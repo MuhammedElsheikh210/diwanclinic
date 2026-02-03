@@ -1,9 +1,4 @@
 import 'dart:async';
-
-import 'package:diwanclinic/Presentation/seeder.dart';
-import 'package:excel/excel.dart';
-import 'package:flutter/foundation.dart';
-import 'package:sqflite/sqflite.dart';
 import 'index/index_main.dart';
 
 void main() {
