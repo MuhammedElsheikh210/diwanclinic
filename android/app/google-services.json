@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "404866464749",
+    "firebase_url": "https://pos-app-c2ced-default-rtdb.firebaseio.com",
+    "project_id": "pos-app-c2ced",
+    "storage_bucket": "pos-app-c2ced.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:404866464749:android:8fc674f045efdec28a85e4",
+        "android_client_info": {
+          "package_name": "com.diwan.diwanclinic"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBE9__lTzLLEQM5A1UiJ2RDSZlB3QJQ9IY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:404866464749:android:a9714d58334390e78a85e4",
+        "android_client_info": {
+          "package_name": "com.elsheikh.marketingwhats"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBE9__lTzLLEQM5A1UiJ2RDSZlB3QJQ9IY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

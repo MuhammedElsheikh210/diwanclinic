@@ -1,0 +1,2 @@
+/Users/apple/diwanclinic/android/app/.cxx/debug/3t4c6j4u/arm64-v8a/CMakeFiles/edit_cache.dir
+/Users/apple/diwanclinic/android/app/.cxx/debug/3t4c6j4u/arm64-v8a/CMakeFiles/rebuild_cache.dir
