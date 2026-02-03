@@ -33,6 +33,11 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Android Studio / IntelliJ
+android/*.iml
+android/.idea/
+
+
 # Symbolication related
 app.*.symbols
 
