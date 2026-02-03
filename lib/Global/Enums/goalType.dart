@@ -1,0 +1,1 @@
+enum GoalEnum { Task, Habit }

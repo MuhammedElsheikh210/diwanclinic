@@ -1,0 +1,164 @@
+import 'package:diwanclinic/Presentation/screens/doctors/create_update/doctor_create_update.dart';
+import 'package:diwanclinic/Presentation/screens/doctors/create_update/doctor_create_update_controller.dart';
+import 'package:diwanclinic/Presentation/screens/doctors/list/doctor_view_model.dart';
+import '../../../../../index/index_main.dart';
+
+class DoctorCard extends StatelessWidget {
+  final LocalUser doctor;
+  final DoctorViewModel controller;
+
+  const DoctorCard({
+    super.key,
+    required this.doctor,
+    required this.controller,
+  });
+
+  bool get isAdmin {
+    final currentUser = LocalUser().getUserData();
+    return currentUser.userType?.name == 'admin';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final typography = context.typography;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(16.r),
+      onTap: () => Get.to(() => DoctorDetailsView(doctor: doctor)),
+      child: Container(
+        margin: EdgeInsets.symmetric(vertical: 6.h, horizontal: 6.w),
+        padding: EdgeInsets.all(14.w),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: AppColors.borderNeutralPrimary, width: 0.7),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.background_black.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // 👨‍⚕️ Doctor Avatar
+            CircleAvatar(
+              radius: 30.r,
+              backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+              backgroundImage: doctor.profileImage != null &&
+                  doctor.profileImage!.isNotEmpty
+                  ? NetworkImage(doctor.profileImage!)
+                  : null,
+              child: doctor.profileImage == null || doctor.profileImage!.isEmpty
+                  ? Icon(
+                Icons.person_rounded,
+                color: AppColors.primary,
+                size: 30.sp,
+              )
+                  : null,
+            ),
+
+            SizedBox(width: 12.w),
+
+            // 🩺 Doctor Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 👨‍⚕️ Doctor Name
+                  Text(
+                    doctor.name ?? "بدون اسم",
+                    style: typography.mdBold.copyWith(
+                      color: AppColors.textDisplay,
+                      fontSize: 16.sp,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+
+                  // 🧠 Specialization Name
+                  if (doctor.specializationName != null &&
+                      doctor.specializationName!.isNotEmpty)
+                    Padding(
+                      padding: EdgeInsets.only(top: 2.h),
+                      child: Text(
+                        doctor.specializationName!,
+                        style: typography.smRegular.copyWith(
+                          color: AppColors.textSecondaryParagraph,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+
+                  SizedBox(height: 6.h),
+
+                  // ⭐ Rating
+                  Row(
+                    children: [
+                      const Icon(Icons.star,
+                          color: AppColors.yellowForeground, size: 18),
+                      SizedBox(width: 4.w),
+                      Text(
+                        "${doctor.totalRate?.toStringAsFixed(1) ?? '0.0'} "
+                            "(${doctor.numberOfRates ?? 0})",
+                        style: typography.smRegular.copyWith(
+                          color: AppColors.textSecondaryParagraph,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: 6.h),
+
+                  // 📱 Phone Number
+                  if (doctor.phone != null && doctor.phone!.isNotEmpty)
+                    Row(
+                      children: [
+                        const Icon(Icons.phone,
+                            color: AppColors.primary, size: 16),
+                        SizedBox(width: 4.w),
+                        Text(
+                          doctor.phone!,
+                          style: typography.smRegular.copyWith(
+                            color: AppColors.textSecondaryParagraph,
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+
+            // 🛠️ Admin actions (Edit/Delete)
+            if (isAdmin)
+              PopupMenuButton<String>(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                icon: const Icon(Icons.more_vert, color: AppColors.textDisplay),
+                onSelected: (value) {
+                  if (value == 'edit') {
+                    Get.delete<CreateDoctorViewModel>();
+                    showCustomBottomSheet(
+                      context: context,
+                      child: CreateDoctorView(
+                        specializeKey: doctor.clinicKey ?? "",
+                        doctor: doctor,
+                      ),
+                    );
+                  } else if (value == 'delete') {
+                    controller.deleteDoctor(doctor);
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(value: 'edit', child: Text("تعديل")),
+                  const PopupMenuItem(value: 'delete', child: Text("حذف")),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
