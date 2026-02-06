@@ -11,6 +11,7 @@ class CreateReservationViewModel extends GetxController {
   bool isFromLegacyQueue = false;
   int legacyQueueCount = 0;
   LegacyQueueModel? currentLegacyQueue;
+  bool isDayClosed = false;
 
   // Delegate fields
   final TextEditingController delegateNameController = TextEditingController();
@@ -69,6 +70,26 @@ class CreateReservationViewModel extends GetxController {
     patientCodeController.addListener(_triggerUpdate);
     paidAmountController.addListener(_triggerUpdate);
     paidAmountController.addListener(_updateRestAmount);
+  }
+
+  Future<void> loadOpenCloseStatusForDate(String date) async {
+    isDayClosed = false; // default open
+
+    LegacyQueueService().getOpenCloseDaysByDateData(
+      date: date,
+      voidCallBack: (data) {
+        if (data.isNotEmpty) {
+          // 👈 أول عنصر كفاية لأن اليوم واحد
+          final item = data.first;
+          if (item != null && item.isClosed == true) {
+            isDayClosed = true;
+          }
+        }
+
+        print("isDayClosed is ${isDayClosed}");
+        update();
+      },
+    );
   }
 
   void _convertPhoneToEnglish() {
@@ -305,6 +326,9 @@ class CreateReservationViewModel extends GetxController {
     List<ReservationModel?> activeList,
     ClinicModel? clinicModel,
   ) async {
+    if (isDayClosed)
+      return Loader.showError("🚫 هذا اليوم مغلق ولا يمكن الحجز فيه");
+
     if (!validateStep()) {
       Loader.showError("⚠️ يرجى ملء جميع الحقول المطلوبة");
       return;

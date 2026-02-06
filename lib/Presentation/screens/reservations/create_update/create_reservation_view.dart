@@ -63,6 +63,7 @@ class _CreateReservationViewState extends State<CreateReservationView> {
 
     // حمّل الكشكول + احسب رقم الحجز
     vm.onDateChanged(today);
+    vm.loadOpenCloseStatusForDate(DateFormat('dd-MM-yyyy').format(today));
 
     vm.getClinicList(
       widget.selected_clinic,
@@ -410,10 +411,17 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                   controller.companyNameController.text) {
                                 controller.companyNameController.text =
                                     formatted;
-
+                                final formattedLegacyDate = DateFormat(
+                                  'dd-MM-yyyy',
+                                ).format(pickedDate);
                                 // 1️⃣ حمّل الكشكول
                                 await controller.loadLegacyQueueForDate(
                                   DateFormat('dd-MM-yyyy').format(pickedDate),
+                                );
+
+                                // 🔥 حالة اليوم (open / close)
+                                await controller.loadOpenCloseStatusForDate(
+                                  formattedLegacyDate,
                                 );
 
                                 // 2️⃣ 🔥 احسب عدد الحجوزات لليوم الجديد
@@ -535,7 +543,13 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                             height: 55.h,
                             child: PrimaryTextButton(
                               appButtonSize: AppButtonSize.xxLarge,
-                              onTap: controller.validateStep()
+                              onTap: (controller.isDayClosed)
+                                  ? () {
+                                      Loader.showError(
+                                        "🚫 اليوم مغلق للحجوزات",
+                                      );
+                                    }
+                                  : controller.validateStep()
                                   ? () {
                                       controller.saveReservation(
                                         widget.list_reservations,
@@ -543,6 +557,7 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                       );
                                     }
                                   : null,
+
                               label: AppText(
                                 text: controller.is_update
                                     ? "تحديث الحجز"
@@ -554,6 +569,21 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                             ),
                           ),
                         ),
+
+                        if (controller.isDayClosed)
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              top: 15,
+                              left: 10,
+                              right: 10,
+                            ),
+                            child: Text(
+                              "هذا اليوم مُغلق بقرار الإدارة",
+                              style: context.typography.mdMedium.copyWith(
+                                color: AppColors.errorForeground,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),

@@ -1,4 +1,3 @@
-import 'package:diwanclinic/Presentation/parentControllers/feedback_service.dart';
 import 'package:intl/intl.dart';
 import '../../../../../index/index_main.dart';
 
@@ -12,6 +11,8 @@ class DoctorDetailsViewModel extends GetxController {
   int legacyQueueCount = 0;
   int completedCount = 0;
   LegacyQueueModel? legacyQueueForDay;
+  bool isSelectedDayClosed = false;
+
 
   DoctorDetailsViewModel({required this.doctor});
 
@@ -54,10 +55,39 @@ class DoctorDetailsViewModel extends GetxController {
     super.onInit();
 
     selectedDate = DateTime.now();
+    await loadOpenCloseStatusForSelectedDate();
+
     getDoctorData();
     _initReservationTypes();
     await _loadClinics();
   }
+
+  Future<void> loadOpenCloseStatusForSelectedDate() async {
+    isSelectedDayClosed = false;
+
+    if (selectedDate == null) {
+      update();
+      return;
+    }
+
+    final date = DateFormat("dd-MM-yyyy").format(selectedDate!);
+
+    await LegacyQueueService().getOpenCloseDaysByDateData(
+      date: date,
+      isPatient: true,
+      doctorUid: doctor.uid,
+      voidCallBack: (data) {
+        if (data.isNotEmpty) {
+          final item = data.first;
+          if (item?.isClosed == true) {
+            isSelectedDayClosed = true;
+          }
+        }
+        update();
+      },
+    );
+  }
+
 
   String _formatLegacyDate(DateTime date) {
     return DateFormat("dd-MM-yyyy").format(date);
@@ -346,8 +376,11 @@ class DoctorDetailsViewModel extends GetxController {
 
   void onSelectDate(DateTime date) {
     selectedDate = date;
-    loadLegacyQueueForSelectedDate();
+
+    loadLegacyQueueForSelectedDate(); // الدور
+    loadOpenCloseStatusForSelectedDate(); // 🔥 check open/close
   }
+
 
   // ─────────────────────────────────────────────
   // 🔹 Calculate Prices + Deposit

@@ -297,40 +297,43 @@ class _SelectReservationDateBottomSheetState
 
                 SizedBox(height: 10.h),
 
-                if (controller.isLoadingOrderInfo)
-                  Padding(
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
-                    child: const CircularProgressIndicator(),
-                  )
-                else if (controller.beforeYouCount != null)
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.all(12.w),
-                    margin: EdgeInsets.only(top: 12.h),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary10,
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: AppColors.primary40),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "👥 هيكون قبلك ${controller.beforeYouCount} حالة ",
-                          style: typography.mdBold.copyWith(
-                            color: AppColors.primary,
+                if (!controller.isSelectedDayClosed) ...[
+                  if (controller.isLoadingOrderInfo)
+                    Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      child: const CircularProgressIndicator(),
+                    )
+                  else if (controller.beforeYouCount != null)
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(12.w),
+                      margin: EdgeInsets.only(top: 12.h),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary10,
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(color: AppColors.primary40),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "👥 هيكون قبلك ${controller.beforeYouCount} حالة ",
+                            style: typography.mdBold.copyWith(
+                              color: AppColors.primary,
+                            ),
                           ),
-                        ),
-                        SizedBox(height: 6.h),
-                        Text(
-                          "📌 دورك رقم ${controller.expectedOrder}",
-                          style: typography.smRegular.copyWith(
-                            color: AppColors.textSecondaryParagraph,
+                          SizedBox(height: 6.h),
+                          Text(
+                            "📌 دورك رقم ${controller.expectedOrder}",
+                            style: typography.smRegular.copyWith(
+                              color: AppColors.textSecondaryParagraph,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
+                ],
+
                 SizedBox(height: 20.h),
 
                 // 🔹 Confirm Button
@@ -345,6 +348,10 @@ class _SelectReservationDateBottomSheetState
                       ),
                     ),
                     onTap: () async {
+                      if (controller.isSelectedDayClosed) {
+                        Loader.showError("🚫 هذا اليوم مغلق للحجوزات");
+                        return;
+                      }
                       final valid = _validate(
                         controller,
                         checkScreenshot: requiresDeposit,
@@ -366,6 +373,21 @@ class _SelectReservationDateBottomSheetState
                     },
                   ),
                 ),
+
+                if (controller.isSelectedDayClosed)
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      top: 15,
+                      left: 10,
+                      right: 10,
+                    ),
+                    child: Text(
+                      "🚫 هذا اليوم مُغلق ولا يمكن الحجز فيه",
+                      style: context.typography.smMedium.copyWith(
+                        color: AppColors.errorForeground,
+                      ),
+                    ),
+                  ),
               ],
             ),
           );
