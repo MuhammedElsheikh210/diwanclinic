@@ -1,3 +1,4 @@
+
 import '../index/index_main.dart';
 
 const String mainpage = "/MainPage";
@@ -33,6 +34,7 @@ const String forceUpdateView = "/ForceUpdateView";
 const String patientHomeView = "/PatientHomeView";
 const String ordersListScreen = "/OrdersListScreen";
 const String legacyQueueView = "/LegacyQueueView";
+const String openclosereservationView = "/OpenclosereservationView";
 
 class Routes {
   static List<GetPage<dynamic>> handle_routes() {
@@ -59,6 +61,15 @@ class Routes {
         binding: Binding(),
         transition: Transition.cupertino,
       ),
+
+      GetPage(
+        name: openclosereservationView,
+        page: () => const OpenclosereservationView(),
+        transitionDuration: const Duration(milliseconds: 500),
+        binding: Binding(),
+        transition: Transition.cupertino,
+      ),
+
       GetPage(
         name: ordersListScreen,
         page: () => const OrdersListScreen(),

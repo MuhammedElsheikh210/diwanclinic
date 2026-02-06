@@ -4,9 +4,12 @@ import '../../index/index_main.dart';
 
 class LegacyQueueService {
   final LegacyQueueUseCases useCase = initController(
-    () => LegacyQueueUseCases(Get.find()),
+        () => LegacyQueueUseCases(Get.find()),
   );
 
+  // ------------------------------------------------------------
+  // 🧾 Legacy Queue (الكشوفات الورقية)
+  // ------------------------------------------------------------
   Future<void> addLegacyQueueData({
     required LegacyQueueModel model,
     required Function(ResponseStatus) voidCallBack,
@@ -20,8 +23,8 @@ class LegacyQueueService {
       doctorUid: doctorUid,
     );
     result.fold(
-      (l) => voidCallBack(ResponseStatus.error),
-      (r) => voidCallBack(ResponseStatus.success),
+          (l) => voidCallBack(ResponseStatus.error),
+          (r) => voidCallBack(ResponseStatus.success),
     );
   }
 
@@ -38,8 +41,8 @@ class LegacyQueueService {
       doctorUid: doctorUid,
     );
     result.fold(
-      (l) => voidCallBack(ResponseStatus.error),
-      (r) => voidCallBack(ResponseStatus.success),
+          (l) => voidCallBack(ResponseStatus.error),
+          (r) => voidCallBack(ResponseStatus.success),
     );
   }
 
@@ -58,8 +61,8 @@ class LegacyQueueService {
       doctorUid: doctorUid,
     );
     result.fold(
-      (l) => voidCallBack(ResponseStatus.error),
-      (r) => voidCallBack(ResponseStatus.success),
+          (l) => voidCallBack(ResponseStatus.error),
+          (r) => voidCallBack(ResponseStatus.success),
     );
   }
 
@@ -77,8 +80,88 @@ class LegacyQueueService {
       doctorUid: doctorUid,
     );
     result.fold(
-      (l) => Loader.showError("Something went wrong"),
-      (r) => voidCallBack(r),
+          (l) => Loader.showError("Something went wrong"),
+          (r) => voidCallBack(r),
+    );
+  }
+
+  // ------------------------------------------------------------
+  // 🔒 Open / Close Days (فتح / غلق الحجوزات)
+  // ------------------------------------------------------------
+  Future<void> getOpenCloseDaysByDateData({
+    required String date,
+    required Function(List<LegacyQueueModel?>) voidCallBack,
+    bool isPatient = false,
+    String? doctorUid,
+  }) async {
+    final result = await useCase.getOpenCloseDaysByDate(
+      date,
+      isPatient: isPatient,
+      doctorUid: doctorUid,
+    );
+
+    result.fold(
+          (l) => Loader.showError("Something went wrong"),
+          (r) => voidCallBack(r),
+    );
+  }
+
+  Future<void> addOpenCloseDayData({
+    required LegacyQueueModel model,
+    required Function(ResponseStatus) voidCallBack,
+    bool isPatient = false,
+    String? doctorUid,
+  }) async {
+    Loader.show();
+    final result = await useCase.addOpenCloseDay(
+      model,
+      isPatient: isPatient,
+      doctorUid: doctorUid,
+    );
+
+    result.fold(
+          (l) => voidCallBack(ResponseStatus.error),
+          (r) => voidCallBack(ResponseStatus.success),
+    );
+  }
+
+  Future<void> updateOpenCloseDayData({
+    required LegacyQueueModel model,
+    required Function(ResponseStatus) voidCallBack,
+    bool isPatient = false,
+    String? doctorUid,
+  }) async {
+    Loader.show();
+    final result = await useCase.updateOpenCloseDay(
+      model,
+      isPatient: isPatient,
+      doctorUid: doctorUid,
+    );
+
+    result.fold(
+          (l) => voidCallBack(ResponseStatus.error),
+          (r) => voidCallBack(ResponseStatus.success),
+    );
+  }
+
+  Future<void> deleteOpenCloseDayData({
+    required String date,
+    required String key,
+    required Function(ResponseStatus) voidCallBack,
+    bool isPatient = false,
+    String? doctorUid,
+  }) async {
+    Loader.show();
+    final result = await useCase.deleteOpenCloseDay(
+      date,
+      key,
+      isPatient: isPatient,
+      doctorUid: doctorUid,
+    );
+
+    result.fold(
+          (l) => voidCallBack(ResponseStatus.error),
+          (r) => voidCallBack(ResponseStatus.success),
     );
   }
 }

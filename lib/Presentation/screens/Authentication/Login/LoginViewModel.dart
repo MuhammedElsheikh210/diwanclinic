@@ -143,6 +143,7 @@ class LoginViewModel extends GetxController {
         Loader.dismiss();
 
         final newToken = await ConstantsData.firebaseToken();
+        //  final newToken = "await ConstantsData.firebaseToken()";
 
         if (user == null) {
           // ✅ No user found → create new in Firebase Realtime

@@ -6,42 +6,54 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
   LegacyQueueDataSourceRepoImpl(this._clientSourceRepo);
 
   // ------------------------------------------------------------
-  // 🔥 PATH RESOLVER (Doctor / Assistant / Patient)
+  // 🔥 PATH RESOLVER (Legacy Queue / Open-Close Days)
   // ------------------------------------------------------------
-  String _resolveLegacyQueuePath({
+  String _resolveQueuePath({
     required String date,
     required bool isPatient,
     required String? doctorUid,
+    required bool isOpenCloseFeature,
   }) {
     final safeDate = date.replaceAll("/", "-").trim();
 
+    final String basePath;
     if (isPatient) {
       if (doctorUid == null || doctorUid.isEmpty) {
         throw Exception("doctorUid is required when isPatient = true");
       }
-      return "doctors/$doctorUid/legacy_queue/$safeDate";
+      basePath = "doctors/$doctorUid";
+    } else {
+      final uid = LocalUser().getUserData().doctorKey ?? "";
+      basePath = "doctors/$uid";
     }
 
-    // Doctor / Assistant
-    String uid = LocalUser().getUserData().doctorKey ?? "";
-    return "doctors/$uid/legacy_queue/$safeDate";
+    final featureNode =
+    isOpenCloseFeature ? "open_close_days" : "legacy_queue";
+
+    return "$basePath/$featureNode/$safeDate";
+  }
+
+  /// 🧠 نحدد الفيتشر من الداتا نفسها
+  bool _isOpenCloseFeature(Map<String, dynamic> data) {
+    return data.containsKey('isClosed') && data['isClosed'] != null;
   }
 
   // ------------------------------------------------------------
-  // 🔹 GET
+  // 🔹 GET (Legacy Queue)
   // ------------------------------------------------------------
   @override
   Future<List<LegacyQueueModel?>> getLegacyQueueByDate(
-    String date,
-    Map<String, dynamic> params, {
-    bool isPatient = false,
-    String? doctorUid,
-  }) async {
+      String date,
+      Map<String, dynamic> params, {
+        bool isPatient = false,
+        String? doctorUid,
+      }) async {
     try {
-      final path = _resolveLegacyQueuePath(
+      final path = _resolveQueuePath(
         date: date,
         isPatient: isPatient,
         doctorUid: doctorUid,
+        isOpenCloseFeature: false,
       );
 
       final response = await _clientSourceRepo.request(
@@ -52,7 +64,7 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
 
       return handleResponse<LegacyQueueModel>(
         response,
-        (json) => LegacyQueueModel.fromJson(json),
+            (json) => LegacyQueueModel.fromJson(json),
       );
     } catch (_) {
       return [];
@@ -60,20 +72,52 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
   }
 
   // ------------------------------------------------------------
-  // 🔹 ADD
+  // 🔒 GET (Open / Close Days)
+  // ------------------------------------------------------------
+  @override
+  Future<List<LegacyQueueModel?>> getOpenCloseDaysByDate(
+      String date, {
+        bool isPatient = false,
+        String? doctorUid,
+      }) async {
+    try {
+      final path = _resolveQueuePath(
+        date: date,
+        isPatient: isPatient,
+        doctorUid: doctorUid,
+        isOpenCloseFeature: true,
+      );
+
+      final response = await _clientSourceRepo.request(
+        HttpMethod.GET,
+        "/$path.json",
+      );
+
+      return handleResponse<LegacyQueueModel>(
+        response,
+            (json) => LegacyQueueModel.fromJson(json),
+      );
+    } catch (_) {
+      return [];
+    }
+  }
+
+  // ------------------------------------------------------------
+  // ➕ ADD (Legacy OR Open-Close)
   // ------------------------------------------------------------
   @override
   Future<SuccessModel> addLegacyQueue(
-    String date,
-    String key,
-    Map<String, dynamic> data, {
-    bool isPatient = false,
-    String? doctorUid,
-  }) async {
-    final path = _resolveLegacyQueuePath(
+      String date,
+      String key,
+      Map<String, dynamic> data, {
+        bool isPatient = false,
+        String? doctorUid,
+      }) async {
+    final path = _resolveQueuePath(
       date: date,
       isPatient: isPatient,
       doctorUid: doctorUid,
+      isOpenCloseFeature: _isOpenCloseFeature(data),
     );
 
     final response = await _clientSourceRepo.request(
@@ -86,20 +130,21 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
   }
 
   // ------------------------------------------------------------
-  // 🔹 UPDATE
+  // ✏️ UPDATE (Legacy OR Open-Close)
   // ------------------------------------------------------------
   @override
   Future<SuccessModel> updateLegacyQueue(
-    String date,
-    String key,
-    Map<String, dynamic> data, {
-    bool isPatient = false,
-    String? doctorUid,
-  }) async {
-    final path = _resolveLegacyQueuePath(
+      String date,
+      String key,
+      Map<String, dynamic> data, {
+        bool isPatient = false,
+        String? doctorUid,
+      }) async {
+    final path = _resolveQueuePath(
       date: date,
       isPatient: isPatient,
       doctorUid: doctorUid,
+      isOpenCloseFeature: _isOpenCloseFeature(data),
     );
 
     final response = await _clientSourceRepo.request(
@@ -112,19 +157,21 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
   }
 
   // ------------------------------------------------------------
-  // 🔹 DELETE
+  // 🗑 DELETE
   // ------------------------------------------------------------
   @override
   Future<SuccessModel> deleteLegacyQueue(
-    String date,
-    String key, {
-    bool isPatient = false,
-    String? doctorUid,
-  }) async {
-    final path = _resolveLegacyQueuePath(
+      String date,
+      String key, {
+        bool isPatient = false,
+        String? doctorUid,
+        bool isOpenCloseFeature = false,
+      }) async {
+    final path = _resolveQueuePath(
       date: date,
       isPatient: isPatient,
       doctorUid: doctorUid,
+      isOpenCloseFeature: isOpenCloseFeature,
     );
 
     final response = await _clientSourceRepo.request(

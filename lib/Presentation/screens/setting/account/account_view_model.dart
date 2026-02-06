@@ -48,60 +48,59 @@ class AccountViewModel extends GetxController {
         return;
       }
 
-      // retrieve "email" as we constructed it during login
       final localUser = LocalUser().getUserData();
       final email = "${localUser.phone}@link.com";
 
-      if (email.isEmpty) {
-        Loader.showError("تعذر العثور على البريد المرتبط بالحساب");
-        return;
-      }
-
       Loader.show();
 
-      // ✅ Reauthenticate with the simulated email + old password
+      // 🔐 Re-auth
       final credential = EmailAuthProvider.credential(
         email: email,
         password: oldPass,
       );
 
       await user.reauthenticateWithCredential(credential);
+
+      // 🔁 Update password in Firebase Auth
       await user.updatePassword(newPass);
 
-      // 🔹 Update local saved user model
-      final updatedUser = LocalUser().getUserData();
-      updatedUser.password = newPass;
-      AuthenticationService().updateClientsData(
+      // 🔄 Update password in Firebase Realtime DB
+      final updatedUser = localUser.copyWith(password: newPass);
+
+      await AuthenticationService().updateClientsData(
         userclient: updatedUser,
-        voidCallBack: (ResponseStatus p1) {
-          Loader.dismiss();
-          LocalUser().saveLocal();
+        voidCallBack: (status) async {
+          if (status == ResponseStatus.success) {
+             updatedUser.saveLocal();
+          }
         },
       );
 
-      Loader.dismiss();
       oldPasswordController.clear();
       newPasswordController.clear();
       confirmPasswordController.clear();
 
+      Loader.dismiss();
       Loader.showSuccess("تم تغيير كلمة المرور بنجاح ✅");
     } on FirebaseAuthException catch (e) {
       Loader.dismiss();
 
-      if (e.code == 'wrong-password') {
-        Loader.showError("كلمة المرور الحالية غير صحيحة");
-      } else if (e.code == 'user-mismatch') {
-        Loader.showError("هذا الحساب غير متطابق مع بيانات الدخول الحالية");
-      } else if (e.code == 'requires-recent-login') {
-        Loader.showError("يجب تسجيل الدخول مجددًا قبل تغيير كلمة المرور");
-      } else if (e.code == 'weak-password') {
-        Loader.showError("كلمة المرور الجديدة ضعيفة جدًا");
-      } else {
-        Loader.showError("حدث خطأ أثناء تغيير كلمة المرور: ${e.message}");
+      switch (e.code) {
+        case 'wrong-password':
+          Loader.showError("كلمة المرور الحالية غير صحيحة");
+          break;
+        case 'requires-recent-login':
+          Loader.showError("يجب تسجيل الدخول مجددًا قبل تغيير كلمة المرور");
+          break;
+        case 'weak-password':
+          Loader.showError("كلمة المرور الجديدة ضعيفة جدًا");
+          break;
+        default:
+          Loader.showError("حدث خطأ: ${e.message}");
       }
     } catch (e) {
       Loader.dismiss();
-      Loader.showError("حدث خطأ غير متوقع: $e");
+      Loader.showError("خطأ غير متوقع: $e");
     }
   }
 }

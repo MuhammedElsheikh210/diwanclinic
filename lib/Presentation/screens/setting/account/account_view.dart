@@ -129,6 +129,14 @@ class AccountView extends StatelessWidget {
                       label: "المساعدين",
                       onTap: () => Get.toNamed(assistantView),
                     ),
+
+                    _menuItemWithStatus(
+                      context,
+                      icon: Icons.event_busy_outlined,
+                      label: "إدارة أيام العمل",
+                      isEnabled: true, // 👈 هنا الحالة (On / Off)
+                      onTap: () => Get.toNamed(openclosereservationView),
+                    ),
                   ]),
                 ],
 
@@ -155,6 +163,22 @@ class AccountView extends StatelessWidget {
                       onTap: () => Get.toNamed(whatsAppGroupView),
                     ),
                   ]),
+
+                  _menuItemWithStatus(
+                    context,
+                    icon: Icons.event_busy_outlined,
+                    label: "إدارة أيام العمل",
+                    isEnabled: true, // 👈 هنا الحالة (On / Off)
+                    onTap: () => Get.toNamed(openclosereservationView),
+                  ),
+
+                  _menuItemWithStatus(
+                    context,
+                    icon: Icons.description_outlined,
+                    label: "الكشوفات الورقية",
+                    isEnabled: true, // 👈 On / Off الكشوفات الورقية
+                    onTap: () => Get.toNamed(legacyQueueView),
+                  ),
                 ],
 
                 const SizedBox(height: 12),
@@ -225,6 +249,67 @@ class AccountView extends StatelessWidget {
     );
   }
 
+  Widget _menuItemWithStatus(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required bool isEnabled,
+    required VoidCallback onTap,
+  }) {
+    final Color statusColor = isEnabled
+        ? Colors.green
+        : AppColors.errorForeground;
+
+    final String statusText = isEnabled ? "مفعل" : "غير مفعل";
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: AppColors.primary, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: context.typography.mdMedium.copyWith(
+                  color: AppColors.text_primary_paragraph,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: statusColor.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                statusText,
+                style: context.typography.xsMedium.copyWith(color: statusColor),
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 16,
+              color: AppColors.textSecondaryParagraph,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> openStorePage() async {
     const String playStoreLink =
         "https://play.google.com/store/apps/details?id=com.elsheikh.marketingwhats";
@@ -279,82 +364,98 @@ class AccountView extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-      ),
-      builder: (_) => SafeArea(
-        child: Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-            left: 20,
-            right: 20,
-            top: 25,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 50,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
+      backgroundColor: Colors.transparent,
+      builder: (_) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+              ),
+              child: SingleChildScrollView(
+                controller: scrollController,
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                  left: 20,
+                  right: 20,
+                  top: 20,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 50,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Center(
+                      child: Text(
+                        "تغيير كلمة المرور",
+                        style: context.typography.lgBold.copyWith(
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 25),
+
+                    _passwordField(
+                      context,
+                      controller: controller.oldPasswordController,
+                      label: "كلمة المرور الحالية",
+                      icon: Icons.lock_clock_outlined,
+                    ),
+                    const SizedBox(height: 20),
+
+                    _passwordField(
+                      context,
+                      controller: controller.newPasswordController,
+                      label: "كلمة المرور الجديدة",
+                      icon: Icons.lock_outline,
+                    ),
+                    const SizedBox(height: 20),
+
+                    _passwordField(
+                      context,
+                      controller: controller.confirmPasswordController,
+                      label: "تأكيد كلمة المرور الجديدة",
+                      icon: Icons.lock_reset_outlined,
+                    ),
+                    const SizedBox(height: 30),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 55.h,
+                      child: PrimaryTextButton(
+                        appButtonSize: AppButtonSize.xxLarge,
+                        label: AppText(
+                          text: "تحديث",
+                          textStyle: context.typography.mdMedium,
+                        ),
+                        onTap: () async {
+                          FocusScope.of(context).unfocus();
+                          Get.back();
+                          await controller.changePassword();
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 20),
-              Center(
-                child: Text(
-                  "تغيير كلمة المرور",
-                  style: context.typography.lgBold.copyWith(
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 25),
-              _passwordField(
-                context,
-                controller: controller.oldPasswordController,
-                label: "كلمة المرور الحالية",
-                icon: Icons.lock_clock_outlined,
-              ),
-              const SizedBox(height: 20),
-              _passwordField(
-                context,
-                controller: controller.newPasswordController,
-                label: "كلمة المرور الجديدة",
-                icon: Icons.lock_outline,
-              ),
-              const SizedBox(height: 20),
-              _passwordField(
-                context,
-                controller: controller.confirmPasswordController,
-                label: "تأكيد كلمة المرور الجديدة",
-                icon: Icons.lock_reset_outlined,
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: ScreenUtil().screenWidth,
-                height: 55.h,
-                child: PrimaryTextButton(
-                  appButtonSize: AppButtonSize.xxLarge,
-                  label: AppText(
-                    text: "تحديث",
-                    textStyle: context.typography.mdMedium,
-                  ),
-                  onTap: () async {
-                    Get.back();
-                    await controller.changePassword();
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+            );
+          },
+        );
+      },
     );
   }
 

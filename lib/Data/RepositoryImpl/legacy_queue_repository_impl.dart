@@ -6,8 +6,12 @@ class LegacyQueueRepositoryImpl extends LegacyQueueRepository {
 
   LegacyQueueRepositoryImpl(this._dataSource);
 
+  // ------------------------------------------------------------
+  // 🧾 Legacy Queue (الكشوفات الورقية)
+  // ------------------------------------------------------------
   @override
-  Future<Either<AppError, List<LegacyQueueModel?>>> getLegacyQueueByDateDomain(
+  Future<Either<AppError, List<LegacyQueueModel?>>>
+  getLegacyQueueByDateDomain(
       String date,
       Map<String, dynamic> params, {
         bool isPatient = false,
@@ -76,11 +80,35 @@ class LegacyQueueRepositoryImpl extends LegacyQueueRepository {
       String key, {
         bool isPatient = false,
         String? doctorUid,
+        bool isOpenCloseFeature = false,
       }) async {
     try {
       final result = await _dataSource.deleteLegacyQueue(
         date,
         key,
+        isPatient: isPatient,
+        doctorUid: doctorUid,
+        isOpenCloseFeature: isOpenCloseFeature,
+      );
+      return Right(result);
+    } catch (e) {
+      return Left(AppError(e.toString()));
+    }
+  }
+
+  // ------------------------------------------------------------
+  // 🔒 Open / Close Days (فتح / غلق الحجوزات)
+  // ------------------------------------------------------------
+  @override
+  Future<Either<AppError, List<LegacyQueueModel?>>>
+  getOpenCloseDaysByDateDomain(
+      String date, {
+        bool isPatient = false,
+        String? doctorUid,
+      }) async {
+    try {
+      final result = await _dataSource.getOpenCloseDaysByDate(
+        date,
         isPatient: isPatient,
         doctorUid: doctorUid,
       );

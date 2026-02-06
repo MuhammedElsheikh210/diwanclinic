@@ -74,24 +74,23 @@ class ReservationDateAppBar extends StatelessWidget
               const SizedBox(width: 10),
 
               // ░░ Notifications Icon (Optional) ░░
-              if (onNotificationTap != null)
-                GestureDetector(
-                  onTap: onNotificationTap,
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: SvgPicture.asset(
-                      IconsConstants.doc,
-                      height: 35.h,
-                      width: 35.w,
-                    ),
-                  ),
-                ),
-              const SizedBox(width: 10),
-
+              // if (onNotificationTap != null)
+              //   GestureDetector(
+              //     onTap: onNotificationTap,
+              //     child: Container(
+              //       padding: const EdgeInsets.all(8),
+              //       decoration: BoxDecoration(
+              //         color: AppColors.primary.withValues(alpha: 0.1),
+              //         shape: BoxShape.circle,
+              //       ),
+              //       child: SvgPicture.asset(
+              //         IconsConstants.doc,
+              //         height: 35.h,
+              //         width: 35.w,
+              //       ),
+              //     ),
+              //   ),
+              // const SizedBox(width: 10),
               if (onFilterTap != null)
                 GestureDetector(
                   onTap: onFilterTap,
