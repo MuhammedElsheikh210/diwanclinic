@@ -1,8 +1,3 @@
-import 'package:diwanclinic/Presentation/screens/patient_orders/details/order_details_view.dart';
-import 'package:diwanclinic/Presentation/screens/patient_orders/list/widget/action_dialog_helper.dart';
-import 'package:diwanclinic/Presentation/screens/patient_orders/list/widget/order_card.dart';
-import 'package:diwanclinic/Presentation/screens/patient_orders/price_details_view/view.dart';
-import 'package:diwanclinic/Presentation/screens/patient_orders/treatement_track/view.dart';
 import '../../../../../index/index_main.dart';
 
 class OrdersSectionView extends StatelessWidget {
@@ -27,9 +22,9 @@ class OrdersSectionView extends StatelessWidget {
       children: [
         HeaderSectionWidget(
           title: "طلباتي",
-          onMore: () => Get.offAll(() => const MainPage(initialIndex:2)),
+          onMore: () => Get.offAll(() => const MainPage(initialIndex: 2)),
         ),
-        SizedBox(height: 15.h,),
+        SizedBox(height: 15.h),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
@@ -43,6 +38,7 @@ class OrdersSectionView extends StatelessWidget {
                   width: 400.w,
                   child: OrderCard(
                     order: order,
+                    from_home: true,
 
                     onConfirmOrder: () =>
                         _showConfirmDialog(context, order, controller),

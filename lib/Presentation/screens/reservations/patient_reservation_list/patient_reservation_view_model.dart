@@ -97,6 +97,75 @@ class ReservationPatientViewModel extends GetxController {
     update();
   }
 
+  Future<void> syncMissingFcmTokenForMyReservations() async {
+    final user = LocalUser().getUserData();
+    final String? myUid = user.uid;
+    final String? myToken = user.fcmToken;
+
+    if (myUid == null || myUid.isEmpty) {
+      debugPrint("❌ [FCM SYNC] No user uid");
+      return;
+    }
+
+    if (myToken == null || myToken.isEmpty) {
+      debugPrint("❌ [FCM SYNC] No FCM token on device");
+      return;
+    }
+
+    debugPrint("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    debugPrint("🔄 [FCM SYNC] Start syncing missing tokens");
+    debugPrint("👤 UID: $myUid");
+    debugPrint("📱 Token: $myToken");
+    debugPrint("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    final reservations =
+        listReservations
+            ?.whereType<ReservationModel>()
+            .where(
+              (r) =>
+                  r.patientUid == myUid &&
+                  (r.fcmToken_patient == null || r.fcmToken_patient!.isEmpty),
+            )
+            .toList() ??
+        [];
+
+    if (reservations.isEmpty) {
+      debugPrint("ℹ️ [FCM SYNC] No reservations need update");
+      return;
+    }
+
+    debugPrint("🧩 [FCM SYNC] Reservations to update: ${reservations.length}");
+
+    for (final r in reservations) {
+      final updated = r.copyWith(fcmTokenPatient: myToken);
+
+      debugPrint("🔁 Updating reservation ${r.key} | order=${r.order_num}");
+
+      // 1️⃣ Update main reservation
+      await ReservationService().updateReservationData(
+        date: updated.appointmentDateTime ?? "",
+        isPatient: true,
+        doctorUid: updated.doctorKey,
+        reservation: updated,
+        localOnly: false,
+        voidCallBack: (_) {},
+      );
+
+      // 2️⃣ Update patient meta
+      await ReservationService().updatePatientReservationData(
+        key: updated.key ?? "",
+        data: updated,
+        voidCallBack: (_) {},
+      );
+    }
+
+    debugPrint("✅ [FCM SYNC] Finished updating tokens");
+    debugPrint("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    // 🔄 Reload reservations
+    getReservations();
+  }
+
   Future<void> setupDefaultDate() async {
     final now = DateTime.now();
     appointment_date_time = DateFormat('dd/MM/yyyy').format(now);
@@ -185,6 +254,8 @@ class ReservationPatientViewModel extends GetxController {
       patientKey: patientKey,
       voidCallBack: (list) async {
         listReservations = list;
+
+        await syncMissingFcmTokenForMyReservations();
 
         // 🔥 أول reservation نستخدمها
         final first = list.whereType<ReservationModel>().firstOrNull;

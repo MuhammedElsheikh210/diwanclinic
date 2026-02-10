@@ -106,6 +106,7 @@ class _ReservationPatientViewState extends State<ReservationPatientView> {
             reservation: reservation ?? ReservationModel(),
             controller: controller,
             index: index,
+            from_home: false,
           ),
         );
       },

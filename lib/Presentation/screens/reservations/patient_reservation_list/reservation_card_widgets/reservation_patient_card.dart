@@ -44,11 +44,36 @@ class ReservationPatientCard extends StatelessWidget {
           const SizedBox(height: 15),
           // 👨‍⚕️ DOCTOR INFO
           // Assigned doctor name
-          DoctorInfoSection(reservation: reservation),
+          from_home != true
+              ? DoctorInfoSection(reservation: reservation)
+              : Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: DoctorInfoSection(reservation: reservation),
+                      ),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("معاد الكشف", style: context.typography.mdBold),
+                          const SizedBox(height: 5),
+                          Text(
+                            reservation.appointmentDateTime ?? "",
+                            style: context.typography.mdBold,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
 
           // 💰 PAYMENT INFO
           // SECTION: Reservation Details
-          ReservationDetailsSection(reservation: reservation),
+          from_home == true
+              ? const SizedBox()
+              : ReservationDetailsSection(reservation: reservation),
 
           OrderMedicineWidget(
             isOrdered: reservation.isOrdered ?? false,
@@ -71,13 +96,15 @@ class ReservationPatientCard extends StatelessWidget {
 
           // 🔘 ACTION BUTTONS
           // Cancel, Rate Doctor, Request Prescription
-          ButtonsSection(
-            reservation: reservation,
-            controller: controller,
-            status: status,
-            index: index,
-            show_details: true,
-          ),
+          from_home == true
+              ? const SizedBox()
+              : ButtonsSection(
+                  reservation: reservation,
+                  controller: controller,
+                  status: status,
+                  index: index,
+                  show_details: true,
+                ),
           const SizedBox(height: 15),
         ],
       ),

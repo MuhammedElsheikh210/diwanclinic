@@ -57,24 +57,46 @@ class OrderMedicineScreen extends StatelessWidget {
           color: AppColors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 12,
               offset: const Offset(0, -4),
             ),
           ],
         ),
-        child: PrimaryTextButton(
-          appButtonSize: AppButtonSize.xxLarge,
-          customBackgroundColor: _buttonColor(vm),
-          onTap: _buttonAction(vm),
-          label: AppText(
-            text: _buttonText(vm),
-            textAlign: TextAlign.center,
-            textStyle: context.typography.lgBold.copyWith(
-              color: Colors.white,
-              height: 1.3,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 🔹 Hint text
+            Padding(
+              padding: EdgeInsets.only(bottom: 8.h),
+              child: AppText(
+                text:
+                    'الخدمة متاحة داخل طنطا فقط (القرى المجاورة غير مدعومة حاليًا)',
+                textAlign: TextAlign.center,
+                textStyle: context.typography.mdRegular.copyWith(
+                  color: AppColors.background_black,
+                  height: 1.4,
+                ),
+              ),
             ),
-          ),
+
+            SizedBox(
+              width: ScreenUtil().screenWidth,
+              child: PrimaryTextButton(
+                appButtonSize: AppButtonSize.xxLarge,
+                customBackgroundColor: _buttonColor(vm),
+                onTap: _buttonAction(vm),
+                label: AppText(
+                  text: _buttonText(vm),
+                  textAlign: TextAlign.center,
+                  textStyle: context.typography.lgBold.copyWith(
+                    color: Colors.white,
+                    height: 1.3,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

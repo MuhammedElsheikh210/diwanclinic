@@ -7,6 +7,7 @@ class OrderCard extends StatelessWidget {
   final VoidCallback? onCancelOrder;
   final VoidCallback? onFollowTreatment;
   final VoidCallback? onOrderDetails;
+  final bool? from_home;
 
   const OrderCard({
     super.key,
@@ -16,6 +17,7 @@ class OrderCard extends StatelessWidget {
     this.onCancelOrder,
     this.onFollowTreatment,
     this.onOrderDetails,
+    this.from_home
   });
 
   @override
@@ -78,7 +80,7 @@ class OrderCard extends StatelessWidget {
           //----------------------------------------------------------
           // SUBHEADER → Doctor Name
           //----------------------------------------------------------
-          order.doctorName == null
+     from_home == true ?const SizedBox():     order.doctorName == null
               ? const SizedBox()
               : _richInfoRow(
                   icon: Icons.medical_services_rounded,
@@ -87,31 +89,31 @@ class OrderCard extends StatelessWidget {
                   color: AppColors.primary,
                 ),
 
-          SizedBox(height: 12.h),
+          from_home == true ?const SizedBox():  SizedBox(height: 12.h),
 
           //----------------------------------------------------------
           // CONTACT INFO → Phone
           //----------------------------------------------------------
-          _richInfoRow(
+          from_home == true ?const SizedBox():   _richInfoRow(
             icon: Icons.phone,
             label: "رقم المريض",
             value: order.phone ?? "لا يوجد",
           ),
 
-          SizedBox(height: 12.h),
+          from_home == true ?const SizedBox():   SizedBox(height: 12.h),
 
           //----------------------------------------------------------
           // ADDRESS
           //----------------------------------------------------------
-          _richInfoRow(
+          from_home == true ?const SizedBox():   _richInfoRow(
             icon: Icons.location_on_outlined,
             label: "العنوان",
             value: order.address ?? "غير متوفر",
           ),
 
-          SizedBox(height: 16.h),
-          const Divider(color: AppColors.borderNeutralPrimary, height: 1),
-          SizedBox(height: 16.h),
+          from_home == true ?const SizedBox():    SizedBox(height: 16.h),
+          from_home == true ?const SizedBox():    const Divider(color: AppColors.borderNeutralPrimary, height: 1),
+          from_home == true ?const SizedBox():    SizedBox(height: 16.h),
 
           //----------------------------------------------------------
           // TOTAL PRICE

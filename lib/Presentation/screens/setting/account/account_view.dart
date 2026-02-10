@@ -1,11 +1,7 @@
 import 'dart:io';
 
-import 'package:diwanclinic/Presentation/screens/setting/about_us_view.dart';
-import 'package:diwanclinic/Presentation/screens/setting/log_out_widget.dart';
-import 'package:diwanclinic/Presentation/screens/setting/profile%20/profile_view.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../index/index_main.dart';
-import 'account_view_model.dart';
 
 class AccountView extends StatelessWidget {
   const AccountView({super.key});
@@ -117,6 +113,12 @@ class AccountView extends StatelessWidget {
                 if (userType == "doctor") ...[
                   _sectionTitle(context, "الإعدادات"),
                   _modernMenuCard(context, [
+                    _menuItem(
+                      context,
+                      icon: Icons.local_hospital_outlined,
+                      label: "ارشيف المرضي",
+                      onTap: () => Get.to(() => const ArchivePatientView()),
+                    ),
                     _menuItem(
                       context,
                       icon: Icons.local_hospital_outlined,

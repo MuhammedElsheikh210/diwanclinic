@@ -65,8 +65,7 @@ class NotificationController extends GetxController {
 
       if (data["to_key"] != userKey) return;
 
-      final model = NotificationModel.fromJson(data)
-        ..key = event.snapshot.key;
+      final model = NotificationModel.fromJson(data)..key = event.snapshot.key;
 
       _upsertNotification(model);
 
@@ -81,8 +80,7 @@ class NotificationController extends GetxController {
 
       if (data["to_key"] != userKey) return;
 
-      final model = NotificationModel.fromJson(data)
-        ..key = event.snapshot.key;
+      final model = NotificationModel.fromJson(data)..key = event.snapshot.key;
 
       _upsertNotification(model);
       update();
@@ -202,10 +200,20 @@ class NotificationController extends GetxController {
       localOnly: false,
       voidCallBack: (_) async {
         await _afterApprove(updated, notificationKey);
-        NotificationHandler().sendStatusNotification(
+
+        // 🔔 Push Notification
+        await NotificationHandler().sendStatusNotification(
           newStatus: ReservationStatus.approved,
           reservation: updated,
           toToken: updated.fcmToken_patient ?? "",
+        );
+
+        // 📱 WhatsApp
+        await WhatsAppStatusMessageService.sendStatusWhatsAppMessage(
+          reservation: updated,
+          clinic: null, // أو clinic لو متاحة
+          from_assist: true, // 👈 مهمة
+          newStatus: ReservationStatus.approved,
         );
       },
     );
@@ -243,7 +251,6 @@ class NotificationController extends GetxController {
       data: FirebaseFilter(orderBy: "reservation_key", equalTo: reservationKey),
       query: SQLiteQueryParams(),
       voidCallBack: (list) async {
-
         for (final notif in list) {
           if (notif == null) continue;
 
@@ -279,16 +286,20 @@ class NotificationController extends GetxController {
       localOnly: false,
       voidCallBack: (_) async {
         await _afterReject(updated, notificationKey);
-        // 🔥 2) امسح باقي إشعارات نفس الحجز
-        await _removeOtherReservationNotifications(
-          reservationKey: reservation.key!,
-          exceptNotificationKey: notificationKey,
-        );
 
-        NotificationHandler().sendStatusNotification(
+        // 🔔 Push Notification
+        await NotificationHandler().sendStatusNotification(
           newStatus: ReservationStatus.cancelledByAssistant,
           reservation: updated,
           toToken: updated.fcmToken_patient ?? "",
+        );
+
+        // 📱 WhatsApp
+        await WhatsAppStatusMessageService.sendStatusWhatsAppMessage(
+          reservation: updated,
+          clinic: null,
+          from_assist: true,
+          newStatus: ReservationStatus.cancelledByAssistant,
         );
       },
     );
