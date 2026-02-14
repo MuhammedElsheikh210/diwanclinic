@@ -1,6 +1,6 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:intl/intl.dart';
-import '../../../../../index/index_main.dart';
+import '../../../../index/index_main.dart';
 import 'package:firebase_database/firebase_database.dart' as firebase_database;
 
 class ReservationDocTorSyncService {

@@ -100,7 +100,7 @@ class _AppBarTypeDropdownState extends State<AppBarTypeDropdown> {
                           widget.controller.selectedType = item.key;
                         }
 
-                        widget.controller.getReservations(is_filter: false);
+                        widget.controller.getReservations(isFilter: false);
                         widget.controller.update();
 
                         _close();

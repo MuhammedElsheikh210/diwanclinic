@@ -130,7 +130,7 @@ class _AppBarStatusDropdownState extends State<AppBarStatusDropdown> {
                                   ReservationStatusNewExt.fromValue(item.key!);
                             }
 
-                            widget.controller.getReservations(is_filter: false);
+                            widget.controller.getReservations(isFilter: false);
                             widget.controller.update();
                             _close();
                           },

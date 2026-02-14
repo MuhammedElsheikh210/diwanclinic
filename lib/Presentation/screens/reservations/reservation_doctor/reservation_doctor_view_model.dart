@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:diwanclinic/Global/Enums/reservation_status_new.dart';
-import 'package:diwanclinic/Presentation/screens/reservations/list/controllers_services/notification_service.dart';
-import 'package:diwanclinic/Presentation/screens/reservations/list/controllers_services/prescription_upload_service.dart';
-import 'package:diwanclinic/Presentation/screens/reservations/list/controllers_services/reservatiob_sync_doctor.dart';
+import 'package:diwanclinic/Presentation/screens/reservations/list/managers/notification_service.dart';
+import 'package:diwanclinic/Presentation/screens/reservations/list/managers/prescription_upload_service.dart';
+import 'package:diwanclinic/Presentation/screens/reservations/reservation_doctor/reservatiob_sync_doctor.dart';
 import 'package:intl/intl.dart';
 import '../../../../../index/index_main.dart';
 

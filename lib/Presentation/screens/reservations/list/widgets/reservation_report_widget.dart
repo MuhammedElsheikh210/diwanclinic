@@ -60,7 +60,9 @@ class ReservationReportWidget extends StatelessWidget {
         AnimatedCrossFade(
           firstChild: const SizedBox.shrink(),
           secondChild: FutureBuilder<List<ReservationModel>>(
-            future: controller.getCompletedReservationsForReport(),
+            future: controller.queryManager.getCompletedReservationsForReport(
+              appointmentDate: controller.appointmentDate,
+            ),
             builder: (context, snapshot) {
               if (!snapshot.hasData) return const SizedBox();
               final reservations = snapshot.data!;

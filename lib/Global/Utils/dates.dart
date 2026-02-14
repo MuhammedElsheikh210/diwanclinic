@@ -35,6 +35,26 @@ class DatesUtilis {
     );
   }
 
+  static String todayAsString() {
+    return DateFormat('dd/MM/yyyy').format(DateTime.now());
+  }
+
+  static String humanizeTimestamp(int? timestamp) {
+    if (timestamp == null) return "غير معروف";
+
+    final now = DateTime.now();
+    final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
+    final diff = now.difference(date);
+
+    if (diff.inMinutes < 1) return "منذ لحظات";
+    if (diff.inMinutes < 60) return "منذ ${diff.inMinutes} دقيقة";
+    if (diff.inHours < 24) return "منذ ${diff.inHours} ساعة";
+    if (diff.inDays < 30) return "منذ ${diff.inDays} يوم";
+    if (diff.inDays < 365) return "منذ ${diff.inDays ~/ 30} شهر";
+
+    return "منذ ${diff.inDays ~/ 365} سنة";
+  }
+
 
   static void checkDateEndBiggerThanStart({
     required String startDateText,

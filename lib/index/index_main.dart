@@ -288,9 +288,9 @@ export 'package:diwanclinic/Presentation/screens/patients/list/patient_view.dart
 export 'package:diwanclinic/Presentation/parentControllers/reservation_service.dart';
 export 'package:diwanclinic/Presentation/screens/reservations/create_update/create_reservation_view.dart';
 export 'package:diwanclinic/Presentation/screens/reservations/create_update/create_reservation_view_model.dart';
-export 'package:diwanclinic/Presentation/screens/reservations/list/reservation_view_model.dart';
+export 'package:diwanclinic/Presentation/screens/reservations/list/view_model/reservation_view_model.dart';
 export 'package:diwanclinic/Presentation/screens/reservations/list/widgets/reservation_card.dart';
-export 'package:diwanclinic/Presentation/screens/reservations/list/reservation_view.dart';
+export 'package:diwanclinic/Presentation/screens/reservations/list/view/reservation_view.dart';
 export 'package:diwanclinic/Data/Models/shift_clinic_model.dart';
 export 'package:diwanclinic/Data/data_source/shift_data_source.dart';
 export 'package:diwanclinic/Domain/Repositories/shift_repository.dart';
@@ -397,7 +397,7 @@ export 'package:diwanclinic/Presentation/screens/doctors/list/doctor_view_model.
 export 'package:diwanclinic/Presentation/screens/doctors/widgets/doctor_card.dart';
 export 'package:diwanclinic/Data/Models/sync_compare_model.dart';
 export 'package:diwanclinic/Presentation/Widgets/drop_down/adatper/clinic_adapter.dart';
-export 'package:diwanclinic/Presentation/screens/reservations/list/controllers_services/reservation_sync_service.dart';
+export 'package:diwanclinic/Presentation/screens/reservations/list/managers/reservation_sync_service.dart';
 export 'package:diwanclinic/Presentation/screens/patient_orders/order_create_bottom_sheet.dart';
 export 'package:diwanclinic/Presentation/screens/reservations/list/widgets/prescription_bottom_sheet.dart';
 export 'package:image_picker/image_picker.dart';
@@ -492,8 +492,8 @@ export 'package:diwanclinic/Presentation/screens/order_medicine_view/order_medic
 export 'package:diwanclinic/Presentation/screens/reservations/patient_reservation_list/reservation_card_widgets/sections/order_medicine_btn.dart';
 export 'package:diwanclinic/Global/Enums/reservation_status_new.dart';
 export 'package:diwanclinic/Presentation/parentControllers/feedback_service.dart';
-export 'package:diwanclinic/Presentation/screens/reservations/list/controllers_services/notification_service.dart';
-export 'package:diwanclinic/Presentation/screens/reservations/list/controllers_services/prescription_upload_service.dart';
+export 'package:diwanclinic/Presentation/screens/reservations/list/managers/notification_service.dart';
+export 'package:diwanclinic/Presentation/screens/reservations/list/managers/prescription_upload_service.dart';
 export 'package:diwanclinic/Presentation/screens/reservations/patient_reservation_list/reservation_card_widgets/actions/upload_prescription.dart';
 export 'package:diwanclinic/Presentation/screens/close_open_reservations/view/OpenCloseReservation_view_model.dart';
 export 'package:diwanclinic/Presentation/screens/close_open_reservations/view/OpenCloseReservation_card.dart';
@@ -526,3 +526,8 @@ export 'package:diwanclinic/Data/data_source_impl/archive_patient_data_source_re
 export 'package:diwanclinic/Presentation/screens/archive_patients/create_archive/createArchivePatientViewModel.dart';
 export 'package:diwanclinic/Presentation/parentControllers/archive_form_service.dart';
 export 'package:diwanclinic/Presentation/parentControllers/archive_patient_service.dart';
+export 'package:diwanclinic/Presentation/screens/reservations/list/view_model/managers/reservation_filter_manager.dart';
+export 'package:diwanclinic/Presentation/screens/reservations/list/view_model/managers/reservation_queue_manager.dart';
+export 'package:diwanclinic/Presentation/screens/reservations/list/view_model/managers/reservation_action_manager_write.dart';
+export 'package:diwanclinic/Presentation/screens/reservations/list/view_model/managers/reservation_query_manager_read.dart';
+export 'package:diwanclinic/Presentation/screens/reservations/list/managers/reservation_notification_manager.dart';

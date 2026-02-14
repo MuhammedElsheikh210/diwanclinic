@@ -1,3 +1,4 @@
+import 'package:diwanclinic/Presentation/screens/reservations/list/view/widgets/order_confirmation_sheet_launcher.dart';
 import 'package:diwanclinic/Presentation/screens/reservations/list/widgets/reservation_details%20/reservation_details_view.dart';
 import '../../../../../index/index_main.dart';
 
@@ -16,7 +17,10 @@ class ReservationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final status = ReservationStatusNewExt.fromValue(reservation.status ?? "");
-    final ahead = controller.aheadInQueue(reservation);
+    final ahead = controller.queueManager.aheadInQueue(
+      reservations: controller.listReservations,
+      target: reservation,
+    );
     final transferImage = reservation.transfer_image;
     final bool isCompletedOrCancelled =
         reservation.status == ReservationNewStatus.completed.value ||
@@ -170,7 +174,7 @@ class ReservationCard extends StatelessWidget {
                                       controller.listReservations ?? [],
 
                                   dailly_date:
-                                      controller.appointment_date_time ?? "",
+                                      controller.appointmentDate ?? "",
 
                                   clinic_key: controller.selectedClinic?.key,
                                   shift_key: controller.selectedShift?.key,
@@ -463,10 +467,12 @@ class ReservationCard extends StatelessWidget {
       return;
     }
 
-    controller.openOrderConfirmationSheet(
-      context: Get.context!,
-      reservation: reservation,
+    openOrderConfirmationSheet(
+      Get.context!,
+      controller,
+      reservation,
     );
+
   }
 
   void _showUploadRequiredSheet(
@@ -581,7 +587,7 @@ class ReservationCard extends StatelessWidget {
     reservation.status = newStatus.value;
     controller.fromUpdate = true;
 
-    await controller.updateReservation(reservation);
+    await controller.actionManager.updateReservation(reservation,isSyncing: true);
     await controller.getReservations();
     controller.update();
 
@@ -622,10 +628,10 @@ class ReservationCard extends StatelessWidget {
           newStatus: newStatus,
         );
 
-        // 🔥 Update queue
-        await controller.notifyApprovedQueueUpdate(
-          completedReservation: reservation,
+        await controller.queueManager.notifyApprovedQueueUpdate(
+          allReservations: controller.completeDayReservations,
         );
+
         break;
 
       // ---------------------------

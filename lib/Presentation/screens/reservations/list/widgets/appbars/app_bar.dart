@@ -52,11 +52,11 @@ class ReservationDateAppBar extends StatelessWidget
                   onDateSelected: (timestamp, formattedDate) {
                     final d = timestamp.toDate();
                     controller.create_at = d.millisecondsSinceEpoch;
-                    controller.appointment_date_time = DateFormat(
+                    controller.appointmentDate = DateFormat(
                       'dd/MM/yyyy',
                     ).format(d);
 
-                    controller.getReservations(is_filter: true);
+                    controller.getReservations(isFilter: true);
                     controller.update();
                   },
                 ),

@@ -104,7 +104,7 @@ class _ReservationViewState extends State<ReservationView> {
                 Get.to(
                   () => CreateReservationView(
                     list_reservations: controller.listReservations ?? [],
-                    dailly_date: controller.appointment_date_time ?? "",
+                    dailly_date: controller.appointmentDate ?? "",
                     clinic_key: controller.selectedClinic?.key,
                     shift_key: controller.selectedShift?.key,
                     selected_clinic: controller.selectedClinic ?? ClinicModel(),
@@ -137,7 +137,7 @@ class _ReservationViewState extends State<ReservationView> {
             isSelected: controller.selectedTab == 0,
             onTap: () {
               controller.selectedTab = 0;
-              controller.getReservations(is_filter: false);
+              controller.getReservations(isFilter: false);
               controller.update();
               setState(() {});
             },
@@ -147,67 +147,13 @@ class _ReservationViewState extends State<ReservationView> {
             isSelected: controller.selectedTab == 1,
             onTap: () {
               controller.selectedTab = 1;
-              controller.getReservations(is_filter: false);
+              controller.getReservations(isFilter: false);
               controller.update();
               setState(() {});
             },
           ),
         ],
       ),
-    );
-  }
-
-  // ---------------------------------------------------------------
-  // GRID VIEW
-  // ---------------------------------------------------------------
-  Widget _buildReservationGrid(
-    List<ReservationModel?>? reservations,
-    ReservationViewModel controller,
-    BuildContext context,
-  ) {
-    if (reservations?.isEmpty ?? true) {
-      return const Padding(
-        padding: EdgeInsets.only(top: 100),
-        child: Center(child: NoDataWidget(title: "لا يوجد حجوزات")),
-      );
-    }
-
-    return GridView.builder(
-      padding: const EdgeInsets.only(top: 15),
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-
-      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 200.h,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 1.2 / 0.5,
-      ),
-
-      itemCount: reservations!.length,
-      itemBuilder: (_, index) {
-        final reservation = reservations[index];
-
-        return InkWell(
-          borderRadius: BorderRadius.circular(12),
-
-          onTap: () {
-            if (LocalUser().getUserData().userType?.name != Strings.assistant) {
-              Get.to(
-                () => PatientForAssistantProfileView(
-                  reservationModel: reservation ?? ReservationModel(),
-                ),
-                binding: Binding(),
-              );
-            }
-          },
-
-          child: GridReservationCard(
-            reservation: reservation ?? ReservationModel(),
-            controller: controller,
-          ),
-        );
-      },
     );
   }
 
@@ -230,7 +176,10 @@ class _ReservationViewState extends State<ReservationView> {
         final status = ReservationStatusNewExt.fromValue(
           reservation.status ?? "",
         );
-        final ahead = controller.aheadInQueue(reservation);
+        final ahead = controller.queueManager.aheadInQueue(
+          reservations: controller.listReservations,
+          target: reservation,
+        );
 
         final bool isCompletedOrCancelled =
             reservation.status == ReservationNewStatus.completed.value ||
@@ -443,9 +392,19 @@ class _ReservationViewState extends State<ReservationView> {
     reservation.status = newStatus.value;
     controller.fromUpdate = true;
 
-    await controller.updateReservation(reservation);
+    await controller.actionManager.updateReservation(
+      reservation,
+      isSyncing: controller.isSyncing,
+    );
     await controller.getReservations();
+
+    await controller.queueManager.notifyApprovedQueueUpdate(
+      allReservations: controller.completeDayReservations,
+    );
+
     controller.update();
+
+
 
     // ===============================
     // 2️⃣ Side effects
@@ -478,9 +437,10 @@ class _ReservationViewState extends State<ReservationView> {
           newStatus: newStatus,
         );
 
-        await controller.notifyApprovedQueueUpdate(
-          completedReservation: reservation,
+        await controller.queueManager.notifyApprovedQueueUpdate(
+          allReservations: controller.completeDayReservations,
         );
+
         break;
 
       case ReservationStatus.cancelledByAssistant:
