@@ -90,7 +90,7 @@ class ReservationViewModel extends GetxController {
   }
 
   // Fetch reservations
-  Future<void> getReservations({bool? isFilter}) async {
+  Future<void> getReservations({bool? isFilter, bool? fromOnline}) async {
     if (appointmentDate == null) return;
 
     final daily = await queryManager.fetchAllReservationsOfDay(
@@ -110,9 +110,11 @@ class ReservationViewModel extends GetxController {
     final filtered = await queryManager.getReservations(
       appointmentDate: appointmentDate,
       query: query,
+      fromOnline: fromOnline,
     );
 
     listReservations = queueManager.buildFinalList(filtered);
+    print("listReservations after update ");
 
     await loadDailyReport();
 
@@ -185,14 +187,23 @@ class ReservationViewModel extends GetxController {
     );
   }
 
-  // Start realtime sync
-  void getSyncReservations() {
+  void getSyncReservations({bool? initLocalData}) {
     syncService.listen(
       selectedClinic: selectedClinic,
       appointmentDate: appointmentDate,
+      onAddLocal: (model) async {
+        initLocalData = null;
+        await actionManager.addReservation(model, localOnly: true);
+      },
+      onUpdatedLocal: (model) async {
+        initLocalData = null;
+        await actionManager.updateReservation(model, isSyncing: true);
+      },
       onReloadLocal: () {
-        if (_isInitialLoad || isSyncing) return;
-        getReservations();
+        print("initLocalData is ${initLocalData}");
+        if (initLocalData == null) {
+          getReservations(fromOnline: false,isFilter: false);
+        }
       },
     );
   }

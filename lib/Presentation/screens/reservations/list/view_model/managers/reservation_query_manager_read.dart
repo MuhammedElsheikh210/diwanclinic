@@ -5,6 +5,7 @@ class ReservationQueryManager {
   Future<List<ReservationModel>> getReservations({
     required String? appointmentDate,
     required SQLiteQueryParams query,
+    bool? fromOnline,
   }) async {
     if (appointmentDate == null) return [];
 
@@ -14,6 +15,7 @@ class ReservationQueryManager {
       date: appointmentDate,
       data: FirebaseFilter(),
       query: query,
+      fromOnline: fromOnline,
       voidCallBack: (list) {
         result = list.whereType<ReservationModel>().toList();
       },
