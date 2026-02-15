@@ -610,37 +610,61 @@ class CreateReservationViewModel extends GetxController {
     final int lastAdd = currentStatus?.lastAddDataTimestamp ?? 0;
     final int lastSync = currentStatus?.lastUpdateTimestamp ?? 0;
 
-    // 2️⃣ 🔥 القرار الحقيقي
+    debugPrint("📊 lastAdd: $lastAdd");
+    debugPrint("📊 lastSync: $lastSync");
+
+    // 🟢 CASE 1: No sync record at all (first app open)
+    if (currentStatus == null || (lastAdd == 0 && lastSync == 0)) {
+      debugPrint("🚀 First time sync — running FULL clients sync");
+      await _runFullClientsSync(authService, syncKey);
+      return;
+    }
+
+    // 🟡 CASE 2: Already synced
     if (lastAdd == lastSync) {
       debugPrint("ℹ️ Clients already synced — skip");
       return;
     }
 
+    // 🔴 CASE 3: Out of sync
     debugPrint("🔄 Clients out of sync — running FULL clients sync");
+    await _runFullClientsSync(authService, syncKey);
+  }
 
-    // 3️⃣ FULL CLIENTS SYNC
-    await authService.getClientsData(
-      isFiltered: false,
-      query: SQLiteQueryParams(is_filtered: false),
-      voidCallBack: (List<LocalUser?> clients) async {
-        debugPrint("✅ Synced ${clients.length} clients locally");
-      },
-    );
+  Future<void> _runFullClientsSync(
+    AuthenticationService authService,
+    String syncKey,
+  ) async {
+    Loader.show();
 
-    // 4️⃣ Update sync status (align timestamps)
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final updated = SyncStatusModel(
-      key: syncKey,
-      lastAddDataTimestamp: lastAdd, // 👈 نخليها زي ما هي
-      lastUpdateTimestamp: now, // 👈 نعلن إننا synced
-    );
+    try {
+      // 1️⃣ Download all clients
+      await authService.getClientsData(
+        isFiltered: false,
+        query: SQLiteQueryParams(is_filtered: false),
+        voidCallBack: (List<LocalUser?> clients) async {
+          debugPrint("✅ Synced ${clients.length} clients locally");
+        },
+      );
 
-    await authService.updateSyncStatus(
-      model: updated,
-      voidCallBack: (_) {
-        debugPrint("✅ Sync status aligned");
-      },
-    );
+      final now = DateTime.now().millisecondsSinceEpoch;
+
+      // 2️⃣ Align timestamps properly
+      await authService.updateSyncStatus(
+        model: SyncStatusModel(
+          key: syncKey,
+          lastAddDataTimestamp: now,
+          lastUpdateTimestamp: now,
+        ),
+        voidCallBack: (_) {
+          debugPrint("✅ Sync status aligned");
+        },
+      );
+    } catch (e) {
+      debugPrint("❌ Sync error: $e");
+    } finally {
+      Loader.dismiss();
+    }
   }
 
   void updateReservation(

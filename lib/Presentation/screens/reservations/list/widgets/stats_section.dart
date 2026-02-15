@@ -7,22 +7,6 @@ class StatsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final all = controller.completeDayReservations;
-
-    final completed = all
-        .where((r) => r.status == ReservationStatus.completed.value)
-        .length;
-
-    final pending = all
-        .where(
-          (r) =>
-              r.status == ReservationStatus.approved.value ||
-              r.status == ReservationStatus.inProgress.value,
-        )
-        .length;
-
-    final total = completed + pending;
-
     return Container(
       height: 56.h,
       padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -33,24 +17,18 @@ class StatsSection extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Title
           _MiniStat(
             label: "المكتملة",
-            value: completed,
+            value: controller.completedCount,
             color: AppColors.successForeground,
           ),
-
           const Spacer(),
-
           _MiniStat(
             label: "المنتظرة",
-            value: pending,
+            value: controller.waitingCount,
             color: AppColors.tag_icon_warning,
           ),
-
           const Spacer(),
-
-          // Total
           Text(
             "الإجمالي",
             style: context.typography.mdBold.copyWith(
@@ -59,8 +37,9 @@ class StatsSection extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            total.toString(),
-            style: context.typography.lgBold.copyWith(color: AppColors.primary),
+            controller.totalCount.toString(),
+            style:
+            context.typography.lgBold.copyWith(color: AppColors.primary),
           ),
         ],
       ),

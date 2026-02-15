@@ -1,4 +1,3 @@
-import 'package:diwanclinic/Presentation/screens/reservations/list/view/widgets/order_confirmation_sheet_launcher.dart';
 
 import '../../../../../../index/index_main.dart';
 
@@ -787,7 +786,7 @@ class ReservationAssistantDetailsView extends StatelessWidget {
 
     await controller.actionManager.updateReservation(
       reservation,
-      isSyncing: true,
+      isSyncing: false,
     );
     await controller.getReservations();
     controller.update();
@@ -829,10 +828,13 @@ class ReservationAssistantDetailsView extends StatelessWidget {
           newStatus: newStatus,
         );
 
-        // 🔥 Update queue
         await controller.queueManager.notifyApprovedQueueUpdate(
-          allReservations: controller.completeDayReservations,
+          allReservations: controller.listReservations
+              ?.whereType<ReservationModel>()
+              .toList() ??
+              [],
         );
+
 
         break;
 

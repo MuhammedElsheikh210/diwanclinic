@@ -1,7 +1,6 @@
 import '../../../../../../index/index_main.dart';
 
 class ReservationQueryManager {
-
   // Generic fetch using ready SQLiteQueryParams
   Future<List<ReservationModel>> getReservations({
     required String? appointmentDate,
@@ -61,9 +60,7 @@ class ReservationQueryManager {
   }
 
   // Get total reservations count for a specific date
-  Future<int> getTotalByDate({
-    required String? appointmentDate,
-  }) async {
+  Future<int> getTotalByDate({required String? appointmentDate}) async {
     if (appointmentDate == null) return 0;
 
     int count = 0;
@@ -89,24 +86,20 @@ class ReservationQueryManager {
     required String? appointmentDate,
   }) async {
     if (appointmentDate == null) return [];
-
     return await getReservations(
       appointmentDate: appointmentDate,
       query: SQLiteQueryParams(
         is_filtered: true,
         where: "appointment_date_time = ? AND status = ?",
-        whereArgs: [
-          appointmentDate,
-          ReservationStatus.completed.value,
-        ],
+        whereArgs: [appointmentDate, ReservationStatus.completed.value],
       ),
     );
   }
 
   // Get last completed reservation for a patient
   Future<ReservationModel?> getLastCompletedForPatient(
-      String patientKey,
-      ) async {
+    String patientKey,
+  ) async {
     ReservationModel? result;
 
     await ReservationService().getReservationsData(
@@ -114,10 +107,7 @@ class ReservationQueryManager {
       query: SQLiteQueryParams(
         is_filtered: false,
         where: "patient_key = ? AND status = ?",
-        whereArgs: [
-          patientKey,
-          ReservationStatus.completed.value,
-        ],
+        whereArgs: [patientKey, ReservationStatus.completed.value],
         orderBy: "create_at DESC",
         limit: 1,
       ),

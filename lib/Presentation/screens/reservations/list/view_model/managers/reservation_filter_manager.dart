@@ -1,52 +1,42 @@
 import '../../../../../../index/index_main.dart';
 
 class ReservationFilterManager {
-
-  // Build SQLite query filters based on clinic, date, and selected tab
   SQLiteQueryParams buildFilters({
     required ClinicModel? selectedClinic,
     required String? appointmentDate,
     required int selectedTab,
     bool isFiltered = true,
   }) {
-    String where = "";
-    List<Object?> whereArgs = [];
+    final conditions = <String>[];
+    final whereArgs = <Object?>[];
 
+    // Clinic filter
     if (selectedClinic?.key != null) {
-      where = "clinic_key = ?";
+      conditions.add("clinic_key = ?");
       whereArgs.add(selectedClinic!.key);
     }
 
+    // Date filter
     if (appointmentDate != null) {
-      if (where.isEmpty) {
-        where = "appointment_date_time = ?";
-      } else {
-        where += " AND appointment_date_time = ?";
-      }
+      conditions.add("appointment_date_time = ?");
       whereArgs.add(appointmentDate);
     }
 
+    // Tab filter
     if (selectedTab == 1) {
-      if (where.isEmpty) {
-        where = "reservation_type = ?";
-      } else {
-        where += " AND reservation_type = ?";
-      }
+      // مستعجل فقط
+      conditions.add("reservation_type = ?");
+      whereArgs.add("كشف مستعجل");
+    } else if (selectedTab == 0) {
+      // كل شيء ما عدا المستعجل
+      conditions.add("reservation_type != ?");
       whereArgs.add("كشف مستعجل");
     }
 
-    if (selectedTab == 0) {
-      if (where.isEmpty) {
-        where = "reservation_type != ?";
-      } else {
-        where += " AND reservation_type != ?";
-      }
-      whereArgs.add("كشف مستعجل");
-    }
-
+    final where = conditions.isNotEmpty ? conditions.join(" AND ") : null;
     return SQLiteQueryParams(
       is_filtered: isFiltered,
-      where: where.isNotEmpty ? where : null,
+      where: where,
       whereArgs: whereArgs.isNotEmpty ? whereArgs : null,
       orderBy: """
         CASE status 

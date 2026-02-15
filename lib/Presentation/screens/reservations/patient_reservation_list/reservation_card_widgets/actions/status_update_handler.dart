@@ -105,6 +105,7 @@ class NotificationHandler {
     required ReservationStatus newStatus,
     required ReservationModel reservation,
     required String toToken,
+     String? cancelReason,
   }) async {
     final userKey = reservation.patientUid;
     if (toToken.isEmpty || userKey == null) return;
@@ -126,7 +127,7 @@ class NotificationHandler {
         return notificationService.sendToToken(
           token: toToken,
           title: titleBody.$1,
-          body: titleBody.$2,
+          body:cancelReason ?? titleBody.$2,
           voidCallBack: callback,
         );
       },

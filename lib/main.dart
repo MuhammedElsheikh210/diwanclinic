@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'index/index_main.dart';
 
 void main() {

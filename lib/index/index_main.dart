@@ -289,7 +289,7 @@ export 'package:diwanclinic/Presentation/parentControllers/reservation_service.d
 export 'package:diwanclinic/Presentation/screens/reservations/create_update/create_reservation_view.dart';
 export 'package:diwanclinic/Presentation/screens/reservations/create_update/create_reservation_view_model.dart';
 export 'package:diwanclinic/Presentation/screens/reservations/list/view_model/reservation_view_model.dart';
-export 'package:diwanclinic/Presentation/screens/reservations/list/widgets/reservation_card.dart';
+export 'package:diwanclinic/Presentation/screens/reservations/list/view/reservation_card/reservation_card.dart';
 export 'package:diwanclinic/Presentation/screens/reservations/list/view/reservation_view.dart';
 export 'package:diwanclinic/Data/Models/shift_clinic_model.dart';
 export 'package:diwanclinic/Data/data_source/shift_data_source.dart';
@@ -531,3 +531,5 @@ export 'package:diwanclinic/Presentation/screens/reservations/list/view_model/ma
 export 'package:diwanclinic/Presentation/screens/reservations/list/view_model/managers/reservation_action_manager_write.dart';
 export 'package:diwanclinic/Presentation/screens/reservations/list/view_model/managers/reservation_query_manager_read.dart';
 export 'package:diwanclinic/Presentation/screens/reservations/list/managers/reservation_notification_manager.dart';
+export 'package:diwanclinic/Presentation/screens/reservations/list/view/reservation_card/order_confirmation_sheet_launcher.dart';
+export 'package:diwanclinic/Presentation/screens/reservations/reservation_details%20/reservation_details_view.dart';

@@ -399,12 +399,12 @@ class _ReservationViewState extends State<ReservationView> {
     await controller.getReservations();
 
     await controller.queueManager.notifyApprovedQueueUpdate(
-      allReservations: controller.completeDayReservations,
+      allReservations:
+          controller.listReservations?.whereType<ReservationModel>().toList() ??
+          [],
     );
 
     controller.update();
-
-
 
     // ===============================
     // 2️⃣ Side effects
@@ -438,7 +438,11 @@ class _ReservationViewState extends State<ReservationView> {
         );
 
         await controller.queueManager.notifyApprovedQueueUpdate(
-          allReservations: controller.completeDayReservations,
+          allReservations:
+              controller.listReservations
+                  ?.whereType<ReservationModel>()
+                  .toList() ??
+              [],
         );
 
         break;

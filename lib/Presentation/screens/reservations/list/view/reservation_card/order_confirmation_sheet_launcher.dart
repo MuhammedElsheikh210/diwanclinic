@@ -36,7 +36,7 @@ Future<void> openOrderConfirmationSheet(
       onConfirmed: (updatedReservation) {
         controller.actionManager.updateReservation(
           reservation,
-          isSyncing: true,
+          isSyncing: false,
         );
       },
     ),

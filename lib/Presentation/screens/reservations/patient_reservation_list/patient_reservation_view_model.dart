@@ -284,14 +284,7 @@ class ReservationPatientViewModel extends GetxController {
     syncService.listen(
       selectedClinic: selectedClinic,
       appointmentDate: appointment_date_time,
-      onAddLocal: (model) async {
-        initLocalData = null;
-        getReservations();
-      },
-      onUpdatedLocal: (model) async {
-        initLocalData = null;
-        await updateReservation(model, localOnly: true);
-      },
+
       onReloadLocal: () {
         if (initLocalData == null) {
           getReservations();

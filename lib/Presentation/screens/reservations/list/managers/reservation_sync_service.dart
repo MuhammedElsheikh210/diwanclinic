@@ -7,9 +7,7 @@ class ReservationSyncService {
   StreamSubscription<DatabaseEvent>? _subscription;
   final ReservationViewModel? controller;
 
-  ReservationSyncService({ this.controller});
-
-
+  ReservationSyncService({this.controller});
 
   void listen({
     required ClinicModel? selectedClinic,
@@ -65,7 +63,6 @@ class ReservationSyncService {
 
       onReloadLocal();
     });
-
   }
 
   void dispose() {

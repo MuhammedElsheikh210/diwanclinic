@@ -1,10 +1,13 @@
 import 'package:diwanclinic/index/index_main.dart';
 
+
 class ReservationReportWidget extends StatelessWidget {
   final ReservationViewModel controller;
 
-  const ReservationReportWidget({Key? key, required this.controller})
-    : super(key: key);
+  const ReservationReportWidget({
+    Key? key,
+    required this.controller,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -25,24 +28,17 @@ class ReservationReportWidget extends StatelessWidget {
               border: Border.all(color: AppColors.borderNeutralPrimary),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Title
-                Text("كشف حساب اليوم", style: context.typography.mdBold),
-
+                Text("كشف حساب اليوم",
+                    style: context.typography.mdBold),
                 const Spacer(),
-
-                // Optional: quick hint
                 Text(
                   "عرض التفاصيل",
                   style: context.typography.smMedium.copyWith(
                     color: AppColors.textSecondaryParagraph,
                   ),
                 ),
-
                 const SizedBox(width: 6),
-
                 AnimatedRotation(
                   turns: controller.showDailyReport ? 0.5 : 0,
                   duration: const Duration(milliseconds: 200),
@@ -59,49 +55,7 @@ class ReservationReportWidget extends StatelessWidget {
 
         AnimatedCrossFade(
           firstChild: const SizedBox.shrink(),
-          secondChild: FutureBuilder<List<ReservationModel>>(
-            future: controller.queryManager.getCompletedReservationsForReport(
-              appointmentDate: controller.appointmentDate,
-            ),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) return const SizedBox();
-              final reservations = snapshot.data!;
-
-              final newCheckups = reservations.where((r) {
-                final type = (r.reservationType ?? "").trim();
-                return type == "كشف جديد";
-              }).toList();
-
-              final urgentCheckups = reservations.where((r) {
-                final type = (r.reservationType ?? "").trim();
-                final status = r.status;
-
-                return type == "كشف مستعجل" &&
-                    status == ReservationStatus.completed.name;
-              }).toList();
-
-              final reCheckups = reservations.where((r) {
-                final type = (r.reservationType ?? "").trim();
-                return type == "إعادة" || type == "متابعة";
-              }).toList();
-
-              // Totals
-              double newTotal = _sum(newCheckups);
-              double reTotal = _sum(reCheckups);
-              double urgentTotal = _sum(urgentCheckups);
-              double dayTotal = newTotal + reTotal + urgentTotal;
-
-              return _ReportContent(
-                newCount: newCheckups.length,
-                reCount: reCheckups.length,
-                urgentCount: urgentCheckups.length,
-                newTotal: newTotal,
-                reTotal: reTotal,
-                urgentTotal: urgentTotal,
-                dayTotal: dayTotal,
-              );
-            },
-          ),
+          secondChild: _buildReportContent(context),
           crossFadeState: controller.showDailyReport
               ? CrossFadeState.showSecond
               : CrossFadeState.showFirst,
@@ -111,17 +65,53 @@ class ReservationReportWidget extends StatelessWidget {
     );
   }
 
+  Widget _buildReportContent(BuildContext context) {
+    final reservations = controller.completedForReport;
+
+    if (reservations.isEmpty) {
+      return const SizedBox();
+    }
+
+    final newCheckups = reservations.where((r) {
+      final type = (r.reservationType ?? "").trim();
+      return type == "كشف جديد";
+    }).toList();
+
+    final urgentCheckups = reservations.where((r) {
+      final type = (r.reservationType ?? "").trim();
+      return type == "كشف مستعجل";
+    }).toList();
+
+    final reCheckups = reservations.where((r) {
+      final type = (r.reservationType ?? "").trim();
+      return type == "إعادة" || type == "متابعة";
+    }).toList();
+
+    final newTotal = _sum(newCheckups);
+    final reTotal = _sum(reCheckups);
+    final urgentTotal = _sum(urgentCheckups);
+    final dayTotal = newTotal + reTotal + urgentTotal;
+
+    return _ReportContent(
+      newCount: newCheckups.length,
+      reCount: reCheckups.length,
+      urgentCount: urgentCheckups.length,
+      newTotal: newTotal,
+      reTotal: reTotal,
+      urgentTotal: urgentTotal,
+      dayTotal: dayTotal,
+    );
+  }
+
   double _sum(List<ReservationModel> list) {
     return list.fold(
       0,
-      (sum, r) => sum + (double.tryParse(r.paidAmount ?? "") ?? 0),
+          (sum, r) => sum + (double.tryParse(r.paidAmount ?? "") ?? 0),
     );
   }
 }
 
-// -------------------------------------------------------
-// 🌟 BEAUTIFUL REPORT CONTENT
-// -------------------------------------------------------
+
 class _ReportContent extends StatelessWidget {
   final int newCount;
   final int reCount;
@@ -198,9 +188,6 @@ class _ReportContent extends StatelessWidget {
   }
 }
 
-// -------------------------------------------------------
-// 🌟 BEAUTIFUL ROW
-// -------------------------------------------------------
 class _ReportRow extends StatelessWidget {
   final String title;
   final int count;
