@@ -67,24 +67,37 @@ class ReservationQueueManager {
     return [...pending, ...inProgress, ...queue, ...completed, ...cancelled];
   }
 
-  // Notify approved patients about updated queue positions
   Future<void> notifyApprovedQueueUpdate({
     required List<ReservationModel> allReservations,
   }) async {
+    debugPrint("🔔 Starting notifyApprovedQueueUpdate...");
+    debugPrint("📊 Total reservations: ${allReservations.length}");
+
     final approvedQueue = allReservations
         .where((r) => r.status == ReservationStatus.approved.value)
         .toList();
 
-
+    debugPrint("✅ Approved reservations count: ${approvedQueue.length}");
 
     approvedQueue.sort(
       (a, b) => (a.order_num ?? 9999).compareTo(b.order_num ?? 9999),
     );
 
+    debugPrint("🔢 Queue sorted by order_num");
+
     for (int i = 0; i < approvedQueue.length; i++) {
       final r = approvedQueue[i];
 
-      if (r.patientUid == null || r.fcmToken_patient == null) continue;
+      debugPrint(
+        "➡️ Processing reservation index: $i | "
+        "order_num: ${r.order_num} | "
+        "patientUid: ${r.patientUid}",
+      );
+
+      if (r.patientUid == null || r.fcmToken_patient == null) {
+        debugPrint("⛔ Skipped - Missing UID or FCM token");
+        continue;
+      }
 
       final ahead = i;
 
@@ -92,14 +105,24 @@ class ReservationQueueManager {
           ? "دورك الآن ✨ تفضل بالاستعداد للدخول"
           : "قبلك $ahead حالات، نرجو الاستعداد";
 
-      await NotificationHandler().sendCustomNotification(
-        toKey: r.patientUid!,
-        toToken: r.fcmToken_patient!,
-        title: "تحديث الدور",
-        body: body,
-        reservation: r,
-        notificationType: "queue_update",
-      );
+      try {
+        await NotificationHandler().sendCustomNotification(
+          toKey: r.patientUid!,
+          toToken: r.fcmToken_patient!,
+          title: "تحديث الدور",
+          body: body,
+          reservation: r,
+          notificationType: "queue_update",
+        );
+
+        debugPrint("📨 Notification sent successfully to ${r.patientUid}");
+      } catch (e, stackTrace) {
+        debugPrint("❌ Error sending notification to ${r.patientUid}");
+        debugPrint("Error: $e");
+        debugPrint("StackTrace: $stackTrace");
+      }
     }
+
+    debugPrint("🏁 Finished notifyApprovedQueueUpdate");
   }
 }

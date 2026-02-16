@@ -638,6 +638,7 @@ class ReservationCard extends StatelessWidget {
             status: status,
             ahead: ahead,
             isCompletedOrCancelled: isCompletedOrCancelled,
+
           ),
           ReservationCardBody(reservation: reservation),
           Padding(

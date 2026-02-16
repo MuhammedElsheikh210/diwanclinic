@@ -249,7 +249,7 @@ class ReservationViewModel extends GetxController {
       debugPrint("[$tag] 🔁 Reservations reloaded");
 
       // 4️⃣ Run side effects in background (no await)
-         _runSideEffectsInBackground(reservation, newStatus, cancelReason);
+      _runSideEffectsInBackground(reservation, newStatus, cancelReason);
 
       Loader.showSuccess("تم تحديث الحالة إلى ${newStatus.label}");
     } catch (e, stack) {
