@@ -21,7 +21,6 @@ class ReservationActionManager {
     bool localOnly = false,
   }) async {
     Loader.dismiss();
-    // if (isSyncing && !localOnly) return;
 
     await ReservationService().updateReservationData(
       date: reservation.appointmentDateTime ?? "",
