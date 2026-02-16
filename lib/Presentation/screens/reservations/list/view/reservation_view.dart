@@ -10,11 +10,21 @@ class ReservationView extends StatefulWidget {
 
 class _ReservationViewState extends State<ReservationView> {
   bool isGrid = true;
+  late final ReservationViewModel controller;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    controller = initController(() => ReservationViewModel());
+    controller.appointmentDate = DatesUtilis.todayAsString();
+    controller.getClinicList();
+  }
 
   @override
   Widget build(BuildContext context) {
     return GetBuilder<ReservationViewModel>(
-      init: ReservationViewModel(),
+      init: controller,
       builder: (controller) {
         final reservations = controller.listReservations;
 
@@ -298,8 +308,7 @@ class _ReservationViewState extends State<ReservationView> {
                       if (status == ReservationNewStatus.pending) ...[
                         GestureDetector(
                           onTap: () async {
-                            await _updateStatusNotebook(
-                              controller: controller,
+                            await controller.changeReservationStatus(
                               reservation: reservation,
                               newStatus: ReservationStatus.approved,
                             );
@@ -317,8 +326,7 @@ class _ReservationViewState extends State<ReservationView> {
                         const SizedBox(width: 6),
                         GestureDetector(
                           onTap: () async {
-                            await _updateStatusNotebook(
-                              controller: controller,
+                            await controller.changeReservationStatus(
                               reservation: reservation,
                               newStatus: ReservationStatus.inProgress,
                             );
@@ -336,8 +344,7 @@ class _ReservationViewState extends State<ReservationView> {
                         const SizedBox(width: 6),
                         GestureDetector(
                           onTap: () async {
-                            await _updateStatusNotebook(
-                              controller: controller,
+                            await controller.changeReservationStatus(
                               reservation: reservation,
                               newStatus: ReservationStatus.completed,
                             );
@@ -377,91 +384,6 @@ class _ReservationViewState extends State<ReservationView> {
         style: context.typography.mdMedium.copyWith(color: color),
       ),
     );
-  }
-
-  Future<void> _updateStatusNotebook({
-    required ReservationViewModel controller,
-    required ReservationModel reservation,
-    required ReservationStatus newStatus,
-  }) async {
-    Loader.show();
-
-    // ===============================
-    // 1️⃣ Update status
-    // ===============================
-    reservation.status = newStatus.value;
-    controller.fromUpdate = true;
-
-    await controller.actionManager.updateReservation(
-      reservation,
-      isSyncing: controller.isSyncing,
-    );
-    await controller.getReservations();
-
-    await controller.queueManager.notifyApprovedQueueUpdate(
-      allReservations:
-          controller.listReservations?.whereType<ReservationModel>().toList() ??
-          [],
-    );
-
-    controller.update();
-
-    // ===============================
-    // 2️⃣ Side effects
-    // ===============================
-    switch (newStatus) {
-      case ReservationStatus.approved:
-        await NotificationHandler().sendStatusNotification(
-          newStatus: ReservationStatus.approved,
-          reservation: reservation,
-          toToken: reservation.fcmToken_patient ?? "",
-        );
-
-        await WhatsAppStatusMessageService.sendStatusWhatsAppMessage(
-          reservation: reservation,
-          clinic: controller.selectedClinic,
-          newStatus: newStatus,
-        );
-        break;
-
-      case ReservationStatus.completed:
-        await NotificationHandler().sendStatusNotification(
-          newStatus: ReservationStatus.completed,
-          reservation: reservation,
-          toToken: reservation.fcmToken_patient ?? "",
-        );
-
-        await WhatsAppStatusMessageService.sendStatusWhatsAppMessage(
-          reservation: reservation,
-          clinic: controller.selectedClinic,
-          newStatus: newStatus,
-        );
-
-        await controller.queueManager.notifyApprovedQueueUpdate(
-          allReservations:
-              controller.listReservations
-                  ?.whereType<ReservationModel>()
-                  .toList() ??
-              [],
-        );
-
-        break;
-
-      case ReservationStatus.cancelledByAssistant:
-      case ReservationStatus.cancelledByDoctor:
-      case ReservationStatus.cancelledByUser:
-        await NotificationHandler().sendStatusNotification(
-          newStatus: newStatus,
-          reservation: reservation,
-          toToken: reservation.fcmToken_patient ?? "",
-        );
-        break;
-
-      default:
-        break;
-    }
-
-    Loader.showSuccess("تم تحديث الحالة");
   }
 
   // ---------------------------------------------------------------

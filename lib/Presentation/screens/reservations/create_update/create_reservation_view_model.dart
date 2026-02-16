@@ -585,7 +585,8 @@ class CreateReservationViewModel extends GetxController {
           from_assist: true,
           newStatus: ReservationStatus.approved,
         );
-        refreshListView();
+        //  refreshListView();
+        Get.back();
         Loader.showSuccess("تم إضافة الحجز بنجاح");
       },
     );
@@ -687,19 +688,20 @@ class CreateReservationViewModel extends GetxController {
       key: reservation.patientUid ?? "",
       data: reservation,
       voidCallBack: (_) async {
-        refreshListView();
+        //   refreshListView();
+        Get.back();
         Loader.showSuccess("تم تحديث الحجز بنجاح");
       },
     );
   }
 
-  void refreshListView() {
-    final reservationVM = initController(() => ReservationViewModel());
-    reservationVM.fromUpdate = null;
-    reservationVM.getReservations();
-    reservationVM.update();
-    Get.back();
-  }
+  // void refreshListView() {
+  //   final reservationVM = initController(() => ReservationViewModel());
+  //   reservationVM.fromUpdate = null;
+  //   reservationVM.getReservations();
+  //   reservationVM.update();
+  //   Get.back();
+  // }
 
   Future<void> getClinicList(
     ClinicModel? clinicModel,

@@ -71,8 +71,6 @@ class ReservationViewModel extends GetxController {
   Future<void> onInit() async {
     super.onInit();
     _initManagers();
-    appointmentDate = DatesUtilis.todayAsString();
-    await getClinicList();
   }
 
   void _initManagers() {
@@ -90,7 +88,10 @@ class ReservationViewModel extends GetxController {
   }
 
   // Fetch reservations
-  Future<void> getReservations({bool? isFilter, bool? fromOnline}) async {
+  Future<void> getReservations({
+    bool? isFilter = false,
+    bool? fromOnline,
+  }) async {
     if (appointmentDate == null) return;
 
     final daily = await queryManager.fetchAllReservationsOfDay(
@@ -194,8 +195,8 @@ class ReservationViewModel extends GetxController {
       appointmentDate: appointmentDate,
 
       onAddLocal: (model) async {
-        //  initLocalData = null;
-        //  await actionManager.addReservation(model, localOnly: true);
+        initLocalData = null;
+        await actionManager.addReservation(model, localOnly: true);
       },
 
       onUpdatedLocal: (model) async {
@@ -210,6 +211,7 @@ class ReservationViewModel extends GetxController {
 
       onReloadLocal: () {
         // pass true in get clinic to not make call here
+        print("call here");
         if (initLocalData == null) {
           getReservations(isFilter: false);
         }
@@ -247,7 +249,7 @@ class ReservationViewModel extends GetxController {
       debugPrint("[$tag] 🔁 Reservations reloaded");
 
       // 4️⃣ Run side effects in background (no await)
-      //   _runSideEffectsInBackground(reservation, newStatus, cancelReason);
+         _runSideEffectsInBackground(reservation, newStatus, cancelReason);
 
       Loader.showSuccess("تم تحديث الحالة إلى ${newStatus.label}");
     } catch (e, stack) {
