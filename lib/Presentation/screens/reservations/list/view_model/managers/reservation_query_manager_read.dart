@@ -1,10 +1,11 @@
 import '../../../../../../index/index_main.dart';
 
 class ReservationQueryManager {
-  // Generic fetch using ready SQLiteQueryParams
+  /// 🔹 Generic fetch
   Future<List<ReservationModel>> getReservations({
     required String? appointmentDate,
     required SQLiteQueryParams query,
+    bool isFiltered = false,
     bool? fromOnline,
   }) async {
     if (appointmentDate == null) return [];
@@ -24,10 +25,12 @@ class ReservationQueryManager {
     return result;
   }
 
-  // Fetch reservations by date and clinic
+  // ------------------------------------------------------------
   Future<List<ReservationModel>> fetchByDateAndClinic({
     required String? appointmentDate,
     required ClinicModel? selectedClinic,
+    bool isFiltered = false,
+    bool? fromOnline,
   }) async {
     if (appointmentDate == null) return [];
 
@@ -42,27 +45,37 @@ class ReservationQueryManager {
     return await getReservations(
       appointmentDate: appointmentDate,
       query: SQLiteQueryParams(
-        is_filtered: true,
+        is_filtered: isFiltered,
         where: where,
         whereArgs: whereArgs,
         orderBy: "order_num ASC",
       ),
+      isFiltered: isFiltered,
+      fromOnline: fromOnline,
     );
   }
 
-  // Fetch all reservations of the day
+  // ------------------------------------------------------------
   Future<List<ReservationModel>> fetchAllReservationsOfDay({
     required String? appointmentDate,
     required ClinicModel? selectedClinic,
+    bool isFiltered = false,
+    bool? fromOnline,
   }) async {
     return await fetchByDateAndClinic(
       appointmentDate: appointmentDate,
       selectedClinic: selectedClinic,
+      isFiltered: isFiltered,
+      fromOnline: fromOnline,
     );
   }
 
-  // Get total reservations count for a specific date
-  Future<int> getTotalByDate({required String? appointmentDate}) async {
+  // ------------------------------------------------------------
+  Future<int> getTotalByDate({
+    required String? appointmentDate,
+    bool isFiltered = false,
+    bool? fromOnline,
+  }) async {
     if (appointmentDate == null) return 0;
 
     int count = 0;
@@ -71,10 +84,11 @@ class ReservationQueryManager {
       date: appointmentDate,
       data: FirebaseFilter(),
       query: SQLiteQueryParams(
-        is_filtered: true,
+        is_filtered: isFiltered,
         where: "appointment_date_time = ?",
         whereArgs: [appointmentDate],
       ),
+      fromOnline: fromOnline,
       voidCallBack: (list) {
         count = list.length;
       },
@@ -83,36 +97,44 @@ class ReservationQueryManager {
     return count;
   }
 
-  // Get completed reservations for report
+  // ------------------------------------------------------------
   Future<List<ReservationModel>> getCompletedReservationsForReport({
     required String? appointmentDate,
+    bool isFiltered = false,
+    bool? fromOnline,
   }) async {
     if (appointmentDate == null) return [];
+
     return await getReservations(
       appointmentDate: appointmentDate,
       query: SQLiteQueryParams(
-        is_filtered: true,
+        is_filtered: isFiltered,
         where: "appointment_date_time = ? AND status = ?",
         whereArgs: [appointmentDate, ReservationStatus.completed.value],
       ),
+      isFiltered: isFiltered,
+      fromOnline: fromOnline,
     );
   }
 
-  // Get last completed reservation for a patient
+  // ------------------------------------------------------------
   Future<ReservationModel?> getLastCompletedForPatient(
-    String patientKey,
-  ) async {
+    String patientKey, {
+    bool isFiltered = false,
+    bool? fromOnline,
+  }) async {
     ReservationModel? result;
 
     await ReservationService().getReservationsData(
       data: FirebaseFilter(),
       query: SQLiteQueryParams(
-        is_filtered: false,
+        is_filtered: isFiltered,
         where: "patient_key = ? AND status = ?",
         whereArgs: [patientKey, ReservationStatus.completed.value],
         orderBy: "create_at DESC",
         limit: 1,
       ),
+      fromOnline: fromOnline,
       voidCallBack: (list) {
         if (list.isNotEmpty) {
           result = list.first as ReservationModel;
@@ -123,7 +145,7 @@ class ReservationQueryManager {
     return result;
   }
 
-  // Get patient by key
+  // ------------------------------------------------------------
   Future<LocalUser?> getPatientByKey(String patientKey) async {
     LocalUser? result;
 

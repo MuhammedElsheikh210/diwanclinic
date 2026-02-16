@@ -378,6 +378,7 @@ class CreateReservationViewModel extends GetxController {
       key: const Uuid().v4(),
       doctorKey: LocalUser().getUserData().doctorKey,
       doctorName: LocalUser().getUserData().doctorName,
+      fcmToken_patient: clientUser?.fcmToken,
       patientKey: clientUser?.key,
       patientUid: clientUser?.uid,
       patientName: selectedType == "زيارة مندوب"

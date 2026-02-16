@@ -20,7 +20,6 @@ class NotificationCleanupService {
               NotificationController controller = initController(
                 () => NotificationController(),
               );
-              //  controller.getNotifications();
               controller.update();
             },
           );

@@ -9,7 +9,9 @@ class ReservationActionManager {
       date: reservation.appointmentDateTime ?? "",
       reservation: reservation,
       localOnly: localOnly,
-      voidCallBack: (_) {},
+      voidCallBack: (_) {
+        Loader.dismiss();
+      },
     );
   }
 
@@ -18,7 +20,8 @@ class ReservationActionManager {
     required bool isSyncing,
     bool localOnly = false,
   }) async {
-    if (isSyncing && !localOnly) return;
+    Loader.dismiss();
+   // if (isSyncing && !localOnly) return;
 
     await ReservationService().updateReservationData(
       date: reservation.appointmentDateTime ?? "",
@@ -48,6 +51,7 @@ class ReservationActionManager {
     await ReservationService().updatePatientReservationData(
       key: reservation.key ?? "",
       data: reservation,
+
       voidCallBack: (_) {},
     );
   }

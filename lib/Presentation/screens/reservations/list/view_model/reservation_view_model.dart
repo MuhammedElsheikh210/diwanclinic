@@ -96,6 +96,7 @@ class ReservationViewModel extends GetxController {
     final daily = await queryManager.fetchAllReservationsOfDay(
       appointmentDate: appointmentDate,
       selectedClinic: selectedClinic,
+      isFiltered: false,
     );
 
     completeDayReservations = daily;
@@ -104,29 +105,29 @@ class ReservationViewModel extends GetxController {
       selectedClinic: selectedClinic,
       appointmentDate: appointmentDate,
       selectedTab: selectedTab,
-      isFiltered: isFilter ?? true,
+      isFiltered: isFilter ?? false,
     );
 
     final filtered = await queryManager.getReservations(
       appointmentDate: appointmentDate,
       query: query,
-      fromOnline: fromOnline,
+      isFiltered: false,
     );
 
     listReservations = queueManager.buildFinalList(filtered);
-    print("listReservations after update ");
 
-    await loadDailyReport();
+    await loadDailyReport(fromOnline: fromOnline ?? true);
 
     update();
   }
 
   // Load daily financial report
-  Future<void> loadDailyReport() async {
+  Future<void> loadDailyReport({bool? fromOnline}) async {
     if (appointmentDate == null) return;
 
     completedForReport = await queryManager.getCompletedReservationsForReport(
       appointmentDate: appointmentDate,
+      isFiltered: false,
     );
   }
 
@@ -174,8 +175,8 @@ class ReservationViewModel extends GetxController {
 
           selectedClinic = data.first;
 
-          getReservations();
-          getSyncReservations();
+          getReservations(isFilter: true);
+          getSyncReservations(initLocalData: true);
 
           Future.delayed(const Duration(milliseconds: 300), () {
             _isInitialLoad = false;
@@ -191,18 +192,26 @@ class ReservationViewModel extends GetxController {
     syncService.listen(
       selectedClinic: selectedClinic,
       appointmentDate: appointmentDate,
+
       onAddLocal: (model) async {
-        initLocalData = null;
-        await actionManager.addReservation(model, localOnly: true);
+        //  initLocalData = null;
+        //  await actionManager.addReservation(model, localOnly: true);
       },
+
       onUpdatedLocal: (model) async {
+        print("log in update sync ");
         initLocalData = null;
-        await actionManager.updateReservation(model, isSyncing: true);
+        await actionManager.updateReservation(
+          model,
+          isSyncing: true,
+          localOnly: true,
+        );
       },
+
       onReloadLocal: () {
-        print("initLocalData is ${initLocalData}");
+        // pass true in get clinic to not make call here
         if (initLocalData == null) {
-          getReservations(fromOnline: false,isFilter: false);
+          getReservations(isFilter: false);
         }
       },
     );
@@ -233,12 +242,12 @@ class ReservationViewModel extends GetxController {
       debugPrint("[$tag] ✅ DB updated successfully");
 
       // 3️⃣ Reload UI data (must await)
-      await getReservations();
+      await getReservations(isFilter: false);
 
       debugPrint("[$tag] 🔁 Reservations reloaded");
 
       // 4️⃣ Run side effects in background (no await)
-      _runSideEffectsInBackground(reservation, newStatus, cancelReason);
+      //   _runSideEffectsInBackground(reservation, newStatus, cancelReason);
 
       Loader.showSuccess("تم تحديث الحالة إلى ${newStatus.label}");
     } catch (e, stack) {
