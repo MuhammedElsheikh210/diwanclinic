@@ -49,26 +49,4 @@ class AuthenticationUseCases {
   ) {
     return _repository.getClientIndividual_domain(data);
   }
-
-  // ─────────────────────────────────────────────
-  // 🔹 Update sync timestamps
-  Future<Either<AppError, SuccessModel>> updateSyncStatus(
-    SyncStatusModel model,
-  ) {
-    return _repository.updateSyncStatus_domain(
-      model,
-      model.syncStatus ?? SyncStatus.client,
-    );
-  }
-
-  // ─────────────────────────────────────────────
-  // 🔹 NEW: Get sync status by key
-  Future<Either<AppError, SyncStatusModel?>> getSyncStatus(
-    SyncStatusModel model,
-  ) {
-    return _repository.getSyncStatus_domain(
-      model.key ?? "",
-      model.syncStatus ?? SyncStatus.client,
-    );
-  }
 }

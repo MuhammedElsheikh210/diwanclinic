@@ -322,6 +322,14 @@ class CreateReservationViewModel extends GetxController {
     update();
   }
 
+  Future<void> _updateClientsSyncStatus() async {
+    final ref = FirebaseDatabase.instance.ref("sync_meta/clients");
+
+    await ref.update({
+      "last_add_data_timestamp": DateTime.now().millisecondsSinceEpoch,
+    });
+  }
+
   void saveReservation(
     List<ReservationModel?> activeList,
     ClinicModel? clinicModel,
@@ -524,6 +532,7 @@ class CreateReservationViewModel extends GetxController {
         voidCallBack: (_) async {
           Loader.dismiss();
           clientUser = newClient; // ✅ NOW we assign it directly here
+          _updateClientsSyncStatus();
           update();
         },
       );
@@ -590,83 +599,6 @@ class CreateReservationViewModel extends GetxController {
         Loader.showSuccess("تم إضافة الحجز بنجاح");
       },
     );
-  }
-
-  Future<void> checkAndSyncClientsIfNeeded() async {
-    final authService = AuthenticationService();
-    final user = LocalUser().getUserData();
-    final String syncKey = user.uid ?? "";
-
-    if (syncKey.isEmpty) return;
-
-    SyncStatusModel? currentStatus;
-
-    // 1️⃣ Get current sync status
-    await authService.getSyncStatus(
-      syncModel: SyncStatusModel(key: syncKey),
-      voidCallBack: (status) {
-        currentStatus = status;
-      },
-    );
-
-    final int lastAdd = currentStatus?.lastAddDataTimestamp ?? 0;
-    final int lastSync = currentStatus?.lastUpdateTimestamp ?? 0;
-
-    debugPrint("📊 lastAdd: $lastAdd");
-    debugPrint("📊 lastSync: $lastSync");
-
-    // 🟢 CASE 1: No sync record at all (first app open)
-    if (currentStatus == null || (lastAdd == 0 && lastSync == 0)) {
-      debugPrint("🚀 First time sync — running FULL clients sync");
-      await _runFullClientsSync(authService, syncKey);
-      return;
-    }
-
-    // 🟡 CASE 2: Already synced
-    if (lastAdd == lastSync) {
-      debugPrint("ℹ️ Clients already synced — skip");
-      return;
-    }
-
-    // 🔴 CASE 3: Out of sync
-    debugPrint("🔄 Clients out of sync — running FULL clients sync");
-    await _runFullClientsSync(authService, syncKey);
-  }
-
-  Future<void> _runFullClientsSync(
-    AuthenticationService authService,
-    String syncKey,
-  ) async {
-    Loader.show();
-
-    try {
-      // 1️⃣ Download all clients
-      await authService.getClientsData(
-        isFiltered: false,
-        query: SQLiteQueryParams(is_filtered: false),
-        voidCallBack: (List<LocalUser?> clients) async {
-          debugPrint("✅ Synced ${clients.length} clients locally");
-        },
-      );
-
-      final now = DateTime.now().millisecondsSinceEpoch;
-
-      // 2️⃣ Align timestamps properly
-      await authService.updateSyncStatus(
-        model: SyncStatusModel(
-          key: syncKey,
-          lastAddDataTimestamp: now,
-          lastUpdateTimestamp: now,
-        ),
-        voidCallBack: (_) {
-          debugPrint("✅ Sync status aligned");
-        },
-      );
-    } catch (e) {
-      debugPrint("❌ Sync error: $e");
-    } finally {
-      Loader.dismiss();
-    }
   }
 
   void updateReservation(

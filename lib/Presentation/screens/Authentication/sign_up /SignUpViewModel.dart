@@ -1,3 +1,5 @@
+import 'package:firebase_database/firebase_database.dart';
+
 import '../../../../index/index_main.dart';
 
 class SignUpViewModel extends GetxController {
@@ -92,18 +94,10 @@ class SignUpViewModel extends GetxController {
   }
 
   Future<void> _updateClientsSyncStatus() async {
-    final authService = AuthenticationService();
+    final ref = FirebaseDatabase.instance.ref("sync_meta/clients");
 
-    // ⚠️ هنا بنستخدم UID المريض الجديد
-    final user = LocalUser().getUserData();
-    final String syncKey = user.uid ?? "";
-
-    if (syncKey.isEmpty) return;
-
-    final now = DateTime.now().millisecondsSinceEpoch;
-
-    final model = SyncStatusModel(key: syncKey, lastAddDataTimestamp: now);
-
-    await authService.updateSyncStatus(model: model, voidCallBack: (_) {});
+    await ref.update({
+      "last_add_data_timestamp": DateTime.now().millisecondsSinceEpoch,
+    });
   }
 }

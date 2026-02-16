@@ -25,17 +25,6 @@ abstract class AuthenticationRepository {
       Map<String, dynamic> data,
       );
 
-  /// 🔹 NEW: Update Sync Status
-  Future<Either<AppError, SuccessModel>> updateSyncStatus_domain(
-      SyncStatusModel model,
-      SyncStatus syncStatus
-      );
-
-  /// 🔹 NEW: Get Sync Status by Key
-  Future<Either<AppError, SyncStatusModel?>> getSyncStatus_domain(
-      String key,
-      SyncStatus syncStatus
-      );
 
   /// 🔹 Add new client
   Future<Either<AppError, SuccessModel>> addClient_domain(

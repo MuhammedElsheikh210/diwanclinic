@@ -26,11 +26,7 @@ abstract class AuthenticationDataSourceRepo {
   // 🔹 Update client
   Future<SuccessModel> updateClient(Map<String, dynamic> data, String key);
 
-  // 🔹 NEW: Sync status – Store timestamps
-  Future<SuccessModel> updateSyncStatus(SyncStatusModel model,SyncStatus syncStatus);
 
-  // 🔹 NEW: Sync status – Get sync status by key
-  Future<SyncStatusModel?> getSyncStatus(String key, SyncStatus syncStatus);
 }
 
 enum SyncStatus {

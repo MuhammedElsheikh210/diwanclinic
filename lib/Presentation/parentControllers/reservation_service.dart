@@ -41,6 +41,13 @@ class ReservationService {
     );
   }
 
+  Future<void> clearLocalReservations() async {
+    final db = await DatabaseService().database;
+
+    await db.delete("reservations");
+  }
+
+
   // ===========================================================================
   // 🔹 2) Update Reservation
   // ===========================================================================

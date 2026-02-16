@@ -19,6 +19,12 @@ class AuthenticationService {
     );
   }
 
+  Future<void> clearLocalClients() async {
+    final db = await DatabaseService().database;
+
+    await db.delete("clients");
+  }
+
   Future<void> updateClientsData({
     required LocalUser userclient,
     required Function(ResponseStatus) voidCallBack,
@@ -103,35 +109,6 @@ class AuthenticationService {
 
     result.fold(
       (l) => Loader.showError("❌ Failed to load local clients"),
-      (r) => voidCallBack(r),
-    );
-  }
-
-  // ─────────────────────────────────────────────
-  // 🔹 Update sync timestamps
-  Future<void> updateSyncStatus({
-    required SyncStatusModel model,
-    required Function(ResponseStatus) voidCallBack,
-  }) async {
-    Loader.show();
-    final result = await useCase.updateSyncStatus(model);
-    result.fold(
-      (l) => voidCallBack(ResponseStatus.error),
-      (r) => voidCallBack(ResponseStatus.success),
-    );
-  }
-
-  // ─────────────────────────────────────────────
-  // 🔹 NEW: Get sync status by key
-  Future<void> getSyncStatus({
-    required SyncStatusModel syncModel,
-    required Function(SyncStatusModel?) voidCallBack,
-  }) async {
-    Loader.show();
-    final result = await useCase.getSyncStatus(syncModel);
-
-    result.fold(
-      (l) => Loader.showError("❌ Failed to load sync status: ${l.messege}"),
       (r) => voidCallBack(r),
     );
   }

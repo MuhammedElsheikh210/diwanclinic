@@ -111,37 +111,5 @@ class AuthenticationRepoImpl extends AuthenticationRepository {
     }
   }
 
-  // ─────────────────────────────────────────────
-  // 🔹 NEW: update sync timestamps
-  @override
-  Future<Either<AppError, SuccessModel>> updateSyncStatus_domain(
-    SyncStatusModel model,
-    SyncStatus syncStatus,
-  ) async {
-    try {
-      final result = await _authenticationRemoteDataSourceImpl.updateSyncStatus(
-        model,syncStatus
-      );
-      return right(result);
-    } catch (e) {
-      return left(AppError(e.toString()));
-    }
-  }
 
-  // ─────────────────────────────────────────────
-  // 🔹 NEW: get sync status by key
-  @override
-  Future<Either<AppError, SyncStatusModel?>> getSyncStatus_domain(
-    String key,
-    SyncStatus syncStatus,
-  ) async {
-    try {
-      final result = await _authenticationRemoteDataSourceImpl.getSyncStatus(
-        key,syncStatus
-      );
-      return right(result);
-    } catch (e) {
-      return left(AppError(e.toString()));
-    }
-  }
 }

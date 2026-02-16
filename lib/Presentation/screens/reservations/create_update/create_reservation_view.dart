@@ -49,11 +49,6 @@ class _CreateReservationViewState extends State<CreateReservationView> {
     vm.resOrderController.text = widget.total_reservations.toString();
     vm.total_reservations = widget.total_reservations;
     vm.companyNameController.text = widget.dailly_date;
-    vm.checkAndSyncClientsIfNeeded();
-    // final fixedDate = widget.dailly_date.replaceAll("/", "-");
-    // vm.loadLegacyQueueForDate(fixedDate);
-
-    // Just trigger loading clinic and reservation count
 
     // تاريخ النهارده
     final today = DateTime.now();

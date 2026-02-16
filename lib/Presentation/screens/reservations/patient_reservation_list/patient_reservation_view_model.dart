@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:firebase_database/firebase_database.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../../index/index_main.dart';
@@ -158,12 +159,20 @@ class ReservationPatientViewModel extends GetxController {
         voidCallBack: (_) {},
       );
     }
-
+    await _updateClientsSyncStatus();
     debugPrint("✅ [FCM SYNC] Finished updating tokens");
     debugPrint("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
     // 🔄 Reload reservations
     getReservations();
+  }
+
+  Future<void> _updateClientsSyncStatus() async {
+    final ref = FirebaseDatabase.instance.ref("sync_meta/clients");
+
+    await ref.update({
+      "last_add_data_timestamp": DateTime.now().millisecondsSinceEpoch,
+    });
   }
 
   Future<void> setupDefaultDate() async {
