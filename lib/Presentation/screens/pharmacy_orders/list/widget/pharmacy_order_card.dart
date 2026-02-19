@@ -139,7 +139,7 @@ class PharmacyOrderCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.sticky_note_2_outlined,
                     color: AppColors.primary,
                     size: 20,
@@ -207,18 +207,22 @@ class PharmacyOrderCard extends StatelessWidget {
                   ],
                 ),
               ),
-              PrimaryTextButton(
-                onTap: !hasPricing ? onPriceDetails : onShowPriceDetails,
-                appButtonSize: AppButtonSize.small,
-                customBackgroundColor: AppColors.white,
-                customBorder: const BorderSide(
-                  color: AppColors.borderNeutralPrimary,
-                ),
-                label: AppText(
-                  text: !hasPricing ? "إبدأ التسعير" : "عرض تفاصيل السعر",
-                  textStyle: t.mdMedium.copyWith(color: AppColors.textDisplay),
-                ),
-              ),
+              !hasPricing
+                  ? const SizedBox()
+                  : PrimaryTextButton(
+                      onTap: !hasPricing ? onPriceDetails : onShowPriceDetails,
+                      appButtonSize: AppButtonSize.small,
+                      customBackgroundColor: AppColors.white,
+                      customBorder: const BorderSide(
+                        color: AppColors.borderNeutralPrimary,
+                      ),
+                      label: AppText(
+                        text: "عرض تفاصيل السعر",
+                        textStyle: t.mdMedium.copyWith(
+                          color: AppColors.textDisplay,
+                        ),
+                      ),
+                    ),
             ],
           ),
 

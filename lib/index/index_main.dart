@@ -533,3 +533,4 @@ export 'package:diwanclinic/Presentation/screens/reservations/list/view_model/ma
 export 'package:diwanclinic/Presentation/screens/reservations/list/managers/reservation_notification_manager.dart';
 export 'package:diwanclinic/Presentation/screens/reservations/list/view/reservation_card/order_confirmation_sheet_launcher.dart';
 export 'package:diwanclinic/Presentation/screens/reservations/reservation_details%20/reservation_details_view.dart';
+export 'package:diwanclinic/Presentation/screens/target_sales_dashboard/targrt_sales_dashboard_view.dart';

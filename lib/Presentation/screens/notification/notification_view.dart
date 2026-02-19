@@ -3,23 +3,8 @@ import 'package:diwanclinic/Presentation/screens/notification/notifiction_contro
 import 'package:intl/intl.dart';
 import '../../../../index/index_main.dart';
 
-class NotificationsView extends StatefulWidget {
+class NotificationsView extends StatelessWidget {
   const NotificationsView({super.key});
-
-  @override
-  State<NotificationsView> createState() => _NotificationsViewState();
-}
-
-class _NotificationsViewState extends State<NotificationsView> {
-  late final NotificationController controller;
-
-  @override
-  void initState() {
-    controller = initController(() => NotificationController());
-    controller.fetchNotifications();
-    controller.update();
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +18,7 @@ class _NotificationsViewState extends State<NotificationsView> {
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
           child: GetBuilder<NotificationController>(
-            init: controller,
+            init: NotificationController(),
             builder: (controller) {
               // if (controller.isLoading) {
               //   return const Center(child: CircularProgressIndicator());

@@ -146,7 +146,7 @@ class PharmacyDailyReportWidget extends StatelessWidget {
             icon: Icons.description_rounded,
           ),
           _ReportRow(
-            title: "إجمالي الأدوية قبل الخصم",
+            title: "إجمالي سعر الروشتات",
             subtitle: "100% (بدون توصيل)",
             valueText: "${subtotalTotal.toStringAsFixed(2)} ج.م",
             icon: Icons.payments_rounded,

@@ -3,6 +3,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:diwanclinic/Presentation/screens/sync_assistant_medicines/sync_medicine_view.dart';
 import 'package:diwanclinic/Presentation/screens/sync_assistant_medicines/sync_medicine_view_model.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -53,9 +54,6 @@ class LoginViewModel extends GetxController {
   }
 
   Future<void> loginData() async {
-    print(
-      "textEditingControllerPassword.text is ${textEditingControllerPassword.text}",
-    );
     Loader.show();
     FirebaseSignIn_UseCase firebaseSignIn_UseCase = initController(
       () => FirebaseSignIn_UseCase(Get.find()),
@@ -107,6 +105,7 @@ class LoginViewModel extends GetxController {
             } else if (userClient.userType == UserType.pharmacy) {
               openAssistantApp();
             } else {
+              _updateClientsSyncStatus();
               Get.offAllNamed(mainpage);
             }
             await NotificationService().subscribeAfterLogin();
@@ -118,6 +117,14 @@ class LoginViewModel extends GetxController {
     );
   }
 
+  Future<void> _updateClientsSyncStatus() async {
+    final ref = FirebaseDatabase.instance.ref("sync_meta/clients");
+
+    await ref.update({
+      "last_add_data_timestamp": DateTime.now().millisecondsSinceEpoch,
+    });
+  }
+
   Future<void> openAssistantApp() async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, 'medicines.db');
@@ -125,13 +132,21 @@ class LoginViewModel extends GetxController {
     final exists = await databaseExists(path);
 
     if (!exists) {
-      // 🟡 First time → prepare DB
-      Get.offAll(
-        () => const SyncMedicineView(),
-        binding: SyncMedicineBinding(),
-      );
+      Get.offAll(() => const SyncMedicineView(),
+          binding: SyncMedicineBinding());
+      return;
+    }
+
+    final db = await openDatabase(path);
+    final count = Sqflite.firstIntValue(
+      await db.rawQuery('SELECT COUNT(*) FROM medicines'),
+    );
+    if (count == null || count == 0) {
+      // 🟡 DB موجودة لكن فاضية
+      Get.offAll(() => const SyncMedicineView(),
+          binding: SyncMedicineBinding());
     } else {
-      // 🟢 Normal flow
+      // 🟢 طبيعي
       Get.offAll(() => const MainPage());
     }
   }
@@ -168,13 +183,13 @@ class LoginViewModel extends GetxController {
           // ✅ Save locally after update
           user.saveLocal(
             saveCallback: () async {
-              print("user type is ${user?.userType}");
               if (user?.userType == UserType.assistant ||
                   user?.userType == UserType.doctor) {
                 Get.offAllNamed(syncView);
               } else if (user?.userType == UserType.pharmacy) {
                 openAssistantApp();
               } else {
+                _updateClientsSyncStatus();
                 Get.offAllNamed(mainpage);
               }
               await NotificationService().subscribeAfterLogin();

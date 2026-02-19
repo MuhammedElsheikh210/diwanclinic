@@ -166,7 +166,7 @@ class OrderStatusService {
 
       // 🔒 تم الإغلاق
       case "completed":
-        return "تم إغلاق الطلب بنجاح. شكرًا لاستخدامك تطبيق لينك.";
+        return "تم خروج الطلب بنجاح. شكرًا لاستخدامك تطبيق لينك.";
 
       // ❌ إلغاء
       case "cancelled":

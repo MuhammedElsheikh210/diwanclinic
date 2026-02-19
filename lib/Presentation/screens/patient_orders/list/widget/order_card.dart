@@ -283,7 +283,7 @@ class OrderCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             AppText(
-              text: order.status == "confirmed"
+              text: (order.status == "confirmed" || order.status == "completed")
                   ? "تفاصيل سعر الروشتة"
                   : hasPrice
                   ? "راجع السعر وأكد الطلب"

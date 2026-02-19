@@ -113,12 +113,12 @@ class AccountView extends StatelessWidget {
                 if (userType == "doctor") ...[
                   _sectionTitle(context, "الإعدادات"),
                   _modernMenuCard(context, [
-                    _menuItem(
-                      context,
-                      icon: Icons.local_hospital_outlined,
-                      label: "ارشيف المرضي",
-                      onTap: () => Get.to(() => const ArchivePatientView()),
-                    ),
+                    // _menuItem(
+                    //   context,
+                    //   icon: Icons.local_hospital_outlined,
+                    //   label: "ارشيف المرضي",
+                    //   onTap: () => Get.to(() => const ArchivePatientView()),
+                    // ),
                     _menuItem(
                       context,
                       icon: Icons.local_hospital_outlined,

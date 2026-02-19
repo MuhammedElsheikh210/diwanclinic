@@ -1,4 +1,3 @@
-
 import '../index/index_main.dart';
 
 class Binding implements Bindings {
@@ -46,13 +45,17 @@ class Binding implements Bindings {
 
     // ───────────── 🆕 Archive Patient Data Source ─────────────
     Get.lazyPut<ArchivePatientDataSourceRepo>(
-          () => ArchivePatientDataSourceRepoImpl(Get.find()),
+      () => ArchivePatientDataSourceRepoImpl(Get.find()),
       fenix: true,
     );
 
-
     Get.lazyPut<DoctorDataSourceRepo>(
       () => DoctorDataSourceRepoImpl(Get.find()),
+      fenix: true,
+    );
+
+    Get.lazyPut<MedicineRepository>(
+      () => MedicineRepositoryImpl(Get.find()),
       fenix: true,
     );
 
@@ -147,10 +150,9 @@ class Binding implements Bindings {
 
     // ───────────── 🆕 Archive Patient Repository ─────────────
     Get.lazyPut<ArchivePatientRepository>(
-          () => ArchivePatientRepositoryImpl(Get.find()),
+      () => ArchivePatientRepositoryImpl(Get.find()),
       fenix: true,
     );
-
 
     Get.lazyPut<FirebaseRepository>(
       () => FirebaseRepoImpl(Get.find()),
@@ -234,9 +236,8 @@ class Binding implements Bindings {
     Get.lazyPut<VisitUseCases>(() => VisitUseCases(Get.find()));
     // ───────────── 🆕 Archive Patient Use Cases ─────────────
     Get.lazyPut<ArchivePatientUseCases>(
-          () => ArchivePatientUseCases(Get.find()),
+      () => ArchivePatientUseCases(Get.find()),
     );
-
 
     // ───────────── 🆕 Archive Form Use Cases ─────────────
     Get.lazyPut<ArchiveFormUseCases>(() => ArchiveFormUseCases(Get.find()));
@@ -288,14 +289,10 @@ class Binding implements Bindings {
     Get.lazyPut<HomePatientController>(() => HomePatientController());
 
     // ───────────── 🆕 Archive Patient View Models ─────────────
-    Get.lazyPut<ArchivePatientViewModel>(
-          () => ArchivePatientViewModel(),
-    );
+    Get.lazyPut<ArchivePatientViewModel>(() => ArchivePatientViewModel());
 
     Get.lazyPut<CreateArchivePatientViewModel>(
-          () => CreateArchivePatientViewModel(),
+      () => CreateArchivePatientViewModel(),
     );
-
-
   }
 }

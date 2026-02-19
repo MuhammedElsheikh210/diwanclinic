@@ -26,7 +26,7 @@ class NotificationController extends GetxController {
   void onInit() {
     super.onInit();
 
-
+    fetchNotifications();
     final user = LocalUser().getUserData();
     final bool isAssistant = user.userType?.name == "assistant";
   }

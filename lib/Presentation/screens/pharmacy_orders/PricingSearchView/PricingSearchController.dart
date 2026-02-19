@@ -62,6 +62,7 @@ class PricingSearchController extends GetxController {
       isLoading = true;
       update();
 
+
       try {
         await MedicineService().searchMedicinesData(
           keyword: keyword,
