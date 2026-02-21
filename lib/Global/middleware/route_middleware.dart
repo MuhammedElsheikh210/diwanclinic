@@ -7,30 +7,56 @@ class RouteWelcomeMiddleWare extends GetMiddleware {
   @override
   RouteSettings? redirect(String? route) {
     final user = LocalUser().getUserData();
-    print("user type is ${user.userType}");
-
     final forceUpdateModel = ForceUdpate().getForceUpdateData();
+
+    print("Current route: $route");
+    print("User type: ${user.userType}");
+
     // ---------------------------------------------------------
-    // 1️⃣ FORCE UPDATE ALWAYS COMES FIRST
+    // 1️⃣ FORCE UPDATE FIRST
     // ---------------------------------------------------------
     if (forceUpdateModel?.forceUpdate == true) {
-      return const RouteSettings(name: forceUpdateView);
+      if (route != forceUpdateView) {
+        return const RouteSettings(name: forceUpdateView);
+      }
+      return null;
+    }
+
+    // ---------------------------------------------------------
+    // 2️⃣ ONBOARD CHECK
+    // ---------------------------------------------------------
+    final hasSeenOnboard = OnboardLocalCheck.isOnboardSeen();
+
+    if (!hasSeenOnboard) {
+      if (route != onBoardView) {
+        return const RouteSettings(name: onBoardView);
+      }
+      return null;
     }
 
     // ---------------------------------------------------------
     // 3️⃣ LOGIN CHECK
     // ---------------------------------------------------------
     if (user.key == null || user.uid == null) {
-      // User is not logged in
+      if (route != loginView) {
+        return const RouteSettings(name: loginView);
+      }
       return null;
     }
 
     // ---------------------------------------------------------
-    // 4️⃣ ALLOW NAVIGATION
+    // 4️⃣ USER LOGGED IN → REDIRECT BASED ON TYPE
     // ---------------------------------------------------------
-    return user.userType == UserType.patient ||
-            user.userType == UserType.pharmacy
-        ? const RouteSettings(name: mainpage)
-        : const RouteSettings(name: syncView);
+    final targetRoute =
+    (user.userType == UserType.patient ||
+        user.userType == UserType.pharmacy)
+        ? mainpage
+        : syncView;
+
+    if (route != targetRoute) {
+      return RouteSettings(name: targetRoute);
+    }
+
+    return null;
   }
 }

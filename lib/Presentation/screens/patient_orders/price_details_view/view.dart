@@ -58,6 +58,12 @@ class _PriceDetailsScreenState extends State<PriceDetailsScreen> {
     final num delivery = widget.order.deliveryFees ?? 0;
     final num finalTotal = widget.order.finalAmount ?? 0;
 
+    final num totalBeforeDiscount = subtotal + delivery;
+
+    final double discountPercent = totalBeforeDiscount == 0
+        ? 0
+        : (discount / totalBeforeDiscount) * 100;
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
@@ -106,16 +112,52 @@ class _PriceDetailsScreenState extends State<PriceDetailsScreen> {
               title: "الملخص",
               child: Column(
                 children: [
-                  SummaryRow(label: "إجمالي الأدوية", value: "$subtotal ج.م"),
-
-                  SummaryRow(label: "التوصيل", value: "$delivery ج.م"),
+                  // SummaryRow(label: "إجمالي الأدوية", value: "$subtotal ج.م"),
+                  //
+                  // SummaryRow(label: "التوصيل", value: "$delivery ج.م"),
+                  SummaryRow(
+                    label: "الإجمالي ",
+                    value: "${delivery + subtotal} ج.م",
+                  ),
 
                   SummaryRow(
                     label: "الخصم",
-                    value: "-$discount ج.م",
+                    value:
+                        "-$discount ج.م (${discountPercent.toStringAsFixed(0)}%)",
                     valueColor: AppColors.errorForeground,
                   ),
 
+                  SizedBox(height: 6.h),
+
+                  Container(
+                    padding: EdgeInsets.all(12.w),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: .08),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(
+                          Icons.local_offer_outlined,
+                          size: 18,
+                          color: AppColors.primary,
+                        ),
+                        SizedBox(width: 8.w),
+                        Expanded(
+                          child: AppText(
+                            text:
+                                "عند طلب العلاج مباشرة بدون حجز كشف تحصل على خصم 10٪ على إجمالي الأدوية.",
+                            textStyle: context.typography.xsRegular.copyWith(
+                              color: AppColors.primary,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   const Divider(color: AppColors.grayLight),
 
                   SummaryRow(
@@ -418,36 +460,7 @@ class MedicineItem extends StatelessWidget {
             ),
 
             // RIGHT — counter
-            isPending
-                ? Row(
-                    children: [
-                      _counterBtn(
-                        icon: Icons.remove,
-                        onTap: () {
-                          if (qty > 1) {
-                            onChanged(medicine.copyWith(quantity: qty - 1));
-                          }
-                        },
-                      ),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12.w),
-                        child: AppText(
-                          text: qty.toString(),
-                          textStyle: context.typography.mdBold,
-                        ),
-                      ),
-                      _counterBtn(
-                        icon: Icons.add,
-                        onTap: () {
-                          onChanged(medicine.copyWith(quantity: qty + 1));
-                        },
-                      ),
-                    ],
-                  )
-                : AppText(
-                    text: qty.toString(),
-                    textStyle: context.typography.mdBold,
-                  ),
+            AppText(text: qty.toString(), textStyle: context.typography.mdBold),
           ],
         ),
       ),

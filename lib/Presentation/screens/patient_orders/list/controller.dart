@@ -10,6 +10,18 @@ class OrdersListViewModel extends GetxController {
   StreamSubscription<DatabaseEvent>? _addSub;
   StreamSubscription<DatabaseEvent>? _changeSub;
   StreamSubscription<DatabaseEvent>? _removeSub;
+  List<OrderModel> get activeOrders {
+    return orders.where((o) =>
+    o.status != "delivered" &&
+        o.status != "cancelled").toList();
+  }
+
+  List<OrderModel> get finishedOrders {
+    return orders.where((o) =>
+    o.status == "delivered" ||
+        o.status == "cancelled").toList();
+  }
+
 
   bool isLoading = false;
 

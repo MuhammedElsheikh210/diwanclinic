@@ -20,6 +20,7 @@ class LocalUser {
   int? createAt;
   String? doctorKey;
   String? doctorName;
+  String? doctorQualifications;
   String? salesKey;
   String? clinicKey;
   String? code;
@@ -54,6 +55,7 @@ class LocalUser {
     this.identifier,
     this.password,
     this.image,
+    this.doctorQualifications,
     this.profileImage,
     this.coverImage,
     this.phone,
@@ -89,6 +91,7 @@ class LocalUser {
     return LocalUser(
       uid: json['token'],
       key: json['key'],
+      doctorQualifications: json['doctorQualifications'],
       specialize_key: json['specialize_key'],
       specializationName: json['specialization_name'],
       phone: json['phone'],
@@ -139,8 +142,11 @@ class LocalUser {
 
     if (uid != null) data['token'] = uid;
     if (key != null) data['key'] = key;
+    if (doctorQualifications != null)
+      data['doctorQualifications'] = doctorQualifications;
     if (specialize_key != null) data['specialize_key'] = specialize_key;
-    if (specializationName != null) data['specialization_name'] = specializationName;
+    if (specializationName != null)
+      data['specialization_name'] = specializationName;
 
     if (image != null) data['image'] = image;
     if (profileImage != null) data['profile_image'] = profileImage;
@@ -150,7 +156,8 @@ class LocalUser {
     if (whatsAppPhone != null) data['whats_app_phone'] = whatsAppPhone;
     if (name != null) data['client_name'] = name;
     if (address != null) data['address'] = address;
-    if (isCompleteProfile != null) data['isCompleteProfile'] = isCompleteProfile;
+    if (isCompleteProfile != null)
+      data['isCompleteProfile'] = isCompleteProfile;
     if (createAt != null) data['createAt'] = createAt;
     if (password != null) data['password'] = password;
     if (identifier != null) data['identifier'] = identifier;
@@ -164,7 +171,8 @@ class LocalUser {
 
     if (transferNumber != null) data['transfer_number'] = transferNumber;
     if (isInstaPay != null) data['is_insta_pay'] = isInstaPay;
-    if (isElectronicWallet != null) data['is_electronic_wallet'] = isElectronicWallet;
+    if (isElectronicWallet != null)
+      data['is_electronic_wallet'] = isElectronicWallet;
 
     if (show_file_number != null) data['show_file_number'] = show_file_number;
     if (file_number != null) data['file_number'] = file_number;
@@ -194,6 +202,7 @@ class LocalUser {
     int? isCompleteProfile,
     String? identifier,
     String? password,
+    String? doctorQualifications,
     String? image,
     String? profileImage,
     String? coverImage,
@@ -225,6 +234,7 @@ class LocalUser {
     return LocalUser(
       uid: uid ?? this.uid,
       key: key ?? this.key,
+      doctorQualifications: doctorQualifications ?? this.doctorQualifications,
       userType: userType ?? this.userType,
       isCompleteProfile: isCompleteProfile ?? this.isCompleteProfile,
       identifier: identifier ?? this.identifier,
@@ -250,7 +260,7 @@ class LocalUser {
       show_file_number: show_file_number ?? this.show_file_number,
       file_number: file_number ?? this.file_number,
       remote_reservation_ability:
-      remote_reservation_ability ?? this.remote_reservation_ability,
+          remote_reservation_ability ?? this.remote_reservation_ability,
       fcmToken: fcmToken ?? this.fcmToken,
       facebookLink: facebookLink ?? this.facebookLink,
       instagramLink: instagramLink ?? this.instagramLink,

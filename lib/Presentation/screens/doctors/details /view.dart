@@ -1,7 +1,3 @@
-import 'package:diwanclinic/Presentation/screens/doctors/details%20/widgets/doctor_contact_widget.dart';
-import 'package:diwanclinic/Presentation/screens/doctors/details%20/widgets/doctor_reviews_widget.dart';
-import 'package:diwanclinic/Presentation/screens/doctors/details%20/widgets/doctor_tabs_widget.dart';
-
 import '../../../../../index/index_main.dart';
 
 class DoctorDetailsView extends StatelessWidget {

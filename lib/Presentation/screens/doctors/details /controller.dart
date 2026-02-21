@@ -1,3 +1,4 @@
+import 'package:diwanclinic/Presentation/screens/reservations/patient_reservation_list/ReservationSuccessScreen.dart';
 import 'package:intl/intl.dart';
 import '../../../../../index/index_main.dart';
 
@@ -12,7 +13,6 @@ class DoctorDetailsViewModel extends GetxController {
   int completedCount = 0;
   LegacyQueueModel? legacyQueueForDay;
   bool isSelectedDayClosed = false;
-
 
   DoctorDetailsViewModel({required this.doctor});
 
@@ -87,7 +87,6 @@ class DoctorDetailsViewModel extends GetxController {
       },
     );
   }
-
 
   String _formatLegacyDate(DateTime date) {
     return DateFormat("dd-MM-yyyy").format(date);
@@ -381,7 +380,6 @@ class DoctorDetailsViewModel extends GetxController {
     loadOpenCloseStatusForSelectedDate(); // 🔥 check open/close
   }
 
-
   // ─────────────────────────────────────────────
   // 🔹 Calculate Prices + Deposit
   void _calculatePrices() {
@@ -503,7 +501,7 @@ class DoctorDetailsViewModel extends GetxController {
           Loader.dismiss();
 
           // 3️⃣ العودة للصفحة الرئيسية
-          Get.offAll(() => const MainPage(initialIndex: 1), binding: Binding());
+          Get.off(() => ReservationSuccessScreen(reservation: reservation));
         },
       );
     } catch (e) {

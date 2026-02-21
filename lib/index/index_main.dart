@@ -534,3 +534,9 @@ export 'package:diwanclinic/Presentation/screens/reservations/list/managers/rese
 export 'package:diwanclinic/Presentation/screens/reservations/list/view/reservation_card/order_confirmation_sheet_launcher.dart';
 export 'package:diwanclinic/Presentation/screens/reservations/reservation_details%20/reservation_details_view.dart';
 export 'package:diwanclinic/Presentation/screens/target_sales_dashboard/targrt_sales_dashboard_view.dart';
+export 'package:diwanclinic/Presentation/screens/doctors/details%20/widgets/doctor_contact_widget.dart';
+export 'package:diwanclinic/Presentation/screens/doctors/details%20/widgets/doctor_reviews_widget.dart';
+export 'package:diwanclinic/Presentation/screens/doctors/details%20/widgets/doctor_tabs_widget.dart';
+export 'package:diwanclinic/Presentation/screens/setting/privacy_policy_screen.dart';
+export 'package:diwanclinic/Presentation/screens/Authentication/onboard/OnBoardView.dart';
+export 'package:diwanclinic/Presentation/screens/order_medicine_view/order_success_screen.dart';

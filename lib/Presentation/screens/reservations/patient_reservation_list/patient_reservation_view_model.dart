@@ -55,6 +55,28 @@ class ReservationPatientViewModel extends GetxController {
     return list;
   }
 
+  List<String> get _finalStatuses => [
+    ReservationStatus.completed.value,
+    ReservationStatus.cancelledByUser.value,
+    ReservationStatus.cancelledByAssistant.value,
+    ReservationStatus.cancelledByDoctor.value,
+  ];
+
+
+  List<ReservationModel?> get completedReservations {
+    return sortedReservations
+        .where((r) => _finalStatuses.contains(r?.status))
+        .toList();
+  }
+
+
+  List<ReservationModel?> get otherReservations {
+    return sortedReservations
+        .where((r) => !_finalStatuses.contains(r?.status))
+        .toList();
+  }
+
+
   bool _isInitialLoad = true;
 
   // 🔹 Filter list for types (NEW)

@@ -40,8 +40,11 @@ class _DoctorViewState extends State<DoctorView> {
               elevation: 0.8,
               centerTitle: true,
               title: Text(
-                "الأطباء",
-                style: typography.lgBold.copyWith(color: AppColors.textDisplay),
+                widget.specializeName,
+                style: typography.lgBold.copyWith(
+                  color: AppColors.textDisplay,
+                  fontSize: 23,
+                ),
               ),
               iconTheme: const IconThemeData(color: AppColors.textDisplay),
             ),

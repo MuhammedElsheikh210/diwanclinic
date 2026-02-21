@@ -1,41 +1,46 @@
 import '../../index/index_main.dart';
 
 class OnboardLocalCheck {
-  bool? firstOpen;
+  final bool hasSeenOnboard;
 
-  OnboardLocalCheck({this.firstOpen});
+  OnboardLocalCheck({required this.hasSeenOnboard});
 
   factory OnboardLocalCheck.fromJson(Map<String, dynamic> json) {
-    return OnboardLocalCheck(firstOpen: json['firstOpen']);
+    return OnboardLocalCheck(
+      hasSeenOnboard: json['hasSeenOnboard'] ?? false,
+    );
   }
 
   Map<String, dynamic> toJson() {
-    return {'firstOpen': firstOpen};
+    return {
+      'hasSeenOnboard': hasSeenOnboard,
+    };
   }
-}
 
-extension SaveLocalData on OnboardLocalCheck {
-  Future<void> saveOnBoardLocal({Function? saveCallback}) async {
-    final isSaved = await StorageService().setData(Strings.firstOepn, toJson());
-    if (isSaved) {
-      print("Saving data: ${toJson()}");
-      saveCallback?.call();
-    } else {
-      Loader.showError("Not saved locally");
+  /// 🔹 Save onboard locally
+  Future<void> save() async {
+    await StorageService().setData(
+      Strings.hasSeenOnboard, // غير الاسم ده لو عندك مختلف
+      toJson(),
+    );
+  }
+
+  /// 🔹 Check if onboard already seen
+  static bool isOnboardSeen() {
+    final data = StorageService().getData(Strings.hasSeenOnboard);
+
+    if (data == null) return false;
+
+    try {
+      final model = OnboardLocalCheck.fromJson(data);
+      return model.hasSeenOnboard;
+    } catch (_) {
+      return false;
     }
   }
 
-  OnboardLocalCheck? getOnBoardData() {
-    final productJson = StorageService().getData(Strings.firstOepn);
-    if (productJson != null) {
-      try {
-        print("Parsed data: $productJson"); // Debug log
-        return OnboardLocalCheck.fromJson(productJson);
-      } catch (e) {
-        return null;
-      }
-    } else {
-      return null;
-    }
+  /// 🔹 Clear onboard (optional – useful for logout)
+  static Future<void> clear() async {
+    await StorageService().remove(Strings.hasSeenOnboard);
   }
 }

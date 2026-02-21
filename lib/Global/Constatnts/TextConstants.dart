@@ -34,6 +34,7 @@ class Strings {
   static int bottomBar_Index = 0;
   static const String KEY_IS_FIRST_TIME = "firstTime";
   static const String KEY_IS_LOGIN = "login";
+  static const String hasSeenOnboard = "hasSeenOnboard";
 
   static const String sign_up = "Sign Up";
   static const String continue_signUp = "Continue";

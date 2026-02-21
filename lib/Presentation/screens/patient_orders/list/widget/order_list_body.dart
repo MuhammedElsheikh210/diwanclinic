@@ -1,41 +1,66 @@
 import '../../../../../index/index_main.dart';
 
+enum OrderTabType { active, finished }
+
 class OrdersListBody extends StatelessWidget {
   final OrdersListViewModel vm;
+  final OrderTabType type;
 
-  const OrdersListBody({super.key, required this.vm});
+  const OrdersListBody({super.key, required this.vm, required this.type});
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (vm.orders.isEmpty) {
+      final list = type == OrderTabType.active
+          ? vm.activeOrders
+          : vm.finishedOrders;
+
+      if (list.isEmpty) {
         return NoDataAnimated(
           title: "لا توجد طلبات حالياً",
           subtitle: "لم يتم العثور على أي طلبات",
           lottiePath: Animations.empty,
+          actionText: "إضافة طلب جديد",
+          onAction: () {
+            // Build reservation with urls
+            final reservation = ReservationModel(
+              patientKey: LocalUser().getUserData().key,
+              patientUid: LocalUser().getUserData().uid,
+              fcmToken_patient: LocalUser().getUserData().fcmToken,
+              patientPhone: LocalUser().getUserData().phone,
+              patientName: LocalUser().getUserData().name,
+            );
+
+            Get.to(
+              () => OrderMedicineScreen(
+                reservation: reservation,
+                onConfirmed: (ReservationModel p1) {
+                  Get.off(() => const OrderSuccessView());
+                },
+              ),
+              binding: Binding(),
+            );
+          },
           height: 220.h,
         );
       }
 
       return ListView.builder(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-        itemCount: vm.orders.length,
+        itemCount: list.length,
         itemBuilder: (_, i) {
-          final order = vm.orders[i];
+          final order = list[i];
 
           return OrderCard(
             order: order,
-
             onConfirmOrder: () => _showConfirmDialog(context, order),
-
             onCancelOrder: () => _showCancelDialog(context, order),
-
             onOrderDetails: () =>
                 Get.to(() => OrderDetailsScreen(order: order)),
             onFollowTreatment: () =>
                 Get.to(() => const TreatmentTrackingListScreen()),
             onPriceDetails: () =>
-                Get.to(() => PriceDetailsScreen(order: order,fromHome: false,)),
+                Get.to(() => PriceDetailsScreen(order: order, fromHome: false)),
           );
         },
       );
@@ -46,7 +71,7 @@ class OrdersListBody extends StatelessWidget {
     ActionDialogHelper.show(
       context: context,
       title: "تأكيد الطلب",
-      message: "هل تريد تأكيد هذا الطلب وإرسال إشعار ورسالة واتساب؟",
+      message: "هل تريد تأكيد هذا الطلب؟",
       confirmText: "تأكيد",
       confirmColor: AppColors.primary,
       onConfirm: () {
@@ -59,8 +84,7 @@ class OrdersListBody extends StatelessWidget {
     ActionDialogHelper.show(
       context: context,
       title: "إلغاء الطلب",
-      message:
-          "هل أنت متأكد من إلغاء هذا الطلب؟ لا يمكن التراجع عن هذا الإجراء.",
+      message: "هل أنت متأكد من الإلغاء؟",
       confirmText: "إلغاء",
       confirmColor: AppColors.errorForeground,
       onConfirm: () {

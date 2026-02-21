@@ -153,6 +153,12 @@ class AccountView extends StatelessWidget {
                     label: "الدعم الفني",
                     onTap: () => Get.toNamed(helpCenterView),
                   ),
+                  _menuItem(
+                    context,
+                    icon: Icons.privacy_tip,
+                    label: "سياسة الخصوصية",
+                    onTap: () => Get.toNamed(privacyPolicyScreen),
+                  ),
                 ]),
 
                 if (userType == "assistant") ...[

@@ -7,14 +7,39 @@ class OrdersSectionView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final list = controller.orders;
+    final list = controller.activeOrders;
 
     if (list.isEmpty) {
       return NoDataAnimated(
         title: "لا توجد طلبات حالياً",
-        subtitle: "لم تقم بأي طلب حتى الآن",
+        subtitle: "لم يتم العثور على أي طلبات",
         lottiePath: Animations.empty,
-        height: 200.h,
+        actionText: "إضافة طلب جديد",
+        onAction: () {
+          // Build reservation with urls
+          final reservation = ReservationModel(
+            patientKey: LocalUser().getUserData().key,
+            patientUid: LocalUser().getUserData().uid,
+            fcmToken_patient: LocalUser().getUserData().fcmToken,
+            patientPhone: LocalUser().getUserData().phone,
+            patientName: LocalUser().getUserData().name,
+          );
+
+          Get.to(
+            () => OrderMedicineScreen(
+              reservation: reservation,
+              onConfirmed: (ReservationModel p1) {
+                // controller.updateReservation(p1);
+                Get.offAll(
+                  () => const MainPage(initialIndex: 2),
+                  binding: Binding(),
+                );
+              },
+            ),
+            binding: Binding(),
+          );
+        },
+        height: 220.h,
       );
     }
 
@@ -33,9 +58,9 @@ class OrdersSectionView extends StatelessWidget {
               final order = list[i];
 
               return Padding(
-                padding: EdgeInsets.only(right: 14.w),
+                padding: EdgeInsets.only(right: 15.w),
                 child: SizedBox(
-                  width: 400.w,
+                  width: 380.w,
                   child: OrderCard(
                     order: order,
                     from_home: true,

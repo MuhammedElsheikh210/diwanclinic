@@ -1,5 +1,3 @@
-
-
 import '../../../../index/index_main.dart';
 
 class ReservationSectionView extends StatelessWidget {
@@ -9,7 +7,7 @@ class ReservationSectionView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final list = controller.sortedReservations ?? [];
+    final list = controller.activeReservations ?? [];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

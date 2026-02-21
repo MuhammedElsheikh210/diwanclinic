@@ -1,4 +1,3 @@
-
 import '../index/index_main.dart';
 
 const String mainpage = "/MainPage";
@@ -6,6 +5,8 @@ const String reservationSuccessView = "/ReservationSuccessView";
 const String doctorFeedbackView = "/DoctorFeedbackView";
 
 const String loginView = "/LoginView";
+const String onBoardView = "/OnBoardView";
+
 const String test = "/Test";
 const String expenceCategoryView = "/ExpenceCategoryView";
 const String createExpenseCategoryView = "/CreateExpenseCategoryView";
@@ -26,6 +27,7 @@ const String reservationDoctorView = "/ReservationDoctorView";
 const String reservationHistoryView = "/ReservationHistoryView";
 const String accountView = "/AccountView";
 const String helpCenterView = "/HelpCenterView";
+const String privacyPolicyScreen = "/PrivacyPolicyScreen";
 const String ordersView = "/OrdersView";
 const String testSendNotificationView = "/TestSendNotificationView";
 const String whatsAppGroupView = "/WhatsAppGroupView";
@@ -55,14 +57,26 @@ class Routes {
         transition: Transition.cupertino,
       ),
       GetPage(
+        name: privacyPolicyScreen,
+        page: () => const PrivacyPolicyScreen(),
+        transitionDuration: const Duration(milliseconds: 500),
+        binding: Binding(),
+        transition: Transition.cupertino,
+      ),
+      GetPage(
         name: forceUpdateView,
         page: () => const ForceUpdateView(),
         transitionDuration: const Duration(milliseconds: 500),
         binding: Binding(),
         transition: Transition.cupertino,
       ),
-
-
+      GetPage(
+        name: onBoardView,
+        page: () => const OnBoardView(),
+        transitionDuration: const Duration(milliseconds: 500),
+        binding: Binding(),
+        transition: Transition.cupertino,
+      ),
 
       GetPage(
         name: openclosereservationView,

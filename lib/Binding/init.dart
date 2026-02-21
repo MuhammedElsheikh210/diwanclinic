@@ -43,6 +43,13 @@ class Binding implements Bindings {
       fenix: true,
     );
 
+    Get.lazyPut<DoctorSuggestionDataSourceRepo>(
+          () => DoctorSuggestionDataSourceRepoImpl(Get.find()),
+      fenix: true,
+    );
+
+
+
     // ───────────── 🆕 Archive Patient Data Source ─────────────
     Get.lazyPut<ArchivePatientDataSourceRepo>(
       () => ArchivePatientDataSourceRepoImpl(Get.find()),
@@ -111,6 +118,11 @@ class Binding implements Bindings {
 
     Get.lazyPut<NotificationDataSourceRepo>(
       () => NotificationDataSourceRepoImpl(Get.find()),
+      fenix: true,
+    );
+
+    Get.lazyPut<DoctorSuggestionRepository>(
+      () => DoctorSuggestionRepositoryImpl(Get.find()),
       fenix: true,
     );
 

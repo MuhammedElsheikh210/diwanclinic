@@ -7,17 +7,19 @@ class ReservationPatientView extends StatefulWidget {
   State<ReservationPatientView> createState() => _ReservationPatientViewState();
 }
 
-class _ReservationPatientViewState extends State<ReservationPatientView> {
+class _ReservationPatientViewState extends State<ReservationPatientView>
+    with SingleTickerProviderStateMixin {
   late final ReservationPatientViewModel controller;
+  late final TabController tabController;
 
   @override
   void initState() {
+    super.initState();
     controller = initController(() => ReservationPatientViewModel());
     controller.getReservations();
     controller.setupDefaultDate();
-    controller.update();
-    // TODO: implement initState
-    super.initState();
+
+    tabController = TabController(length: 2, vsync: this);
   }
 
   @override
@@ -25,29 +27,25 @@ class _ReservationPatientViewState extends State<ReservationPatientView> {
     return GetBuilder<ReservationPatientViewModel>(
       init: controller,
       builder: (controller) {
-        final reservations = controller.sortedReservations ?? [];
-        print("reservations is ${reservations.length}");
-
         return Scaffold(
           backgroundColor: AppColors.white,
           appBar: const HomePatientAppBar(),
 
-          body: Container(
-            color: AppColors.white,
-            child: RefreshIndicator(
-              color: AppColors.primary,
-              onRefresh: () async {
-                controller.getReservations();
-                await controller.setupDefaultDate();
-              },
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+          body: SafeArea(
+            child: Container(
+              color: AppColors.white,
+              child: Column(
                 children: [
-                  // Optional: daily stats summary
-                  // _buildStats(controller, context),
-                  _buildReservationList(reservations, controller, context),
+                  _buildProfessionalTabs(controller),
+                  Expanded(
+                    child: TabBarView(
+                      controller: tabController,
+                      children: [
+                        _buildTabList(controller.otherReservations),
+                        _buildTabList(controller.completedReservations),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -58,58 +56,106 @@ class _ReservationPatientViewState extends State<ReservationPatientView> {
   }
 
   // ─────────────────────────────────────────────
-  Widget _buildReservationList(
-    List<ReservationModel?> reservations,
-    ReservationPatientViewModel controller,
-    BuildContext context,
-  ) {
-    if (reservations.isEmpty) {
-      return Center(
-        child: NoDataAnimated(
-          title: "لا توجد حجوزات",
-          subtitle: "لم تقم بأي حجز بعد",
-          lottiePath: Animations.no_prescription,
-          height: 200.h,
-
-          // ⭐ Action button
-          actionText: "إضافة حجز جديد",
-
-          // ⭐ Redirect to Specializations page
-          onAction: () {
-            Get.to(() => const SpecializationView());
-          },
-        ),
-      );
-    }
-
-    return ListView.separated(
-      physics: const NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      itemCount: reservations.length,
-      separatorBuilder: (_, __) => SizedBox(height: 10.h),
-      itemBuilder: (context, index) {
-        final reservation = reservations[index];
+  Widget _buildProfessionalTabs(ReservationPatientViewModel controller) {
+    return StatefulBuilder(
+      builder: (context, setState) {
         return Container(
+          margin: const EdgeInsets.only(left: 10, right: 10, bottom: 5),
+          height: 50.h,
           decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 3,
-                offset: const Offset(0, 2),
+            color: const Color(0xffE5E5E5),
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Row(
+            children: [
+              _tabItem(
+                title: "الحالية (${controller.otherReservations.length})",
+                index: 0,
+              ),
+              _tabItem(
+                title: "المكتملة (${controller.completedReservations.length})",
+                index: 1,
               ),
             ],
           ),
-          padding: EdgeInsets.symmetric(horizontal: 0.w, vertical: 5.h),
-          child: ReservationPatientCard(
-            reservation: reservation ?? ReservationModel(),
-            controller: controller,
-            index: index,
-            from_home: false,
-          ),
         );
       },
+    );
+  }
+
+  Widget _tabItem({required String title, required int index}) {
+    final bool isSelected = tabController.index == index;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          tabController.animateTo(index);
+          setState(() {});
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+          margin: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(25),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            title,
+            style: TextStyle(
+              color: isSelected ? Colors.white : Colors.grey.shade600,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  Widget _buildTabList(List<ReservationModel?> reservations) {
+    return RefreshIndicator(
+      color: AppColors.primary,
+      onRefresh: () async {
+        controller.getReservations();
+        await controller.setupDefaultDate();
+      },
+      child: reservations.isEmpty
+          ? ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                SizedBox(height: 150.h),
+                Center(
+                  child: NoDataAnimated(
+                    title: "لا توجد حجوزات",
+                    subtitle: "لم تقم بأي حجز بعد",
+                    lottiePath: Animations.no_prescription,
+                    height: 200.h,
+                    actionText: "إضافة حجز جديد",
+                    onAction: () {
+                      Get.to(() => const SpecializationView());
+                    },
+                  ),
+                ),
+              ],
+            )
+          : ListView.separated(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemCount: reservations.length,
+              separatorBuilder: (_, __) => SizedBox(height: 12.h),
+              itemBuilder: (context, index) {
+                final reservation = reservations[index];
+
+                return ReservationPatientCard(
+                  reservation: reservation ?? ReservationModel(),
+                  controller: controller,
+                  index: index,
+                  from_home: false,
+                );
+              },
+            ),
     );
   }
 }

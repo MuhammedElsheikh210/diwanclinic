@@ -29,10 +29,21 @@ class HomePatientController extends GetxController {
     "c27f91dd-0b5f-4b6d-9c55-0b1cd8e01409",
   ];
 
-  List<ReservationModel?> get sortedReservations {
-    return reservationVM.sortedReservations;
+  List<ReservationModel?> get activeReservations {
+    return reservationVM.otherReservations;
   }
 
+  List<OrderModel> get activeOrders {
+    return orders
+        .where((o) => o.status != "delivered" && o.status != "cancelled")
+        .toList();
+  }
+
+  List<OrderModel> get finishedOrders {
+    return orders
+        .where((o) => o.status == "delivered" || o.status == "cancelled")
+        .toList();
+  }
 
   // ------------------------------------------------------------------
   // INIT
@@ -169,8 +180,14 @@ class HomePatientController extends GetxController {
   // 🔄 REFRESH (same name – partial reload)
   // ------------------------------------------------------------------
   Future<void> refreshAll() async {
-    listReservation = await reservationVM.loadMyReservations();
+    isLoading = true;
+    update();
+
+    reservationVM.getReservations(); // 🔥 دي المهمة
+
     getSpecializationData();
+
+    isLoading = false;
     update();
   }
 

@@ -37,6 +37,8 @@ class _CreateDoctorViewState extends State<CreateDoctorView> {
     if (widget.doctor != null) {
       vm.nameController.text = widget.doctor?.name ?? "";
       vm.phoneController.text = widget.doctor?.phone ?? "";
+      vm.qualificationsController.text =
+          widget.doctor?.doctorQualifications ?? "";
       vm.whatsappController.text = widget.doctor?.whatsAppPhone ?? "";
       vm.facebookController.text = widget.doctor?.facebookLink ?? "";
       vm.instagramController.text = widget.doctor?.instagramLink ?? "";
@@ -168,6 +170,16 @@ class _CreateDoctorViewState extends State<CreateDoctorView> {
                     label: "اسم التخصص",
                     controller: controller.specializationNameController,
                     hintText: "ادخل اسم التخصص",
+                    focusNode: FocusNode(),
+                    keyboardType: TextInputType.name,
+                    validator: InputValidators.combine([notEmptyValidator]),
+                  ),
+                  SizedBox(height: 10.h),
+
+                  CustomInputField(
+                    label: "المؤهلات",
+                    controller: controller.qualificationsController,
+                    hintText: "المؤهلات",
                     focusNode: FocusNode(),
                     keyboardType: TextInputType.name,
                     validator: InputValidators.combine([notEmptyValidator]),

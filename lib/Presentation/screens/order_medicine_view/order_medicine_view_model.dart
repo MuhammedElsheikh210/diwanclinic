@@ -24,6 +24,7 @@ class OrderMedicineViewModel extends GetxController {
   static const int maxImages = 5;
   final List<XFile> selectedImages = [];
   final List<String> uploadedUrls = [];
+  bool addressError = false;
 
   final RxDouble uploadProgress = 0.0.obs;
   final RxInt currentUploadIndex = 0.obs;
@@ -39,6 +40,8 @@ class OrderMedicineViewModel extends GetxController {
   late TextEditingController notesController;
 
   bool isWhatsAppSame = true;
+  bool phoneError = false;
+
 
   // ===============================
   @override
@@ -51,6 +54,16 @@ class OrderMedicineViewModel extends GetxController {
     addressController = TextEditingController(text: user.address ?? "");
     doseController = TextEditingController();
     notesController = TextEditingController();
+
+    // 🔥 اسمع لتغييرات العنوان
+    addressController.addListener(() {
+      update(); // يعيد بناء الزرار تلقائي
+    });
+
+    phoneController.addListener(() {
+      update();
+    });
+
 
     if (whatsappController.text.isEmpty ||
         whatsappController.text == phoneController.text) {
@@ -84,6 +97,33 @@ class OrderMedicineViewModel extends GetxController {
     selectedImages.addAll(picked.take(remain));
     update();
   }
+
+  bool validateForm() {
+    final phone = phoneController.text.trim();
+    final address = addressController.text.trim();
+
+    phoneError = phone.isEmpty || !_isValidEgyptPhone(phone);
+    addressError = address.isEmpty;
+
+    if (phoneError) {
+      Loader.showError("يرجى إدخال رقم هاتف صحيح");
+    } else if (addressError) {
+      Loader.showError("يرجى إدخال عنوان التوصيل");
+    }
+
+    update();
+
+    return !phoneError && !addressError;
+  }
+
+
+  bool _isValidEgyptPhone(String phone) {
+    final cleaned = phone.trim();
+
+    final regex = RegExp(r'^01[0-2,5]{1}[0-9]{8}$');
+    return regex.hasMatch(cleaned);
+  }
+
 
   void toggleWhatsAppSame(bool? value) {
     isWhatsAppSame = value ?? true;
@@ -296,6 +336,8 @@ class OrderMedicineViewModel extends GetxController {
   // ✅ CONFIRM ORDER
   // ===========================================================================
   Future<void> confirmOrder(Function(ReservationModel) onConfirmed) async {
+    if (!validateForm()) return;
+
     Loader.show();
     final pharmacy = await getPharmacyData();
 

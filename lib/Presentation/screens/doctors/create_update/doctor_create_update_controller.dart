@@ -1,11 +1,5 @@
 import 'dart:io';
-import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:diwanclinic/Data/Models/User_local/save_local_user.dart';
-import 'package:diwanclinic/Data/Models/User_local/user_types_enums.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../../index/index_main.dart';
-import '../list/doctor_view_model.dart';
 
 class CreateDoctorViewModel extends GetxController {
   final String specializeKey;
@@ -17,7 +11,10 @@ class CreateDoctorViewModel extends GetxController {
   final TextEditingController facebookController = TextEditingController();
   final TextEditingController instagramController = TextEditingController();
   final TextEditingController tiktokController = TextEditingController();
-  final TextEditingController specializationNameController = TextEditingController();
+  final TextEditingController specializationNameController =
+      TextEditingController();
+  final TextEditingController qualificationsController =
+      TextEditingController();
 
   File? profileImageFile;
   File? coverImageFile;
@@ -57,7 +54,9 @@ class CreateDoctorViewModel extends GetxController {
   Future<String?> _uploadImage(File file, String folder) async {
     try {
       final fileName = "${DateTime.now().millisecondsSinceEpoch}.jpg";
-      final ref = FirebaseStorage.instance.ref().child("doctors/$folder/$fileName");
+      final ref = FirebaseStorage.instance.ref().child(
+        "doctors/$folder/$fileName",
+      );
       await ref.putFile(file);
       return await ref.getDownloadURL();
     } catch (e) {
@@ -74,7 +73,8 @@ class CreateDoctorViewModel extends GetxController {
 
     /// If doctor exists (EDIT MODE), load remote reservation ability
     if (existingDoctor != null) {
-      remoteReservationAbility = existingDoctor?.remote_reservation_ability ?? 0;
+      remoteReservationAbility =
+          existingDoctor?.remote_reservation_ability ?? 0;
     }
   }
 
@@ -114,6 +114,7 @@ class CreateDoctorViewModel extends GetxController {
   void _updateDoctor(LocalUser doctor, String? profileUrl, String? coverUrl) {
     final updatedDoctor = doctor.copyWith(
       name: nameController.text,
+      doctorQualifications: qualificationsController.text,
       phone: phoneController.text,
       whatsAppPhone: whatsappController.text,
       facebookLink: facebookController.text,
@@ -136,7 +137,10 @@ class CreateDoctorViewModel extends GetxController {
   }
 
   /// 🔹 Create new doctor account
-  Future<void> _createDoctorAccount(String? profileUrl, String? coverUrl) async {
+  Future<void> _createDoctorAccount(
+    String? profileUrl,
+    String? coverUrl,
+  ) async {
     final email = "${phoneController.text}@link.com";
     final password = phoneController.text;
 
@@ -150,6 +154,7 @@ class CreateDoctorViewModel extends GetxController {
         uid: uid,
         key: const Uuid().v4(),
         phone: phoneController.text,
+        doctorQualifications: qualificationsController.text,
         whatsAppPhone: whatsappController.text,
         facebookLink: facebookController.text,
         instagramLink: instagramController.text,
@@ -181,7 +186,7 @@ class CreateDoctorViewModel extends GetxController {
 
   void refreshListView() {
     final doctorVM = initController(
-          () => DoctorViewModel(specializeKey: specializeKey),
+      () => DoctorViewModel(specializeKey: specializeKey),
     );
     doctorVM.getData();
     doctorVM.update();
@@ -196,6 +201,7 @@ class CreateDoctorViewModel extends GetxController {
   void dispose() {
     nameController.dispose();
     phoneController.dispose();
+    qualificationsController.dispose();
     whatsappController.dispose();
     facebookController.dispose();
     instagramController.dispose();

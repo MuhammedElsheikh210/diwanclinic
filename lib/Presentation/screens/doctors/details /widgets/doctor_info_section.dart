@@ -59,6 +59,47 @@ class DoctorHeaderWidget extends StatelessWidget {
             ),
           ),
         ),
+        Positioned(
+          bottom: -50.h,
+          right: 10.w,
+          child: InkWell(
+            onTap: () => Get.to(
+              () => FullScreenImageView(imageUrl: doctor.profileImage ?? ""),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: 100.w,
+                  height: 100.h,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 4),
+                    image: DecorationImage(
+                      image: CachedNetworkImageProvider(
+                        doctor.profileImage ??
+                            "https://via.placeholder.com/150x150?text=Profile",
+                      ),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                SizedBox(
+                  width: ScreenUtil().screenWidth - 140.w,
+                  child: Text(
+                    doctor.doctorQualifications ?? "",
+                    maxLines: 2,
+                    style: context.typography.mdBold.copyWith(
+                      color: AppColors.background_black,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }

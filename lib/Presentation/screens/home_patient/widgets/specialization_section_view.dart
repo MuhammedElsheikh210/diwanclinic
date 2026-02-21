@@ -24,9 +24,9 @@ class SpecializationSectionView extends StatelessWidget {
         SizedBox(height: 14.h),
 
         Padding(
-          padding: EdgeInsets.only(right: 12.0.w),
+          padding: EdgeInsets.symmetric(horizontal: 20.w),
           child: GridView.builder(
-            padding: const EdgeInsets.only(top: 4, left: 10),
+            padding: const EdgeInsets.only(top: 4, left: 0),
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(

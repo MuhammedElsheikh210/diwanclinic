@@ -30,21 +30,7 @@ class _SpecializationViewState extends State<SpecializationView> {
             backgroundColor: AppColors.white,
             appBar: AppBar(
               backgroundColor: AppColors.white,
-              actions: [
-                InkWell(
-                  onTap: () {
-                    Get.toNamed(notificationsView);
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                    child: SvgPicture.asset(
-                      IconsConstants.notification,
-                      height: 30.h,
-                      width: 30.w,
-                    ),
-                  ),
-                ),
-              ],
+
               title: Text(
                 "التخصصات",
                 style: context.typography.xlBold.copyWith(
@@ -127,7 +113,7 @@ class _SpecializationViewState extends State<SpecializationView> {
                           ),
                           child: SpecializeCard(
                             categoryEntity: category,
-                          //  controller: controller,
+                            //  controller: controller,
                             showAdminActions: isAdmin,
                           ),
                         );

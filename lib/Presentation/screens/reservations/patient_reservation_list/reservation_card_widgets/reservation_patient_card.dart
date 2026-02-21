@@ -83,10 +83,7 @@ class ReservationPatientCard extends StatelessWidget {
                   reservation: reservation,
                   onConfirmed: (ReservationModel p1) {
                     controller.updateReservation(p1);
-                    Get.offAll(
-                      () => const MainPage(initialIndex: 2),
-                      binding: Binding(),
-                    );
+                    Get.off(() => const OrderSuccessView());
                   },
                 ),
                 binding: Binding(),

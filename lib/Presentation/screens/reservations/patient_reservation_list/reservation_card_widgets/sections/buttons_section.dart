@@ -51,35 +51,38 @@ class ButtonsSection extends StatelessWidget {
       );
     }
     //
-    // // 🔴 إلغاء
-    // if (![
-    //   ReservationStatus.completed,
-    //   ReservationStatus.cancelledByUser,
-    //   ReservationStatus.cancelledByAssistant,
-    //   ReservationStatus.cancelledByDoctor,
-    // ].contains(status)) {
-    //   buttons.add(
-    //     Expanded(
-    //       child: PrimaryTextButton(
-    //         onTap: () async {
-    //           NotificationHandler().sendStatusNotification(
-    //             newStatus: ReservationStatus.cancelledByUser,
-    //             reservation: reservation,
-    //             toToken: reservation.fcmToken_assist ?? "",
-    //           );
-    //         },
-    //         appButtonSize: AppButtonSize.large,
-    //         customBackgroundColor: AppColors.errorForeground,
-    //         label: AppText(
-    //           text: "إلغاء",
-    //           textStyle: context.typography.mdMedium.copyWith(
-    //             color: Colors.white,
-    //           ),
-    //         ),
-    //       ),
-    //     ),
-    //   );
-    // }
+    // 🔴 إلغاء
+    if (![
+      ReservationStatus.completed,
+      ReservationStatus.cancelledByUser,
+      ReservationStatus.cancelledByAssistant,
+      ReservationStatus.cancelledByDoctor,
+    ].contains(status)) {
+      buttons.add(
+        Expanded(
+          child: PrimaryTextButton(
+            onTap: () async {
+              await _updateStatus(ReservationStatus.cancelledByUser);
+
+              print("يخرررث");
+              NotificationHandler().sendStatusNotification(
+                newStatus: ReservationStatus.cancelledByUser,
+                reservation: reservation,
+                toToken: reservation.fcmToken_assist ?? "",
+              );
+            },
+            appButtonSize: AppButtonSize.large,
+            customBackgroundColor: AppColors.errorForeground,
+            label: AppText(
+              text: "إلغاء",
+              textStyle: context.typography.mdMedium.copyWith(
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
     // ⭐ تقييم الدكتور
     if (status == ReservationStatus.completed &&
@@ -121,5 +124,44 @@ class ButtonsSection extends StatelessWidget {
       builder: (_) =>
           FeedbackSheet(reservation: reservation, controller: controller),
     );
+  }
+
+  Future<void> _updateStatus(ReservationStatus newStatus) async {
+    if (newStatus == ReservationStatus.completed) {
+      try {
+        final phone = reservation.patientPhone ?? "";
+        if (phone.isNotEmpty) {
+          final formatted = WhatsAppManager.formatNumber(phone);
+          //  const formatted = "01551061194";
+
+          final patient = reservation.patientName ?? "المريض";
+          final doctor = LocalUser().getUserData().name ?? "العيادة";
+          const android = Strings.url_android;
+          const ios = Strings.url_ios;
+
+          final message =
+              """
+من عيادة د. $doctor 👨‍⚕️
+
+الكشف خلص يا $patient 🌿  
+تقدر تطلب العلاج لحد بيتك مع خصم 5٪ - 10٪
+
+سجل دخول على تطبيق لينك باستخدام رقمك:  
+$phone
+
+📱 أندرويد: $android  
+🍎 آيفون: $ios
+""";
+
+          if (controller.selectedClinic?.sendWhatsapp == 1) {
+            await WhatsAppManager.sendMessage(to: formatted, body: message);
+          }
+        }
+      } catch (_) {}
+    }
+
+    reservation.status = newStatus.value;
+    controller.updateReservation(reservation);
+    Loader.showSuccess("تم تحديث الحالة إلى ${newStatus.label}");
   }
 }

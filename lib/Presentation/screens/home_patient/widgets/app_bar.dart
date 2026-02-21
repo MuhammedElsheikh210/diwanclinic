@@ -1,10 +1,7 @@
 import '../../../../index/index_main.dart';
 
 class HomePatientAppBar extends StatelessWidget implements PreferredSizeWidget {
-
-  const HomePatientAppBar({
-    super.key,
-  });
+  const HomePatientAppBar({super.key});
 
   @override
   Size get preferredSize => Size.fromHeight(70.h);
@@ -68,7 +65,7 @@ class HomePatientAppBar extends StatelessWidget implements PreferredSizeWidget {
   // ------------------------------------------------------------
   Widget _buildProfileAvatar() {
     return Container(
-      padding: EdgeInsets.all(2),
+      padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: AppColors.white,
@@ -83,11 +80,11 @@ class HomePatientAppBar extends StatelessWidget implements PreferredSizeWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(60),
         child: Image.asset(
-                Images.logo_brown,
-                width: 50.w,
-                height: 50.w,
-                fit: BoxFit.cover,
-              ),
+          Images.logo_brown,
+          width: 50.w,
+          height: 50.w,
+          fit: BoxFit.cover,
+        ),
       ),
     );
   }

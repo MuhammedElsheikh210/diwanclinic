@@ -20,7 +20,7 @@ class Images {
   static const String shoppingcart = "assets/images/no_product.jpg";
   static const String no_data = "assets/images/no_data.jpg";
   static const String deposite = "assets/images/deposite.png";
-
-
-
+  static const String onboard_1 = "assets/images/onboard_1.png";
+  static const String onboard_2 = "assets/images/onboard_2.png";
+  static const String onboard_3 = "assets/images/onboard_3.png";
 }

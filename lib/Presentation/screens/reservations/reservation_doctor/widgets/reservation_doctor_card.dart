@@ -350,8 +350,8 @@ class ReservationDoctorCard extends StatelessWidget {
       try {
         final phone = reservation.patientPhone ?? "";
         if (phone.isNotEmpty) {
-          //   final formatted = WhatsAppManager.formatNumber(phone);
-          const formatted = "01551061194";
+             final formatted = WhatsAppManager.formatNumber(phone);
+        //  const formatted = "01551061194";
 
           final patient = reservation.patientName ?? "المريض";
           final doctor = LocalUser().getUserData().name ?? "العيادة";

@@ -7,11 +7,7 @@ class DoctorCard extends StatelessWidget {
   final LocalUser doctor;
   final DoctorViewModel controller;
 
-  const DoctorCard({
-    super.key,
-    required this.doctor,
-    required this.controller,
-  });
+  const DoctorCard({super.key, required this.doctor, required this.controller});
 
   bool get isAdmin {
     final currentUser = LocalUser().getUserData();
@@ -45,18 +41,18 @@ class DoctorCard extends StatelessWidget {
           children: [
             // 👨‍⚕️ Doctor Avatar
             CircleAvatar(
-              radius: 30.r,
+              radius: 70.r,
               backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-              backgroundImage: doctor.profileImage != null &&
-                  doctor.profileImage!.isNotEmpty
+              backgroundImage:
+                  doctor.profileImage != null && doctor.profileImage!.isNotEmpty
                   ? NetworkImage(doctor.profileImage!)
                   : null,
               child: doctor.profileImage == null || doctor.profileImage!.isEmpty
                   ? Icon(
-                Icons.person_rounded,
-                color: AppColors.primary,
-                size: 30.sp,
-              )
+                      Icons.person_rounded,
+                      color: AppColors.primary,
+                      size: 30.sp,
+                    )
                   : null,
             ),
 
@@ -65,66 +61,72 @@ class DoctorCard extends StatelessWidget {
             // 🩺 Doctor Info
             Expanded(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   // 👨‍⚕️ Doctor Name
                   Text(
                     doctor.name ?? "بدون اسم",
                     style: typography.mdBold.copyWith(
                       color: AppColors.textDisplay,
-                      fontSize: 16.sp,
+                      fontSize: 20.sp,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
 
-                  // 🧠 Specialization Name
-                  if (doctor.specializationName != null &&
-                      doctor.specializationName!.isNotEmpty)
-                    Padding(
-                      padding: EdgeInsets.only(top: 2.h),
-                      child: Text(
-                        doctor.specializationName!,
-                        style: typography.smRegular.copyWith(
-                          color: AppColors.textSecondaryParagraph,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                  // 👨‍⚕️ Doctor Name
+                  Text(
+                    doctor.address ?? "بدون اسم",
+                    style: typography.smRegular.copyWith(
+                      color: AppColors.textDisplay,
                     ),
-
-                  SizedBox(height: 6.h),
-
-                  // ⭐ Rating
-                  Row(
-                    children: [
-                      const Icon(Icons.star,
-                          color: AppColors.yellowForeground, size: 18),
-                      SizedBox(width: 4.w),
-                      Text(
-                        "${doctor.totalRate?.toStringAsFixed(1) ?? '0.0'} "
-                            "(${doctor.numberOfRates ?? 0})",
-                        style: typography.smRegular.copyWith(
-                          color: AppColors.textSecondaryParagraph,
-                        ),
-                      ),
-                    ],
+                    overflow: TextOverflow.ellipsis,
                   ),
 
-                  SizedBox(height: 6.h),
+                  // ⭐ Rating
+                  doctor.totalRate == 0.0
+                      ? const SizedBox()
+                      : Padding(
+                          padding: const EdgeInsets.only(top: 5.0),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.star,
+                                color: AppColors.yellowForeground,
+                                size: 18,
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                "${doctor.totalRate?.toStringAsFixed(1) ?? '0.0'} "
+                                "(${doctor.numberOfRates ?? 0})",
+                                style: typography.smRegular.copyWith(
+                                  color: AppColors.textSecondaryParagraph,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
 
                   // 📱 Phone Number
                   if (doctor.phone != null && doctor.phone!.isNotEmpty)
-                    Row(
-                      children: [
-                        const Icon(Icons.phone,
-                            color: AppColors.primary, size: 16),
-                        SizedBox(width: 4.w),
-                        Text(
-                          doctor.phone!,
-                          style: typography.smRegular.copyWith(
-                            color: AppColors.textSecondaryParagraph,
+                    Padding(
+                      padding: const EdgeInsets.only(top: 5.0),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.phone,
+                            color: AppColors.primary,
+                            size: 16,
                           ),
-                        ),
-                      ],
+                          SizedBox(width: 4.w),
+                          Text(
+                            doctor.phone!,
+                            style: typography.mdRegular.copyWith(
+                              color: AppColors.textSecondaryParagraph,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                 ],
               ),

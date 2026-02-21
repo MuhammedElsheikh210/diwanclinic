@@ -132,8 +132,10 @@ class LoginViewModel extends GetxController {
     final exists = await databaseExists(path);
 
     if (!exists) {
-      Get.offAll(() => const SyncMedicineView(),
-          binding: SyncMedicineBinding());
+      Get.offAll(
+        () => const SyncMedicineView(),
+        binding: SyncMedicineBinding(),
+      );
       return;
     }
 
@@ -143,8 +145,10 @@ class LoginViewModel extends GetxController {
     );
     if (count == null || count == 0) {
       // 🟡 DB موجودة لكن فاضية
-      Get.offAll(() => const SyncMedicineView(),
-          binding: SyncMedicineBinding());
+      Get.offAll(
+        () => const SyncMedicineView(),
+        binding: SyncMedicineBinding(),
+      );
     } else {
       // 🟢 طبيعي
       Get.offAll(() => const MainPage());

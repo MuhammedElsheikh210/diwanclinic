@@ -53,62 +53,68 @@ class _PatientHomeViewState extends State<PatientHomeView> {
                               right: 16.w,
                               bottom: 12.h,
                             ),
-                            child: Column(
+                            child: Row(
                               children: [
-                                HomeFeatureTile(
-                                  title: "احجز كشف",
-                                  subtitle:
-                                      "تابع دورك لحظة بلحظة واستقبل التحديثات فورًا",
-                                  icon: Icons.calendar_month,
-                                  color: AppColors.primary,
-                                  onTap: () {
-                                    Get.to(() => const SpecializationView());
-                                  },
+                                Expanded(
+                                  child: HomeFeatureTile(
+                                    title: "احجز كشف",
+                                    subtitle:
+                                        "تابع دورك لحظة بلحظة واستقبل التحديثات فورًا",
+                                    icon: Icons.calendar_month,
+                                    color: AppColors.primary,
+                                    onTap: () {
+                                      Get.to(() => const SpecializationView());
+                                    },
+                                  ),
                                 ),
 
                                 SizedBox(height: 12.h),
 
-                                HomeFeatureTile(
-                                  title: "اطلب علاج بخصم",
-                                  subtitle:
-                                      "خصم يصل إلى 10٪ وتوصيل العلاج لحد باب البيت",
-                                  icon: Icons.medical_services,
-                                  color: AppColors.successForeground,
-                                  onTap: () {
-                                    // Build reservation with urls
-                                    final reservation = ReservationModel(
-                                      patientKey: LocalUser().getUserData().key,
-                                      patientUid: LocalUser().getUserData().uid,
-                                      fcmToken_patient: LocalUser()
-                                          .getUserData()
-                                          .fcmToken,
-                                      patientPhone: LocalUser()
-                                          .getUserData()
-                                          .phone,
-                                      patientName: LocalUser()
-                                          .getUserData()
-                                          .name,
-                                    );
+                                Expanded(
+                                  child: HomeFeatureTile(
+                                    title: "اطلب علاج بخصم",
+                                    subtitle:
+                                        "خصم يصل إلى 10٪ وتوصيل العلاج لحد باب البيت",
+                                    icon: Icons.medical_services,
+                                    color: AppColors.successForeground,
+                                    onTap: () {
+                                      // Build reservation with urls
+                                      final reservation = ReservationModel(
+                                        patientKey: LocalUser()
+                                            .getUserData()
+                                            .key,
+                                        patientUid: LocalUser()
+                                            .getUserData()
+                                            .uid,
+                                        fcmToken_patient: LocalUser()
+                                            .getUserData()
+                                            .fcmToken,
+                                        patientPhone: LocalUser()
+                                            .getUserData()
+                                            .phone,
+                                        patientName: LocalUser()
+                                            .getUserData()
+                                            .name,
+                                      );
 
-                                    Get.to(
-                                      () => OrderMedicineScreen(
-                                        reservation: reservation,
-                                        onConfirmed: (ReservationModel p1) {
-                                          // controller.updateReservation(p1);
-                                          Get.offAll(
-                                            () =>
-                                                const MainPage(initialIndex: 2),
-                                            binding: Binding(),
-                                          );
-                                        },
-                                      ),
-                                      binding: Binding(),
-                                    );
-                                  },
+                                      Get.to(
+                                        () => OrderMedicineScreen(
+                                          reservation: reservation,
+                                          onConfirmed: (ReservationModel p1) {
+                                            Get.off(
+                                              () => const OrderSuccessView(),
+                                            );
+                                          },
+                                        ),
+                                        binding: Binding(),
+                                      );
+                                    },
+                                  ),
                                 ),
                               ],
                             ),
                           ),
+                          SizedBox(height: 10.h),
 
                           ReservationSectionView(controller: controller),
                           SizedBox(height: 24.h),
@@ -129,7 +135,7 @@ class _PatientHomeViewState extends State<PatientHomeView> {
   }
 }
 
-class HomeFeatureTile extends StatelessWidget {
+class HomeFeatureTile extends StatefulWidget {
   final String title;
   final String subtitle;
   final IconData icon;
@@ -146,70 +152,82 @@ class HomeFeatureTile extends StatelessWidget {
   });
 
   @override
+  State<HomeFeatureTile> createState() => _HomeFeatureTileState();
+}
+
+class _HomeFeatureTileState extends State<HomeFeatureTile> {
+  bool isPressed = false;
+
+  @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20.r),
-      splashColor: color.withOpacity(0.08),
-      highlightColor: Colors.transparent,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(20.r),
-          border: Border.all(color: AppColors.grayLight.withOpacity(0.45)),
-        ),
-        child: Row(
-          children: [
-            /// 🔹 Leading icon
-            Container(
-              width: 46.w,
-              height: 46.w,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(14.r),
-              ),
-              child: Icon(icon, color: color, size: 24.sp),
+    return GestureDetector(
+      onTap: widget.onTap,
+      onTapDown: (_) => setState(() => isPressed = true),
+      onTapUp: (_) => setState(() => isPressed = false),
+      onTapCancel: () => setState(() => isPressed = false),
+      child: AnimatedScale(
+        duration: const Duration(milliseconds: 120),
+        scale: isPressed ? 0.97 : 1,
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 22.h, horizontal: 16.w),
+          margin: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(24.r),
+
+            // 👇 Border أنعم
+            border: Border.all(
+              color: widget.color.withOpacity(0.25),
+              width: 1.1,
             ),
 
-            SizedBox(width: 14.w),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.035),
+                blurRadius: 14,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              /// Arrow in corner
+              Positioned(
+                left: 0,
+                child: Icon(
+                  Icons.arrow_forward_ios,
+                  size: 14.sp,
+                  color: Colors.grey.shade400,
+                ),
+              ),
 
-            /// 🔹 Title + Subtitle
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              /// Main Content
+              Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  Container(
+                    width: 60.w,
+                    height: 60.w,
+                    decoration: BoxDecoration(
+                      color: widget.color.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(18.r),
+                    ),
+                    child: Icon(widget.icon, color: widget.color, size: 28.sp),
+                  ),
+                  SizedBox(height: 16.h),
                   Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    widget.title,
+                    textAlign: TextAlign.center,
                     style: context.typography.mdMedium.copyWith(
                       fontWeight: FontWeight.w700,
-                      height: 1.2,
-                    ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: context.typography.smMedium.copyWith(
-                      color: AppColors.grayMedium,
-                      height: 1.3,
+                      fontSize: 16.sp,
                     ),
                   ),
                 ],
               ),
-            ),
-
-            /// 🔹 Trailing chevron
-            Icon(
-              Icons.chevron_right, // RTL-friendly
-              color: AppColors.grayLight,
-              size: 22.sp,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -114,7 +114,12 @@ class OrderMedicineScreen extends StatelessWidget {
       return vm.selectedImages.isEmpty ? null : vm.uploadImagesAndNext;
     }
 
-    return () => vm.confirmOrder(onConfirmed);
+    final phoneValid = vm.phoneController.text.trim().isNotEmpty;
+    final addressValid = vm.addressController.text.trim().isNotEmpty;
+
+    return (phoneValid && addressValid)
+        ? () => vm.confirmOrder(onConfirmed)
+        : null;
   }
 
   String _buttonText(OrderMedicineViewModel vm) {
@@ -249,7 +254,13 @@ class OrderMedicineScreen extends StatelessWidget {
             title: "بيانات التواصل",
             child: Column(
               children: [
-                _field("رقم الهاتف", vm.phoneController, context),
+                _field(
+                  "رقم الهاتف *",
+                  vm.phoneController,
+                  context,
+                  type: TextInputType.phone,
+                  errorText: vm.phoneError ? "رقم هاتف غير صحيح" : null,
+                ),
                 _whatsAppSame(vm, context),
                 if (!vm.isWhatsAppSame)
                   _field("رقم الواتساب", vm.whatsappController, context),
@@ -267,7 +278,13 @@ class OrderMedicineScreen extends StatelessWidget {
             title: "بيانات التوصيل",
             child: Column(
               children: [
-                _field("العنوان", vm.addressController, context, max: 2),
+                _field(
+                  "العنوان *",
+                  vm.addressController,
+                  context,
+                  max: 2,
+                  errorText: vm.addressError ? "العنوان مطلوب" : null,
+                ),
               ],
             ),
           ),
@@ -367,6 +384,7 @@ class OrderMedicineScreen extends StatelessWidget {
     BuildContext context, {
     int max = 1,
     TextInputType type = TextInputType.text,
+    String? errorText,
   }) {
     return Padding(
       padding: EdgeInsets.only(bottom: 12.h),
@@ -384,6 +402,7 @@ class OrderMedicineScreen extends StatelessWidget {
             controller: controller,
             maxLines: max,
             keyboardType: type,
+            errorText: errorText, // ✅ ده الصح
           ),
         ],
       ),
