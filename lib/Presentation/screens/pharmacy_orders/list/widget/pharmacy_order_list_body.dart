@@ -1,4 +1,5 @@
 import 'package:diwanclinic/Presentation/screens/pharmacy_orders/PricingSearchView/PricingSearchView.dart';
+import 'package:diwanclinic/Presentation/screens/pharmacy_orders/list/bottom_sheets/cancel_with_reason_dialog.dart';
 
 import '../../../../../index/index_main.dart';
 
@@ -61,14 +62,18 @@ class PharmacyOrdersListBody extends StatelessWidget {
   }
 
   void _showCancelDialog(BuildContext context, OrderModel order) {
-    ActionDialogHelper.show(
+    CancelWithReasonDialog.show(
       context: context,
-      title: "إلغاء الطلب",
-      message:
-          "هل أنت متأكد من إلغاء هذا الطلب؟ لا يمكن التراجع عن هذا الإجراء.",
-      confirmText: "إلغاء",
-      confirmColor: AppColors.errorForeground,
-      onConfirm: () {
+      title: "إلغاء الحجز",
+      confirmText: "تأكيد الإلغاء",
+      reasons: [
+        "الدواء غير متوفر في المخزن",
+        "الخدمة متاحة في طنطا فقط",
+        "خطأ في بيانات الطلب",
+        "سبب آخر",
+      ],
+      onConfirm: (reason) {
+        order.copyWith(cancel_reason: reason);
         vm.updateOrderStatus(order: order, newStatus: "cancelled");
       },
     );

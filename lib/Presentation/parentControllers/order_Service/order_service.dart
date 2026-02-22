@@ -36,6 +36,7 @@ class OrderService {
   Future<void> updateOrderData({
     required OrderModel order,
     OrderSideEffects? sideEffects,
+    String? reason,
     required Function(ResponseStatus) voidCallBack,
   }) async {
     Loader.show();

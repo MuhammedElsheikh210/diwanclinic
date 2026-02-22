@@ -11,6 +11,7 @@ class OrderModel {
   final String? doctorKey;
   final String? clinicKey;
   final String? fcmToken;
+   String? cancel_reason;
 
   // 🧑‍⚕️ Names
   final String? patientName;
@@ -63,6 +64,7 @@ class OrderModel {
     this.medicines,
     this.fcmToken,
     this.patientPhone,
+    this.cancel_reason,
     this.patientaddress,
     this.reservationKey,
     this.patientKey,
@@ -102,6 +104,7 @@ class OrderModel {
     final data = <String, dynamic>{};
 
     if (key != null) data['key'] = key;
+    if (cancel_reason != null) data['cancel_reason'] = cancel_reason;
     if (patientuid != null) data['patientuid'] = patientuid;
     if (patientPhone != null) data['patientPhone'] = patientPhone;
     if (patientaddress != null) data['patientaddress'] = patientaddress;
@@ -158,6 +161,7 @@ class OrderModel {
   factory OrderModel.fromJson(Map<String, dynamic> json) {
     return OrderModel(
       key: json['key'],
+      cancel_reason: json['cancel_reason'],
       patientuid: json['patientuid'],
       patientPhone: json['patientPhone'],
       patientaddress: json['patientaddress'],
@@ -221,6 +225,7 @@ class OrderModel {
     String? patientUid,
     String? patientPhone,
     String? patientAddress,
+    String? cancel_reason,
     String? fcmToken,
     String? reservationKey,
     String? patientKey,
@@ -269,6 +274,7 @@ class OrderModel {
       doctorKey: doctorKey ?? this.doctorKey,
       clinicKey: clinicKey ?? this.clinicKey,
       medicines: medicines ?? this.medicines,
+      cancel_reason: cancel_reason ?? this.cancel_reason,
       patientName: patientName ?? this.patientName,
       doctorName: doctorName ?? this.doctorName,
       phone: phone ?? this.phone,

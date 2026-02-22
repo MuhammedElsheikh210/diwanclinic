@@ -67,7 +67,7 @@ class PricingSummary extends StatelessWidget {
             const SizedBox(height: 6),
             _options<double>(
               context,
-              values: const [10, 15, 20],
+              values: const [15, 20, 25],
               selected: controller.deliveryFee,
               onSelect: controller.setDelivery,
               formatter: (v) => "${v.toStringAsFixed(0)} ج",

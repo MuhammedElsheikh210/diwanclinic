@@ -75,6 +75,7 @@ class PharmacyOrdersListViewModel extends GetxController {
   Future<void> updateOrderStatus({
     required OrderModel order,
     required String newStatus,
+     String? reason,
   }) async {
     await OrderStatusService.updateOrderStatus(
       order: order,
@@ -82,6 +83,7 @@ class PharmacyOrdersListViewModel extends GetxController {
       onSave: (updatedOrder) async {
         await _service.updateOrderData(
           order: updatedOrder,
+          reason: reason,
           voidCallBack: (_) async {
             await fetchOrders();
           },

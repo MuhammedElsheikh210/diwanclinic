@@ -118,7 +118,7 @@ class _PricingSearchViewState extends State<PricingSearchView> {
                                 keys[index],
                               ),
                               onIncrease: () => c.increaseQty(e),
-                              onDecrease: () => c.decreaseQty(e),
+                              onDecrease: () => c.decreaseQty(e, context),
                             );
                           }).toList(),
                         ),

@@ -23,9 +23,9 @@ class OrderUseCases {
 
   /// 📥 Get list of orders (with filters)
   Future<Either<AppError, List<OrderModel?>>> getOrders(
-      Map<String, dynamic> data,
-      bool? isFiltered,
-      ) {
+    Map<String, dynamic> data,
+    bool? isFiltered,
+  ) {
     return _repository.getOrdersDomain(data, SQLiteQueryParams(), isFiltered);
   }
 }

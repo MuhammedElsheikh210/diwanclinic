@@ -19,35 +19,31 @@ class PricingSearchController extends GetxController {
   double discountPercent = 0.0;
   double deliveryFee = 15;
 
-  // subtotal already num → نخليه int
+  // ───────────── Calculations ─────────────
+
   int get subtotalInt =>
       selectedMedicines.fold<int>(0, (s, e) => s + e.total.round());
 
-  // الخصم يتقرب لأقرب عدد صحيح
   int get discountValueInt => (subtotalInt * discountPercent).round();
 
-  // التوصيل عدد صحيح
   int get deliveryFeeInt => deliveryFee.round();
 
-  // الإجمالي النهائي
   int get totalInt => subtotalInt - discountValueInt + deliveryFeeInt;
 
   void initWithOrder(OrderModel order) {
-    // 🎯 لو تابع كشف
     if (order.reservationKey != null && order.reservationKey!.isNotEmpty) {
       discountPercent = 0.05; // 5%
     } else {
-      discountPercent = 0.10; // 10% (Free)
+      discountPercent = 0.10; // 10%
     }
 
     update();
   }
 
-  // ───────────── Search Logic (PRODUCTION) ─────────────
+  // ───────────── Search Logic ─────────────
   void onSearchChanged(String value) {
     final keyword = value.trim();
 
-    // ⛔ Ignore short keywords
     if (keyword.length < 2) {
       _debounce?.cancel();
       searchResults.clear();
@@ -62,7 +58,6 @@ class PricingSearchController extends GetxController {
       isLoading = true;
       update();
 
-
       try {
         await MedicineService().searchMedicinesData(
           keyword: keyword,
@@ -73,7 +68,6 @@ class PricingSearchController extends GetxController {
           },
         );
       } catch (_) {
-        // ❗ Search error ≠ critical error
         searchResults = [];
         isLoading = false;
         update();
@@ -105,21 +99,37 @@ class PricingSearchController extends GetxController {
   }
 
   // ───────────── Quantity Controls ─────────────
+
   void increaseQty(SelectedMedicine item) {
     item.quantity++;
     update();
   }
 
-  void decreaseQty(SelectedMedicine item) {
-    if (item.quantity <= 1) return;
-    item.quantity--;
-    update();
+  void decreaseQty(SelectedMedicine item, BuildContext context) {
+    if (item.quantity > 1) {
+      item.quantity--;
+      update();
+      return;
+    }
+
+    // 👇 لو الكمية = 1 → نسأل قبل الحذف
+    ActionDialogHelper.show(
+      context: context,
+      title: "حذف الدواء",
+      message: "هل أنت متأكد من حذف هذا الدواء من الطلب؟",
+      confirmText: "حذف",
+      confirmColor: AppColors.errorForeground,
+      onConfirm: () {
+        selectedMedicines.remove(item);
+        update();
+      },
+    );
   }
 
   // ───────────── Add Medicine ─────────────
   void addMedicine(MedicineModel medicine) {
     final index = selectedMedicines.indexWhere(
-      (e) => e.medicine.id == medicine.id,
+          (e) => e.medicine.id == medicine.id,
     );
 
     searchResults.clear();

@@ -42,7 +42,7 @@ class OrderStatusService {
     await notificationService.sendToToken(
       token: userType ? order.fcmToken ?? "" : token,
       title: _notificationTitle(order.status),
-      body: _notificationBody(order),
+      body: order.cancel_reason ?? _notificationBody(order),
       voidCallBack: (status) async {
         if (status != ResponseStatus.success) return;
 
