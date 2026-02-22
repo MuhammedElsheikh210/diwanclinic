@@ -26,26 +26,31 @@ class ReservationQueryManager {
   }
 
   // ------------------------------------------------------------
-  Future<List<ReservationModel>> fetchByDateAndClinic({
+  Future<List<ReservationModel>> fetchByDateClinicAndShift({
     required String? appointmentDate,
     required ClinicModel? selectedClinic,
+    required GenericListModel? selectedShift,
     bool isFiltered = false,
     bool? fromOnline,
   }) async {
-    if (appointmentDate == null) return [];
-
-    String where = "appointment_date_time = ?";
-    final whereArgs = <Object?>[appointmentDate];
-
-    if (selectedClinic?.key != null) {
-      where += " AND clinic_key = ?";
-      whereArgs.add(selectedClinic!.key);
+    if (appointmentDate == null ||
+        selectedClinic == null ||
+        selectedShift == null) {
+      return [];
     }
+
+    String where =
+        "appointment_date_time = ? AND clinic_key = ? AND shift_key = ?";
+    final whereArgs = <Object?>[
+      appointmentDate,
+      selectedClinic.key,
+      selectedShift.key,
+    ];
 
     return await getReservations(
       appointmentDate: appointmentDate,
       query: SQLiteQueryParams(
-        is_filtered: isFiltered,
+        is_filtered: true,
         where: where,
         whereArgs: whereArgs,
         orderBy: "order_num ASC",
@@ -59,12 +64,14 @@ class ReservationQueryManager {
   Future<List<ReservationModel>> fetchAllReservationsOfDay({
     required String? appointmentDate,
     required ClinicModel? selectedClinic,
+    required GenericListModel? selectedShift,
     bool isFiltered = false,
     bool? fromOnline,
   }) async {
-    return await fetchByDateAndClinic(
+    return await fetchByDateClinicAndShift(
       appointmentDate: appointmentDate,
       selectedClinic: selectedClinic,
+      selectedShift: selectedShift,
       isFiltered: isFiltered,
       fromOnline: fromOnline,
     );
@@ -73,10 +80,16 @@ class ReservationQueryManager {
   // ------------------------------------------------------------
   Future<int> getTotalByDate({
     required String? appointmentDate,
+    required ClinicModel? selectedClinic,
+    required GenericListModel? selectedShift,
     bool isFiltered = false,
     bool? fromOnline,
   }) async {
-    if (appointmentDate == null) return 0;
+    if (appointmentDate == null ||
+        selectedClinic == null ||
+        selectedShift == null) {
+      return 0;
+    }
 
     int count = 0;
 
@@ -84,9 +97,9 @@ class ReservationQueryManager {
       date: appointmentDate,
       data: FirebaseFilter(),
       query: SQLiteQueryParams(
-        is_filtered: isFiltered,
-        where: "appointment_date_time = ?",
-        whereArgs: [appointmentDate],
+        is_filtered: true,
+        where: "appointment_date_time = ? AND clinic_key = ? AND shift_key = ?",
+        whereArgs: [appointmentDate, selectedClinic.key, selectedShift.key],
       ),
       fromOnline: fromOnline,
       voidCallBack: (list) {
@@ -100,17 +113,30 @@ class ReservationQueryManager {
   // ------------------------------------------------------------
   Future<List<ReservationModel>> getCompletedReservationsForReport({
     required String? appointmentDate,
+    required ClinicModel? selectedClinic,
+    required GenericListModel? selectedShift,
     bool isFiltered = false,
     bool? fromOnline,
   }) async {
-    if (appointmentDate == null) return [];
+    if (appointmentDate == null ||
+        selectedClinic == null ||
+        selectedShift == null) {
+      return [];
+    }
 
     return await getReservations(
       appointmentDate: appointmentDate,
       query: SQLiteQueryParams(
-        is_filtered: isFiltered,
-        where: "appointment_date_time = ? AND status = ?",
-        whereArgs: [appointmentDate, ReservationStatus.completed.value],
+        is_filtered: true,
+        where:
+            "appointment_date_time = ? AND clinic_key = ? AND shift_key = ? AND status = ?",
+        whereArgs: [
+          appointmentDate,
+          selectedClinic.key,
+          selectedShift.key,
+          ReservationStatus.completed.value,
+        ],
+        orderBy: "order_num ASC",
       ),
       isFiltered: isFiltered,
       fromOnline: fromOnline,

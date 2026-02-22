@@ -1,3 +1,5 @@
+import 'package:diwanclinic/Presentation/screens/reservations/list/widgets/bottom_sheet/showMandatoryShiftDialog.dart';
+
 import '../../../../../../index/index_main.dart';
 
 class ReservationViewModel extends GetxController {
@@ -11,6 +13,7 @@ class ReservationViewModel extends GetxController {
   // Services
   final PrescriptionUploadService prescriptionService =
       PrescriptionUploadService();
+  final ShiftService shiftService = ShiftService();
 
   // UI State
   bool showDailyReport = false;
@@ -87,16 +90,19 @@ class ReservationViewModel extends GetxController {
     super.onClose();
   }
 
-  // Fetch reservations
   Future<void> getReservations({
     bool? isFilter = false,
     bool? fromOnline,
   }) async {
     if (appointmentDate == null) return;
 
+    // 🔥 مهم جدًا
+    if (selectedShift == null) return;
+
     final daily = await queryManager.fetchAllReservationsOfDay(
       appointmentDate: appointmentDate,
       selectedClinic: selectedClinic,
+      selectedShift: selectedShift, // 👈 هنضيفها
       isFiltered: false,
     );
 
@@ -105,6 +111,8 @@ class ReservationViewModel extends GetxController {
     final query = filterManager.buildFilters(
       selectedClinic: selectedClinic,
       appointmentDate: appointmentDate,
+      selectedShift: selectedShift,
+      // 👈 مهم
       selectedTab: selectedTab,
       isFiltered: isFilter ?? false,
     );
@@ -124,17 +132,36 @@ class ReservationViewModel extends GetxController {
 
   // Load daily financial report
   Future<void> loadDailyReport({bool? fromOnline}) async {
-    if (appointmentDate == null) return;
+    if (appointmentDate == null ||
+        selectedClinic == null ||
+        selectedShift == null) {
+      completedForReport = [];
+      return;
+    }
 
     completedForReport = await queryManager.getCompletedReservationsForReport(
       appointmentDate: appointmentDate,
+      selectedClinic: selectedClinic,
+      selectedShift: selectedShift,
       isFiltered: false,
+      fromOnline: fromOnline,
     );
   }
 
   // Get total reservations count
-  Future<int> getTotalTodayReservations() {
-    return queryManager.getTotalByDate(appointmentDate: appointmentDate);
+  Future<int> getTotalTodayReservations() async {
+    if (appointmentDate == null ||
+        selectedClinic == null ||
+        selectedShift == null) {
+      return 0;
+    }
+
+    return await queryManager.getTotalByDate(
+      appointmentDate: appointmentDate,
+      selectedClinic: selectedClinic,
+      selectedShift: selectedShift,
+      isFiltered: false,
+    );
   }
 
   // Get last visit for patient
@@ -165,23 +192,30 @@ class ReservationViewModel extends GetxController {
         where: clinicKey.isNotEmpty ? "key = ?" : null,
         whereArgs: clinicKey.isNotEmpty ? [clinicKey] : [],
       ),
-      voidCallBack: (data) {
+      isFiltered: true,
+      voidCallBack: (data) async {
         listClinic = data;
         Loader.dismiss();
 
         if (data.isNotEmpty) {
-          clinicDropdownItems = ClinicAdapterUtil.convertClinicListToGeneric(
-            data,
-          );
+          clinicDropdownItems = ModelAdapterUtil.clinicListToGeneric(data);
 
+          // 🔥 لازم الأول نحدد العيادة
           selectedClinic = data.first;
 
-          getReservations(isFilter: true);
+          // 🔥 بعد تحديد العيادة نجيب الشيفتات
+          await getShiftList();
           getSyncReservations(initLocalData: true);
+
+          // ⛔ مهم: ما نجيبش الحجوزات هنا
+          // لأنها بقت تعتمد على اختيار الشيفت
 
           Future.delayed(const Duration(milliseconds: 300), () {
             _isInitialLoad = false;
           });
+        } else {
+          clinicDropdownItems = [];
+          selectedClinic = null;
         }
 
         update();
@@ -189,18 +223,74 @@ class ReservationViewModel extends GetxController {
     );
   }
 
-  void getSyncReservations({bool? initLocalData}) {
+  Future<void> getShiftList() async {
+    if (selectedClinic == null) return;
+
+    shiftService.getShiftsData(
+      data: FirebaseFilter(orderBy: "clinicKey", equalTo: selectedClinic!.key),
+      query: SQLiteQueryParams(
+        is_filtered: true,
+        where: "clinicKey = ?",
+        whereArgs: [selectedClinic!.key],
+      ),
+      isFiltered: true,
+      voidCallBack: (data) {
+        if (data != null && data.isNotEmpty) {
+          // 🔥 هنا التعديل الصح
+          shiftDropdownItems = ModelAdapterUtil.shiftListToGeneric(data);
+
+          selectedShift = null;
+
+          showMandatoryShiftDialog();
+        } else {
+          shiftDropdownItems = [];
+          selectedShift = null;
+        }
+
+        update();
+      },
+    );
+  }
+
+  void showMandatoryShiftDialog() {
+    if (shiftDropdownItems == null || shiftDropdownItems!.isEmpty) return;
+
+    Get.dialog(
+      ShiftSelectionDialog(
+        shifts: shiftDropdownItems!,
+        onConfirm: (shift) async {
+          selectedShift = shift;
+
+          await getReservations(isFilter: true);
+
+          update();
+        },
+      ),
+      barrierDismissible: false,
+    );
+  }
+
+  void getSyncReservations({bool initLocalData = false}) {
+    print("🚀 Sync started | initLocalData = $initLocalData");
+
+    if (selectedShift == null || appointmentDate == null) {
+      print("⛔ Sync skipped (missing shift or date)");
+      return;
+    }
+
+    bool isFirstLoad = initLocalData;
+
     syncService.listen(
       selectedClinic: selectedClinic,
+      selectedShift: selectedShift,
+      // 🔥 مهم جدًا
       appointmentDate: appointmentDate,
 
       onAddLocal: (model) async {
-        initLocalData = null;
         await actionManager.addReservation(model, localOnly: true);
       },
 
       onUpdatedLocal: (model) async {
-        initLocalData = null;
         await actionManager.updateReservation(
           model,
           isSyncing: true,
@@ -209,11 +299,15 @@ class ReservationViewModel extends GetxController {
       },
 
       onReloadLocal: () {
-        // pass true in get clinic to not make call here
-        print("call here");
-        if (initLocalData == null) {
-          getReservations(isFilter: false);
+        print("🔄 Reload Triggered | isFirstLoad = $isFirstLoad");
+
+        if (isFirstLoad) {
+          // أول تحميل فقط → منمنعش refresh
+          isFirstLoad = false;
+          return;
         }
+
+       // getReservations(isFilter: true);
       },
     );
   }

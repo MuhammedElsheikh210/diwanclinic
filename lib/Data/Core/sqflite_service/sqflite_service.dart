@@ -22,7 +22,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 53, // update version when schema changes
+      version: 55, // update version when schema changes
       onCreate: _onCreate,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
@@ -68,6 +68,19 @@ class DatabaseService {
   );
 ''');
 
+      // ===========================
+      // ✅ TABLE: shifts
+      // ===========================
+      await db.execute('''
+  CREATE TABLE IF NOT EXISTS shifts (
+    key TEXT PRIMARY KEY,
+    name TEXT,
+    startTime TEXT,
+    endTime TEXT,
+    clinicKey TEXT,
+    doctor_key TEXT
+  );
+''');
       // ===========================
       // ✅ TABLE: clients
       // ===========================
@@ -211,7 +224,7 @@ class DatabaseService {
         // medicines
         await db.execute('DROP TABLE IF EXISTS medicines;');
         await db.execute('DROP TABLE IF EXISTS medicines_fts;');
-
+        await db.execute('DROP TABLE IF EXISTS shifts;');
         // باقي الجداول
         await db.execute('DROP TABLE IF EXISTS clients;');
         await db.execute('DROP TABLE IF EXISTS reservations;');

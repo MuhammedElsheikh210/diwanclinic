@@ -1,71 +1,87 @@
+import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:intl/intl.dart';
 import '../../../../../index/index_main.dart';
-import 'package:firebase_database/firebase_database.dart' as firebase_database;
 
 class ReservationSyncService {
-  StreamSubscription<DatabaseEvent>? _subscription;
+  StreamSubscription<DatabaseEvent>? _addedSub;
+  StreamSubscription<DatabaseEvent>? _changedSub;
+
   final ReservationViewModel? controller;
 
   ReservationSyncService({this.controller});
 
   void listen({
     required ClinicModel? selectedClinic,
+     GenericListModel? selectedShift, // 🔥 مهم
     required String? appointmentDate,
     required Function(ReservationModel) onUpdatedLocal,
     required Function(ReservationModel) onAddLocal,
     required Function() onReloadLocal,
   }) {
-    _subscription?.cancel();
+    // 🛑 Cancel old listeners
+    _addedSub?.cancel();
+    _changedSub?.cancel();
 
     final user = LocalUser().getUserData();
     final doctorKey = user.doctorKey ?? user.uid ?? "";
 
+    if (doctorKey.isEmpty) return;
+    if (selectedShift?.key == null) return;
+
     final String today = DateFormat('dd-MM-yyyy').format(DateTime.now());
-    final String basePath = 'doctors/$doctorKey/reservations/$today';
 
-    final dbRef = FirebaseDatabase.instance.ref(basePath);
+    // 🔥🔥🔥 NEW STRUCTURE
+    final String basePath =
+        'doctors/$doctorKey/reservations/$today/${selectedShift!.key}';
 
-    firebase_database.Query query = dbRef;
+    final DatabaseReference dbRef = FirebaseDatabase.instance.ref(basePath);
 
-    if (selectedClinic?.key != null) {
-      query = query.orderByChild('clinic_key').equalTo(selectedClinic!.key);
-    } else if (appointmentDate != null) {
-      query = query
-          .orderByChild('appointment_date_time')
-          .equalTo(appointmentDate);
-    }
-
-    query.onChildAdded.listen((event) async {
+    // ===============================
+    // 🟢 CHILD ADDED
+    // ===============================
+    _addedSub = dbRef.onChildAdded.listen((event) async {
       final data = event.snapshot.value;
       if (data == null) return;
 
-      final json = Map<String, dynamic>.from(data as Map);
-      final model = ReservationModel.fromJson(json);
+      try {
+        final json = Map<String, dynamic>.from(data as Map);
+        final model = ReservationModel.fromJson(json);
 
-      controller?.isSyncing = true;
-      await onAddLocal(model);
-      controller?.isSyncing = false;
+        controller?.isSyncing = true;
+        await onAddLocal(model);
+        controller?.isSyncing = false;
 
-      onReloadLocal();
+        onReloadLocal();
+      } catch (e) {
+        print("❌ onChildAdded Error: $e");
+      }
     });
 
-    query.onChildChanged.listen((event) async {
+    // ===============================
+    // 🟡 CHILD CHANGED
+    // ===============================
+    _changedSub = dbRef.onChildChanged.listen((event) async {
       final data = event.snapshot.value;
       if (data == null) return;
 
-      final json = Map<String, dynamic>.from(data as Map);
-      final model = ReservationModel.fromJson(json);
+      try {
+        final json = Map<String, dynamic>.from(data as Map);
+        final model = ReservationModel.fromJson(json);
 
-      controller?.isSyncing = true;
-      await onUpdatedLocal(model);
-      controller?.isSyncing = false;
+        controller?.isSyncing = true;
+        await onUpdatedLocal(model);
+        controller?.isSyncing = false;
 
-      onReloadLocal();
+        onReloadLocal();
+      } catch (e) {
+        print("❌ onChildChanged Error: $e");
+      }
     });
   }
 
   void dispose() {
-    _subscription?.cancel();
+    _addedSub?.cancel();
+    _changedSub?.cancel();
   }
 }

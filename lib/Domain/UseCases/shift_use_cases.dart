@@ -6,35 +6,60 @@ class ShiftUseCases {
 
   ShiftUseCases(this._repository);
 
-  /// 🕒 Add new shift
+  // =========================================================
+  // 🔹 ADD SHIFT
+  // =========================================================
   Future<Either<AppError, SuccessModel>> addShift(ShiftModel shift) {
-    return _repository.addShiftDomain(shift.toJson(), shift.key ?? "");
+    return _repository.addShiftDomain(
+      shift.toJson(),
+      shift.key ?? "",
+    );
   }
 
-  /// 🕒 Update existing shift
+  // =========================================================
+  // 🔹 UPDATE SHIFT
+  // =========================================================
   Future<Either<AppError, SuccessModel>> updateShift(ShiftModel shift) {
-    return _repository.updateShiftDomain(shift.toJson(), shift.key ?? "");
+    return _repository.updateShiftDomain(
+      shift.toJson(),
+      shift.key ?? "",
+    );
   }
 
-  /// 🗑️ Delete shift
+  // =========================================================
+  // 🔹 DELETE SHIFT
+  // =========================================================
   Future<Either<AppError, SuccessModel>> deleteShift(String key) {
     return _repository.deleteShiftDomain({}, key);
   }
 
-  /// 📅 Get all shifts
+  // =========================================================
+  // 🔹 GET SHIFTS (Local First / Force Online)
+  // =========================================================
   Future<Either<AppError, List<ShiftModel?>>> getShifts(
       FirebaseFilter data,
       SQLiteQueryParams query,
-      bool? isFiltered,
-      ) {
-    return _repository.getShiftsDomain(data.toJson(), query, isFiltered);
+      bool? isFiltered, {
+        bool? fromOnline,
+      }) {
+    return _repository.getShiftsDomain(
+      data.toJson(),
+      query,
+      isFiltered,
+      fromOnline: fromOnline,
+    );
   }
 
-  /// 👩‍⚕️ Get shifts for a specific doctor (used by patient)
+  // =========================================================
+  // 🔹 GET SHIFTS FROM PATIENT
+  // =========================================================
   Future<Either<AppError, List<ShiftModel?>>> getShiftssFromPatient(
       Map<String, dynamic> data,
       String? doctorKey,
       ) {
-    return _repository.getShiftssFromPatientDomain(data, doctorKey);
+    return _repository.getShiftssFromPatientDomain(
+      data,
+      doctorKey,
+    );
   }
 }

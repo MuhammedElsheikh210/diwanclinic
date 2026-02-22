@@ -3,58 +3,107 @@
 import '../../index/index_main.dart';
 
 class ShiftService {
-  final ShiftUseCases useCase = initController(() => ShiftUseCases(Get.find()));
+  final ShiftUseCases useCase =
+  initController(() => ShiftUseCases(Get.find()));
 
+  // =========================================================
+  // 🔹 ADD SHIFT
+  // =========================================================
   Future<void> addShiftData({
     required ShiftModel shift,
     required Function(ResponseStatus) voidCallBack,
   }) async {
     Loader.show();
+
     final result = await useCase.addShift(shift);
+
+    Loader.dismiss();
+
     result.fold(
-      (l) => voidCallBack(ResponseStatus.error),
-      (r) => voidCallBack(ResponseStatus.success),
+          (l) {
+        Loader.showError(l.messege ?? "حدث خطأ أثناء إضافة الفترة");
+        voidCallBack(ResponseStatus.error);
+      },
+          (r) => voidCallBack(ResponseStatus.success),
     );
   }
 
+  // =========================================================
+  // 🔹 UPDATE SHIFT
+  // =========================================================
   Future<void> updateShiftData({
     required ShiftModel shift,
     required Function(ResponseStatus) voidCallBack,
   }) async {
     Loader.show();
+
     final result = await useCase.updateShift(shift);
+
+    Loader.dismiss();
+
     result.fold(
-      (l) => voidCallBack(ResponseStatus.error),
-      (r) => voidCallBack(ResponseStatus.success),
+          (l) {
+        Loader.showError(l.messege ?? "فشل تحديث الفترة");
+        voidCallBack(ResponseStatus.error);
+      },
+          (r) => voidCallBack(ResponseStatus.success),
     );
   }
 
+  // =========================================================
+  // 🔹 DELETE SHIFT
+  // =========================================================
   Future<void> deleteShiftData({
     required String shiftKey,
     required Function(ResponseStatus) voidCallBack,
   }) async {
     Loader.show();
+
     final result = await useCase.deleteShift(shiftKey);
+
+    Loader.dismiss();
+
     result.fold(
-      (l) => voidCallBack(ResponseStatus.error),
-      (r) => voidCallBack(ResponseStatus.success),
+          (l) {
+        Loader.showError(l.messege ?? "فشل حذف الفترة");
+        voidCallBack(ResponseStatus.error);
+      },
+          (r) => voidCallBack(ResponseStatus.success),
     );
   }
 
+  // =========================================================
+  // 🔹 GET SHIFTS
+  // =========================================================
   Future<void> getShiftsData({
     required FirebaseFilter data,
     required SQLiteQueryParams query,
     bool? isFiltered,
+    bool? fromOnline, // 🔥 جديد
     required Function(List<ShiftModel?>) voidCallBack,
   }) async {
-    final result = await useCase.getShifts(data, query, isFiltered);
+    final result = await useCase.getShifts(
+      data,
+      query,
+      isFiltered,
+      fromOnline: fromOnline,
+    );
+
     result.fold(
-      (l) => Loader.showError("Something went wrong"),
-      (r) => voidCallBack(r),
+          (l) {
+        print("❌ [ShiftService] ${l.messege}");
+        Loader.showError("حدث خطأ أثناء تحميل الفترات");
+      },
+          (r) {
+        print("✅ [ShiftService] Loaded ${r.length} shifts");
+        voidCallBack(r);
+      },
     );
   }
 
-  /// 👩‍⚕️ Get shifts for a specific doctor (used by patient side)
+  // =========================================================
+  // 🔹 GET SHIFTS FROM PATIENT
+  // =========================================================
   Future<void> getShiftssFromPatientData({
     required Map<String, dynamic> data,
     required String doctorKey,
@@ -62,18 +111,21 @@ class ShiftService {
   }) async {
     try {
       Loader.show();
-      final result = await useCase.getShiftssFromPatient(data, doctorKey);
+
+      final result = await useCase.getShiftssFromPatient(
+        data,
+        doctorKey,
+      );
+
       Loader.dismiss();
 
       result.fold(
-        (l) {
-          print(
-            "❌ [ShiftService] Error fetching shifts for doctor: ${l.messege}",
-          );
+            (l) {
+          print("❌ [ShiftService] ${l.messege}");
           Loader.showError("حدث خطأ أثناء جلب بيانات الفترات");
         },
-        (r) {
-          print("✅ [ShiftService] Shifts fetched for doctor: ${r.length}");
+            (r) {
+          print("✅ [ShiftService] Patient shifts: ${r.length}");
           voidCallBack(r);
         },
       );

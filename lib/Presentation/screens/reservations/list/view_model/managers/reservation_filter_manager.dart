@@ -3,6 +3,7 @@ import '../../../../../../index/index_main.dart';
 class ReservationFilterManager {
   SQLiteQueryParams buildFilters({
     required ClinicModel? selectedClinic,
+    required GenericListModel? selectedShift, // 🔥 جديد
     required String? appointmentDate,
     required int selectedTab,
     bool isFiltered = true,
@@ -10,19 +11,25 @@ class ReservationFilterManager {
     final conditions = <String>[];
     final whereArgs = <Object?>[];
 
-    // Clinic filter
+    // 🔹 Clinic filter
     if (selectedClinic?.key != null) {
       conditions.add("clinic_key = ?");
       whereArgs.add(selectedClinic!.key);
     }
 
-    // Date filter
+    // 🔹 Shift filter (🔥 الأساس الجديد)
+    if (selectedShift?.key != null) {
+      conditions.add("shift_key = ?");
+      whereArgs.add(selectedShift!.key);
+    }
+
+    // 🔹 Date filter
     if (appointmentDate != null) {
       conditions.add("appointment_date_time = ?");
       whereArgs.add(appointmentDate);
     }
 
-    // Tab filter
+    // 🔹 Tab filter
     if (selectedTab == 1) {
       // مستعجل فقط
       conditions.add("reservation_type = ?");
@@ -34,6 +41,7 @@ class ReservationFilterManager {
     }
 
     final where = conditions.isNotEmpty ? conditions.join(" AND ") : null;
+
     return SQLiteQueryParams(
       is_filtered: isFiltered,
       where: where,
