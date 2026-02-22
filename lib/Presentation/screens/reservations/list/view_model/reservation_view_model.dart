@@ -200,7 +200,6 @@ class ReservationViewModel extends GetxController {
       },
 
       onUpdatedLocal: (model) async {
-        print("log in update sync ");
         initLocalData = null;
         await actionManager.updateReservation(
           model,

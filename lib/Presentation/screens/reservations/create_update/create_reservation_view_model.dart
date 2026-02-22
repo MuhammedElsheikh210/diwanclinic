@@ -59,11 +59,47 @@ class CreateReservationViewModel extends GetxController {
   ClinicModel? clinicModel;
   int? totalAmount;
   final AuthenticationService clientService = AuthenticationService();
+  int currentStep = 1;
+
+  void nextStep() {
+    if (currentStep < 3) {
+      currentStep++;
+      update();
+    }
+  }
+
+  void previousStep() {
+    if (currentStep > 0) {
+      currentStep--;
+      update();
+    }
+  }
+
+  bool validateStep1() {
+    return companyNameController.text.isNotEmpty &&
+        (!isFromLegacyQueue || resOrderController.text.isNotEmpty);
+  }
+
+  bool validateStep2() {
+    return patientNameController.text.isNotEmpty &&
+        patientPhoneController.text.isNotEmpty;
+  }
+
+  bool validateStep3() {
+    return selectedType != null && paidAmountController.text.isNotEmpty;
+  }
+
+  bool validateCurrentStep() {
+    if (currentStep == 1) return validateStep1();
+    if (currentStep == 2) return validateStep2();
+    if (currentStep == 3) return validateStep3();
+    return false;
+  }
 
   @override
   Future<void> onInit() async {
     super.onInit();
-    // 🔹 Listen to text controllers for live validation
+
     patientNameController.addListener(_triggerUpdate);
     resOrderController.addListener(_triggerUpdate);
     patientPhoneController.addListener(_convertPhoneToEnglish);
@@ -81,6 +117,7 @@ class CreateReservationViewModel extends GetxController {
         if (data.isNotEmpty) {
           // 👈 أول عنصر كفاية لأن اليوم واحد
           final item = data.first;
+          print("item in day close is ${item?.toJson()}");
           if (item != null && item.isClosed == true) {
             isDayClosed = true;
           }
@@ -620,20 +657,22 @@ class CreateReservationViewModel extends GetxController {
       key: reservation.patientUid ?? "",
       data: reservation,
       voidCallBack: (_) async {
-        //   refreshListView();
+        refreshListView();
         Get.back();
         Loader.showSuccess("تم تحديث الحجز بنجاح");
       },
     );
   }
 
-  // void refreshListView() {
-  //   final reservationVM = initController(() => ReservationViewModel());
-  //   reservationVM.fromUpdate = null;
-  //   reservationVM.getReservations();
-  //   reservationVM.update();
-  //   Get.back();
-  // }
+  void refreshListView() {
+    // final reservationVM = initController(() => ReservationViewModel());
+    // reservationVM.fromUpdate = null;
+    // reservationVM.getReservations();
+    // reservationVM.update();
+    // Get.back();
+
+    Get.offAllNamed(mainpage);
+  }
 
   Future<void> getClinicList(
     ClinicModel? clinicModel,
@@ -644,6 +683,12 @@ class CreateReservationViewModel extends GetxController {
     urgentConsultationPrice = clinicModel?.urgentConsultationPrice ?? "";
     clinicModel = clinicModel;
     getPatientData(reservation);
+
+    /// 👇 default selected type
+    if (selectedType == null && typeOptions.isNotEmpty) {
+      selectedType = typeOptions.first;
+      setReservationType(selectedType);
+    }
   }
 
   @override

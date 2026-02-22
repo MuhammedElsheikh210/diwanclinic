@@ -1,4 +1,3 @@
-
 import '../../../../../../index/index_main.dart';
 
 class ReservationAssistantDetailsView extends StatelessWidget {
@@ -34,473 +33,513 @@ class ReservationAssistantDetailsView extends StatelessWidget {
         iconTheme: const IconThemeData(color: AppColors.primary),
       ),
 
-      body: Container(
-        margin: const EdgeInsets.only(left: 10, right: 10, bottom: 30),
-        decoration: BoxDecoration(
-          color: reservation.reservationType == "كشف مستعجل"
-              ? AppColors.errorForeground.withValues(alpha: 0.3)
-              : AppColors.white,
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: ColorMappingImpl().borderNeutralPrimary),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                color: AppColors.background_neutral_100,
-                borderRadius: BorderRadius.circular(16),
+      body: GetBuilder<ReservationViewModel>(
+        init: controller,
+        builder: (controller) {
+          return Container(
+            margin: const EdgeInsets.only(left: 10, right: 10, bottom: 30),
+            decoration: BoxDecoration(
+              color: reservation.reservationType == "كشف مستعجل"
+                  ? AppColors.errorForeground.withValues(alpha: 0.3)
+                  : AppColors.white,
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(
+                color: ColorMappingImpl().borderNeutralPrimary,
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  /// رقم الحجز
-                  isCompletedOrCancelled ||
-                          reservation.reservationType == "كشف مستعجل"
-                      ? const SizedBox()
-                      : Column(
-                          children: [
-                            /// 🔹 Header: رقم الحجز + حالة + Edit
-                            ///
-                            Padding(
-                              padding: const EdgeInsets.only(left: 8.0),
-                              child:
-                                  ahead >= 0 &&
-                                      (reservation.status !=
-                                              ReservationStatus
-                                                  .completed
-                                                  .value &&
-                                          reservation.status !=
-                                              ReservationStatus
-                                                  .inProgress
-                                                  .value)
-                                  ? Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      child: ahead == 0
-                                          ? Text(
-                                              "دورك دلوقتي",
-                                              style: context.typography.mdMedium
-                                                  .copyWith(
-                                                    color: AppColors
-                                                        .background_black,
-                                                  ),
-                                            )
-                                          : Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.start,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                AppText(
-                                                  text: " : قدامك",
-                                                  textStyle: context
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.background_neutral_100,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      /// رقم الحجز
+                      isCompletedOrCancelled ||
+                              reservation.reservationType == "كشف مستعجل"
+                          ? const SizedBox()
+                          : Column(
+                              children: [
+                                /// 🔹 Header: رقم الحجز + حالة + Edit
+                                ///
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 8.0),
+                                  child:
+                                      ahead >= 0 &&
+                                          (reservation.status !=
+                                                  ReservationStatus
+                                                      .completed
+                                                      .value &&
+                                              reservation.status !=
+                                                  ReservationStatus
+                                                      .inProgress
+                                                      .value)
+                                      ? Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 6,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                          ),
+                                          child: ahead == 0
+                                              ? Text(
+                                                  "دورك دلوقتي",
+                                                  style: context
                                                       .typography
                                                       .mdMedium
                                                       .copyWith(
-                                                        color: ColorMappingImpl()
-                                                            .textSecondaryParagraph,
+                                                        color: AppColors
+                                                            .background_black,
                                                       ),
+                                                )
+                                              : Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.start,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    AppText(
+                                                      text: " : قدامك",
+                                                      textStyle: context
+                                                          .typography
+                                                          .mdMedium
+                                                          .copyWith(
+                                                            color: ColorMappingImpl()
+                                                                .textSecondaryParagraph,
+                                                          ),
+                                                    ),
+                                                    const SizedBox(width: 5),
+                                                    AppText(
+                                                      text: "$ahead",
+                                                      textStyle: context
+                                                          .typography
+                                                          .lgBold
+                                                          .copyWith(
+                                                            color:
+                                                                ColorMappingImpl()
+                                                                    .textDisplay,
+                                                          ),
+                                                    ),
+                                                  ],
                                                 ),
-                                                const SizedBox(width: 5),
-                                                AppText(
-                                                  text: "$ahead",
-                                                  textStyle: context
-                                                      .typography
-                                                      .lgBold
-                                                      .copyWith(
-                                                        color:
-                                                            ColorMappingImpl()
-                                                                .textDisplay,
-                                                      ),
-                                                ),
-                                              ],
-                                            ),
-                                    )
-                                  : const SizedBox(),
-                            ),
-                            Row(
-                              children: [
-                                AppText(
-                                  text: " :رقم الحجز",
-                                  textStyle: context.typography.mdMedium
-                                      .copyWith(
-                                        color: ColorMappingImpl()
-                                            .textSecondaryParagraph,
-                                      ),
+                                        )
+                                      : const SizedBox(),
                                 ),
-                                const SizedBox(width: 5),
-                                AppText(
-                                  text: "${reservation.order_num ?? '-'}",
-                                  textStyle: context.typography.lgBold.copyWith(
-                                    color: ColorMappingImpl().textDisplay,
-                                  ),
+                                Row(
+                                  children: [
+                                    AppText(
+                                      text: " :رقم الحجز",
+                                      textStyle: context.typography.mdMedium
+                                          .copyWith(
+                                            color: ColorMappingImpl()
+                                                .textSecondaryParagraph,
+                                          ),
+                                    ),
+                                    const SizedBox(width: 5),
+                                    AppText(
+                                      text: "${reservation.order_num ?? '-'}",
+                                      textStyle: context.typography.lgBold
+                                          .copyWith(
+                                            color:
+                                                ColorMappingImpl().textDisplay,
+                                          ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                          ],
-                        ),
 
-                  /// الحالة + زر تعديل
-                  Row(
-                    children: [
-                      StatusBadge(
-                        status: reservation.status ?? "",
-                        label: status.label,
-                        dateTimeStamp: 0,
-                        color: status.color,
-                      ),
-                      const SizedBox(width: 8),
-                      reservation.status == "completed"
-                          ? const SizedBox()
-                          : InkWell(
-                              onTap: () async {
-                                final trueTotal = await controller
-                                    .getTotalTodayReservations();
+                      /// الحالة + زر تعديل
+                      Row(
+                        children: [
+                          StatusBadge(
+                            status: reservation.status ?? "",
+                            label: status.label,
+                            dateTimeStamp: 0,
+                            color: status.color,
+                          ),
+                          const SizedBox(width: 8),
+                          reservation.status == "completed"
+                              ? const SizedBox()
+                              : InkWell(
+                                  onTap: () async {
+                                    final trueTotal = await controller
+                                        .getTotalTodayReservations();
 
-                                // 🟢 فتح شاشة تعديل الحجز
-                                Get.delete<CreateReservationViewModel>();
-                                int total =
-                                    controller.listReservations?.length ?? 0;
-                                Get.to(
-                                  () => CreateReservationView(
-                                    list_reservations:
-                                        controller.listReservations ?? [],
+                                    // 🟢 فتح شاشة تعديل الحجز
+                                    Get.delete<CreateReservationViewModel>();
+                                    int total =
+                                        controller.listReservations?.length ??
+                                        0;
+                                    Get.to(
+                                      () => CreateReservationView(
+                                        list_reservations:
+                                            controller.listReservations ?? [],
 
-                                    dailly_date:
-                                        controller.appointmentDate ?? "",
+                                        dailly_date:
+                                            controller.appointmentDate ?? "",
 
-                                    clinic_key: controller.selectedClinic?.key,
-                                    shift_key: controller.selectedShift?.key,
-                                    selected_clinic:
-                                        controller.selectedClinic ??
-                                        ClinicModel(),
-                                    reservation: reservation,
-                                    total_reservations: trueTotal,
+                                        clinic_key:
+                                            controller.selectedClinic?.key,
+                                        shift_key:
+                                            controller.selectedShift?.key,
+                                        selected_clinic:
+                                            controller.selectedClinic ??
+                                            ClinicModel(),
+                                        reservation: reservation,
+                                        total_reservations: trueTotal,
+                                      ),
+                                    );
+                                  },
+                                  child: Svgicon(
+                                    icon: IconsConstants.edit_btn,
+                                    height: 30.h,
+                                    width: 30.w,
+                                    color: AppColors.primary,
                                   ),
-                                );
-                              },
-                              child: Svgicon(
-                                icon: IconsConstants.edit_btn,
-                                height: 30.h,
-                                width: 30.w,
-                                color: AppColors.primary,
-                              ),
-                            ),
+                                ),
+                        ],
+                      ),
                     ],
-                  ),
-                ],
-              ),
-            ),
-
-            /// 🔹 Patient Name + Phone
-            Row(
-              children: [
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 5,
-                      horizontal: 10,
-                    ),
-                    child: AppLisTile(
-                      leading: const Svgicon(icon: IconsConstants.avatar),
-                      title: AppText(
-                        text: "الحالة",
-                        textStyle: context.typography.mdRegular.copyWith(
-                          color: ColorMappingImpl().textSecondaryParagraph,
-                        ),
-                      ),
-                      subtitle: AppText(
-                        text: reservation.patientName ?? "بدون اسم",
-                        textStyle: context.typography.lgBold.copyWith(
-                          color: ColorMappingImpl().textDisplay,
-                        ),
-                      ),
-                    ),
                   ),
                 ),
 
-                if (transferImage != null && transferImage.isNotEmpty)
-                  InkWell(
-                    onTap: () {
-                      // 🖼️ Open full screen preview
-                      Get.to(
-                        () => FullScreenImageView(imageUrl: transferImage),
-                        transition: Transition.fadeIn,
-                        duration: const Duration(milliseconds: 250),
-                      );
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 12.0, right: 8),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: CachedNetworkImage(
-                          imageUrl: transferImage,
-                          fit: BoxFit.cover,
-                          height: 55.w,
-                          width: 85.w,
-                          placeholder: (context, url) => Container(
-                            height: 55.w,
-                            width: 85.w,
-                            color: AppColors.background_neutral_100,
-                            child: const Center(
-                              child: SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 1.5,
-                                ),
-                              ),
-                            ),
-                          ),
-                          errorWidget: (context, url, error) => Container(
-                            height: 55.w,
-                            width: 85.w,
-                            color: AppColors.background_neutral_100,
-                            child: const Icon(
-                              Icons.broken_image,
-                              color: Colors.grey,
-                            ),
-                          ),
+                /// 🔹 Patient Name + Phone
+                Row(
+                  children: [
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 5,
+                          horizontal: 10,
                         ),
-                      ),
-                    ),
-                  )
-                else
-                  const SizedBox(),
-              ],
-            ),
-
-            /// 🔹 Type + Amounts
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: ReservationListTileWidget(
-                      icon: IconsConstants.money,
-                      title: "المدفوع",
-                      body: reservation.paidAmount ?? "0",
-                    ),
-                  ),
-                  Expanded(
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 5,
-                        vertical: 5,
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: ColorMappingImpl().background_neutral_100,
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AppText(
-                            text: "الروشتة",
-                            textStyle: context.typography.mdBold.copyWith(
+                        child: AppLisTile(
+                          leading: const Svgicon(icon: IconsConstants.avatar),
+                          title: AppText(
+                            text: "الحالة",
+                            textStyle: context.typography.mdRegular.copyWith(
                               color: ColorMappingImpl().textSecondaryParagraph,
                             ),
                           ),
-                          const SizedBox(height: 5),
+                          subtitle: AppText(
+                            text: reservation.patientName ?? "بدون اسم",
+                            textStyle: context.typography.lgBold.copyWith(
+                              color: ColorMappingImpl().textDisplay,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
 
-                          // ✅ Collect available prescription URLs
-                          Builder(
-                            builder: (_) {
-                              final images = <String>[
-                                if (reservation.prescriptionUrl1?.isNotEmpty ==
-                                    true)
-                                  reservation.prescriptionUrl1!,
-                                if (reservation.prescriptionUrl2?.isNotEmpty ==
-                                    true)
-                                  reservation.prescriptionUrl2!,
-                              ];
-                              print("images is ${images}");
-
-                              // ✅ If no images → show upload button
-                              // ✅ If no images
-                              if (images.isEmpty) {
-                                final isCompleted =
-                                    reservation.status ==
-                                    ReservationNewStatus.completed.value;
-
-                                print("isCompleted is ${isCompleted}");
-
-                                if (isCompleted) {
-                                  // 🔹 Allow upload after finish
-                                  return GestureDetector(
-                                    onTap: () {
-                                      print("doneee");
-                                      controller.prescriptionService
-                                          .openBottomSheet(
-                                            context: context,
-                                            reservation: reservation,
-                                            onUpdated: () {
-                                              controller.getReservations();
-                                              controller.update();
-                                            },
-                                          );
-                                    },
-                                    child: Container(
-                                      margin: EdgeInsets.only(top: 5.h),
-                                      height: 45.h,
-                                      width: double.infinity,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.background_neutral_100,
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(
-                                          color: AppColors.primary,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          const Icon(
-                                            Icons.upload_file,
-                                            color: AppColors.primary,
-                                          ),
-                                          SizedBox(width: 8.w),
-                                          Text(
-                                            'تحميل الروشتة',
-                                            style: context.typography.mdMedium
-                                                .copyWith(
-                                                  color: AppColors.primary,
-                                                ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                } else {
-                                  // 🔹 Indication only — not clickable
-                                  return Container(
-                                    margin: EdgeInsets.only(top: 5.h),
-                                    padding: EdgeInsets.symmetric(
-                                      vertical: 10.h,
-                                      horizontal: 10.w,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.background_neutral_100,
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color: AppColors.borderNeutralPrimary
-                                            .withOpacity(0.5),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        const Icon(
-                                          Icons.lock_clock,
-                                          color:
-                                              AppColors.textSecondaryParagraph,
-                                        ),
-                                        SizedBox(width: 6.w),
-                                        Expanded(
-                                          child: Text(
-                                            ' ستقوم بتصوير الروشتة بعد انتهاء الكشف',
-                                            style: context.typography.smRegular
-                                                .copyWith(
-                                                  color: AppColors
-                                                      .textSecondaryParagraph,
-                                                ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }
-                              }
-
-                              // ✅ If images exist → show them in a horizontal list
-                              return SizedBox(
-                                height: 80.h,
-                                child: ListView.separated(
-                                  scrollDirection: Axis.horizontal,
-                                  itemCount: images.length,
-                                  separatorBuilder: (_, __) =>
-                                      SizedBox(width: 8.w),
-                                  itemBuilder: (_, i) => GestureDetector(
-                                    onTap: () {
-                                      controller.prescriptionService
-                                          .openBottomSheet(
-                                            context: context,
-                                            reservation: reservation,
-                                            onUpdated: () {
-                                              controller.getReservations();
-                                              controller.update();
-                                            },
-                                          );
-
-                                      // Get.to(
-                                      //   () => FullScreenImageView(
-                                      //     imageUrl: images[i],
-                                      //   ),
-                                      // );
-                                    },
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: CachedNetworkImage(
-                                        imageUrl: images[i],
-                                        fit: BoxFit.cover,
-                                        height: 70.h,
-                                        width: 100.w,
-                                      ),
+                    if (transferImage != null && transferImage.isNotEmpty)
+                      InkWell(
+                        onTap: () {
+                          // 🖼️ Open full screen preview
+                          Get.to(
+                            () => FullScreenImageView(imageUrl: transferImage),
+                            transition: Transition.fadeIn,
+                            duration: const Duration(milliseconds: 250),
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 12.0, right: 8),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: CachedNetworkImage(
+                              imageUrl: transferImage,
+                              fit: BoxFit.cover,
+                              height: 55.w,
+                              width: 85.w,
+                              placeholder: (context, url) => Container(
+                                height: 55.w,
+                                width: 85.w,
+                                color: AppColors.background_neutral_100,
+                                child: const Center(
+                                  child: SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 1.5,
                                     ),
                                   ),
                                 ),
-                              );
-                            },
+                              ),
+                              errorWidget: (context, url, error) => Container(
+                                height: 55.w,
+                                width: 85.w,
+                                color: AppColors.background_neutral_100,
+                                child: const Icon(
+                                  Icons.broken_image,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                        ),
+                      )
+                    else
+                      const SizedBox(),
+                  ],
+                ),
 
-            /// 🔹 Date of Reservation
-            Row(
-              children: [
-                Expanded(
-                  child: ReservationListTileWidget(
-                    icon: IconsConstants.reserve_type,
-                    title: "نوع الحجز",
-                    body: reservation.reservationType ?? "",
+                /// 🔹 Type + Amounts
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: ReservationListTileWidget(
+                          icon: IconsConstants.money,
+                          title: "المدفوع",
+                          body: reservation.paidAmount ?? "0",
+                        ),
+                      ),
+                      Expanded(
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 5,
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: ColorMappingImpl().background_neutral_100,
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              AppText(
+                                text: "الروشتة",
+                                textStyle: context.typography.mdBold.copyWith(
+                                  color:
+                                      ColorMappingImpl().textSecondaryParagraph,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+
+                              // ✅ Collect available prescription URLs
+                              Builder(
+                                builder: (_) {
+                                  final images = <String>[
+                                    if (reservation
+                                            .prescriptionUrl1
+                                            ?.isNotEmpty ==
+                                        true)
+                                      reservation.prescriptionUrl1!,
+                                    if (reservation
+                                            .prescriptionUrl2
+                                            ?.isNotEmpty ==
+                                        true)
+                                      reservation.prescriptionUrl2!,
+                                  ];
+                                  print("images is ${images}");
+
+                                  // ✅ If no images → show upload button
+                                  // ✅ If no images
+                                  if (images.isEmpty) {
+                                    final isCompleted =
+                                        reservation.status ==
+                                        ReservationNewStatus.completed.value;
+
+                                    print("isCompleted is ${isCompleted}");
+
+                                    if (isCompleted) {
+                                      // 🔹 Allow upload after finish
+                                      return GestureDetector(
+                                        onTap: () {
+                                          print("doneee");
+                                          controller.prescriptionService
+                                              .openBottomSheet(
+                                                context: context,
+                                                reservation: reservation,
+                                                onUpdated: () {
+                                                  controller.getReservations();
+                                                  controller.update();
+                                                },
+                                              );
+                                        },
+                                        child: Container(
+                                          margin: EdgeInsets.only(top: 5.h),
+                                          height: 45.h,
+                                          width: double.infinity,
+                                          decoration: BoxDecoration(
+                                            color: AppColors
+                                                .background_neutral_100,
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                            border: Border.all(
+                                              color: AppColors.primary,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              const Icon(
+                                                Icons.upload_file,
+                                                color: AppColors.primary,
+                                              ),
+                                              SizedBox(width: 8.w),
+                                              Text(
+                                                'تحميل الروشتة',
+                                                style: context
+                                                    .typography
+                                                    .mdMedium
+                                                    .copyWith(
+                                                      color: AppColors.primary,
+                                                    ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    } else {
+                                      // 🔹 Indication only — not clickable
+                                      return Container(
+                                        margin: EdgeInsets.only(top: 5.h),
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: 10.h,
+                                          horizontal: 10.w,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color:
+                                              AppColors.background_neutral_100,
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                          border: Border.all(
+                                            color: AppColors
+                                                .borderNeutralPrimary
+                                                .withOpacity(0.5),
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            const Icon(
+                                              Icons.lock_clock,
+                                              color: AppColors
+                                                  .textSecondaryParagraph,
+                                            ),
+                                            SizedBox(width: 6.w),
+                                            Expanded(
+                                              child: Text(
+                                                ' ستقوم بتصوير الروشتة بعد انتهاء الكشف',
+                                                style: context
+                                                    .typography
+                                                    .smRegular
+                                                    .copyWith(
+                                                      color: AppColors
+                                                          .textSecondaryParagraph,
+                                                    ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }
+                                  }
+
+                                  // ✅ If images exist → show them in a horizontal list
+                                  return SizedBox(
+                                    height: 80.h,
+                                    child: ListView.separated(
+                                      scrollDirection: Axis.horizontal,
+                                      itemCount: images.length,
+                                      separatorBuilder: (_, __) =>
+                                          SizedBox(width: 8.w),
+                                      itemBuilder: (_, i) => GestureDetector(
+                                        onTap: () {
+                                          controller.prescriptionService
+                                              .openBottomSheet(
+                                                context: context,
+                                                reservation: reservation,
+                                                onUpdated: () {
+                                                  controller.getReservations();
+                                                  controller.update();
+                                                },
+                                              );
+
+                                          // Get.to(
+                                          //   () => FullScreenImageView(
+                                          //     imageUrl: images[i],
+                                          //   ),
+                                          // );
+                                        },
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                          child: CachedNetworkImage(
+                                            imageUrl: images[i],
+                                            fit: BoxFit.cover,
+                                            height: 70.h,
+                                            width: 100.w,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                Expanded(
-                  child: ReservationListTileWidget(
-                    icon: IconsConstants.calendar,
-                    title: "تاريخ الحجز",
-                    body: DatesUtilis.convertTimestamp(
-                      reservation.createAt ?? 0,
+
+                /// 🔹 Date of Reservation
+                Row(
+                  children: [
+                    Expanded(
+                      child: ReservationListTileWidget(
+                        icon: IconsConstants.reserve_type,
+                        title: "نوع الحجز",
+                        body: reservation.reservationType ?? "",
+                      ),
                     ),
+                    Expanded(
+                      child: ReservationListTileWidget(
+                        icon: IconsConstants.calendar,
+                        title: "تاريخ الحجز",
+                        body: DatesUtilis.convertTimestamp(
+                          reservation.createAt ?? 0,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                /// 🔹 Action Buttons (Dynamic by Status)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 15,
+                    vertical: 10,
                   ),
+                  child: _buildButtons(context, status),
                 ),
               ],
             ),
-
-            /// 🔹 Action Buttons (Dynamic by Status)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-              child: _buildButtons(context, status),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -829,12 +868,12 @@ class ReservationAssistantDetailsView extends StatelessWidget {
         );
 
         await controller.queueManager.notifyApprovedQueueUpdate(
-          allReservations: controller.listReservations
-              ?.whereType<ReservationModel>()
-              .toList() ??
+          allReservations:
+              controller.listReservations
+                  ?.whereType<ReservationModel>()
+                  .toList() ??
               [],
         );
-
 
         break;
 

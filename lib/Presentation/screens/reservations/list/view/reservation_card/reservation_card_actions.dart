@@ -96,7 +96,7 @@ class ReservationCardActions extends StatelessWidget {
           _actionButton(
             context,
             "موافقة",
-            AppColors.successBackground,
+            AppColors.successForeground,
             () => controller.changeReservationStatus(
               reservation: reservation,
               newStatus: ReservationStatus.approved,

@@ -1,4 +1,6 @@
 import 'package:diwanclinic/Presentation/screens/patients/search/patient_search_view.dart';
+import 'package:diwanclinic/Presentation/screens/reservations/create_update/horizontal_steppers_widget.dart';
+import 'package:diwanclinic/Presentation/screens/reservations/create_update/reservation_bottom_navigation.dart';
 import 'package:intl/intl.dart';
 import '../../../../index/index_main.dart';
 
@@ -44,31 +46,55 @@ class _CreateReservationViewState extends State<CreateReservationView> {
   @override
   void initState() {
     super.initState();
+
     vm.clinic_key = widget.clinic_key;
     vm.shift_key = widget.shift_key;
     vm.resOrderController.text = widget.total_reservations.toString();
     vm.total_reservations = widget.total_reservations;
-    vm.companyNameController.text = widget.dailly_date;
 
-    // تاريخ النهارده
     final today = DateTime.now();
-    vm.create_at = today.millisecondsSinceEpoch;
+    DateTime selectedDate = today;
 
-    vm.companyNameController.text = DateFormat('dd/MM/yyyy').format(today);
+    // ================================
+    // 🔵 UPDATE MODE
+    // ================================
+    if (widget.reservation != null &&
+        widget.reservation!.appointmentDateTime != null &&
+        widget.reservation!.appointmentDateTime!.isNotEmpty) {
+      try {
+        selectedDate = DateFormat(
+          'dd/MM/yyyy',
+        ).parse(widget.reservation!.appointmentDateTime!);
+      } catch (_) {
+        selectedDate = today;
+      }
 
-    // حمّل الكشكول + احسب رقم الحجز
-    vm.onDateChanged(today);
-    vm.loadOpenCloseStatusForDate(DateFormat('dd-MM-yyyy').format(today));
+      vm.existingReservation = widget.reservation;
+      vm.is_update = true;
+    }
+    // ================================
+    // 🟢 CREATE MODE
+    // ================================
+    else {
+      selectedDate = today;
+    }
 
+    // 🔹 اضبط التاريخ في الـ ViewModel
+    vm.create_at = selectedDate.millisecondsSinceEpoch;
+    vm.companyNameController.text = DateFormat(
+      'dd/MM/yyyy',
+    ).format(selectedDate);
+
+    // 🔹 حمّل حالة اليوم (مفتوح / مغلق)
+    vm.loadOpenCloseStatusForDate(
+      DateFormat('dd/MM/yyyy').format(selectedDate),
+    );
+
+    // 🔹 حمّل بيانات العيادة + المريض
     vm.getClinicList(
       widget.selected_clinic,
       widget.reservation ?? ReservationModel(),
     );
-    if (widget.reservation != null) {
-      vm.existingReservation = widget.reservation;
-
-      vm.is_update = true;
-    }
 
     vm.update();
   }
@@ -117,9 +143,58 @@ class _CreateReservationViewState extends State<CreateReservationView> {
             title: Text("إنشاء حجز جديد", style: context.typography.lgBold),
           ),
 
-          // ✅ Fixed bottom button
+          bottomNavigationBar: SafeArea(
+            child: SizedBox(
+              height: 140.h,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Divider(),
 
-          // ✅ Scrollable form body
+                  if (controller.isDayClosed)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 3,
+                      ),
+                      child: Text(
+                        "هذا اليوم مُغلق بقرار الإدارة",
+                        style: context.typography.lgBold.copyWith(
+                          color: AppColors.errorForeground,
+                        ),
+                      ),
+                    ),
+
+                  ReservationBottomNavigation(
+                    controller: controller,
+                    onSave: () {
+                      // 🚫 اليوم مغلق
+                      if (controller.isDayClosed) {
+                        Loader.showError("🚫 اليوم مغلق للحجوزات");
+                        return;
+                      }
+
+                      // ❌ Validation فشل
+                      if (!controller.validateCurrentStep()) {
+                        Loader.showError("⚠️ اكمل بيانات الخطوة الحالية");
+                        return;
+                      }
+
+                      // ✅ لو آخر خطوة → احفظ
+                      if (controller.currentStep == 3) {
+                        controller.saveReservation(
+                          widget.list_reservations,
+                          widget.selected_clinic,
+                        );
+                      } else {
+                        controller.nextStep();
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
           body: KeyboardActions(
             config: keyboardService.buildConfig(context, keys),
             child: SafeArea(
@@ -132,453 +207,476 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        /// 🔹 البحث برقم الهاتف
+                        /// Horizontal Stepper
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                          child: PatientSearchBar(
-                            tag: "search_phone",
-                            hint: "ابحث برقم الهاتف",
-                            textInputType: TextInputType.phone,
-                            focusNode: keyboardService.getFocusNode(keys[0]),
-                            textEditingController:
-                                controller.patientPhoneController,
-                            searchResult: (patientModel, text) {
-                              setState(() {
-                                // ✅ Show phone list only when typing and name list is hidden
-                                showPhoneList =
-                                    text.isNotEmpty && !showNameList;
-                                if (text.isEmpty) showPhoneList = false;
-                              });
-                            },
-                            onCloseList: () {
-                              // ✅ Just hide the list, keep the text intact
-                              setState(() {
-                                showPhoneList = false;
-                              });
-                              FocusScope.of(
-                                context,
-                              ).unfocus(); // optional, hides keyboard
-                            },
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: HorizontalStepper(
+                            currentStep: controller.currentStep - 1,
+                            titles: const ["الدور", "المريض", "الدفع"],
+                            subtitles: const [
+                              "تاريخ ورقم الحجز",
+                              "بيانات المريض",
+                              "نوع الحجز والمبلغ",
+                            ],
                           ),
                         ),
 
-                        if (showPhoneList)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 15.0,
-                            ),
-                            child: PatientResultList(
-                              tag: "search_phone",
-                              onSelect: (client) {
-                                _fillPatientData(controller, client);
-                                setState(() {
-                                  showPhoneList =
-                                      false; // ✅ Hide results when a patient is selected
-                                });
-                              },
-                            ),
-                          ),
-
-                        SizedBox(height: 20.h),
-
-                        /// 🔹 البحث بالاسم
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                          child: PatientSearchBar(
-                            tag: "search_name",
-                            hint: "ابحث بالاسم",
-                            focusNode: keyboardService.getFocusNode(keys[1]),
-                            textEditingController:
-                                controller.patientNameController,
-                            searchResult: (patientModel, text) {
-                              setState(() {
-                                showNameList =
-                                    text.isNotEmpty && !showPhoneList;
-                                if (text.isEmpty) showNameList = false;
-                              });
-                            },
-                            onCloseList: () {
-                              setState(() {
-                                showNameList =
-                                    false; // ✅ Only hides results, doesn’t clear text
-                              });
-                            },
-                          ),
-                        ),
-
-                        if (showNameList)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 15.0,
-                            ),
-                            child: PatientResultList(
-                              tag: "search_name",
-                              onSelect: (client) {
-                                _fillPatientData(controller, client);
-                                setState(() => showNameList = false);
-                              },
-                            ),
-                          ),
-
-                        // Padding(
-                        //   padding: EdgeInsets.only(
-                        //     left: 15.0.w,
-                        //     right: 15,
-                        //     top: 15.h,
-                        //   ),
-                        //   child: PatientSearchBar(
-                        //     tag: "search_code",
-                        //     hint: "ابحث برقم الملف",
-                        //     textInputType: TextInputType.number,
-                        //     focusNode: keyboardService.getFocusNode(keys[2]),
-                        //     textEditingController:
-                        //         controller.patientCodeController,
-                        //     searchResult: (patientModel, text) {
-                        //       setState(() {
-                        //         showCodeList = text.isNotEmpty;
-                        //       });
-                        //     },
-                        //     onCloseList: () {
-                        //       setState(() => showCodeList = false);
-                        //       FocusScope.of(context).unfocus();
-                        //     },
-                        //   ),
-                        // ),
-                        if (showCodeList)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 15.0,
-                            ),
-                            child: PatientResultList(
-                              tag: "search_code",
-                              onSelect: (client) {
-                                _fillPatientData(controller, client);
-                                setState(() => showCodeList = false);
-                              },
-                            ),
-                          ),
-
-                        if (controller.lastReservationHumanText != null)
-                          Padding(
-                            padding: const EdgeInsets.only(
-                              left: 15.0,
-                              right: 15,
-                              top: 8,
-                            ),
-                            child: Text(
-                              "آخر كشف: ${controller.lastReservationHumanText}",
-                              style: context.typography.mdRegular.copyWith(
-                                color: AppColors.errorForeground,
-                              ),
-                            ),
-                          ),
-
-                        // /// 🔹 رقم الملف
-                        // controller.selectedClinic?.file_number == 0
-                        //     ? const SizedBox()
-                        //     : Padding(
-                        //         padding: EdgeInsets.only(
-                        //           left: 15.0.w,
-                        //           right: 15,
-                        //           top: 15.h,
-                        //         ),
-                        //         child: AppTextField(
-                        //           controller: controller.patientCodeController,
-                        //           hintText: "رقم الملف",
-                        //           focusNode: keyboardService.getFocusNode(
-                        //             keys[2],
-                        //           ),
-                        //           keyboardType: TextInputType.text,
-                        //           validator: InputValidators.combine([
-                        //             notEmptyValidator,
-                        //           ]),
-                        //         ),
-                        //       ),
-
-                        /// 🔹 نوع الحجز
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 15.0,
-                            vertical: 15,
-                          ),
-                          child: GenericDropdown<GenericListModel>(
-                            hint_text: "نوع الحجز",
-                            title: "اختر نوع الحجز",
-                            items: controller.typeOptions
-                                .map((e) => GenericListModel(name: e))
-                                .toList(),
-                            initialValue: controller.selectedType != null
-                                ? GenericListModel(
-                                    name: controller.selectedType!,
-                                  )
-                                : null,
-                            onChanged: (val) {
-                              controller.setReservationType(val.name);
-                              controller.selectedType = val.name;
-                              controller.update();
-                            },
-
-                            displayItemBuilder: (item) => Text(item.name ?? ""),
-                          ),
-                        ),
-
-                        /// 🔹 المبالغ
-                        controller.selectedType == "متابعة"
+                        controller.currentStep != 2
                             ? const SizedBox()
-                            : Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 15.0,
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: AppTextField(
-                                        controller:
-                                            controller.paidAmountController,
-                                        hintText: "المدفوع",
-                                        keyboardType: TextInputType.number,
-                                        validator: InputValidators.combine([
-                                          notEmptyValidator,
-                                        ]),
-                                        focusNode: keyboardService.getFocusNode(
-                                          keys[4],
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(width: 10.w),
-                                    Expanded(
-                                      child: AppTextField(
-                                        controller:
-                                            controller.restAmountController,
-                                        hintText: "المتبقي",
-                                        keyboardType: TextInputType.number,
-                                        focusNode: keyboardService.getFocusNode(
-                                          keys[5],
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(width: 10.w),
-
-                                    controller.selectedType == "متابعة"
-                                        ? const SizedBox()
-                                        : Expanded(
-                                            child: AppTextField(
-                                              hintText: "رقم الكشف",
-                                              enabled:
-                                                  controller.isFromLegacyQueue,
-                                              controller:
-                                                  controller.resOrderController,
-                                              keyboardType:
-                                                  TextInputType.number,
-                                              focusNode: keyboardService
-                                                  .getFocusNode(keys[6]),
-                                            ),
-                                          ),
-                                  ],
-                                ),
-                              ),
-
-                        Padding(
-                          padding: const EdgeInsets.only(
-                            left: 15.0,
-                            right: 15,
-                            top: 15,
-                          ),
-                          child: CalenderWidget(
-                            hintText: "تاريخ الحجز",
-                            initialTimestamp:
-                                controller.create_at ??
-                                DateTime.now().millisecondsSinceEpoch,
-                            onDateSelected: (timeStamp, date) async {
-                              final pickedDate =
-                                  DateTime.fromMillisecondsSinceEpoch(
-                                    timeStamp.millisecondsSinceEpoch,
-                                  );
-
-                              controller.create_at =
-                                  timeStamp.millisecondsSinceEpoch;
-
-                              final formatted = DateFormat(
-                                'dd/MM/yyyy',
-                              ).format(pickedDate);
-
-                              if (formatted !=
-                                  controller.companyNameController.text) {
-                                controller.companyNameController.text =
-                                    formatted;
-                                final formattedLegacyDate = DateFormat(
-                                  'dd-MM-yyyy',
-                                ).format(pickedDate);
-                                // 1️⃣ حمّل الكشكول
-                                await controller.loadLegacyQueueForDate(
-                                  DateFormat('dd-MM-yyyy').format(pickedDate),
-                                );
-
-                                // 🔥 حالة اليوم (open / close)
-                                await controller.loadOpenCloseStatusForDate(
-                                  formattedLegacyDate,
-                                );
-
-                                // 2️⃣ 🔥 احسب عدد الحجوزات لليوم الجديد
-                                controller.total_reservations = await controller
-                                    .getTotalTodayReservations(formatted);
-
-                                // 3️⃣ 🔥 احسب رقم الحجز
-                                controller.recalculateOrderNum();
-                              }
-
-                              controller.update();
-                            },
-                          ),
-                        ),
-
-                        /// 🗂️ Legacy Queue Checkbox (Assistant only)
-                        if (LocalUser().getUserData().userType?.name ==
-                                Strings.assistant &&
-                            controller.legacyQueueCount > 0)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 15.0,
-                              vertical: 15,
-                            ),
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 12.w,
-                                vertical: 10.h,
-                              ),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: AppColors.borderNeutralPrimary
-                                      .withOpacity(0.6),
-                                ),
-                              ),
-                              child: Row(
+                            : Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Checkbox(
-                                    value: controller.isFromLegacyQueue,
-                                    activeColor: AppColors.primary,
-                                    onChanged: (val) {
-                                      controller.toggleLegacyQueue(
-                                        val ?? false,
-                                      );
-                                    },
-                                  ),
-                                  Expanded(
-                                    child: Text(
-                                      "الحجز ده مسجّل في الكشكول",
-                                      style: context.typography.mdMedium
-                                          .copyWith(
-                                            color: AppColors.textDisplay,
-                                          ),
+                                  /// 🔹 البحث برقم الهاتف
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 15.0,
+                                    ),
+                                    child: PatientSearchBar(
+                                      tag: "search_phone",
+                                      hint: "ابحث برقم الهاتف",
+                                      textInputType: TextInputType.phone,
+                                      focusNode: keyboardService.getFocusNode(
+                                        keys[0],
+                                      ),
+                                      textEditingController:
+                                          controller.patientPhoneController,
+                                      searchResult: (patientModel, text) {
+                                        setState(() {
+                                          // ✅ Show phone list only when typing and name list is hidden
+                                          showPhoneList =
+                                              text.isNotEmpty && !showNameList;
+                                          if (text.isEmpty)
+                                            showPhoneList = false;
+                                        });
+                                      },
+                                      onCloseList: () {
+                                        // ✅ Just hide the list, keep the text intact
+                                        setState(() {
+                                          showPhoneList = false;
+                                        });
+                                        FocusScope.of(
+                                          context,
+                                        ).unfocus(); // optional, hides keyboard
+                                      },
                                     ),
                                   ),
+
+                                  if (showPhoneList)
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 15.0,
+                                      ),
+                                      child: PatientResultList(
+                                        tag: "search_phone",
+                                        onSelect: (client) {
+                                          _fillPatientData(controller, client);
+                                          setState(() {
+                                            showPhoneList =
+                                                false; // ✅ Hide results when a patient is selected
+                                          });
+                                        },
+                                      ),
+                                    ),
+
+                                  SizedBox(height: 20.h),
+
+                                  /// 🔹 البحث بالاسم
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 15.0,
+                                    ),
+                                    child: PatientSearchBar(
+                                      tag: "search_name",
+                                      hint: "ابحث بالاسم",
+                                      focusNode: keyboardService.getFocusNode(
+                                        keys[1],
+                                      ),
+                                      textEditingController:
+                                          controller.patientNameController,
+                                      searchResult: (patientModel, text) {
+                                        setState(() {
+                                          showNameList =
+                                              text.isNotEmpty && !showPhoneList;
+                                          if (text.isEmpty)
+                                            showNameList = false;
+                                        });
+                                      },
+                                      onCloseList: () {
+                                        setState(() {
+                                          showNameList =
+                                              false; // ✅ Only hides results, doesn’t clear text
+                                        });
+                                      },
+                                    ),
+                                  ),
+
+                                  if (showNameList)
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 15.0,
+                                      ),
+                                      child: PatientResultList(
+                                        tag: "search_name",
+                                        onSelect: (client) {
+                                          _fillPatientData(controller, client);
+                                          setState(() => showNameList = false);
+                                        },
+                                      ),
+                                    ),
+
+                                  if (controller.lastReservationHumanText !=
+                                      null)
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                        left: 15.0,
+                                        right: 15,
+                                        top: 8,
+                                      ),
+                                      child: Text(
+                                        "آخر كشف: ${controller.lastReservationHumanText}",
+                                        style: context.typography.mdRegular
+                                            .copyWith(
+                                              color: AppColors.errorForeground,
+                                            ),
+                                      ),
+                                    ),
                                 ],
                               ),
-                            ),
-                          ),
 
-                        SizedBox(height: 16.h),
+                        /// 🔹 نوع الحجز
+                        controller.currentStep != 3
+                            ? const SizedBox()
+                            : Column(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 15,
+                                      vertical: 10,
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "نوع الحجز",
+                                          style: context.typography.mdMedium,
+                                        ),
+                                        const SizedBox(height: 12),
 
-                        // /// 🔹 التقويم
-                        // Padding(
-                        //   padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                        //   child: CalenderWidget(
-                        //     onDateSelected: (timeStamp, date) {
-                        //       controller.create_at =
-                        //           timeStamp.millisecondsSinceEpoch;
-                        //
-                        //       final formatted = DateFormat('yyyy-MM-dd').format(
-                        //         DateTime.fromMillisecondsSinceEpoch(
-                        //           timeStamp.millisecondsSinceEpoch,
-                        //         ),
-                        //       );
-                        //
-                        //       final total =
-                        //           controller.clinicModel
-                        //               ?.getTotalReservationsForDate(
-                        //                 formatted,
-                        //               ) ??
-                        //           0;
-                        //       final urgent =
-                        //           controller.clinicModel
-                        //               ?.getUrgentReservationsForDate(
-                        //                 formatted,
-                        //               ) ??
-                        //           0;
-                        //
-                        //       int nextOrder;
-                        //       if (controller.selectedType == "كشف مستعجل") {
-                        //         nextOrder = (urgent + 1).toInt();
-                        //       } else {
-                        //         nextOrder = (total + urgent + 1).toInt();
-                        //       }
-                        //
-                        //       controller.resOrderController.text = nextOrder
-                        //           .toString();
-                        //
-                        //       debugPrint(
-                        //         "📅 [$formatted] type=${controller.selectedType} → total=$total | urgent=$urgent → next=$nextOrder",
-                        //       );
-                        //       controller.update();
-                        //     },
-                        //
-                        //     initialTimestamp:
-                        //         controller.create_at ??
-                        //         DateTime.now().millisecondsSinceEpoch,
-                        //     hintText: "تاريخ الحجز",
-                        //   ),
-                        // ),
-                        SizedBox(height: 50.h),
+                                        Wrap(
+                                          spacing: 12,
+                                          runSpacing: 12,
+                                          children: controller.typeOptions.map((
+                                            type,
+                                          ) {
+                                            final isSelected =
+                                                controller.selectedType == type;
 
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 15.0.w),
-                          child: SizedBox(
-                            width: ScreenUtil().screenWidth,
-                            height: 55.h,
-                            child: PrimaryTextButton(
-                              appButtonSize: AppButtonSize.xxLarge,
-                              onTap: (controller.isDayClosed)
-                                  ? () {
-                                      Loader.showError(
-                                        "🚫 اليوم مغلق للحجوزات",
-                                      );
-                                    }
-                                  : controller.validateStep()
-                                  ? () {
-                                      controller.saveReservation(
-                                        widget.list_reservations,
-                                        widget.selected_clinic,
-                                      );
-                                    }
-                                  : null,
+                                            return GestureDetector(
+                                              onTap: () {
+                                                controller.setReservationType(
+                                                  type,
+                                                );
+                                                controller.selectedType = type;
+                                                controller.update();
+                                              },
+                                              child: AnimatedContainer(
+                                                duration: const Duration(
+                                                  milliseconds: 200,
+                                                ),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 18,
+                                                      vertical: 14,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: isSelected
+                                                      ? AppColors.primary
+                                                            .withOpacity(0.1)
+                                                      : Colors.white,
+                                                  borderRadius:
+                                                      BorderRadius.circular(14),
+                                                  border: Border.all(
+                                                    color: isSelected
+                                                        ? AppColors.primary
+                                                        : Colors.grey.shade300,
+                                                    width: 1.5,
+                                                  ),
+                                                  boxShadow: isSelected
+                                                      ? [
+                                                          BoxShadow(
+                                                            color: AppColors
+                                                                .primary
+                                                                .withOpacity(
+                                                                  0.15,
+                                                                ),
+                                                            blurRadius: 8,
+                                                            offset:
+                                                                const Offset(
+                                                                  0,
+                                                                  3,
+                                                                ),
+                                                          ),
+                                                        ]
+                                                      : [],
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.check_circle,
+                                                      size: 18,
+                                                      color: isSelected
+                                                          ? AppColors.primary
+                                                          : Colors.transparent,
+                                                    ),
+                                                    if (isSelected)
+                                                      const SizedBox(width: 6),
+                                                    Text(
+                                                      type,
+                                                      style: context
+                                                          .typography
+                                                          .mdMedium
+                                                          .copyWith(
+                                                            color: isSelected
+                                                                ? AppColors
+                                                                      .primary
+                                                                : Colors
+                                                                      .grey
+                                                                      .shade700,
+                                                          ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            );
+                                          }).toList(),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
 
-                              label: AppText(
-                                text: controller.is_update
-                                    ? "تحديث الحجز"
-                                    : "إضافة الحجز",
-                                textStyle: context.typography.mdMedium.copyWith(
-                                  color: AppColors.white,
-                                ),
+                                  /// 🔹 المبالغ
+                                  controller.selectedType == "متابعة"
+                                      ? const SizedBox()
+                                      : Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 15.0,
+                                            vertical: 30,
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Expanded(
+                                                child: AppTextField(
+                                                  controller: controller
+                                                      .paidAmountController,
+                                                  hintText: "المدفوع",
+                                                  keyboardType:
+                                                      TextInputType.number,
+                                                  validator:
+                                                      InputValidators.combine([
+                                                        notEmptyValidator,
+                                                      ]),
+                                                  focusNode: keyboardService
+                                                      .getFocusNode(keys[4]),
+                                                ),
+                                              ),
+                                              SizedBox(width: 10.w),
+                                              Expanded(
+                                                child: AppTextField(
+                                                  controller: controller
+                                                      .restAmountController,
+                                                  hintText: "المتبقي",
+                                                  keyboardType:
+                                                      TextInputType.number,
+                                                  focusNode: keyboardService
+                                                      .getFocusNode(keys[5]),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                ],
                               ),
-                            ),
-                          ),
-                        ),
 
-                        if (controller.isDayClosed)
-                          Padding(
-                            padding: const EdgeInsets.only(
-                              top: 15,
-                              left: 10,
-                              right: 10,
-                            ),
-                            child: Text(
-                              "هذا اليوم مُغلق بقرار الإدارة",
-                              style: context.typography.mdMedium.copyWith(
-                                color: AppColors.errorForeground,
+                        controller.currentStep != 1
+                            ? const SizedBox()
+                            : Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // controller.selectedType == "متابعة"
+                                  //     ? const SizedBox()
+                                  //     :
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 15.0,
+                                    ),
+                                    child: Text(
+                                      "رقم الدور ",
+                                      style: context.typography.lgBold.copyWith(
+                                        color: AppColors.background_black,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 7),
+
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 15.0,
+                                    ),
+                                    child: AppTextField(
+                                      hintText: "رقم الكشف",
+                                      enabled: controller.isFromLegacyQueue,
+                                      controller: controller.resOrderController,
+                                      keyboardType: TextInputType.number,
+                                      focusNode: keyboardService.getFocusNode(
+                                        keys[6],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 25),
+
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 15.0,
+                                    ),
+                                    child: Text(
+                                      "تاريخ الكشف ",
+                                      style: context.typography.lgBold.copyWith(
+                                        color: AppColors.background_black,
+                                      ),
+                                    ),
+                                  ),
+                                  // رقم الكشف
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 15.0,
+                                      right: 15,
+
+                                      top: 8,
+                                    ),
+                                    child: CalenderWidget(
+                                      hintText: "تاريخ الحجز",
+                                      initialTimestamp:
+                                          controller.create_at ??
+                                          DateTime.now().millisecondsSinceEpoch,
+                                      onDateSelected: (timeStamp, date) async {
+                                        final pickedDate =
+                                            DateTime.fromMillisecondsSinceEpoch(
+                                              timeStamp.millisecondsSinceEpoch,
+                                            );
+
+                                        controller.create_at =
+                                            timeStamp.millisecondsSinceEpoch;
+
+                                        final formatted = DateFormat(
+                                          'dd/MM/yyyy',
+                                        ).format(pickedDate);
+
+                                        if (formatted !=
+                                            controller
+                                                .companyNameController
+                                                .text) {
+                                          controller
+                                                  .companyNameController
+                                                  .text =
+                                              formatted;
+                                          final formattedLegacyDate =
+                                              DateFormat(
+                                                'dd-MM-yyyy',
+                                              ).format(pickedDate);
+                                          // 1️⃣ حمّل الكشكول
+                                          await controller
+                                              .loadLegacyQueueForDate(
+                                                DateFormat(
+                                                  'dd-MM-yyyy',
+                                                ).format(pickedDate),
+                                              );
+
+                                          // 🔥 حالة اليوم (open / close)
+                                          await controller
+                                              .loadOpenCloseStatusForDate(
+                                                formattedLegacyDate,
+                                              );
+
+                                          // 2️⃣ 🔥 احسب عدد الحجوزات لليوم الجديد
+                                          controller.total_reservations =
+                                              await controller
+                                                  .getTotalTodayReservations(
+                                                    formatted,
+                                                  );
+
+                                          // 3️⃣ 🔥 احسب رقم الحجز
+                                          controller.recalculateOrderNum();
+                                        }
+
+                                        controller.update();
+                                      },
+                                    ),
+                                  ),
+
+                                  /// 🗂️ Legacy Queue Checkbox (Assistant only)
+                                  if (LocalUser()
+                                              .getUserData()
+                                              .userType
+                                              ?.name ==
+                                          Strings.assistant &&
+                                      controller.legacyQueueCount > 0)
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 15.0,
+                                        vertical: 15,
+                                      ),
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 12.w,
+                                          vertical: 10.h,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          border: Border.all(
+                                            color: AppColors
+                                                .borderNeutralPrimary
+                                                .withOpacity(0.6),
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Checkbox(
+                                              value:
+                                                  controller.isFromLegacyQueue,
+                                              activeColor: AppColors.primary,
+                                              onChanged: (val) {
+                                                controller.toggleLegacyQueue(
+                                                  val ?? false,
+                                                );
+                                              },
+                                            ),
+                                            Expanded(
+                                              child: Text(
+                                                "الحجز ده مسجّل في الكشكول",
+                                                style: context
+                                                    .typography
+                                                    .mdMedium
+                                                    .copyWith(
+                                                      color:
+                                                          AppColors.textDisplay,
+                                                    ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+
+                                  SizedBox(height: 16.h),
+                                ],
                               ),
-                            ),
-                          ),
                       ],
                     ),
                   ),

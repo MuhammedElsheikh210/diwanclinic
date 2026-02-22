@@ -10,13 +10,13 @@ class OrderController extends GetxController {
 
   // 🔹 Summary
   double totalMonthProfit = 0;
+  double todayProfit = 0;
+
   bool isLoading = false;
 
-  // ------------------------------------------------------------------
-  // 🔹 Commission percentage (UPDATED → 5%)
-  // ------------------------------------------------------------------
+  // 🔹 Commission
   double commissionRate = 0.05;
-  String commissionLabel = "نسبة الربح (5٪)";
+  String commissionLabel = "نسبة العمولة (5٪)";
 
   @override
   void onInit() {
@@ -25,45 +25,10 @@ class OrderController extends GetxController {
     final user = LocalUser().getUserData();
     final isDoctor = user.userType?.name == "doctor";
 
-    if (isDoctor) {
-      commissionRate = 0.05;
-      commissionLabel = "نسبة الدكتور (5٪)";
-    } else {
-      commissionRate = 0.05;
-      commissionLabel = "نسبة المساعد (5٪)";
-    }
-  }
+    commissionRate = 0.05;
 
-  // ------------------------------------------------------------------
-  // 🔹 incentive tiers (UPDATED → 5%)
-  // ------------------------------------------------------------------
-  List<Map<String, dynamic>> getIncentiveTiers() {
-    const pricePerOrder = 200.0;
-
-    const baseRate = 0.05; // 5%
-    const weeklyDays = 6;
-    const monthlyDays = 26;
-
-    final tiers = [5, 10, 15];
-
-    return tiers.map((count) {
-      final revenue = count * pricePerOrder;
-
-      final weekly = revenue * baseRate * weeklyDays;
-      final monthly = revenue * baseRate * monthlyDays;
-
-      return {
-        "orders": count,
-
-        "avg_weekly": weekly,
-        "inc_weekly": 0.0,
-        "total_weekly": weekly,
-
-        "avg_monthly": monthly,
-        "inc_monthly": 0.0,
-        "total_monthly": monthly,
-      };
-    }).toList();
+    commissionLabel =
+    isDoctor ? "نسبة الدكتور (5٪)" : "نسبة المساعد (5٪)";
   }
 
   // ------------------------------------------------------------------
@@ -81,11 +46,15 @@ class OrderController extends GetxController {
 
       await OrderService().getOrdersData(
         data: {"orderBy": "\"$filterField\"", "equalTo": "\"$userKey\""},
-        filrebaseFilter: FirebaseFilter(orderBy: filterField, equalTo: userKey),
+        filrebaseFilter: FirebaseFilter(
+          orderBy: filterField,
+          equalTo: userKey,
+        ),
         voidCallBack: (data) {
           allOrders = data;
           _categorize();
-          _calculateProfit();
+          _calculateMonthlyProfit();
+          _calculateTodayProfit();
         },
       );
     } catch (e) {
@@ -120,29 +89,94 @@ class OrderController extends GetxController {
   }
 
   // ------------------------------------------------------------------
-  // 💰 Calculate Monthly Profit
+  // 💰 Calculate Today Profit (NEW RULE)
   // ------------------------------------------------------------------
-  void _calculateProfit() {
-    totalMonthProfit = 0;
+  void _calculateTodayProfit() {
+    todayProfit = 0;
+
     final now = DateTime.now();
+
+    final todayOrders = finishedOrders.where((o) {
+      if (o == null) return false;
+      final date = DateTime.fromMillisecondsSinceEpoch(o.createdAt ?? 0);
+      return date.day == now.day &&
+          date.month == now.month &&
+          date.year == now.year;
+    }).toList();
+
+    if (todayOrders.length >= 3) {
+      double total = 0;
+
+      for (var o in todayOrders) {
+        total += (o?.totalOrder ?? 0);
+      }
+
+      todayProfit = total * commissionRate;
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // 💰 Calculate Monthly Profit (based on daily rule)
+  // ------------------------------------------------------------------
+  void _calculateMonthlyProfit() {
+    totalMonthProfit = 0;
+
+    final now = DateTime.now();
+
+    // 🔹 نجمع الأوردرات حسب اليوم
+    final Map<String, List<OrderModel?>> groupedByDay = {};
 
     for (var o in finishedOrders) {
       if (o == null) continue;
 
       final date = DateTime.fromMillisecondsSinceEpoch(o.createdAt ?? 0);
+
       if (date.month == now.month && date.year == now.year) {
-        totalMonthProfit += (o.totalOrder ?? 0) * commissionRate;
+        final key = "${date.year}-${date.month}-${date.day}";
+
+        groupedByDay.putIfAbsent(key, () => []);
+        groupedByDay[key]!.add(o);
+      }
+    }
+
+    // 🔹 نحسب عمولة كل يوم حسب القاعدة
+    for (var dailyOrders in groupedByDay.values) {
+      if (dailyOrders.length >= 3) {
+        double total = 0;
+
+        for (var o in dailyOrders) {
+          total += (o?.totalOrder ?? 0);
+        }
+
+        totalMonthProfit += total * commissionRate;
       }
     }
   }
 
   // ------------------------------------------------------------------
-  // 💵 Profit per order (UPDATED → 5%)
+  // 💵 Profit per order (based on daily activation)
   // ------------------------------------------------------------------
   double getOrderProfit(OrderModel order) {
+    final date =
+    DateTime.fromMillisecondsSinceEpoch(order.createdAt ?? 0);
+
+    final sameDayOrders = finishedOrders.where((o) {
+      if (o == null) return false;
+
+      final d = DateTime.fromMillisecondsSinceEpoch(o.createdAt ?? 0);
+
+      return d.day == date.day &&
+          d.month == date.month &&
+          d.year == date.year;
+    }).toList();
+
+    // لو أقل من 3 في اليوم → صفر
+    if (sameDayOrders.length < 3) return 0;
+
     return (order.totalOrder ?? 0) * commissionRate;
   }
 
+  // ------------------------------------------------------------------
   Future<void> refreshOrders() async {
     await getOrders();
   }

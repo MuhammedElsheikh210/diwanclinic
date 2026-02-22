@@ -217,150 +217,168 @@ class _ReservationViewState extends State<ReservationView> {
           statusColor = AppColors.textSecondaryParagraph;
         }
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 6),
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-          decoration: BoxDecoration(
-            color: status == ReservationNewStatus.inProgress
-                ? AppColors.primary.withValues(alpha: 0.06)
-                : status == ReservationNewStatus.completed
-                ? AppColors.tag_icon_warning.withValues(alpha: 0.06)
-                : (status == ReservationNewStatus.approved && ahead <= 0)
-                ? AppColors.successBackground.withValues(alpha: 0.15)
-                : AppColors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
+        return InkWell(
+          onTap: () {
+            print("donnnne");
+            Get.to(
+              () => ReservationAssistantDetailsView(
+                reservation: reservation,
+                controller: controller,
+                index: 0,
+              ),
+              binding: Binding(),
+            );
+          },
+
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 6),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+            decoration: BoxDecoration(
               color: status == ReservationNewStatus.inProgress
-                  ? AppColors.primary.withValues(alpha: 0.4)
-                  : AppColors.borderNeutralPrimary.withValues(alpha: 0.3),
+                  ? AppColors.primary.withValues(alpha: 0.06)
+                  : status == ReservationNewStatus.completed
+                  ? AppColors.tag_icon_warning.withValues(alpha: 0.06)
+                  : (status == ReservationNewStatus.approved && ahead <= 0)
+                  ? AppColors.successBackground.withValues(alpha: 0.15)
+                  : AppColors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: status == ReservationNewStatus.inProgress
+                    ? AppColors.primary.withValues(alpha: 0.4)
+                    : AppColors.borderNeutralPrimary.withValues(alpha: 0.3),
+              ),
             ),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // 🔢 الرقم
-              SizedBox(
-                width: 28.w,
-                child: Text(
-                  "${reservation.order_num ?? '-'}",
-                  style: context.typography.mdBold.copyWith(
-                    color: AppColors.textSecondaryParagraph,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // 🔢 الرقم
+                SizedBox(
+                  width: 28.w,
+                  child: Text(
+                    "${reservation.order_num ?? '-'}",
+                    style: context.typography.mdBold.copyWith(
+                      color: AppColors.textSecondaryParagraph,
+                    ),
                   ),
                 ),
-              ),
 
-              // 👤 الاسم + نوع الكشف
-              // 👤 الاسم + نوع الكشف + الحالة
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // الاسم
-                    Row(
-                      children: [
-                        Text(
-                          reservation.patientName ?? "",
-                          style: context.typography.mdMedium.copyWith(
-                            color: AppColors.background_black,
+                // 👤 الاسم + نوع الكشف
+                // 👤 الاسم + نوع الكشف + الحالة
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // الاسم
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              reservation.patientName ?? "",
+                              style: context.typography.mdMedium.copyWith(
+                                color: AppColors.background_black,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
 
-                        Text(
-                          "  ( ${reservation.reservationType ?? ""} )",
-                          style: context.typography.smMedium.copyWith(
-                            color: AppColors.textSecondaryParagraph,
+                          Expanded(
+                            child: Text(
+                              "  ( ${reservation.reservationType ?? ""} )",
+                              style: context.typography.smMedium.copyWith(
+                                color: AppColors.textSecondaryParagraph,
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-
-                    // نوع الكشف • الحالة
-                    Text(
-                      "المدفوع  ${reservation.paidAmount ?? ""} ج.م ",
-                      style: context.typography.smMedium.copyWith(
-                        color: AppColors.textSecondaryParagraph,
+                        ],
                       ),
+                      const SizedBox(height: 2),
+
+                      // نوع الكشف • الحالة
+                      Text(
+                        "المدفوع  ${reservation.paidAmount ?? ""} ج.م ",
+                        style: context.typography.smMedium.copyWith(
+                          color: AppColors.textSecondaryParagraph,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // 🔹 الحالة + الأزرار
+                Column(
+                  children: [
+                    // الحالة
+                    reservation.reservationType == "كشف مستعجل"
+                        ? const SizedBox()
+                        : Text(
+                            statusText,
+                            style: context.typography.smMedium.copyWith(
+                              color: statusColor,
+                            ),
+                          ),
+                    const SizedBox(height: 5),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // 🟡 pending → تأكيد / إلغاء
+                        if (status == ReservationNewStatus.pending) ...[
+                          GestureDetector(
+                            onTap: () async {
+                              await controller.changeReservationStatus(
+                                reservation: reservation,
+                                newStatus: ReservationStatus.approved,
+                              );
+                            },
+                            child: _smallActionButton(
+                              context,
+                              text: "تأكيد",
+                              color: AppColors.successForeground,
+                            ),
+                          ),
+                        ],
+
+                        // 🟢 approved → ابدأ الكشف
+                        if (status == ReservationNewStatus.approved) ...[
+                          const SizedBox(width: 6),
+                          GestureDetector(
+                            onTap: () async {
+                              await controller.changeReservationStatus(
+                                reservation: reservation,
+                                newStatus: ReservationStatus.inProgress,
+                              );
+                            },
+                            child: _smallActionButton(
+                              context,
+                              text: "ابدأ الكشف",
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+
+                        // 🔵 inProgress → إنهاء
+                        if (status == ReservationNewStatus.inProgress) ...[
+                          const SizedBox(width: 6),
+                          GestureDetector(
+                            onTap: () async {
+                              await controller.changeReservationStatus(
+                                reservation: reservation,
+                                newStatus: ReservationStatus.completed,
+                              );
+                            },
+                            child: _smallActionButton(
+                              context,
+                              text: "إنهاء الكشف",
+                              color: AppColors.background_black,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ),
-              ),
-
-              // 🔹 الحالة + الأزرار
-              Column(
-                children: [
-                  // الحالة
-                  reservation.reservationType == "كشف مستعجل"
-                      ? const SizedBox()
-                      : Text(
-                          statusText,
-                          style: context.typography.smMedium.copyWith(
-                            color: statusColor,
-                          ),
-                        ),
-                  const SizedBox(height: 5),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // 🟡 pending → تأكيد / إلغاء
-                      if (status == ReservationNewStatus.pending) ...[
-                        GestureDetector(
-                          onTap: () async {
-                            await controller.changeReservationStatus(
-                              reservation: reservation,
-                              newStatus: ReservationStatus.approved,
-                            );
-                          },
-                          child: _smallActionButton(
-                            context,
-                            text: "تأكيد",
-                            color: AppColors.successForeground,
-                          ),
-                        ),
-                      ],
-
-                      // 🟢 approved → ابدأ الكشف
-                      if (status == ReservationNewStatus.approved) ...[
-                        const SizedBox(width: 6),
-                        GestureDetector(
-                          onTap: () async {
-                            await controller.changeReservationStatus(
-                              reservation: reservation,
-                              newStatus: ReservationStatus.inProgress,
-                            );
-                          },
-                          child: _smallActionButton(
-                            context,
-                            text: "ابدأ الكشف",
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ],
-
-                      // 🔵 inProgress → إنهاء
-                      if (status == ReservationNewStatus.inProgress) ...[
-                        const SizedBox(width: 6),
-                        GestureDetector(
-                          onTap: () async {
-                            await controller.changeReservationStatus(
-                              reservation: reservation,
-                              newStatus: ReservationStatus.completed,
-                            );
-                          },
-                          child: _smallActionButton(
-                            context,
-                            text: "إنهاء الكشف",
-                            color: AppColors.background_black,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
         );
       }),
