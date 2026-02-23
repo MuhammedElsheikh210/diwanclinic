@@ -49,8 +49,9 @@ class _CreateReservationViewState extends State<CreateReservationView> {
 
     vm.clinic_key = widget.clinic_key;
     vm.shift_key = widget.shift_key;
-    vm.resOrderController.text = widget.total_reservations.toString();
-    vm.total_reservations = widget.total_reservations;
+    final totalReservation = widget.total_reservations + 1;
+    vm.resOrderController.text = totalReservation.toString();
+    vm.total_reservations = totalReservation;
 
     final today = DateTime.now();
     DateTime selectedDate = today;
