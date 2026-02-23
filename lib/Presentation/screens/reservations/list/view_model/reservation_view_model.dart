@@ -105,9 +105,11 @@ class ReservationViewModel extends GetxController {
     final query = filterManager.buildFilters(
       selectedClinic: selectedClinic,
       appointmentDate: appointmentDate,
+      selectedShift: selectedShift,
       selectedTab: selectedTab,
       isFiltered: isFilter ?? false,
     );
+    print("query is ${query}");
 
     final filtered = await queryManager.getReservations(
       appointmentDate: appointmentDate,
@@ -165,7 +167,7 @@ class ReservationViewModel extends GetxController {
         where: clinicKey.isNotEmpty ? "key = ?" : null,
         whereArgs: clinicKey.isNotEmpty ? [clinicKey] : [],
       ),
-      voidCallBack: (data) {
+      voidCallBack: (data) async {
         listClinic = data;
         Loader.dismiss();
 
@@ -175,13 +177,40 @@ class ReservationViewModel extends GetxController {
           );
 
           selectedClinic = data.first;
-
-          getReservations(isFilter: true);
-          getSyncReservations(initLocalData: true);
+          await getShiftList();
 
           Future.delayed(const Duration(milliseconds: 300), () {
             _isInitialLoad = false;
           });
+        }
+
+        update();
+      },
+    );
+  }
+
+  Future<void> getShiftList() async {
+    if (selectedClinic == null) return;
+
+    ShiftService().getShiftsData(
+      data: FirebaseFilter(orderBy: "clinicKey", equalTo: selectedClinic!.key),
+      query: SQLiteQueryParams(
+        is_filtered: true,
+        where: "clinicKey = ?",
+        whereArgs: [selectedClinic!.key],
+      ),
+      voidCallBack: (data) {
+        if (data != null && data.isNotEmpty) {
+          shiftDropdownItems = ShiftModelAdapterUtil.convertShiftListToGeneric(
+            data,
+          );
+
+          selectedShift = shiftDropdownItems!.first;
+          getReservations(isFilter: true);
+          getSyncReservations(initLocalData: true);
+        } else {
+          shiftDropdownItems = [];
+          selectedShift = null;
         }
 
         update();
