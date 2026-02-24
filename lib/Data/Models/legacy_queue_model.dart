@@ -63,9 +63,7 @@ class LegacyQueueModel {
       clinic_key: clinic_key ?? this.clinic_key,
       date: date ?? this.date,
       value: value ?? this.value,
-      isClosed: setIsClosedNull
-          ? null
-          : (isClosed ?? this.isClosed),
+      isClosed: setIsClosedNull ? null : (isClosed ?? this.isClosed),
     );
   }
 }

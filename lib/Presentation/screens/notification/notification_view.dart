@@ -1,5 +1,4 @@
 import 'package:diwanclinic/Presentation/screens/notification/notification_item.dart';
-import 'package:diwanclinic/Presentation/screens/notification/notifiction_controller.dart';
 import 'package:intl/intl.dart';
 import '../../../../index/index_main.dart';
 

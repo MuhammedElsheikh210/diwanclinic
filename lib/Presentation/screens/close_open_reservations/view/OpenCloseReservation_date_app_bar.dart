@@ -29,6 +29,7 @@ class OpenclosereservationDateAppBar extends StatelessWidget
         padding: const EdgeInsets.symmetric(horizontal: 14),
         child: Row(
           children: [
+            /// 📅 Date
             Expanded(
               child: InkWell(
                 onTap: () => _showDatePicker(context),
@@ -49,41 +50,55 @@ class OpenclosereservationDateAppBar extends StatelessWidget
                     children: [
                       Text(
                         controller.formattedDate,
-                        style: context.typography.lgBold.copyWith(
-                          color: AppColors.textDisplay,
-                        ),
+                        style: context.typography.lgBold,
                       ),
                       const SizedBox(width: 8),
-                      const Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        color: AppColors.primary,
-                      ),
-
-                      /// 🔒 Closed badge
-                      if (isClosedDay) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 8.w,
-                            vertical: 2.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.errorForeground.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                          child: Text(
-                            "مغلق",
-                            style: context.typography.xsMedium.copyWith(
-                              color: AppColors.errorForeground,
-                            ),
-                          ),
-                        ),
-                      ],
+                      const Icon(Icons.keyboard_arrow_down_rounded),
                     ],
                   ),
                 ),
               ),
             ),
+
+            /// 🕒 Shift Badge (لو أكتر من شيفت)
+            if (controller.shiftDropdownItems != null &&
+                controller.shiftDropdownItems!.length > 1 &&
+                controller.selectedShift != null) ...[
+              const SizedBox(width: 10),
+              GestureDetector(
+                onTap: controller.showMandatoryShiftDialog,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.schedule,
+                        size: 18,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        controller.selectedShift?.name ?? "",
+                        style: context.typography.smMedium.copyWith(
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        size: 18,
+                        color: AppColors.primary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

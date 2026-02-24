@@ -2,7 +2,10 @@ import 'package:intl/intl.dart';
 import '../../../../index/index_main.dart';
 
 class CreateLegacyQueueViewModel extends GetxController {
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+
   final TextEditingController valueController = TextEditingController();
+  final FocusNode valueFocusNode = FocusNode();
 
   bool isUpdate = false;
   LegacyQueueModel? existing;
@@ -16,7 +19,8 @@ class CreateLegacyQueueViewModel extends GetxController {
     if (model != null) {
       existing = model;
       isUpdate = true;
-      valueController.text = model.value?.toString() ?? "0";
+
+      valueController.text = model.value?.toString() ?? "";
 
       try {
         final parsed = DateFormat("dd-MM-yyyy").parse(model.date ?? "");
@@ -34,7 +38,23 @@ class CreateLegacyQueueViewModel extends GetxController {
     update();
   }
 
+  /// 🔎 Validation
+  String? validateValue(String? val) {
+    if (val == null || val.isEmpty) {
+      return "العدد مطلوب";
+    }
+
+    final parsed = int.tryParse(val);
+    if (parsed == null || parsed <= 0) {
+      return "ادخل رقم صحيح أكبر من صفر";
+    }
+
+    return null;
+  }
+
   void save() {
+    if (!formKey.currentState!.validate()) return;
+
     if (formattedDate == null) {
       Loader.showError("يرجى اختيار التاريخ");
       return;
@@ -50,19 +70,9 @@ class CreateLegacyQueueViewModel extends GetxController {
     Loader.show();
 
     if (isUpdate) {
-      service.updateLegacyQueueData(
-        model: model,
-        voidCallBack: (status) {
-          _handleResult(status);
-        },
-      );
+      service.updateLegacyQueueData(model: model, voidCallBack: _handleResult);
     } else {
-      service.addLegacyQueueData(
-        model: model,
-        voidCallBack: (status) {
-          _handleResult(status);
-        },
-      );
+      service.addLegacyQueueData(model: model, voidCallBack: _handleResult);
     }
   }
 
@@ -72,22 +82,24 @@ class CreateLegacyQueueViewModel extends GetxController {
 
     if (status == ResponseStatus.success) {
       _refreshList();
-      Get.back(); // close bottom sheet
+      Get.back();
     } else {
       Loader.showError("حدث خطأ، حاول مرة أخرى");
     }
   }
 
-  /// 🔄 Reload Legacy Queue list
+  /// 🔄 Reload Legacy Queue list safely
   void _refreshList() {
-    final legacyVM = initController(() => LegacyQueueViewModel());
-    legacyVM.getData();
-    legacyVM.update();
+    if (Get.isRegistered<LegacyQueueViewModel>()) {
+      final legacyVM = Get.find<LegacyQueueViewModel>();
+      legacyVM.getData();
+    }
   }
 
   @override
   void dispose() {
     valueController.dispose();
+    valueFocusNode.dispose();
     super.dispose();
   }
 }

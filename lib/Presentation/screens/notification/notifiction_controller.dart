@@ -1,5 +1,3 @@
-import 'package:diwanclinic/Presentation/parentControllers/parent_notification_service.dart';
-import 'package:diwanclinic/Presentation/screens/notification/notification_sync_service.dart';
 import 'package:firebase_database/firebase_database.dart';
 import '../../../../index/index_main.dart';
 
@@ -37,6 +35,7 @@ class NotificationController extends GetxController {
   Future<void> fetchNotifications() async {
     final user = LocalUser().getUserData();
     final userKey = user.uid;
+    print("userKey is ${userKey}");
 
     if (userKey == null || userKey.isEmpty) {
       update();
@@ -46,10 +45,8 @@ class NotificationController extends GetxController {
     update();
 
     final ref = FirebaseDatabase.instance.ref("notifications");
-
     /// 👇 1️⃣ check once if there is any data
     final snapshot = await ref.get();
-
     if (!snapshot.exists) {
       // 🔴 no notifications at all
       notifications.clear();

@@ -19,6 +19,7 @@ abstract class LegacyQueueRepository {
       Map<String, dynamic> data, {
         bool isPatient = false,
         String? doctorUid,
+        String? shiftKey, // ✅ جديد (لو Open/Close)
       });
 
   Future<Either<AppError, SuccessModel>> updateLegacyQueueDomain(
@@ -27,6 +28,7 @@ abstract class LegacyQueueRepository {
       Map<String, dynamic> data, {
         bool isPatient = false,
         String? doctorUid,
+        String? shiftKey, // ✅ جديد
       });
 
   Future<Either<AppError, SuccessModel>> deleteLegacyQueueDomain(
@@ -34,15 +36,17 @@ abstract class LegacyQueueRepository {
       String key, {
         bool isPatient = false,
         String? doctorUid,
-        bool isOpenCloseFeature = false, // 👈 مهم
+        bool isOpenCloseFeature = false,
+        String? shiftKey, // ✅ جديد
       });
 
   // ------------------------------------------------------------
-  // 🔒 Open / Close Days (فتح / غلق الحجوزات)
+  // 🔒 Open / Close Days (فتح / غلق الحجوزات) - WITH SHIFT
   // ------------------------------------------------------------
   Future<Either<AppError, List<LegacyQueueModel?>>>
   getOpenCloseDaysByDateDomain(
       String date, {
+        required String shiftKey, // ✅ مهم جدًا
         bool isPatient = false,
         String? doctorUid,
       });

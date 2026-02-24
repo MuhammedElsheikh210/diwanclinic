@@ -113,6 +113,7 @@ class CreateReservationViewModel extends GetxController {
 
     LegacyQueueService().getOpenCloseDaysByDateData(
       date: date,
+      shiftKey: shift_key ?? "",
       voidCallBack: (data) {
         if (data.isNotEmpty) {
           // 👈 أول عنصر كفاية لأن اليوم واحد

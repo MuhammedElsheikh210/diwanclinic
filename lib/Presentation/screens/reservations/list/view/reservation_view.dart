@@ -33,26 +33,7 @@ class _ReservationViewState extends State<ReservationView> {
 
           appBar: ReservationDateAppBar(
             controller: controller,
-            onNotificationTap: () {
-              Get.toNamed(legacyQueueView);
-              // showModalBottomSheet(
-              //   context: context,
-              //   isScrollControlled: true,
-              //   backgroundColor: Colors.transparent,
-              //   builder: (_) => DoctorArrivalBottomSheet(
-              //     onNotifyArrival: () =>
-              //         ReservationNotificationService().notifyAllActiveClients(
-              //           title: "📢 الطبيب وصل العيادة",
-              //           body: "دكتورك وصل العيادة، سيتم بدء الكشوفات الآن.",
-              //         ),
-              //     onNotifyDelay: (title, body) =>
-              //         ReservationNotificationService().notifyAllActiveClients(
-              //           title: title,
-              //           body: body,
-              //         ),
-              //   ),
-              // );
-            },
+
             onFilterTap: () {
               setState(() => isGrid = !isGrid);
             },

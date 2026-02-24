@@ -62,20 +62,17 @@ class ReservationPatientViewModel extends GetxController {
     ReservationStatus.cancelledByDoctor.value,
   ];
 
-
   List<ReservationModel?> get completedReservations {
     return sortedReservations
         .where((r) => _finalStatuses.contains(r?.status))
         .toList();
   }
 
-
   List<ReservationModel?> get otherReservations {
     return sortedReservations
         .where((r) => !_finalStatuses.contains(r?.status))
         .toList();
   }
-
 
   bool _isInitialLoad = true;
 

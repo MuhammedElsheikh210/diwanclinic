@@ -13,6 +13,7 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
     required bool isPatient,
     required String? doctorUid,
     required bool isOpenCloseFeature,
+    String? shiftKey,
   }) {
     final safeDate = date.replaceAll("/", "-").trim();
 
@@ -24,18 +25,30 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
       basePath = "doctors/$doctorUid";
     } else {
       final uid = LocalUser().getUserData().doctorKey ?? "";
+      if (uid.isEmpty) {
+        throw Exception("Doctor key is missing");
+      }
       basePath = "doctors/$uid";
     }
 
     final featureNode =
     isOpenCloseFeature ? "open_close_days" : "legacy_queue";
 
+    /// ✅ Open / Close مربوط بالشيفت
+    if (isOpenCloseFeature) {
+      if (shiftKey == null || shiftKey.isEmpty) {
+        throw Exception("shiftKey is required for open_close_days");
+      }
+
+      return "$basePath/$featureNode/$safeDate/$shiftKey";
+    }
+
+    /// legacy_queue القديم بدون شيفت
     return "$basePath/$featureNode/$safeDate";
   }
 
-  /// 🧠 نحدد الفيتشر من الداتا نفسها
   bool _isOpenCloseFeature(Map<String, dynamic> data) {
-    return data.containsKey('isClosed') && data['isClosed'] != null;
+    return data.containsKey('isClosed');
   }
 
   // ------------------------------------------------------------
@@ -66,17 +79,19 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
         response,
             (json) => LegacyQueueModel.fromJson(json),
       );
-    } catch (_) {
+    } catch (e) {
+      debugPrint("❌ getLegacyQueueByDate error: $e");
       return [];
     }
   }
 
   // ------------------------------------------------------------
-  // 🔒 GET (Open / Close Days)
+  // 🔒 GET (Open / Close Days) WITH SHIFT
   // ------------------------------------------------------------
   @override
   Future<List<LegacyQueueModel?>> getOpenCloseDaysByDate(
       String date, {
+        required String shiftKey,
         bool isPatient = false,
         String? doctorUid,
       }) async {
@@ -86,6 +101,7 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
         isPatient: isPatient,
         doctorUid: doctorUid,
         isOpenCloseFeature: true,
+        shiftKey: shiftKey,
       );
 
       final response = await _clientSourceRepo.request(
@@ -97,7 +113,8 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
         response,
             (json) => LegacyQueueModel.fromJson(json),
       );
-    } catch (_) {
+    } catch (e) {
+      debugPrint("❌ getOpenCloseDaysByDate error: $e");
       return [];
     }
   }
@@ -112,12 +129,16 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
       Map<String, dynamic> data, {
         bool isPatient = false,
         String? doctorUid,
+        String? shiftKey,
       }) async {
+    final isOpenClose = _isOpenCloseFeature(data);
+
     final path = _resolveQueuePath(
       date: date,
       isPatient: isPatient,
       doctorUid: doctorUid,
-      isOpenCloseFeature: _isOpenCloseFeature(data),
+      isOpenCloseFeature: isOpenClose,
+      shiftKey: isOpenClose ? shiftKey : null,
     );
 
     final response = await _clientSourceRepo.request(
@@ -139,12 +160,16 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
       Map<String, dynamic> data, {
         bool isPatient = false,
         String? doctorUid,
+        String? shiftKey,
       }) async {
+    final isOpenClose = _isOpenCloseFeature(data);
+
     final path = _resolveQueuePath(
       date: date,
       isPatient: isPatient,
       doctorUid: doctorUid,
-      isOpenCloseFeature: _isOpenCloseFeature(data),
+      isOpenCloseFeature: isOpenClose,
+      shiftKey: isOpenClose ? shiftKey : null,
     );
 
     final response = await _clientSourceRepo.request(
@@ -166,12 +191,14 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
         bool isPatient = false,
         String? doctorUid,
         bool isOpenCloseFeature = false,
+        String? shiftKey,
       }) async {
     final path = _resolveQueuePath(
       date: date,
       isPatient: isPatient,
       doctorUid: doctorUid,
       isOpenCloseFeature: isOpenCloseFeature,
+      shiftKey: isOpenCloseFeature ? shiftKey : null,
     );
 
     final response = await _clientSourceRepo.request(
@@ -179,6 +206,7 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
       "/$path/$key.json",
     );
 
-    return SuccessModel.fromJson(response ?? {"message": "تم الحذف بنجاح"});
+    return SuccessModel.fromJson(
+        response ?? {"message": "تم الحذف بنجاح"});
   }
 }

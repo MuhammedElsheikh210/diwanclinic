@@ -48,7 +48,7 @@ class LegacyQueueUseCases {
       key,
       isPatient: isPatient,
       doctorUid: doctorUid,
-      isOpenCloseFeature: false, // 👈 legacy
+      isOpenCloseFeature: false,
     );
   }
 
@@ -67,16 +67,18 @@ class LegacyQueueUseCases {
   }
 
   // ------------------------------------------------------------
-  // 🔒 Open / Close Days (فتح / غلق الحجوزات)
+  // 🔒 Open / Close Days (WITH SHIFT)
   // ------------------------------------------------------------
   Future<Either<AppError, List<LegacyQueueModel?>>>
   getOpenCloseDaysByDate(
       String date, {
+        required String shiftKey, // ✅ مهم
         bool isPatient = false,
         String? doctorUid,
       }) {
     return _repository.getOpenCloseDaysByDateDomain(
       date,
+      shiftKey: shiftKey,
       isPatient: isPatient,
       doctorUid: doctorUid,
     );
@@ -84,6 +86,7 @@ class LegacyQueueUseCases {
 
   Future<Either<AppError, SuccessModel>> addOpenCloseDay(
       LegacyQueueModel model, {
+        required String shiftKey, // ✅ مهم
         bool isPatient = false,
         String? doctorUid,
       }) {
@@ -93,11 +96,13 @@ class LegacyQueueUseCases {
       model.toJson(),
       isPatient: isPatient,
       doctorUid: doctorUid,
+      shiftKey: shiftKey,
     );
   }
 
   Future<Either<AppError, SuccessModel>> updateOpenCloseDay(
       LegacyQueueModel model, {
+        required String shiftKey, // ✅ مهم
         bool isPatient = false,
         String? doctorUid,
       }) {
@@ -107,12 +112,14 @@ class LegacyQueueUseCases {
       model.toJson(),
       isPatient: isPatient,
       doctorUid: doctorUid,
+      shiftKey: shiftKey,
     );
   }
 
   Future<Either<AppError, SuccessModel>> deleteOpenCloseDay(
       String date,
       String key, {
+        required String shiftKey, // ✅ مهم
         bool isPatient = false,
         String? doctorUid,
       }) {
@@ -121,7 +128,8 @@ class LegacyQueueUseCases {
       key,
       isPatient: isPatient,
       doctorUid: doctorUid,
-      isOpenCloseFeature: true, // 👈 open/close
+      isOpenCloseFeature: true,
+      shiftKey: shiftKey,
     );
   }
 }

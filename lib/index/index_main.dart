@@ -382,7 +382,7 @@ export 'package:diwanclinic/Presentation/screens/visits/lists/visites_view_model
 export 'package:diwanclinic/Presentation/screens/doctors/details%20/controller.dart';
 export 'package:diwanclinic/Presentation/screens/doctors/details%20/widgets/clinic_and_shift_section.dart';
 export 'package:diwanclinic/Presentation/screens/doctors/details%20/widgets/doctor_info_section.dart';
-export 'package:diwanclinic/Presentation/screens/doctors/details%20/widgets/reservation_section.dart';
+export 'package:diwanclinic/Presentation/screens/doctors/details%20/bottom_sheet/confirm_reservation_section.dart';
 export 'package:diwanclinic/Data/Models/DoctorSuggestionModel.dart';
 export 'package:diwanclinic/Data/data_source/doctor_suggestion_data_source_repo.dart';
 export 'package:diwanclinic/Domain/Repositories/doctor_suggestion_repository.dart';
@@ -540,3 +540,4 @@ export 'package:diwanclinic/Presentation/screens/doctors/details%20/widgets/doct
 export 'package:diwanclinic/Presentation/screens/setting/privacy_policy_screen.dart';
 export 'package:diwanclinic/Presentation/screens/Authentication/onboard/OnBoardView.dart';
 export 'package:diwanclinic/Presentation/screens/order_medicine_view/order_success_screen.dart';
+export 'package:diwanclinic/Presentation/screens/reservations/list/widgets/bottom_sheet/show_mendatory_select_shift.dart';

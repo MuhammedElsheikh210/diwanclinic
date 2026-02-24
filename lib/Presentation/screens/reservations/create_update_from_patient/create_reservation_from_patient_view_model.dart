@@ -65,7 +65,6 @@ class CreateReservationFromPatientViewModel extends GetxController {
     paidAmountController.addListener(_updateRestAmount);
   }
 
-
   /// Called when opening the view
   void initData({
     ReservationModel? reservation,

@@ -39,13 +39,14 @@ class ReservationDateAppBar extends StatelessWidget
                 child: CalendarDropdown(
                   controller: controller,
                   initialTimestamp:
-                  controller.create_at ??
+                      controller.create_at ??
                       DateTime.now().millisecondsSinceEpoch,
                   onDateSelected: (timestamp, formattedDate) {
                     final d = timestamp.toDate();
                     controller.create_at = d.millisecondsSinceEpoch;
-                    controller.appointmentDate =
-                        DateFormat('dd/MM/yyyy').format(d);
+                    controller.appointmentDate = DateFormat(
+                      'dd/MM/yyyy',
+                    ).format(d);
 
                     controller.getReservations(isFilter: true);
                     controller.update();
@@ -56,14 +57,17 @@ class ReservationDateAppBar extends StatelessWidget
               const SizedBox(width: 10),
 
               // ░░ Shift Badge ░░
-              if (controller.selectedShift != null)
+              if (!controller.hideShiftSelector &&
+                  controller.selectedShift != null)
                 GestureDetector(
                   onTap: () {
                     controller.showMandatoryShiftDialog();
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 8),
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
@@ -106,9 +110,7 @@ class ReservationDateAppBar extends StatelessWidget
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      isGrid
-                          ? Icons.grid_view_rounded
-                          : Icons.list_alt_rounded,
+                      isGrid ? Icons.grid_view_rounded : Icons.list_alt_rounded,
                       size: 28,
                       color: AppColors.primary,
                     ),

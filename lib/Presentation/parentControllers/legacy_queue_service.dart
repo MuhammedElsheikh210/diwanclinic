@@ -22,6 +22,7 @@ class LegacyQueueService {
       isPatient: isPatient,
       doctorUid: doctorUid,
     );
+
     result.fold(
           (l) => voidCallBack(ResponseStatus.error),
           (r) => voidCallBack(ResponseStatus.success),
@@ -40,6 +41,7 @@ class LegacyQueueService {
       isPatient: isPatient,
       doctorUid: doctorUid,
     );
+
     result.fold(
           (l) => voidCallBack(ResponseStatus.error),
           (r) => voidCallBack(ResponseStatus.success),
@@ -60,6 +62,7 @@ class LegacyQueueService {
       isPatient: isPatient,
       doctorUid: doctorUid,
     );
+
     result.fold(
           (l) => voidCallBack(ResponseStatus.error),
           (r) => voidCallBack(ResponseStatus.success),
@@ -79,6 +82,7 @@ class LegacyQueueService {
       isPatient: isPatient,
       doctorUid: doctorUid,
     );
+
     result.fold(
           (l) => Loader.showError("Something went wrong"),
           (r) => voidCallBack(r),
@@ -86,16 +90,18 @@ class LegacyQueueService {
   }
 
   // ------------------------------------------------------------
-  // 🔒 Open / Close Days (فتح / غلق الحجوزات)
+  // 🔒 Open / Close Days (WITH SHIFT)
   // ------------------------------------------------------------
   Future<void> getOpenCloseDaysByDateData({
     required String date,
+    required String shiftKey, // ✅ مهم جدًا
     required Function(List<LegacyQueueModel?>) voidCallBack,
     bool isPatient = false,
     String? doctorUid,
   }) async {
     final result = await useCase.getOpenCloseDaysByDate(
       date,
+      shiftKey: shiftKey,
       isPatient: isPatient,
       doctorUid: doctorUid,
     );
@@ -108,6 +114,7 @@ class LegacyQueueService {
 
   Future<void> addOpenCloseDayData({
     required LegacyQueueModel model,
+    required String shiftKey, // ✅ مهم
     required Function(ResponseStatus) voidCallBack,
     bool isPatient = false,
     String? doctorUid,
@@ -115,6 +122,7 @@ class LegacyQueueService {
     Loader.show();
     final result = await useCase.addOpenCloseDay(
       model,
+      shiftKey: shiftKey,
       isPatient: isPatient,
       doctorUid: doctorUid,
     );
@@ -127,6 +135,7 @@ class LegacyQueueService {
 
   Future<void> updateOpenCloseDayData({
     required LegacyQueueModel model,
+    required String shiftKey, // ✅ مهم
     required Function(ResponseStatus) voidCallBack,
     bool isPatient = false,
     String? doctorUid,
@@ -134,6 +143,7 @@ class LegacyQueueService {
     Loader.show();
     final result = await useCase.updateOpenCloseDay(
       model,
+      shiftKey: shiftKey,
       isPatient: isPatient,
       doctorUid: doctorUid,
     );
@@ -147,6 +157,7 @@ class LegacyQueueService {
   Future<void> deleteOpenCloseDayData({
     required String date,
     required String key,
+    required String shiftKey, // ✅ مهم
     required Function(ResponseStatus) voidCallBack,
     bool isPatient = false,
     String? doctorUid,
@@ -155,6 +166,7 @@ class LegacyQueueService {
     final result = await useCase.deleteOpenCloseDay(
       date,
       key,
+      shiftKey: shiftKey,
       isPatient: isPatient,
       doctorUid: doctorUid,
     );

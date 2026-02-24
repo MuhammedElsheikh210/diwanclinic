@@ -37,6 +37,7 @@ class LegacyQueueRepositoryImpl extends LegacyQueueRepository {
       Map<String, dynamic> data, {
         bool isPatient = false,
         String? doctorUid,
+        String? shiftKey,
       }) async {
     try {
       final result = await _dataSource.addLegacyQueue(
@@ -45,6 +46,7 @@ class LegacyQueueRepositoryImpl extends LegacyQueueRepository {
         data,
         isPatient: isPatient,
         doctorUid: doctorUid,
+        shiftKey: shiftKey, // ✅ جديد
       );
       return Right(result);
     } catch (e) {
@@ -59,6 +61,7 @@ class LegacyQueueRepositoryImpl extends LegacyQueueRepository {
       Map<String, dynamic> data, {
         bool isPatient = false,
         String? doctorUid,
+        String? shiftKey,
       }) async {
     try {
       final result = await _dataSource.updateLegacyQueue(
@@ -67,6 +70,7 @@ class LegacyQueueRepositoryImpl extends LegacyQueueRepository {
         data,
         isPatient: isPatient,
         doctorUid: doctorUid,
+        shiftKey: shiftKey, // ✅ جديد
       );
       return Right(result);
     } catch (e) {
@@ -81,6 +85,7 @@ class LegacyQueueRepositoryImpl extends LegacyQueueRepository {
         bool isPatient = false,
         String? doctorUid,
         bool isOpenCloseFeature = false,
+        String? shiftKey,
       }) async {
     try {
       final result = await _dataSource.deleteLegacyQueue(
@@ -89,6 +94,7 @@ class LegacyQueueRepositoryImpl extends LegacyQueueRepository {
         isPatient: isPatient,
         doctorUid: doctorUid,
         isOpenCloseFeature: isOpenCloseFeature,
+        shiftKey: shiftKey, // ✅ جديد
       );
       return Right(result);
     } catch (e) {
@@ -97,18 +103,20 @@ class LegacyQueueRepositoryImpl extends LegacyQueueRepository {
   }
 
   // ------------------------------------------------------------
-  // 🔒 Open / Close Days (فتح / غلق الحجوزات)
+  // 🔒 Open / Close Days (فتح / غلق الحجوزات) - WITH SHIFT
   // ------------------------------------------------------------
   @override
   Future<Either<AppError, List<LegacyQueueModel?>>>
   getOpenCloseDaysByDateDomain(
       String date, {
+        required String shiftKey, // ✅ مهم
         bool isPatient = false,
         String? doctorUid,
       }) async {
     try {
       final result = await _dataSource.getOpenCloseDaysByDate(
         date,
+        shiftKey: shiftKey, // ✅ مهم جدًا
         isPatient: isPatient,
         doctorUid: doctorUid,
       );

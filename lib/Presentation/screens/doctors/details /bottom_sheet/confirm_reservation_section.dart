@@ -144,43 +144,198 @@ class _SelectReservationDateBottomSheetState
           return SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // 🔹 Title
-                Text(
-                  "تأكيد الحجز",
-                  style: typography.xlBold.copyWith(
-                    color: AppColors.textDisplay,
+                Center(
+                  child: Text(
+                    "تأكيد الحجز",
+                    textAlign: TextAlign.center,
+                    style: typography.xlBold.copyWith(
+                      color: AppColors.textDisplay,
+                    ),
                   ),
                 ),
                 SizedBox(height: 16.h),
 
-                // 🔹 رقم الكشف (Order number)
-                if (controller.nextOrder != null)
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.all(12.w),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary10,
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: AppColors.primary40),
-                    ),
-                    child: Text(
-                      "رقم الكشف: ${controller.nextOrder}",
-                      style: typography.lgBold.copyWith(
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ),
+                // // 🔹 رقم الكشف (Order number)
+                // if (controller.nextOrder != null)
+                //   Container(
+                //     width: double.infinity,
+                //     padding: EdgeInsets.all(12.w),
+                //     decoration: BoxDecoration(
+                //       color: AppColors.primary10,
+                //       borderRadius: BorderRadius.circular(12.r),
+                //       border: Border.all(color: AppColors.primary40),
+                //     ),
+                //     child: Text(
+                //       "رقم الكشف: ${controller.nextOrder}",
+                //       style: typography.lgBold.copyWith(
+                //         color: AppColors.primary,
+                //       ),
+                //     ),
+                //   ),
 
-                // 🔹 Clinic & Shift Section (dropdowns + info)
-                ClinicAndShiftSection(
-                  controller: controller,
-                  showFromHome: true,
-                  showClinicInfo: false,
+                /// 🔹 اختيار الشيفت
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("اختر الفترة", style: typography.mdMedium),
+                    const SizedBox(height: 8),
+
+                    controller.listShifts == null
+                        ? const SizedBox()
+                        : Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: controller.listShifts!.map((shift) {
+                              final isSelected =
+                                  controller.selectedShift?.key == shift?.key;
+
+                              return GestureDetector(
+                                onTap: () {
+                                  controller.selectedShift = shift;
+                                  controller
+                                      .loadExpectedOrderFromExistingData();
+                                  controller.update();
+                                },
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? AppColors.primary.withValues(
+                                            alpha: 0.1,
+                                          )
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? AppColors.primary
+                                          : Colors.grey.shade300,
+                                      width: 1.5,
+                                    ),
+                                    boxShadow: isSelected
+                                        ? [
+                                            BoxShadow(
+                                              color: AppColors.primary
+                                                  .withValues(alpha: 0.15),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 3),
+                                            ),
+                                          ]
+                                        : [],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.access_time,
+                                        size: 18,
+                                        color: isSelected
+                                            ? AppColors.primary
+                                            : Colors.grey,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        shift?.name ?? "",
+                                        style: typography.mdMedium.copyWith(
+                                          color: isSelected
+                                              ? AppColors.primary
+                                              : Colors.grey.shade700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                  ],
                 ),
 
-                SizedBox(height: 20.h),
+                /// 🔹 نوع الحجز
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 17.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("نوع الحجز", style: typography.mdMedium),
+                      const SizedBox(height: 8),
+
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: controller.reservationTypes.map((type) {
+                          final isSelected =
+                              controller.selectedReservationType == type;
+
+                          return GestureDetector(
+                            onTap: () {
+                              controller.selectedReservationType = type;
+                              controller.update();
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppColors.primary.withOpacity(0.1)
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? AppColors.primary
+                                      : Colors.grey.shade300,
+                                  width: 1.5,
+                                ),
+                                boxShadow: isSelected
+                                    ? [
+                                        BoxShadow(
+                                          color: AppColors.primary.withOpacity(
+                                            0.15,
+                                          ),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ]
+                                    : [],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.check_circle,
+                                    size: 18,
+                                    color: isSelected
+                                        ? AppColors.primary
+                                        : Colors.transparent,
+                                  ),
+                                  if (isSelected) const SizedBox(width: 6),
+                                  Text(
+                                    type,
+                                    style: typography.mdMedium.copyWith(
+                                      color: isSelected
+                                          ? AppColors.primary
+                                          : Colors.grey.shade700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                ),
 
                 // 🔹 Deposit Section
                 if (requiresDeposit) ...[
@@ -278,20 +433,28 @@ class _SelectReservationDateBottomSheetState
                 ],
 
                 // 🔹 Calendar
-                CalenderWidget(
-                  onDateSelected: (timeStamp, date) {
-                    final pickedDate = DateTime.fromMillisecondsSinceEpoch(
-                      timeStamp.millisecondsSinceEpoch,
-                    );
-                    controller.onSelectDate(pickedDate);
-                  },
-                  initialTimestamp: controller.selectedDate != null
-                      ? controller.selectedDate!.millisecondsSinceEpoch
-                      : DateTime.now().millisecondsSinceEpoch,
-                  hintText: "اختر تاريخ الحجز",
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("تاريخ الكشف", style: typography.mdMedium),
+                    const SizedBox(height: 8),
+                    CalenderWidget(
+                      onDateSelected: (timeStamp, date) {
+                        final pickedDate = DateTime.fromMillisecondsSinceEpoch(
+                          timeStamp.millisecondsSinceEpoch,
+                        );
+                        controller.onSelectDate(pickedDate);
+                      },
+                      initialTimestamp: controller.selectedDate != null
+                          ? controller.selectedDate!.millisecondsSinceEpoch
+                          : DateTime.now().millisecondsSinceEpoch,
+                      hintText: "اختر تاريخ الحجز",
+                    ),
+                  ],
                 ),
 
-                SizedBox(height: 10.h),
+                SizedBox(height: 15.h),
 
                 if (!controller.isSelectedDayClosed) ...[
                   if (controller.isLoadingOrderInfo)

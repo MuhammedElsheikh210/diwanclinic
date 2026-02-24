@@ -76,6 +76,7 @@ class DoctorDetailsViewModel extends GetxController {
       date: date,
       isPatient: true,
       doctorUid: doctor.uid,
+      shiftKey: selectedShift?.key ?? "",
       voidCallBack: (data) {
         if (data.isNotEmpty) {
           final item = data.first;
@@ -175,7 +176,7 @@ class DoctorDetailsViewModel extends GetxController {
 
     await ReservationService().getReservationsData(
       date: formattedDate,
-      data: FirebaseFilter(),
+      data: FirebaseFilter(orderBy: "shift_key", equalTo: selectedShift?.key),
       isPatient: true,
       doctorUid: doctor.uid,
       fromOnline: true,

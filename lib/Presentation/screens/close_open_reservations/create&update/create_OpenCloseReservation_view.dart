@@ -13,15 +13,28 @@ class CreateOpenclosereservationViewModel extends GetxController {
   /// 🔒 اليوم مقفول؟
   bool isClosed = false;
 
+  /// ⏰ Shift
+  List<GenericListModel>? shiftDropdownItems;
+  GenericListModel? selectedShift;
+  String? shiftKey;
+
   final LegacyQueueService service = LegacyQueueService();
 
-  void init(LegacyQueueModel? model) {
+  // ------------------------------------------------------------
+  // 🔹 INIT
+  // ------------------------------------------------------------
+  void init(
+      LegacyQueueModel? model, {
+        String? incomingShiftKey,
+      }) {
+    shiftKey = incomingShiftKey;
+
     if (model != null) {
       existing = model;
       isUpdate = true;
 
       valueController.text = model.value?.toString() ?? "0";
-      isClosed = model.isClosed ?? false; // 👈 الجديد
+      isClosed = model.isClosed ?? false;
 
       try {
         final parsed = DateFormat("dd-MM-yyyy").parse(model.date ?? "");
@@ -29,9 +42,60 @@ class CreateOpenclosereservationViewModel extends GetxController {
         formattedDate = model.date;
       } catch (_) {}
     }
+
+    loadShiftList();
   }
 
-  /// 📅 Date Picker handler
+  // ------------------------------------------------------------
+  // 🔹 LOAD SHIFTS
+  // ------------------------------------------------------------
+  Future<void> loadShiftList() async {
+    final clinicKey = LocalUser().getUserData().clinicKey ?? "";
+
+    ShiftService().getShiftsData(
+      data: FirebaseFilter(orderBy: "clinicKey", equalTo: clinicKey),
+      query: SQLiteQueryParams(
+        is_filtered: true,
+        where: "clinicKey = ?",
+        whereArgs: [clinicKey],
+      ),
+      voidCallBack: (data) {
+        if (data != null && data.isNotEmpty) {
+          shiftDropdownItems =
+              ShiftModelAdapterUtil.convertShiftListToGeneric(data);
+
+          if (shiftDropdownItems!.length == 1) {
+            selectedShift = shiftDropdownItems!.first;
+            shiftKey = selectedShift!.key;
+          } else {
+            if (shiftKey != null) {
+              try {
+                selectedShift = shiftDropdownItems!
+                    .firstWhere((e) => e.key == shiftKey);
+              } catch (_) {
+                selectedShift = null;
+              }
+            }
+          }
+        }
+
+        update();
+      },
+    );
+  }
+
+  // ------------------------------------------------------------
+  // 🔹 Select Shift manually
+  // ------------------------------------------------------------
+  void selectShift(GenericListModel shift) {
+    selectedShift = shift;
+    shiftKey = shift.key;
+    update();
+  }
+
+  // ------------------------------------------------------------
+  // 📅 Date Picker
+  // ------------------------------------------------------------
   void setDate(Timestamp timestamp) {
     final dateTime = timestamp.toDate();
     selectedTimestamp = dateTime.millisecondsSinceEpoch;
@@ -39,15 +103,25 @@ class CreateOpenclosereservationViewModel extends GetxController {
     update();
   }
 
-  /// 🔁 Toggle close / open day
+  // ------------------------------------------------------------
+  // 🔁 Toggle close / open
+  // ------------------------------------------------------------
   void toggleClosed(bool value) {
     isClosed = value;
     update();
   }
 
+  // ------------------------------------------------------------
+  // 💾 SAVE
+  // ------------------------------------------------------------
   void save() {
     if (formattedDate == null) {
       Loader.showError("يرجى اختيار التاريخ");
+      return;
+    }
+
+    if (shiftKey == null || shiftKey!.isEmpty) {
+      Loader.showError("يرجى اختيار الفترة");
       return;
     }
 
@@ -56,45 +130,40 @@ class CreateOpenclosereservationViewModel extends GetxController {
       date: formattedDate,
       value: int.tryParse(valueController.text) ?? 0,
       clinic_key: LocalUser().getUserData().clinicKey,
-      isClosed: isClosed, // 👈 المهم
+      isClosed: isClosed,
     );
 
     Loader.show();
 
     if (isUpdate) {
-      service.updateLegacyQueueData(
+      service.updateOpenCloseDayData(
         model: model,
-        voidCallBack: (status) {
-          _handleResult(status);
-        },
+        shiftKey: shiftKey!,
+        voidCallBack: _handleResult,
       );
     } else {
-      service.addLegacyQueueData(
+      service.addOpenCloseDayData(
         model: model,
-        voidCallBack: (status) {
-          _handleResult(status);
-        },
+        shiftKey: shiftKey!,
+        voidCallBack: _handleResult,
       );
     }
   }
 
-  /// 🔄 Handle success / error
+  // ------------------------------------------------------------
+  // 🔄 Result Handler
+  // ------------------------------------------------------------
   void _handleResult(ResponseStatus status) {
     Loader.dismiss();
 
     if (status == ResponseStatus.success) {
-      _refreshList();
-      Get.back(); // close bottom sheet
+      final vm = Get.find<OpenclosereservationViewModel>();
+      vm.getData();
+      vm.update();
+      Get.back();
     } else {
       Loader.showError("حدث خطأ، حاول مرة أخرى");
     }
-  }
-
-  /// 🔄 Reload Legacy Queue list
-  void _refreshList() {
-    final legacyVM = initController(() => LegacyQueueViewModel());
-    legacyVM.getData();
-    legacyVM.update();
   }
 
   @override

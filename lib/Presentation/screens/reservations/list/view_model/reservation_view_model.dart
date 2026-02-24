@@ -7,6 +7,7 @@ class ReservationViewModel extends GetxController {
   late final ReservationFilterManager filterManager;
   late final ReservationActionManager actionManager;
   late final ReservationQueryManager queryManager;
+  bool hideShiftSelector = false;
 
   // Services
   final PrescriptionUploadService prescriptionService =
@@ -87,74 +88,6 @@ class ReservationViewModel extends GetxController {
     super.onClose();
   }
 
-  // Fetch reservations
-  Future<void> getReservations({
-    bool? isFilter = false,
-    bool? fromOnline,
-  }) async {
-    if (appointmentDate == null) return;
-
-    final daily = await queryManager.fetchAllReservationsOfDay(
-      appointmentDate: appointmentDate,
-      selectedClinic: selectedClinic,
-      isFiltered: false,
-    );
-
-    completeDayReservations = daily;
-
-    final query = filterManager.buildFilters(
-      selectedClinic: selectedClinic,
-      appointmentDate: appointmentDate,
-      selectedShift: selectedShift,
-      selectedTab: selectedTab,
-      isFiltered: isFilter ?? false,
-    );
-    print("query is ${query}");
-
-    final filtered = await queryManager.getReservations(
-      appointmentDate: appointmentDate,
-      query: query,
-      isFiltered: false,
-    );
-
-    listReservations = queueManager.buildFinalList(filtered);
-
-    await loadDailyReport(fromOnline: fromOnline ?? true);
-
-    update();
-  }
-
-  // Load daily financial report
-  Future<void> loadDailyReport({bool? fromOnline}) async {
-    if (appointmentDate == null) return;
-
-    completedForReport = await queryManager.getCompletedReservationsForReport(
-      appointmentDate: appointmentDate,
-      isFiltered: false,
-    );
-  }
-
-  // Get total reservations count
-  Future<int> getTotalTodayReservations() {
-    return queryManager.getTotalByDate(appointmentDate: appointmentDate);
-  }
-
-  // Get last visit for patient
-  Future<void> getLastReservationDateForPatient(LocalUser client) async {
-    selectedPatientLastVisit = null;
-    update();
-
-    final reservation = await queryManager.getLastCompletedForPatient(
-      client.key!,
-    );
-
-    selectedPatientLastVisit = reservation == null
-        ? "لا يوجد كشف سابق"
-        : DatesUtilis.humanizeTimestamp(reservation.createAt);
-
-    update();
-  }
-
   // Fetch clinics
   Future<void> getClinicList() async {
     final clinicKey = LocalUser().getUserData().clinicKey ?? "";
@@ -189,6 +122,26 @@ class ReservationViewModel extends GetxController {
     );
   }
 
+  void showMandatoryShiftDialog() {
+    if (shiftDropdownItems == null || shiftDropdownItems!.isEmpty) return;
+
+    Get.dialog(
+      ShiftSelectionDialog(
+        shifts: shiftDropdownItems!,
+        initialSelected: selectedShift,
+        onSelect: (shift) async {
+          selectedShift = shift;
+
+          await getReservations(isFilter: false);
+          getSyncReservations(initLocalData: true);
+
+          update();
+        },
+      ),
+      barrierDismissible: false, // 👈 مهم عشان يبقى mandatory
+    );
+  }
+
   Future<void> getShiftList() async {
     if (selectedClinic == null) return;
 
@@ -199,15 +152,28 @@ class ReservationViewModel extends GetxController {
         where: "clinicKey = ?",
         whereArgs: [selectedClinic!.key],
       ),
-      voidCallBack: (data) {
+      voidCallBack: (data) async {
         if (data != null && data.isNotEmpty) {
           shiftDropdownItems = ShiftModelAdapterUtil.convertShiftListToGeneric(
             data,
           );
 
-          selectedShift = shiftDropdownItems!.first;
-          getReservations(isFilter: true);
-          getSyncReservations(initLocalData: true);
+          // ✅ حالة شيفت واحد فقط
+          if (shiftDropdownItems!.length == 1) {
+            selectedShift = shiftDropdownItems!.first;
+            hideShiftSelector = true;
+
+            await getReservations(isFilter: true);
+            getSyncReservations(initLocalData: true);
+          }
+          // ✅ أكثر من شيفت → افتح Dialog
+          else {
+            hideShiftSelector = false;
+
+            Future.microtask(() {
+              showMandatoryShiftDialog();
+            });
+          }
         } else {
           shiftDropdownItems = [];
           selectedShift = null;
@@ -361,5 +327,95 @@ class ReservationViewModel extends GetxController {
       ),
       binding: Binding(),
     );
+  }
+}
+
+extension ReservationData on ReservationViewModel {
+  // ------------------------------------------------------------
+  // Fetch reservations
+  Future<void> getReservations({
+    bool? isFilter = false,
+    bool? fromOnline,
+  }) async {
+    if (appointmentDate == null || selectedShift == null) return;
+
+    // 🔹 1) Get full day reservations (with shift filter)
+    final daily = await queryManager.fetchAllReservationsOfDay(
+      appointmentDate: appointmentDate,
+      selectedClinic: selectedClinic,
+      shiftKey: selectedShift!.key,
+      isFiltered: false,
+      fromOnline: fromOnline,
+    );
+
+    completeDayReservations = daily;
+
+    // 🔹 2) Build local filter query (already includes shift)
+    final query = filterManager.buildFilters(
+      selectedClinic: selectedClinic,
+      appointmentDate: appointmentDate,
+      selectedShift: selectedShift,
+      selectedTab: selectedTab,
+      isFiltered: isFilter ?? false,
+    );
+
+    // 🔹 3) Apply filtered list
+    final filtered = await queryManager.getReservations(
+      appointmentDate: appointmentDate,
+      query: query,
+      isFiltered: false,
+      fromOnline: fromOnline,
+    );
+
+    listReservations = queueManager.buildFinalList(filtered);
+
+    // 🔹 4) Load report
+    await loadDailyReport(fromOnline: fromOnline ?? false);
+
+    update();
+  }
+
+  // ------------------------------------------------------------
+  // Load daily financial report
+  Future<void> loadDailyReport({bool? fromOnline}) async {
+    if (appointmentDate == null || selectedShift == null) return;
+
+    completedForReport = await queryManager.getCompletedReservationsForReport(
+      appointmentDate: appointmentDate,
+      shiftKey: selectedShift!.key,
+      isFiltered: false,
+      fromOnline: fromOnline,
+    );
+  }
+
+  // ------------------------------------------------------------
+  // Get total reservations count
+  Future<int> getTotalTodayReservations() async {
+    if (appointmentDate == null || selectedShift == null) {
+      return 0;
+    }
+
+    return await queryManager.getTotalByDate(
+      appointmentDate: appointmentDate,
+      shiftKey: selectedShift!.key,
+      isFiltered: false,
+    );
+  }
+
+  // ------------------------------------------------------------
+  // Get last visit for patient
+  Future<void> getLastReservationDateForPatient(LocalUser client) async {
+    selectedPatientLastVisit = null;
+    update();
+
+    final reservation = await queryManager.getLastCompletedForPatient(
+      client.key!,
+    );
+
+    selectedPatientLastVisit = reservation == null
+        ? "لا يوجد كشف سابق"
+        : DatesUtilis.humanizeTimestamp(reservation.createAt);
+
+    update();
   }
 }
