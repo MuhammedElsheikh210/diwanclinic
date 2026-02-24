@@ -49,6 +49,7 @@ class _CreateReservationViewState extends State<CreateReservationView> {
 
     vm.clinic_key = widget.clinic_key;
     vm.shift_key = widget.shift_key;
+    vm.loadShiftsForClinic();
     final totalReservation = widget.total_reservations + 1;
     vm.resOrderController.text = totalReservation.toString();
     vm.total_reservations = totalReservation;
@@ -90,6 +91,9 @@ class _CreateReservationViewState extends State<CreateReservationView> {
     vm.loadOpenCloseStatusForDate(
       DateFormat('dd/MM/yyyy').format(selectedDate),
     );
+
+    // 🔹 حمّل حالة اليوم (مفتوح / مغلق)
+    vm.loadLegacyQueueForDate(DateFormat('dd/MM/yyyy').format(selectedDate));
 
     // 🔹 حمّل بيانات العيادة + المريض
     vm.getClinicList(
@@ -146,7 +150,7 @@ class _CreateReservationViewState extends State<CreateReservationView> {
 
           bottomNavigationBar: SafeArea(
             child: SizedBox(
-              height: 140.h,
+              height: 150.h,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -349,15 +353,19 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                         controller.currentStep != 3
                             ? const SizedBox()
                             : Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Padding(
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 15,
+                                      horizontal: 20,
                                       vertical: 10,
                                     ),
                                     child: Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
                                       children: [
                                         Text(
                                           "نوع الحجز",
@@ -618,6 +626,94 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                       },
                                     ),
                                   ),
+
+                                  if (controller.shiftItems.length > 1)
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 15,
+                                        vertical: 20,
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "الفترة",
+                                            style: context.typography.mdMedium,
+                                          ),
+                                          const SizedBox(height: 8),
+
+                                          if (controller.isLoadingShifts)
+                                            const Center(
+                                              child:
+                                                  CircularProgressIndicator(),
+                                            )
+                                          else
+                                            Wrap(
+                                              spacing: 12,
+                                              runSpacing: 12,
+                                              children: controller.shiftItems.map((
+                                                shift,
+                                              ) {
+                                                final isSelected =
+                                                    controller
+                                                        .selectedShiftModel
+                                                        ?.key ==
+                                                    shift.key;
+
+                                                return GestureDetector(
+                                                  onTap: () => controller
+                                                      .selectShift(shift),
+                                                  child: AnimatedContainer(
+                                                    duration: const Duration(
+                                                      milliseconds: 200,
+                                                    ),
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 18,
+                                                          vertical: 14,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: isSelected
+                                                          ? AppColors.primary
+                                                                .withValues(
+                                                                  alpha: 0.1,
+                                                                )
+                                                          : Colors.white,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            14,
+                                                          ),
+                                                      border: Border.all(
+                                                        color: isSelected
+                                                            ? AppColors.primary
+                                                            : Colors
+                                                                  .grey
+                                                                  .shade300,
+                                                        width: 1.5,
+                                                      ),
+                                                    ),
+                                                    child: Text(
+                                                      shift.name ?? "",
+                                                      style: context
+                                                          .typography
+                                                          .mdMedium
+                                                          .copyWith(
+                                                            color: isSelected
+                                                                ? AppColors
+                                                                      .primary
+                                                                : Colors
+                                                                      .grey
+                                                                      .shade700,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                );
+                                              }).toList(),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
 
                                   /// 🗂️ Legacy Queue Checkbox (Assistant only)
                                   if (LocalUser()

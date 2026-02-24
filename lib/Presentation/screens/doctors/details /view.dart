@@ -59,8 +59,41 @@ class DoctorDetailsView extends StatelessWidget {
                   ? const ShimmerLoader()
                   : ListView(
                       children: [
-                        DoctorHeaderWidget(doctor: doctor),
-                        SizedBox(height: 50.h),
+                        //  DoctorHeaderWidget(doctor: doctor),
+                        InkWell(
+                          onTap: () => Get.to(
+                            () => FullScreenImageView(
+                              imageUrl: doctor.profileImage ?? "",
+                            ),
+                          ),
+                          child: Container(
+                            width: 150.w,
+                            height: 150.h,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 4),
+                              image: DecorationImage(
+                                image: CachedNetworkImageProvider(
+                                  doctor.profileImage ??
+                                      "https://via.placeholder.com/150x150?text=Profile",
+                                ),
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 15.0,
+                            vertical: 10,
+                          ),
+                          child: Text(
+                            doctor.doctorQualifications ?? "",
+                            style: context.typography.mdMedium.copyWith(
+                              color: AppColors.background_black,
+                            ),
+                          ),
+                        ),
 
                         // 🔹 Custom Tabs
                         DoctorTabsWidget(controller: controller),

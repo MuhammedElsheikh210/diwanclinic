@@ -4,12 +4,13 @@ import '../../index/index_main.dart';
 
 class LegacyQueueService {
   final LegacyQueueUseCases useCase = initController(
-        () => LegacyQueueUseCases(Get.find()),
+    () => LegacyQueueUseCases(Get.find()),
   );
 
   // ------------------------------------------------------------
-  // 🧾 Legacy Queue (الكشوفات الورقية)
+  // 🧾 Legacy Queue
   // ------------------------------------------------------------
+
   Future<void> addLegacyQueueData({
     required LegacyQueueModel model,
     required Function(ResponseStatus) voidCallBack,
@@ -24,8 +25,8 @@ class LegacyQueueService {
     );
 
     result.fold(
-          (l) => voidCallBack(ResponseStatus.error),
-          (r) => voidCallBack(ResponseStatus.success),
+      (l) => voidCallBack(ResponseStatus.error),
+      (r) => voidCallBack(ResponseStatus.success),
     );
   }
 
@@ -43,8 +44,8 @@ class LegacyQueueService {
     );
 
     result.fold(
-          (l) => voidCallBack(ResponseStatus.error),
-          (r) => voidCallBack(ResponseStatus.success),
+      (l) => voidCallBack(ResponseStatus.error),
+      (r) => voidCallBack(ResponseStatus.success),
     );
   }
 
@@ -64,57 +65,57 @@ class LegacyQueueService {
     );
 
     result.fold(
-          (l) => voidCallBack(ResponseStatus.error),
-          (r) => voidCallBack(ResponseStatus.success),
+      (l) => voidCallBack(ResponseStatus.error),
+      (r) => voidCallBack(ResponseStatus.success),
     );
   }
 
   Future<void> getLegacyQueueByDateData({
     required String date,
-    Map<String, dynamic>? params,
+    required FirebaseFilter firebaseFilter, // ✅ استخدام FirebaseFilter
     required Function(List<LegacyQueueModel?>) voidCallBack,
     bool isPatient = false,
     String? doctorUid,
   }) async {
     final result = await useCase.getLegacyQueueByDate(
       date,
-      params ?? {},
+      firebaseFilter.toJson() ?? {}, // 🔥 يتحول Map هنا
       isPatient: isPatient,
       doctorUid: doctorUid,
     );
 
     result.fold(
-          (l) => Loader.showError("Something went wrong"),
-          (r) => voidCallBack(r),
+      (l) => Loader.showError("Something went wrong"),
+      (r) => voidCallBack(r),
     );
   }
 
   // ------------------------------------------------------------
-  // 🔒 Open / Close Days (WITH SHIFT)
+  // 🔒 Open / Close Days
   // ------------------------------------------------------------
+
   Future<void> getOpenCloseDaysByDateData({
     required String date,
-    required String shiftKey, // ✅ مهم جدًا
+    required FirebaseFilter firebaseFilter, // ✅ دعم الفلتر
     required Function(List<LegacyQueueModel?>) voidCallBack,
     bool isPatient = false,
     String? doctorUid,
   }) async {
     final result = await useCase.getOpenCloseDaysByDate(
       date,
-      shiftKey: shiftKey,
+      firebaseFilter.toJson() ?? {}, // 🔥 تحويل هنا
       isPatient: isPatient,
       doctorUid: doctorUid,
     );
 
     result.fold(
-          (l) => Loader.showError("Something went wrong"),
-          (r) => voidCallBack(r),
+      (l) => Loader.showError("Something went wrong"),
+      (r) => voidCallBack(r),
     );
   }
 
   Future<void> addOpenCloseDayData({
     required LegacyQueueModel model,
-    required String shiftKey, // ✅ مهم
     required Function(ResponseStatus) voidCallBack,
     bool isPatient = false,
     String? doctorUid,
@@ -122,20 +123,18 @@ class LegacyQueueService {
     Loader.show();
     final result = await useCase.addOpenCloseDay(
       model,
-      shiftKey: shiftKey,
       isPatient: isPatient,
       doctorUid: doctorUid,
     );
 
     result.fold(
-          (l) => voidCallBack(ResponseStatus.error),
-          (r) => voidCallBack(ResponseStatus.success),
+      (l) => voidCallBack(ResponseStatus.error),
+      (r) => voidCallBack(ResponseStatus.success),
     );
   }
 
   Future<void> updateOpenCloseDayData({
     required LegacyQueueModel model,
-    required String shiftKey, // ✅ مهم
     required Function(ResponseStatus) voidCallBack,
     bool isPatient = false,
     String? doctorUid,
@@ -143,21 +142,19 @@ class LegacyQueueService {
     Loader.show();
     final result = await useCase.updateOpenCloseDay(
       model,
-      shiftKey: shiftKey,
       isPatient: isPatient,
       doctorUid: doctorUid,
     );
 
     result.fold(
-          (l) => voidCallBack(ResponseStatus.error),
-          (r) => voidCallBack(ResponseStatus.success),
+      (l) => voidCallBack(ResponseStatus.error),
+      (r) => voidCallBack(ResponseStatus.success),
     );
   }
 
   Future<void> deleteOpenCloseDayData({
     required String date,
     required String key,
-    required String shiftKey, // ✅ مهم
     required Function(ResponseStatus) voidCallBack,
     bool isPatient = false,
     String? doctorUid,
@@ -166,14 +163,13 @@ class LegacyQueueService {
     final result = await useCase.deleteOpenCloseDay(
       date,
       key,
-      shiftKey: shiftKey,
       isPatient: isPatient,
       doctorUid: doctorUid,
     );
 
     result.fold(
-          (l) => voidCallBack(ResponseStatus.error),
-          (r) => voidCallBack(ResponseStatus.success),
+      (l) => voidCallBack(ResponseStatus.error),
+      (r) => voidCallBack(ResponseStatus.success),
     );
   }
 }

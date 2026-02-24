@@ -12,6 +12,10 @@ class CreateReservationViewModel extends GetxController {
   int legacyQueueCount = 0;
   LegacyQueueModel? currentLegacyQueue;
   bool isDayClosed = false;
+  List<ShiftModel?>? shiftList;
+  List<GenericListModel> shiftItems = [];
+  GenericListModel? selectedShiftModel;
+  bool isLoadingShifts = false;
 
   // Delegate fields
   final TextEditingController delegateNameController = TextEditingController();
@@ -113,7 +117,10 @@ class CreateReservationViewModel extends GetxController {
 
     LegacyQueueService().getOpenCloseDaysByDateData(
       date: date,
-      shiftKey: shift_key ?? "",
+      firebaseFilter: FirebaseFilter(
+        orderBy: "clinicShiftKey",
+        equalTo: "${clinic_key}_${shift_key}",
+      ),
       voidCallBack: (data) {
         if (data.isNotEmpty) {
           // 👈 أول عنصر كفاية لأن اليوم واحد
@@ -144,11 +151,99 @@ class CreateReservationViewModel extends GetxController {
     update();
   }
 
+  Future<void> loadShiftsForClinic() async {
+    if (clinic_key == null || clinic_key!.isEmpty) return;
+
+    isLoadingShifts = true;
+    update();
+
+    try {
+      await ShiftService().getShiftsData(
+        data: FirebaseFilter(orderBy: "clinicKey", equalTo: clinic_key),
+        query: SQLiteQueryParams(
+          is_filtered: true,
+          where: "clinicKey = ?",
+          whereArgs: [clinic_key],
+        ),
+        voidCallBack: (data) {
+          shiftList = data;
+
+          shiftItems = (data ?? [])
+              .whereType<ShiftModel>()
+              .map(
+                (s) =>
+                    GenericListModel(key: s.key ?? "", name: s.name ?? "فترة"),
+              )
+              .toList();
+
+          // ✅ لو شيفت واحد بس → اختاره تلقائي
+          if (shiftItems.length == 1) {
+            selectedShiftModel = shiftItems.first;
+            shift_key = selectedShiftModel!.key;
+          }
+
+          // ✅ اختار الشيفت اللي جاي من الشاشة
+          if (shift_key != null) {
+            try {
+              selectedShiftModel = shiftItems.firstWhere(
+                (e) => e.key == shift_key,
+              );
+            } catch (_) {
+              selectedShiftModel = shiftItems.isNotEmpty
+                  ? shiftItems.first
+                  : null;
+            }
+          }
+
+          isLoadingShifts = false;
+          update();
+        },
+      );
+    } catch (e) {
+      isLoadingShifts = false;
+      Loader.showError("فشل تحميل الفترات");
+      update();
+    }
+  }
+
+  Future<void> selectShift(GenericListModel shift) async {
+    selectedShiftModel = shift;
+    shift_key = shift.key;
+
+    if (companyNameController.text.isEmpty) {
+      update();
+      return;
+    }
+
+    final formatted = companyNameController.text;
+    final legacyDate = DateFormat(
+      'dd-MM-yyyy',
+    ).format(DateFormat('dd/MM/yyyy').parse(formatted));
+
+    // 1️⃣ حمّل الكشكول للشيفت الجديد
+    await loadLegacyQueueForDate(legacyDate);
+
+    // 2️⃣ حمّل حالة اليوم (مفتوح / مغلق)
+    await loadOpenCloseStatusForDate(legacyDate);
+
+    // 3️⃣ احسب عدد حجوزات السيستم لنفس الشيفت
+    total_reservations = await getTotalTodayReservations(formatted);
+
+    // 4️⃣ احسب رقم الدور
+    recalculateOrderNum();
+
+    update();
+  }
+
   Future<void> loadLegacyQueueForDate(String date) async {
     final myClinicKey = LocalUser().getUserData().clinicKey;
 
     LegacyQueueService().getLegacyQueueByDateData(
       date: date,
+      firebaseFilter: FirebaseFilter(
+        orderBy: "clinicShiftKey",
+        equalTo: "${LocalUser().getUserData().clinicKey}_${shift_key}",
+      ),
       voidCallBack: (data) {
         legacyQueueCount = 0;
         currentLegacyQueue = null;
@@ -220,30 +315,37 @@ class CreateReservationViewModel extends GetxController {
       resOrderController.text = "";
     } else {
       // 🟩 حجز سيستم
-      resOrderController.text = (systemCount + legacyQueueCount + 1).toString();
+      resOrderController.text = (systemCount + legacyQueueCount).toString();
     }
   }
 
   Future<int> getTotalTodayReservations(String date) async {
     int count = 0;
 
-    // cancelled values
     const cancelledStatuses = [
       "cancelled_by_user",
       "cancelled_by_assistant",
       "cancelled_by_doctor",
     ];
 
-    // Create placeholders (?, ?, ?) for SQL
     final placeholders = List.filled(cancelledStatuses.length, '?').join(',');
 
     await ReservationService().getReservationsData(
       date: date,
-      data: FirebaseFilter(),
+      data: FirebaseFilter(
+        orderBy: "shift_key",
+        equalTo: shift_key, // 🔥 فلترة فايربيز بالشيفت
+      ),
       query: SQLiteQueryParams(
-        is_filtered: true,
-        where: "appointment_date_time = ?",
-        whereArgs: [date],
+        is_filtered: false,
+        where:
+            """
+        appointment_date_time = ?
+        AND clinic_key = ?
+        AND shift_key = ?
+        AND status NOT IN ($placeholders)
+      """,
+        whereArgs: [date, clinic_key, shift_key, ...cancelledStatuses],
       ),
       voidCallBack: (list) {
         count = list.length;

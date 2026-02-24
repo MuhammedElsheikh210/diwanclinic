@@ -7,29 +7,60 @@ class LegacyQueueRepositoryImpl extends LegacyQueueRepository {
   LegacyQueueRepositoryImpl(this._dataSource);
 
   // ------------------------------------------------------------
-  // 🧾 Legacy Queue (الكشوفات الورقية)
+  // 🧾 Legacy Queue
   // ------------------------------------------------------------
   @override
   Future<Either<AppError, List<LegacyQueueModel?>>>
   getLegacyQueueByDateDomain(
       String date,
-      Map<String, dynamic> params, {
+      Map<String, dynamic> data, {
         bool isPatient = false,
         String? doctorUid,
       }) async {
     try {
       final result = await _dataSource.getLegacyQueueByDate(
         date,
-        params,
+        data,
         isPatient: isPatient,
         doctorUid: doctorUid,
       );
+
       return Right(result);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint("❌ Repository Error (LegacyQueue): $e");
       return Left(AppError(e.toString()));
     }
   }
 
+  // ------------------------------------------------------------
+  // 🔒 Open / Close Days
+  // ------------------------------------------------------------
+  @override
+  Future<Either<AppError, List<LegacyQueueModel?>>>
+  getOpenCloseDaysByDateDomain(
+      String date,
+      Map<String, dynamic> data, {
+        bool isPatient = false,
+        String? doctorUid,
+      }) async {
+    try {
+      final result = await _dataSource.getOpenCloseDaysByDate(
+        date,
+        data,
+        isPatient: isPatient,
+        doctorUid: doctorUid,
+      );
+
+      return Right(result);
+    } catch (e) {
+      debugPrint("❌ Repository Error (OpenClose): $e");
+      return Left(AppError(e.toString()));
+    }
+  }
+
+  // ------------------------------------------------------------
+  // ➕ ADD
+  // ------------------------------------------------------------
   @override
   Future<Either<AppError, SuccessModel>> addLegacyQueueDomain(
       String date,
@@ -37,7 +68,6 @@ class LegacyQueueRepositoryImpl extends LegacyQueueRepository {
       Map<String, dynamic> data, {
         bool isPatient = false,
         String? doctorUid,
-        String? shiftKey,
       }) async {
     try {
       final result = await _dataSource.addLegacyQueue(
@@ -46,14 +76,18 @@ class LegacyQueueRepositoryImpl extends LegacyQueueRepository {
         data,
         isPatient: isPatient,
         doctorUid: doctorUid,
-        shiftKey: shiftKey, // ✅ جديد
       );
+
       return Right(result);
     } catch (e) {
+      debugPrint("❌ Repository Error (Add): $e");
       return Left(AppError(e.toString()));
     }
   }
 
+  // ------------------------------------------------------------
+  // ✏️ UPDATE
+  // ------------------------------------------------------------
   @override
   Future<Either<AppError, SuccessModel>> updateLegacyQueueDomain(
       String date,
@@ -61,7 +95,6 @@ class LegacyQueueRepositoryImpl extends LegacyQueueRepository {
       Map<String, dynamic> data, {
         bool isPatient = false,
         String? doctorUid,
-        String? shiftKey,
       }) async {
     try {
       final result = await _dataSource.updateLegacyQueue(
@@ -70,14 +103,18 @@ class LegacyQueueRepositoryImpl extends LegacyQueueRepository {
         data,
         isPatient: isPatient,
         doctorUid: doctorUid,
-        shiftKey: shiftKey, // ✅ جديد
       );
+
       return Right(result);
     } catch (e) {
+      debugPrint("❌ Repository Error (Update): $e");
       return Left(AppError(e.toString()));
     }
   }
 
+  // ------------------------------------------------------------
+  // 🗑 DELETE
+  // ------------------------------------------------------------
   @override
   Future<Either<AppError, SuccessModel>> deleteLegacyQueueDomain(
       String date,
@@ -85,7 +122,6 @@ class LegacyQueueRepositoryImpl extends LegacyQueueRepository {
         bool isPatient = false,
         String? doctorUid,
         bool isOpenCloseFeature = false,
-        String? shiftKey,
       }) async {
     try {
       final result = await _dataSource.deleteLegacyQueue(
@@ -94,34 +130,11 @@ class LegacyQueueRepositoryImpl extends LegacyQueueRepository {
         isPatient: isPatient,
         doctorUid: doctorUid,
         isOpenCloseFeature: isOpenCloseFeature,
-        shiftKey: shiftKey, // ✅ جديد
       );
-      return Right(result);
-    } catch (e) {
-      return Left(AppError(e.toString()));
-    }
-  }
 
-  // ------------------------------------------------------------
-  // 🔒 Open / Close Days (فتح / غلق الحجوزات) - WITH SHIFT
-  // ------------------------------------------------------------
-  @override
-  Future<Either<AppError, List<LegacyQueueModel?>>>
-  getOpenCloseDaysByDateDomain(
-      String date, {
-        required String shiftKey, // ✅ مهم
-        bool isPatient = false,
-        String? doctorUid,
-      }) async {
-    try {
-      final result = await _dataSource.getOpenCloseDaysByDate(
-        date,
-        shiftKey: shiftKey, // ✅ مهم جدًا
-        isPatient: isPatient,
-        doctorUid: doctorUid,
-      );
       return Right(result);
     } catch (e) {
+      debugPrint("❌ Repository Error (Delete): $e");
       return Left(AppError(e.toString()));
     }
   }

@@ -131,6 +131,7 @@ class CreateOpenclosereservationViewModel extends GetxController {
       value: int.tryParse(valueController.text) ?? 0,
       clinic_key: LocalUser().getUserData().clinicKey,
       isClosed: isClosed,
+      shiftKey: shiftKey,
     );
 
     Loader.show();
@@ -138,13 +139,11 @@ class CreateOpenclosereservationViewModel extends GetxController {
     if (isUpdate) {
       service.updateOpenCloseDayData(
         model: model,
-        shiftKey: shiftKey!,
         voidCallBack: _handleResult,
       );
     } else {
       service.addOpenCloseDayData(
         model: model,
-        shiftKey: shiftKey!,
         voidCallBack: _handleResult,
       );
     }

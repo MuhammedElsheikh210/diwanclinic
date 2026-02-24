@@ -76,7 +76,10 @@ class DoctorDetailsViewModel extends GetxController {
       date: date,
       isPatient: true,
       doctorUid: doctor.uid,
-      shiftKey: selectedShift?.key ?? "",
+      firebaseFilter: FirebaseFilter(
+        orderBy: "clinicShiftKey",
+        equalTo: "${selectedClinic?.key}_${selectedShift?.key}",
+      ),
       voidCallBack: (data) {
         if (data.isNotEmpty) {
           final item = data.first;
@@ -114,6 +117,10 @@ class DoctorDetailsViewModel extends GetxController {
     await LegacyQueueService().getLegacyQueueByDateData(
       date: date,
       isPatient: true,
+      firebaseFilter: FirebaseFilter(
+        orderBy: "clinicShiftKey",
+        equalTo: "${LocalUser().getUserData().clinicKey}_${selectedShift?.key}",
+      ),
       doctorUid: doctor.uid,
       voidCallBack: (data) {
         for (final item in data) {
@@ -348,13 +355,14 @@ class DoctorDetailsViewModel extends GetxController {
               )
               .toList();
 
+          selectedShift = listShifts?.first;
           isLoadingShifts = false;
           update();
         },
       );
     } catch (e, stack) {
       Loader.dismiss();
-      Loader.showError("فشل تحميل الفترات");
+    //  Loader.showError("فشل تحميل الفترات");
       debugPrint("❌ [Shifts] Error while loading shifts: $e");
       debugPrint(stack.toString());
       isLoadingShifts = false;

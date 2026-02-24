@@ -101,6 +101,10 @@ class ReservationPatientViewModel extends GetxController {
     await LegacyQueueService().getLegacyQueueByDateData(
       date: date, // dd-MM-yyyy
       isPatient: true,
+      firebaseFilter: FirebaseFilter(
+        orderBy: "clinicShiftKey",
+        equalTo: "${LocalUser().getUserData().clinicKey}_${selectedShift?.key}",
+      ),
       doctorUid: doctorUid,
       voidCallBack: (data) {
         for (final item in data) {

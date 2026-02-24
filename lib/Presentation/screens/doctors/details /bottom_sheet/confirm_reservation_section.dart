@@ -148,14 +148,26 @@ class _SelectReservationDateBottomSheetState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // 🔹 Title
-                Center(
-                  child: Text(
-                    "تأكيد الحجز",
-                    textAlign: TextAlign.center,
-                    style: typography.xlBold.copyWith(
-                      color: AppColors.textDisplay,
+                Row(
+                  children: [
+                    InkWell(
+                      onTap: () {
+                        Get.back();
+                      },
+                      child: const Icon(Icons.cancel_outlined),
                     ),
-                  ),
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          "تأكيد الحجز",
+                          textAlign: TextAlign.center,
+                          style: typography.xlBold.copyWith(
+                            color: AppColors.textDisplay,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 SizedBox(height: 16.h),
 

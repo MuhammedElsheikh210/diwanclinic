@@ -89,6 +89,10 @@ class LegacyQueueViewModel extends GetxController {
 
     service.getLegacyQueueByDateData(
       date: formatted,
+      firebaseFilter: FirebaseFilter(
+        orderBy: "clinicShiftKey",
+        equalTo: "${LocalUser().getUserData().clinicKey}_${selectedShift?.key}",
+      ),
       voidCallBack: (data) {
         list = data;
         update();

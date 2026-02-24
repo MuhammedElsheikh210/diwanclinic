@@ -79,7 +79,7 @@ class ShiftService {
       );
     } catch (e) {
       Loader.dismiss();
-      Loader.showError("حدث خطأ غير متوقع أثناء تحميل بيانات الفترات");
+      //Loader.showError("حدث خطأ غير متوقع أثناء تحميل بيانات الفترات");
       print("❌ [ShiftService] Exception: $e");
     }
   }

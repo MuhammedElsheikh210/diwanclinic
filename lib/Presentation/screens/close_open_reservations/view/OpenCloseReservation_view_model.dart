@@ -106,7 +106,7 @@ class OpenclosereservationViewModel extends GetxController {
 
     service.getOpenCloseDaysByDateData(
       date: formatted,
-      shiftKey: selectedShift?.key ?? "", // 👈 مهم تضيفه في السيرفيس
+      firebaseFilter: FirebaseFilter(),
       voidCallBack: (data) {
         list = data;
         update();

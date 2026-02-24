@@ -13,8 +13,17 @@ class CreateLegacyQueueViewModel extends GetxController {
   int? selectedTimestamp;
   String? formattedDate;
 
+  // 🔹 Shift Data
+  List<ShiftModel?>? listShifts;
+  List<GenericListModel> shiftItems = [];
+  GenericListModel? selectedShift;
+  bool isLoadingShifts = false;
+
   final LegacyQueueService service = LegacyQueueService();
 
+  // ------------------------------------------------------------
+  // 🔹 INIT
+  // ------------------------------------------------------------
   void init(LegacyQueueModel? model) {
     if (model != null) {
       existing = model;
@@ -28,9 +37,71 @@ class CreateLegacyQueueViewModel extends GetxController {
         formattedDate = model.date;
       } catch (_) {}
     }
+
+    _loadShiftsForClinic(); // 🔥 load shifts on init
   }
 
-  /// 📅 Date Picker handler
+  // ------------------------------------------------------------
+  // 🔹 Load Shifts According to Clinic
+  // ------------------------------------------------------------
+  Future<void> _loadShiftsForClinic() async {
+    final clinicKey = LocalUser().getUserData().clinicKey;
+
+    if (clinicKey == null || clinicKey.isEmpty) return;
+
+    isLoadingShifts = true;
+    update();
+
+    try {
+      await ShiftService().getShiftsData(
+        data: FirebaseFilter(orderBy: "clinicKey", equalTo: clinicKey),
+        query: SQLiteQueryParams(
+          is_filtered: true,
+          where: "clinicKey = ?",
+          whereArgs: [clinicKey],
+        ),
+        voidCallBack: (data) {
+          Loader.dismiss();
+
+          listShifts = data;
+
+          shiftItems = (data ?? [])
+              .whereType<ShiftModel>()
+              .map(
+                (s) => GenericListModel(
+                  key: s.key ?? "",
+                  name: "${s.name ?? "فترة"} (${s.dayOfWeek ?? ""})",
+                ),
+              )
+              .toList();
+
+          if (shiftItems.isNotEmpty) {
+            selectedShift = shiftItems.first;
+          }
+
+          isLoadingShifts = false;
+          update();
+        },
+      );
+    } catch (e) {
+      Loader.dismiss();
+      Loader.showError("فشل تحميل الفترات");
+      isLoadingShifts = false;
+      update();
+    }
+  }
+
+  // ------------------------------------------------------------
+  // 🔹 Select Shift
+  // ------------------------------------------------------------
+  void selectShift(GenericListModel shift) {
+    selectedShift = shift;
+    update();
+  }
+
+  // ------------------------------------------------------------
+  // 📅 Date Picker
+  // ------------------------------------------------------------
   void setDate(Timestamp timestamp) {
     final dateTime = timestamp.toDate();
     selectedTimestamp = dateTime.millisecondsSinceEpoch;
@@ -38,7 +109,9 @@ class CreateLegacyQueueViewModel extends GetxController {
     update();
   }
 
-  /// 🔎 Validation
+  // ------------------------------------------------------------
+  // 🔎 Validation
+  // ------------------------------------------------------------
   String? validateValue(String? val) {
     if (val == null || val.isEmpty) {
       return "العدد مطلوب";
@@ -52,6 +125,9 @@ class CreateLegacyQueueViewModel extends GetxController {
     return null;
   }
 
+  // ------------------------------------------------------------
+  // 💾 SAVE
+  // ------------------------------------------------------------
   void save() {
     if (!formKey.currentState!.validate()) return;
 
@@ -60,11 +136,21 @@ class CreateLegacyQueueViewModel extends GetxController {
       return;
     }
 
+    if (selectedShift == null) {
+      Loader.showError("يرجى اختيار الفترة");
+      return;
+    }
+
+    final clinicKey = LocalUser().getUserData().clinicKey ?? "";
+    final shiftKey = selectedShift!.key ?? "";
+
     final model = LegacyQueueModel(
       key: existing?.key ?? const Uuid().v4(),
       date: formattedDate,
       value: int.tryParse(valueController.text) ?? 0,
-      clinic_key: LocalUser().getUserData().clinicKey,
+      clinic_key: clinicKey,
+      shiftKey: shiftKey,
+      // ❌ لا تحتاج تمرر clinicShiftKey لو الموديل بيولده تلقائي
     );
 
     Loader.show();
@@ -76,7 +162,9 @@ class CreateLegacyQueueViewModel extends GetxController {
     }
   }
 
-  /// 🔄 Handle success / error
+  // ------------------------------------------------------------
+  // 🔄 Handle Result
+  // ------------------------------------------------------------
   void _handleResult(ResponseStatus status) {
     Loader.dismiss();
 
@@ -88,7 +176,6 @@ class CreateLegacyQueueViewModel extends GetxController {
     }
   }
 
-  /// 🔄 Reload Legacy Queue list safely
   void _refreshList() {
     if (Get.isRegistered<LegacyQueueViewModel>()) {
       final legacyVM = Get.find<LegacyQueueViewModel>();

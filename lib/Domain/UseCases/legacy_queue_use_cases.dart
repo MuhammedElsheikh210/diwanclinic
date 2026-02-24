@@ -10,10 +10,10 @@ class LegacyQueueUseCases {
   // 🧾 Legacy Queue (الكشوفات الورقية)
   // ------------------------------------------------------------
   Future<Either<AppError, SuccessModel>> addLegacyQueue(
-      LegacyQueueModel model, {
-        bool isPatient = false,
-        String? doctorUid,
-      }) {
+    LegacyQueueModel model, {
+    bool isPatient = false,
+    String? doctorUid,
+  }) {
     return _repository.addLegacyQueueDomain(
       model.date ?? "",
       model.key ?? "",
@@ -24,10 +24,10 @@ class LegacyQueueUseCases {
   }
 
   Future<Either<AppError, SuccessModel>> updateLegacyQueue(
-      LegacyQueueModel model, {
-        bool isPatient = false,
-        String? doctorUid,
-      }) {
+    LegacyQueueModel model, {
+    bool isPatient = false,
+    String? doctorUid,
+  }) {
     return _repository.updateLegacyQueueDomain(
       model.date ?? "",
       model.key ?? "",
@@ -38,11 +38,11 @@ class LegacyQueueUseCases {
   }
 
   Future<Either<AppError, SuccessModel>> deleteLegacyQueue(
-      String date,
-      String key, {
-        bool isPatient = false,
-        String? doctorUid,
-      }) {
+    String date,
+    String key, {
+    bool isPatient = false,
+    String? doctorUid,
+  }) {
     return _repository.deleteLegacyQueueDomain(
       date,
       key,
@@ -53,11 +53,11 @@ class LegacyQueueUseCases {
   }
 
   Future<Either<AppError, List<LegacyQueueModel?>>> getLegacyQueueByDate(
-      String date,
-      Map<String, dynamic> params, {
-        bool isPatient = false,
-        String? doctorUid,
-      }) {
+    String date,
+    Map<String, dynamic> params, {
+    bool isPatient = false,
+    String? doctorUid,
+  }) {
     return _repository.getLegacyQueueByDateDomain(
       date,
       params,
@@ -69,67 +69,60 @@ class LegacyQueueUseCases {
   // ------------------------------------------------------------
   // 🔒 Open / Close Days (WITH SHIFT)
   // ------------------------------------------------------------
-  Future<Either<AppError, List<LegacyQueueModel?>>>
-  getOpenCloseDaysByDate(
-      String date, {
-        required String shiftKey, // ✅ مهم
-        bool isPatient = false,
-        String? doctorUid,
-      }) {
+  Future<Either<AppError, List<LegacyQueueModel?>>> getOpenCloseDaysByDate(
+    String date,
+    Map<String, dynamic> params, { // ✅ أضف ده
+    bool isPatient = false,
+    String? doctorUid,
+  }) {
     return _repository.getOpenCloseDaysByDateDomain(
       date,
-      shiftKey: shiftKey,
+      params, // ✅ مرره هنا
       isPatient: isPatient,
       doctorUid: doctorUid,
     );
   }
 
   Future<Either<AppError, SuccessModel>> addOpenCloseDay(
-      LegacyQueueModel model, {
-        required String shiftKey, // ✅ مهم
-        bool isPatient = false,
-        String? doctorUid,
-      }) {
+    LegacyQueueModel model, {
+    bool isPatient = false,
+    String? doctorUid,
+  }) {
     return _repository.addLegacyQueueDomain(
       model.date ?? "",
       model.key ?? "",
       model.toJson(),
       isPatient: isPatient,
       doctorUid: doctorUid,
-      shiftKey: shiftKey,
     );
   }
 
   Future<Either<AppError, SuccessModel>> updateOpenCloseDay(
-      LegacyQueueModel model, {
-        required String shiftKey, // ✅ مهم
-        bool isPatient = false,
-        String? doctorUid,
-      }) {
+    LegacyQueueModel model, {
+    bool isPatient = false,
+    String? doctorUid,
+  }) {
     return _repository.updateLegacyQueueDomain(
       model.date ?? "",
       model.key ?? "",
       model.toJson(),
       isPatient: isPatient,
       doctorUid: doctorUid,
-      shiftKey: shiftKey,
     );
   }
 
   Future<Either<AppError, SuccessModel>> deleteOpenCloseDay(
-      String date,
-      String key, {
-        required String shiftKey, // ✅ مهم
-        bool isPatient = false,
-        String? doctorUid,
-      }) {
+    String date,
+    String key, {
+    bool isPatient = false,
+    String? doctorUid,
+  }) {
     return _repository.deleteLegacyQueueDomain(
       date,
       key,
       isPatient: isPatient,
       doctorUid: doctorUid,
       isOpenCloseFeature: true,
-      shiftKey: shiftKey,
     );
   }
 }
