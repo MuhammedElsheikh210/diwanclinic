@@ -1,8 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:diwanclinic/Global/Enums/reservation_status_new.dart';
-import 'package:diwanclinic/Presentation/screens/reservations/list/managers/notification_service.dart';
-import 'package:diwanclinic/Presentation/screens/reservations/list/managers/prescription_upload_service.dart';
 import 'package:diwanclinic/Presentation/screens/reservations/reservation_doctor/reservatiob_sync_doctor.dart';
 import 'package:intl/intl.dart';
 import '../../../../../index/index_main.dart';
@@ -110,12 +107,43 @@ class ReservationDoctorViewModel extends GetxController {
   }
 
   // ─────────────────────────────────────────────
+  // 🔹 Load Shifts By Clinic
+  // ─────────────────────────────────────────────
+  Future<void> loadShiftsForClinic(String clinicKey) async {
+    final completer = Completer<void>();
+
+    ShiftService().getShiftssFromPatientData(
+      data: {},
+      doctorKey: _doctorKey ?? "",
+      voidCallBack: (data) {
+        final filtered = data
+            .whereType<ShiftModel>()
+            .where((s) => s.clinicKey == clinicKey)
+            .toList();
+
+        shiftDropdownItems = filtered
+            .map(
+              (s) => GenericListModel(
+                key: s.key,
+                name: "${s.name ?? ""} (${s.dayOfWeek ?? ""})",
+              ),
+            )
+            .toList();
+
+        update();
+        completer.complete();
+      },
+    );
+
+    return completer.future;
+  }
+
+  // ─────────────────────────────────────────────
   // DEFAULT DATE
   // ─────────────────────────────────────────────
   void _setupDefaultDate() {
     final now = DateTime.now();
     appointment_date_time = DateFormat('dd/MM/yyyy').format(now);
-    loadDayStats();
   }
 
   // ─────────────────────────────────────────────
@@ -285,18 +313,10 @@ class ReservationDoctorViewModel extends GetxController {
       whereArgs.add(selectedClinic!.key);
     }
 
-    if (selectedStatusesList != null && selectedStatusesList!.isNotEmpty) {
-      final placeholders = List.filled(
-        selectedStatusesList!.length,
-        '?',
-      ).join(',');
+    if (selectedShift?.key != null) {
       where += where.isEmpty ? "" : " AND ";
-      where += "status IN ($placeholders)";
-      whereArgs.addAll(selectedStatusesList!.map((e) => e.value));
-    } else if (selectedStatus != null) {
-      where += where.isEmpty ? "" : " AND ";
-      where += "status = ?";
-      whereArgs.add(selectedStatus!.value);
+      where += "shift_key = ?";
+      whereArgs.add(selectedShift!.key);
     }
 
     if (selectedType != null) {
@@ -315,7 +335,7 @@ class ReservationDoctorViewModel extends GetxController {
     }
 
     final query = SQLiteQueryParams(
-      is_filtered: true,
+      is_filtered: false,
       where: where,
       whereArgs: whereArgs,
       orderBy: "order_num ASC",
@@ -407,14 +427,25 @@ class ReservationDoctorViewModel extends GetxController {
         where: "doctor_key = ?",
         whereArgs: [doctorKey],
       ),
-      voidCallBack: (data) {
+      voidCallBack: (data) async {
         list_clinic = data;
 
         if (data.isNotEmpty) {
           clinicDropdownItems = ClinicAdapterUtil.convertClinicListToGeneric(
             data,
           );
-          selectedClinic = data.first;
+
+          // 🔥 لو عنده عيادة واحدة
+          if (data.length == 1) {
+            selectedClinic = data.first;
+
+            await loadShiftsForClinic(selectedClinic!.key!);
+
+            // 🔥 لو عنده شيفت واحد
+            if (shiftDropdownItems != null && shiftDropdownItems!.length == 1) {
+              selectedShift = shiftDropdownItems!.first;
+            }
+          }
 
           getSyncReservations();
           getReservations();

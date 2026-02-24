@@ -30,7 +30,7 @@ class ReservationDoctorAppBar extends StatelessWidget
               child: CalendarDropdownDoctor(
                 controller: controller,
                 initialTimestamp:
-                controller.create_at?.toInt() ??
+                    controller.create_at?.toInt() ??
                     DateTime.now().millisecondsSinceEpoch,
                 onDateSelected: (timestamp, formattedDate) {
                   controller.create_at = timestamp;
@@ -45,13 +45,13 @@ class ReservationDoctorAppBar extends StatelessWidget
 
             const SizedBox(width: 10),
 
-            /// STATUS DROPDOWN
-            Expanded(
-              flex: 4,
-              child: AppBarStatusDropdownDoctor(controller: controller),
-            ),
-
-            const SizedBox(width: 10),
+            // /// STATUS DROPDOWN
+            // Expanded(
+            //   flex: 4,
+            //   child: AppBarStatusDropdownDoctor(controller: controller),
+            // ),
+            //
+            // const SizedBox(width: 10),
 
             /// FILTER ICON
             InkWell(
@@ -61,7 +61,7 @@ class ReservationDoctorAppBar extends StatelessWidget
                   context: context,
                   isScrollControlled: true,
                   backgroundColor: Colors.transparent,
-                  builder: (_) => const FilterViewReservation(),
+                  builder: (_) => FilterViewReservation(),
                 );
               },
               child: Container(
@@ -87,10 +87,7 @@ class ReservationDoctorAppBar extends StatelessWidget
 
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
-        child: Container(
-          height: 1.3,
-          color: AppColors.borderNeutralPrimary,
-        ),
+        child: Container(height: 1.3, color: AppColors.borderNeutralPrimary),
       ),
     );
   }

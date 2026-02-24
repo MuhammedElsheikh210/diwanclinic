@@ -1,209 +1,177 @@
 import '../../../../../index/index_main.dart';
-import 'package:diwanclinic/Presentation/Widgets/drop_down/adatper/clinic_adapter.dart';
 
-class FilterViewReservation extends StatefulWidget {
-  const FilterViewReservation({Key? key}) : super(key: key);
-
-  @override
-  State<FilterViewReservation> createState() => _FilterViewReservationState();
-}
-
-class _FilterViewReservationState extends State<FilterViewReservation> {
-  GenericListModel? selectedClinic;
-  List<GenericListModel>? clinicDropdownItems;
+class FilterViewReservation extends StatelessWidget {
+  FilterViewReservation({Key? key}) : super(key: key);
 
   final ReservationDoctorViewModel controller =
       Get.find<ReservationDoctorViewModel>();
 
   @override
-  void initState() {
-    super.initState();
-    _loadClinicsLocal();
-
-    /// Pre-fill selected clinic
-    if (controller.selectedClinic != null) {
-      selectedClinic = GenericListModel(
-        key: controller.selectedClinic!.key,
-        name: controller.selectedClinic!.title,
-      );
-    }
-  }
-
-  // ---------------------------------------------------------------------
-  // 🔹 Load Clinics Locally (only clinics belonging to doctor)
-  // ---------------------------------------------------------------------
-  void _loadClinicsLocal() {
-    final doctorKey = LocalUser().getUserData().doctorKey ?? "";
-
-    ClinicService().getClinicsData(
-      data: {},
-      filrebaseFilter: FirebaseFilter(),
-      query: SQLiteQueryParams(
-        is_filtered: doctorKey.isNotEmpty,
-        where: doctorKey.isNotEmpty ? "doctor_key = ?" : null,
-        whereArgs: doctorKey.isNotEmpty ? [doctorKey] : null,
-      ),
-      voidCallBack: (data) {
-        Loader.dismiss();
-        clinicDropdownItems = ClinicAdapterUtil.convertClinicListToGeneric(
-          data,
-        );
-        setState(() {});
-      },
-    );
-  }
-
-  // ---------------------------------------------------------------------
-  // 🔹 Apply Filters — ONLY clinic now
-  // ---------------------------------------------------------------------
-  void applyFilters() {
-    controller.selectedClinic = null;
-
-    if (selectedClinic != null) {
-      controller.selectedClinic = ClinicModel(
-        key: selectedClinic!.key,
-        title: selectedClinic!.name,
-      );
-    }
-
-    controller.getReservations(is_filter: true);
-    controller.update();
-    Get.back();
-  }
-
-  // ---------------------------------------------------------------------
-  // 🔹 Reset Filters
-  // ---------------------------------------------------------------------
-  void resetFilters() {
-    setState(() {
-      selectedClinic = null;
-    });
-
-    controller.selectedClinic = null;
-    controller.getReservations();
-    controller.update();
-
-    Get.back();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      child: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
-          child: SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40.w,
-                    height: 5.h,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
-                ),
+    return GetBuilder<ReservationDoctorViewModel>(
+      builder: (vm) {
+        final clinics = vm.clinicDropdownItems ?? [];
+        final shifts = vm.shiftDropdownItems ?? [];
 
-                SizedBox(height: 15.h),
-                Center(
-                  child: Text(
-                    "فلترة العيادات",
-                    style: context.typography.lgBold.copyWith(
-                      color: AppColors.primary,
+        return Container(
+          padding: EdgeInsets.all(20.w),
+          decoration: const BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ─────────────────────────────
+              // 🔹 Clinic Wrap
+              // ─────────────────────────────
+              Text("العيادة", style: context.typography.mdMedium),
+              SizedBox(height: 12.h),
+
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: clinics.map((clinic) {
+                  final isSelected = vm.selectedClinic?.key == clinic.key;
+
+                  return GestureDetector(
+                    onTap: () async {
+                      if (isSelected) {
+                        vm.selectedClinic = null;
+                        vm.selectedShift = null;
+                      } else {
+                        vm.selectedClinic = ClinicModel(
+                          key: clinic.key,
+                          title: clinic.name,
+                        );
+
+                        vm.selectedShift = null;
+
+                        await vm.loadShiftsForClinic(clinic.key!);
+                      }
+
+                      vm.update();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isSelected
+                              ? AppColors.primary
+                              : Colors.grey.shade300,
+                        ),
+                        color: isSelected
+                            ? AppColors.primary.withOpacity(0.1)
+                            : Colors.white,
+                      ),
+                      child: Text(
+                        clinic.name ?? "",
+                        style: context.typography.smMedium.copyWith(
+                          color: isSelected
+                              ? AppColors.primary
+                              : Colors.grey.shade700,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
+                  );
+                }).toList(),
+              ),
+
+              // ─────────────────────────────
+              // 🔹 Shift Wrap
+              // ─────────────────────────────
+              if (shifts.isNotEmpty) ...[
                 SizedBox(height: 25.h),
 
-                // ---------------------------------------------------------------------
-                // 🔹 Clinic Dropdown ONLY
-                // ---------------------------------------------------------------------
-                Text(
-                  "العيادة",
-                  style: context.typography.mdMedium.copyWith(
-                    color: AppColors.text_primary_paragraph,
-                  ),
-                ),
-                SizedBox(height: 8.h),
+                Text("الوردية", style: context.typography.mdMedium),
+                SizedBox(height: 12.h),
 
-                clinicDropdownItems == null
-                    ? const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(20.0),
-                          child: CircularProgressIndicator(),
-                        ),
-                      )
-                    : GenericDropdown<GenericListModel>(
-                        hint_text: "اختر العيادة",
-                        title: "اختر العيادة",
-                        show_title: false,
-                        items: clinicDropdownItems!,
-                        initialValue: selectedClinic,
-                        onChanged: (v) => setState(() => selectedClinic = v),
-                        displayItemBuilder: (item) => Text(
-                          item.name ?? "",
-                          style: context.typography.smRegular.copyWith(
-                            color: AppColors.secondary100,
-                          ),
-                        ),
-                      ),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: shifts.map((shift) {
+                    final isSelected = vm.selectedShift?.key == shift.key;
 
-                SizedBox(height: 30.h),
-
-                // ---------------------------------------------------------------------
-                // 🔹 Buttons
-                // ---------------------------------------------------------------------
-                Row(
-                  children: [
-                    Expanded(
-                      child: PrimaryTextButton(
-                        onTap: applyFilters,
-                        label: AppText(
-                          text: "تطبيق الفلتر",
-                          textStyle: context.typography.mdBold.copyWith(
-                            color: AppColors.white,
-                          ),
+                    return GestureDetector(
+                      onTap: () {
+                        vm.selectedShift = isSelected ? null : shift;
+                        vm.update();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
                         ),
-                        customBackgroundColor: AppColors.primary,
-                      ),
-                    ),
-                    SizedBox(width: 10.w),
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: resetFilters,
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppColors.primary),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.r),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: isSelected
+                                ? AppColors.primary
+                                : Colors.grey.shade300,
                           ),
+                          color: isSelected
+                              ? AppColors.primary.withOpacity(0.1)
+                              : Colors.white,
                         ),
                         child: Text(
-                          "مسح الفلتر",
-                          style: context.typography.mdMedium.copyWith(
-                            color: AppColors.primary,
+                          shift.name ?? "",
+                          style: context.typography.smMedium.copyWith(
+                            color: isSelected
+                                ? AppColors.primary
+                                : Colors.grey.shade700,
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    );
+                  }).toList(),
                 ),
               ],
-            ),
+
+              SizedBox(height: 30.h),
+
+              // ─────────────────────────────
+              // 🔹 Buttons
+              // ─────────────────────────────
+              Row(
+                children: [
+                  Expanded(
+                    child: PrimaryTextButton(
+                      onTap: () {
+                        vm.getReservations(is_filter: false);
+                        Get.back();
+                      },
+                      label: AppText(
+                        text: "تطبيق الفلتر",
+                        textStyle: context.typography.mdBold.copyWith(
+                          color: AppColors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        vm.selectedClinic = null;
+                        vm.selectedShift = null;
+                        vm.getReservations();
+                        vm.update();
+                        Get.back();
+                      },
+                      child: const Text("مسح الفلتر"),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

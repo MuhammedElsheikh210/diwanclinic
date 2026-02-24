@@ -45,6 +45,7 @@ class NotificationController extends GetxController {
     update();
 
     final ref = FirebaseDatabase.instance.ref("notifications");
+
     /// 👇 1️⃣ check once if there is any data
     final snapshot = await ref.get();
     if (!snapshot.exists) {
