@@ -1,20 +1,15 @@
-
-import 'package:diwanclinic/Presentation/screens/visits/lists/widgets/VisitCard.dart';
-import 'package:diwanclinic/Presentation/screens/visits/visites_create/visites_create.dart';
-import 'package:diwanclinic/Presentation/screens/visits/visites_create/visites_creats_viewmodel.dart';
-
 import '../../../../../index/index_main.dart';
 
-class VisitView extends StatefulWidget {
+class SalesView extends StatefulWidget {
   final String? title;
 
-  const VisitView({super.key, this.title});
+  const SalesView({super.key, this.title});
 
   @override
-  State<VisitView> createState() => _VisitViewState();
+  State<SalesView> createState() => _SalesViewState();
 }
 
-class _VisitViewState extends State<VisitView> {
+class _SalesViewState extends State<SalesView> {
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -23,14 +18,14 @@ class _VisitViewState extends State<VisitView> {
         statusBarIconBrightness: Brightness.dark,
         statusBarBrightness: Brightness.light,
       ),
-      child: GetBuilder<VisitViewModel>(
-        init: VisitViewModel(),
+      child: GetBuilder<SalesViewModel>(
+        init: SalesViewModel(),
         builder: (controller) {
           return Scaffold(
-            backgroundColor: ColorMappingImpl().white,
+            backgroundColor: AppColors.white,
             appBar: AppBar(
               title: Text(
-                widget.title ?? "الزيارات",
+                widget.title ?? "مندوبي المبيعات",
                 style: context.typography.lgBold,
               ),
               elevation: 1,
@@ -38,36 +33,33 @@ class _VisitViewState extends State<VisitView> {
             ),
             floatingActionButton: InkWell(
               onTap: () {
-                Get.delete<CreateVisitViewModel>();
+                Get.delete<CreateSalesViewModel>();
                 showCustomBottomSheet(
                   context: context,
-                  child: const CreateVisitView(),
+                  child: const CreateSalesView(),
                 );
               },
               child: const Svgicon(icon: IconsConstants.fab_Button),
             ),
-            body: controller.listVisits == null
+            body: controller.listSales == null
                 ? const ShimmerLoader()
-                : controller.listVisits!.isEmpty
+                : controller.listSales!.isEmpty
                 ? const NoDataWidget()
                 : ListView.builder(
               padding: EdgeInsets.symmetric(
                 vertical: 15.h,
                 horizontal: 5.w,
               ),
-              shrinkWrap: true,
-              physics: const BouncingScrollPhysics(),
-              itemCount: controller.listVisits!.length,
-              itemBuilder: (BuildContext context, int index) {
-                final visit = controller.listVisits![index];
+              itemCount: controller.listSales!.length,
+              itemBuilder: (context, index) {
+                final sales = controller.listSales![index];
                 return Padding(
-                  padding: EdgeInsets.only(
-                    left: 10.0.w,
-                    right: 10.0.w,
-                    bottom: 5.h,
+                  padding: EdgeInsets.symmetric(
+                    vertical: 5.h,
+                    horizontal: 10.w,
                   ),
-                  child: VisitCard(
-                    visitModel: visit ?? const VisitModel(),
+                  child: SalesCard(
+                    sales: sales ?? LocalUser(),
                     controller: controller,
                   ),
                 );

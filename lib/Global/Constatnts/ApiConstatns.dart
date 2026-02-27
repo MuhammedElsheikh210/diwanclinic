@@ -88,4 +88,7 @@ class ApiConstatns {
   static String get visits => "visits";
 
   static String get doctorSuggestions => "doctorSuggestions";
+
+  static String get doctorList => "doctorList";
+
 }

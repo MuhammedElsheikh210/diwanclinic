@@ -249,6 +249,7 @@ class AccountView extends StatelessWidget {
                   label: "تسجيل الخروج",
                   onTap: () => _showLogoutDialog(context),
                 ),
+                SizedBox(height: 80.h),
               ],
             ),
           ),

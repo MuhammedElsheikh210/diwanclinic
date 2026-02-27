@@ -1,6 +1,6 @@
-import 'package:diwanclinic/Presentation/screens/sales/create_update/create_sales_view.dart';
-import 'package:diwanclinic/Presentation/screens/sales/list/sales_view_model.dart';
-import '../../../../../index/index_main.dart';
+
+
+import '../../../../../../index/index_main.dart';
 
 class SalesCard extends StatelessWidget {
   final LocalUser sales;

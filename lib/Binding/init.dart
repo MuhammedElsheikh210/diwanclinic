@@ -1,3 +1,4 @@
+
 import '../index/index_main.dart';
 
 class Binding implements Bindings {
@@ -10,6 +11,12 @@ class Binding implements Bindings {
     // ───────────── Data Sources ─────────────
     Get.lazyPut<AuthenticationDataSourceRepo>(
       () => AuthenticationRemoteDataSourceImpl(Get.find()),
+      fenix: true,
+    );
+
+
+    Get.lazyPut<DoctorListRemoteDataSource>(
+          () => DoctorListRemoteDataSourceImpl(Get.find()),
       fenix: true,
     );
 
@@ -63,6 +70,11 @@ class Binding implements Bindings {
 
     Get.lazyPut<MedicineRepository>(
       () => MedicineRepositoryImpl(Get.find()),
+      fenix: true,
+    );
+
+    Get.lazyPut<DoctorListRepository>(
+          () => DoctorListRepositoryImpl(Get.find()),
       fenix: true,
     );
 

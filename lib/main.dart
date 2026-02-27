@@ -21,7 +21,7 @@ void main() {
 
       // 🔹 Storage & Services
       await StorageService().init();
-      await NotificationService().initCore();
+    //  await NotificationService().initCore();
 
       await FirebaseRemoteConfigService().checkForceUpdate();
 

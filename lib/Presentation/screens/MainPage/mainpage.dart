@@ -1,5 +1,3 @@
-import 'package:diwanclinic/Presentation/screens/notes/view.dart';
-
 import '../../../index/index_main.dart';
 import 'package:flutter/cupertino.dart';
 
@@ -190,9 +188,8 @@ class _MainPageState extends State<MainPage> {
       case UserType.sales:
         return [
           _item(IconsConstants.orders, "الزيارات"),
+          _item(IconsConstants.category, "الدكاترة"),
           _item(IconsConstants.money, "التارجت"),
-          _item(IconsConstants.feedback_icon, "مدونات"),
-          _item(IconsConstants.category, "التخصصات"),
           _item(IconsConstants.account, "الحساب"),
         ];
 
@@ -288,9 +285,8 @@ class _MainPageState extends State<MainPage> {
       case UserType.sales:
         return [
           const VisitView(),
+          const DoctorListView(),
           const TargetDashboardScreen(),
-          const NotesView(),
-          const SpecializationView(),
           const AccountView(),
         ][index];
 

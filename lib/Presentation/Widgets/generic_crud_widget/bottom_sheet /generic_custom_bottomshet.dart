@@ -1,35 +1,34 @@
 import '../../../../index/index_main.dart';
 
-/// ✅ **Generic Bottom Sheet Launcher**
 void showCustomBottomSheet({
   required BuildContext context,
   required Widget child,
   bool isDismissible = true,
+  double heightFactor = 0.85, // 👈 تقدر تتحكم في الطول
 }) {
   showModalBottomSheet(
     context: context,
     isDismissible: isDismissible,
-    elevation: 1,
-
     isScrollControlled: true,
+    // 🔥 أهم تعديل
     backgroundColor: Colors.transparent,
     builder: (BuildContext context) {
-      return Container(
-        width: MediaQuery.of(context).size.width,
-        padding:  EdgeInsets.only(
-          left: 15.w,
-          right: 15.w,
-          bottom: 30.h,
-          top: 30.h,
-        ),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(16),
-            topRight: Radius.circular(16),
+      return FractionallySizedBox(
+        heightFactor: heightFactor, // 👈 مش هتملى الشاشة
+        child: Container(
+          width: MediaQuery.of(context).size.width,
+          padding: EdgeInsets.only(
+            left: 15.w,
+            right: 15.w,
+            bottom: 30.h,
+            top: 20.h,
           ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: child,
         ),
-        child: child, // 🔥 Pass any widget here!
       );
     },
   );
