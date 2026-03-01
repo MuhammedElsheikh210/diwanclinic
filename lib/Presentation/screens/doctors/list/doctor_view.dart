@@ -20,6 +20,9 @@ class _DoctorViewState extends State<DoctorView> {
 
   bool get isAdmin => user.userType?.name == 'admin';
 
+  bool get isSales => user.userType?.name == 'sales';
+
+  bool get canManageSpecialization => isAdmin || isSales;
   @override
   Widget build(BuildContext context) {
     final typography = context.typography;
@@ -52,7 +55,7 @@ class _DoctorViewState extends State<DoctorView> {
             // ✅ Show FAB only if user is admin
             floatingActionButton: InkWell(
               onTap: () {
-                if (isAdmin) {
+                if (canManageSpecialization) {
                   Get.to(
                     () => CreateDoctorView(
                       specializeKey: widget.specializeKey,
@@ -83,7 +86,7 @@ class _DoctorViewState extends State<DoctorView> {
                 ),
                 child: Center(
                   child: Svgicon(
-                    icon: isAdmin
+                    icon: canManageSpecialization
                         ? IconsConstants.fab_Button
                         : IconsConstants.add,
                     color: AppColors.white,

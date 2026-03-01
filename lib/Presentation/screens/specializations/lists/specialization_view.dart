@@ -15,6 +15,9 @@ class _SpecializationViewState extends State<SpecializationView> {
 
   bool get isAdmin => user.userType?.name == 'admin';
 
+  bool get isSales => user.userType?.name == 'sales';
+
+  bool get canManageSpecialization => isAdmin || isSales;
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -42,7 +45,7 @@ class _SpecializationViewState extends State<SpecializationView> {
             /// ✅ FAB for admin or patient
             floatingActionButton: InkWell(
               onTap: () {
-                if (isAdmin) {
+                if (canManageSpecialization) {
                   Get.delete<CreateSpecializeViewModel>();
                   showCustomBottomSheet(
                     context: context,
@@ -71,7 +74,7 @@ class _SpecializationViewState extends State<SpecializationView> {
                 ),
                 child: Center(
                   child: Svgicon(
-                    icon: isAdmin
+                    icon: canManageSpecialization
                         ? IconsConstants.fab_Button
                         : IconsConstants.add,
                     color: AppColors.white,
@@ -114,7 +117,7 @@ class _SpecializationViewState extends State<SpecializationView> {
                           child: SpecializeCard(
                             categoryEntity: category,
                             //  controller: controller,
-                            showAdminActions: isAdmin,
+                            showAdminActions: canManageSpecialization,
                           ),
                         );
                       },

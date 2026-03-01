@@ -1,23 +1,26 @@
-// ignore_for_file: non_constant_identifier_names, unused_local_variable, unnecessary_null_comparison, unrelated_type_equality_checks
+// ignore_for_file: non_constant_identifier_names
 
 import 'package:dartz/dartz.dart';
-import 'package:diwanclinic/Presentation/screens/sync_assistant_medicines/sync_medicine_view.dart';
-import 'package:diwanclinic/Presentation/screens/sync_assistant_medicines/sync_medicine_view_model.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../../../../Domain/UseCases/Firebase_UseCases/FirebaseSignIn_USeCase.dart';
 import '../../../../index/index_main.dart';
+import '../../../screens/sync_assistant_medicines/sync_medicine_view.dart';
+import '../../../screens/sync_assistant_medicines/sync_medicine_view_model.dart';
 
 class LoginViewModel extends GetxController {
-  // Reactive fields
   final phone = ''.obs;
   final password = ''.obs;
+
   final isPhoneValid = false.obs;
   final isPasswordValid = false.obs;
   final showPassword = false.obs;
+  final isLoading = false.obs;
+
   final phoneKeyLogin = GlobalKey<FormState>();
+
   final textEditingController = TextEditingController();
   final textEditingControllerPassword = TextEditingController();
 
@@ -28,102 +31,179 @@ class LoginViewModel extends GetxController {
   }
 
   @override
-  void dispose() {
+  void onClose() {
     textEditingController.dispose();
     textEditingControllerPassword.dispose();
-    super.dispose();
+    super.onClose();
   }
 
-  // Validation check for phone
+  // ─────────────────────────────
+  // Validation
+  // ─────────────────────────────
+
   void validatePhone(String value) {
-    phone.value = value;
-    isPhoneValid.value = value.isNotEmpty; // Valid if not empty
-    update();
+    phone.value = value.trim();
+    isPhoneValid.value = value.trim().isNotEmpty;
   }
 
-  // Validation check for password
   void validatePassword(String value) {
-    isPasswordValid.value =
-        value.isNotEmpty && value.length >= 6; // Minimum 6 characters
+    password.value = value;
+    isPasswordValid.value = value.isNotEmpty && value.length >= 6;
   }
 
-  // Toggle password visibility
   void togglePasswordVisibility() {
-    showPassword.value = !showPassword.value;
-    update();
+    showPassword.toggle();
   }
+
+  // ─────────────────────────────
+  // LOGIN
+  // ─────────────────────────────
 
   Future<void> loginData() async {
+    if (isLoading.value) return;
+
+    isLoading.value = true;
     Loader.show();
-    FirebaseSignIn_UseCase firebaseSignIn_UseCase = initController(
-      () => FirebaseSignIn_UseCase(Get.find()),
+
+    final firebaseSignInUseCase = initController(
+          () => FirebaseSignIn_UseCase(Get.find()),
     );
 
-    final Either<AppError, UserCredential> userdata =
-        await firebaseSignIn_UseCase(
-          FirebaseAuthModel(
-            "${phone.value}@link.com",
-            textEditingControllerPassword.text.isEmpty
-                ? phone.value
-                : textEditingControllerPassword.text,
-          ),
-        );
-    userdata.fold(
-      (l) {
-        Loader.showError(l.messege);
+    final Either<AppError, UserCredential> result =
+    await firebaseSignInUseCase(
+      FirebaseAuthModel(
+        "${phone.value}@link.com",
+        textEditingControllerPassword.text.isEmpty
+            ? phone.value
+            : textEditingControllerPassword.text,
+      ),
+    );
+
+    result.fold(
+          (error) {
+        Loader.showError(error.messege);
       },
-      (r) {
+          (credential) async {
         Loader.showSuccess("تم تسجيل الدخول بنجاح");
-
-        getUserData(r.user?.uid ?? "");
-        update();
+        await getUserData(credential.user?.uid ?? "");
       },
     );
+
+    isLoading.value = false;
   }
 
-  Future<void> SaveUserToFirebaseRealtime(String uid) async {
-    LocalUser userClient = LocalUser(
+  // ─────────────────────────────
+  // CREATE USER
+  // ─────────────────────────────
+
+  Future<void> saveUserToFirebaseRealtime(String uid) async {
+    final newToken = NotificationService().token;
+
+    final LocalUser userClient = LocalUser(
       uid: uid,
       key: const Uuid().v4(),
       phone: phone.value,
       identifier: "${phone.value}@link.com",
       isCompleteProfile: 0,
-      fcmToken: await ConstantsData.firebaseToken(),
+      fcmToken: newToken, // ممكن يكون null عادي
       userType: UserType.admin,
       password: password.value,
     );
 
     AuthenticationService().addClientsData(
       userclient: userClient,
-      voidCallBack: (model) {
+      voidCallBack: (_) async {
         Loader.dismiss();
-        userClient.saveLocal(
-          saveCallback: () async {
-            if (userClient.userType == UserType.assistant ||
-                userClient.userType == UserType.doctor) {
-              Get.offAllNamed(syncView);
-            } else if (userClient.userType == UserType.pharmacy) {
-              openAssistantApp();
-            } else {
-              _updateClientsSyncStatus();
-              Get.offAllNamed(mainpage);
-            }
-            await NotificationService().subscribeAfterLogin();
-            NotificationService().printCurrentTopic();
-          },
-        );
-        update();
+        await _finalizeLogin(userClient);
       },
     );
   }
+
+  // ─────────────────────────────
+  // GET USER DATA
+  // ─────────────────────────────
+
+  Future<void> getUserData(String uid) async {
+    AuthenticationService().getSingleClientsData(
+      filrebaseFilter: FirebaseFilter(equalTo: uid, orderBy: "token"),
+      voidCallBack: (user) async {
+        Loader.dismiss();
+
+        final newToken = NotificationService().token;
+
+        if (user == null) {
+          await saveUserToFirebaseRealtime(uid);
+          return;
+        }
+
+        // تحديث التوكن فقط لو موجود
+        if (newToken != null &&
+            (user.fcmToken == null || user.fcmToken != newToken)) {
+          final updatedUser = user.copyWith(fcmToken: newToken);
+
+          await AuthenticationService().updateClientsData(
+            userclient: updatedUser,
+            voidCallBack: (_) {},
+          );
+
+          user = updatedUser;
+        }
+
+        await _finalizeLogin(user);
+      },
+    );
+  }
+
+  // ─────────────────────────────
+  // FINALIZE LOGIN
+  // ─────────────────────────────
+
+  Future<void> _finalizeLogin(LocalUser user) async {
+     user.saveLocal();
+
+    // subscribe آمن (NotificationService فيه حماية pending)
+    await NotificationService().subscribeAfterLogin();
+
+    await _navigateByRole(user.userType);
+  }
+
+  // ─────────────────────────────
+  // NAVIGATION
+  // ─────────────────────────────
+
+  Future<void> _navigateByRole(UserType? role) async {
+    switch (role) {
+      case UserType.assistant:
+      case UserType.doctor:
+        Get.offAllNamed(syncView);
+        break;
+
+      case UserType.pharmacy:
+        await openAssistantApp();
+        break;
+
+      default:
+        await _updateClientsSyncStatus();
+        Get.offAllNamed(mainpage);
+    }
+  }
+
+  // ─────────────────────────────
+  // SYNC UPDATE
+  // ─────────────────────────────
 
   Future<void> _updateClientsSyncStatus() async {
     final ref = FirebaseDatabase.instance.ref("sync_meta/clients");
 
     await ref.update({
-      "last_add_data_timestamp": DateTime.now().millisecondsSinceEpoch,
+      "last_add_data_timestamp":
+      DateTime.now().millisecondsSinceEpoch,
     });
   }
+
+  // ─────────────────────────────
+  // ASSISTANT DB CHECK
+  // ─────────────────────────────
 
   Future<void> openAssistantApp() async {
     final dbPath = await getDatabasesPath();
@@ -133,77 +213,25 @@ class LoginViewModel extends GetxController {
 
     if (!exists) {
       Get.offAll(
-        () => const SyncMedicineView(),
+            () => const SyncMedicineView(),
         binding: SyncMedicineBinding(),
       );
       return;
     }
 
     final db = await openDatabase(path);
+
     final count = Sqflite.firstIntValue(
       await db.rawQuery('SELECT COUNT(*) FROM medicines'),
     );
+
     if (count == null || count == 0) {
-      // 🟡 DB موجودة لكن فاضية
       Get.offAll(
-        () => const SyncMedicineView(),
+            () => const SyncMedicineView(),
         binding: SyncMedicineBinding(),
       );
     } else {
-      // 🟢 طبيعي
       Get.offAll(() => const MainPage());
     }
-  }
-
-  Future<void> getUserData(String uid) async {
-    AuthenticationService().getSingleClientsData(
-      filrebaseFilter: FirebaseFilter(equalTo: uid, orderBy: "token"),
-      voidCallBack: (user) async {
-        Loader.dismiss();
-
-        final newToken = await ConstantsData.firebaseToken();
-        //  final newToken = "await ConstantsData.firebaseToken()";
-
-        if (user == null) {
-          // ✅ No user found → create new in Firebase Realtime
-          SaveUserToFirebaseRealtime(uid);
-        } else {
-          // 🔹 Check if FCM token is missing or outdated → Update it
-          if (user.fcmToken == null || user.fcmToken != newToken) {
-            final updatedUser = user.copyWith(fcmToken: newToken);
-
-            await AuthenticationService().updateClientsData(
-              userclient: updatedUser,
-              voidCallBack: (status) {
-                if (status == ResponseStatus.success) {
-                } else {}
-              },
-            );
-
-            // 🧠 Update the in-memory user with the new token
-            user = updatedUser;
-          }
-
-          // ✅ Save locally after update
-          user.saveLocal(
-            saveCallback: () async {
-              if (user?.userType == UserType.assistant ||
-                  user?.userType == UserType.doctor) {
-                Get.offAllNamed(syncView);
-              } else if (user?.userType == UserType.pharmacy) {
-                openAssistantApp();
-              } else {
-                _updateClientsSyncStatus();
-                Get.offAllNamed(mainpage);
-              }
-              await NotificationService().subscribeAfterLogin();
-              NotificationService().printCurrentTopic();
-            },
-          );
-        }
-
-        update();
-      },
-    );
   }
 }

@@ -1,4 +1,12 @@
+import 'dart:developer';
 import 'index/index_main.dart';
+
+/// 🔔 MUST be top-level
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  log("🔔 [Background] MessageId: ${message.messageId}");
+  log("🧩 [Background Data]: ${message.data}");
+}
 
 void main() {
   runZonedGuarded(
@@ -8,7 +16,10 @@ void main() {
       // 🔥 Firebase
       await Firebase.initializeApp();
 
-      // 🔹 Orientation
+      // 🔔 Register background handler (VERY IMPORTANT)
+      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+      // 🔹 Lock Orientation
       await SystemChrome.setPreferredOrientations([
         DeviceOrientation.portraitUp,
       ]);
@@ -17,19 +28,20 @@ void main() {
       final dbService = DatabaseService();
       await dbService.database;
       await dbService.checkTables();
-      //   await dbService.deleteDatabaseFile();
 
-      // 🔹 Storage & Services
+      // 🔹 Storage
       await StorageService().init();
-    //  await NotificationService().initCore();
 
+      // 🔔 Notification Core
+      await NotificationService().initCore();
+
+      // 🔥 Remote Config
       await FirebaseRemoteConfigService().checkForceUpdate();
 
-      // 🔹 Bindings (مرة واحدة)
+      // 🔹 Bindings
       Binding().dependencies();
 
-      // ✅ IMPORTANT
-      // ThemeScope لازم يشتغل *بعد* ScreenUtilInit
+      // 🎨 ThemeScope (AFTER everything)
       final app = await ThemeScopeWidget.initialize(const MyApp());
 
       runApp(
@@ -38,11 +50,9 @@ void main() {
           minTextAdapt: true,
           splitScreenMode: true,
           useInheritedMediaQuery: true,
-          builder: (context, child) => app,
+          builder: (_, __) => app,
         ),
       );
-
-      // 🔥 Seeder starts AFTER UI (background)
     },
     (e, s) {
       debugPrint("❌ ZONE ERROR: $e");
@@ -55,14 +65,12 @@ class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
   String getLocalLan() {
-    // لو هتستخدمه بعدين تمام
     final localStorage = LocalStorage_language();
     return "ar";
   }
 
   @override
   Widget build(BuildContext context) {
-    // ✅ دلوقتي ThemeScope موجود ومش هيكراش
     final theme = ThemeScope.of(context);
 
     return GetMaterialApp(

@@ -1,15 +1,11 @@
 import 'dart:developer';
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
-
 import '../../index/index_main.dart';
 
-/// 🔔 Background message handler — must be top-level
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
   log("🔔 [Background] MessageId: ${message.messageId}");
-  log("🧩 [Background Data]: ${message.data}");
 }
 
 class NotificationService {
@@ -23,55 +19,35 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
 
+  String? _fcmToken;
   String? _currentTopic;
+  String? _pendingTopic;
+  bool _initialized = false;
+
+  String? get token => _fcmToken;
 
   // ─────────────────────────────────────────────
-  // 🚀 CORE INIT (call in main)
+  // 🚀 INIT
   // ─────────────────────────────────────────────
   Future<void> initCore() async {
+    if (_initialized) return;
+
     log("🚀 Initializing Notification Core...");
 
     await _requestPermission();
     await _setupLocalNotifications();
     await _configureForegroundPresentation();
-    await _setupMessageListeners();
+    await _initTokenListener();
+
+    _setupMessageListeners();
+
+    _initialized = true;
 
     log("✅ Notification core ready");
   }
 
   // ─────────────────────────────────────────────
-  // 🔔 ROLE-BASED SUBSCRIBE (call AFTER login)
-  // ─────────────────────────────────────────────
-  Future<void> subscribeAfterLogin() async {
-    final topic = _topicFromUserRole();
-
-    if (topic.isEmpty) {
-      log("⚠️ No role found → skip subscribe");
-      return;
-    }
-
-    await _messaging.subscribeToTopic(topic);
-    _currentTopic = topic;
-
-    log("✅ Subscribed to topic: $topic");
-  }
-
-  // 🔄 Logout / role switch
-  Future<void> unsubscribeAllRoles() async {
-    for (final role in UserType.values) {
-      final topic = "role_${role.name}";
-      await _messaging.unsubscribeFromTopic(topic);
-      log("🚫 Unsubscribed from topic: $topic");
-    }
-    _currentTopic = null;
-  }
-
-  void printCurrentTopic() {
-    log("📌 Current topic: ${_currentTopic ?? 'NONE'}");
-  }
-
-  // ─────────────────────────────────────────────
-  // 🔐 Permissions
+  // 🔐 PERMISSION
   // ─────────────────────────────────────────────
   Future<void> _requestPermission() async {
     final settings = await _messaging.requestPermission(
@@ -79,11 +55,36 @@ class NotificationService {
       badge: true,
       sound: true,
     );
+
     log("🔔 Permission: ${settings.authorizationStatus}");
   }
 
   // ─────────────────────────────────────────────
-  // 📲 Foreground (iOS)
+  // 📲 TOKEN SAFE
+  // ─────────────────────────────────────────────
+  Future<void> _initTokenListener() async {
+    _messaging.onTokenRefresh.listen((newToken) async {
+      log("🔥 TOKEN READY/REFRESHED: $newToken");
+      _fcmToken = newToken;
+
+      // لو كان في subscribe pending
+      if (_pendingTopic != null) {
+        await _subscribe(_pendingTopic!);
+        _pendingTopic = null;
+      }
+    });
+
+    try {
+      final token = await _messaging.getToken();
+      _fcmToken = token;
+      log("🔥 FCM TOKEN: $token");
+    } catch (_) {
+      log("⚠️ Token not ready yet (Debug timing)");
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // 📲 FOREGROUND CONFIG
   // ─────────────────────────────────────────────
   Future<void> _configureForegroundPresentation() async {
     await _messaging.setForegroundNotificationPresentationOptions(
@@ -94,7 +95,7 @@ class NotificationService {
   }
 
   // ─────────────────────────────────────────────
-  // 🔔 Local Notifications
+  // 🔔 LOCAL NOTIFICATIONS
   // ─────────────────────────────────────────────
   Future<void> _setupLocalNotifications() async {
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -102,14 +103,7 @@ class NotificationService {
 
     const settings = InitializationSettings(android: androidInit, iOS: iosInit);
 
-    await _localNotifications.initialize(
-      settings,
-      onDidReceiveNotificationResponse: (details) {
-        if (details.payload != null) {
-          _handlePayload(details.payload!);
-        }
-      },
-    );
+    await _localNotifications.initialize(settings);
 
     const channel = AndroidNotificationChannel(
       'high_importance_channel',
@@ -125,13 +119,14 @@ class NotificationService {
   }
 
   // ─────────────────────────────────────────────
-  // 🎧 FCM listeners
+  // 🎧 LISTENERS
   // ─────────────────────────────────────────────
-  Future<void> _setupMessageListeners() async {
-    final initialMessage = await _messaging.getInitialMessage();
-    if (initialMessage != null) {
-      _handleNavigation(initialMessage);
-    }
+  void _setupMessageListeners() {
+    _messaging.getInitialMessage().then((message) {
+      if (message != null) {
+        _handleNavigation(message);
+      }
+    });
 
     FirebaseMessaging.onMessageOpenedApp.listen(_handleNavigation);
 
@@ -141,13 +136,39 @@ class NotificationService {
   }
 
   // ─────────────────────────────────────────────
-  // Helpers
+  // 🔔 SUBSCRIBE SAFE
   // ─────────────────────────────────────────────
-  String _topicFromUserRole() {
+  Future<void> subscribeAfterLogin() async {
     final role = LocalUser().getUserData().userType?.name;
-    return role == null ? "" : "role_$role";
+    if (role == null) return;
+
+    final topic = "role_$role";
+
+    if (_currentTopic == topic) return;
+
+    // لو التوكن مش جاهز → خليه pending
+    if (_fcmToken == null) {
+      log("⏳ Token not ready → delaying subscription...");
+      _pendingTopic = topic;
+      return;
+    }
+
+    await _subscribe(topic);
   }
 
+  Future<void> _subscribe(String topic) async {
+    try {
+      await _messaging.subscribeToTopic(topic);
+      _currentTopic = topic;
+      log("✅ Subscribed to $topic");
+    } catch (e) {
+      log("⚠️ Subscribe failed: $e");
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // 🔔 LOCAL SHOW
+  // ─────────────────────────────────────────────
   Future<void> _showLocalNotification(RemoteMessage message) async {
     final notification = message.notification;
     if (notification == null) return;
@@ -166,7 +187,6 @@ class NotificationService {
       notification.title,
       notification.body,
       details,
-      payload: message.data['target'],
     );
   }
 
@@ -187,9 +207,5 @@ class NotificationService {
         Get.toNamed('/offers');
         break;
     }
-  }
-
-  void _handlePayload(String payload) {
-    log("🧩 Payload: $payload");
   }
 }

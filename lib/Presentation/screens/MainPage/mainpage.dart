@@ -161,10 +161,10 @@ class _MainPageState extends State<MainPage> {
           notifController == null
               ? _item(IconsConstants.notification_mainpaage, "الإشعارات")
               : _itemWithBadge(
-                  IconsConstants.notification_mainpaage,
-                  "الإشعارات",
-                  notifController.unreadCount,
-                ),
+                IconsConstants.notification_mainpaage,
+                "الإشعارات",
+                notifController.unreadCount,
+              ),
           _item(IconsConstants.orders, "الطلبات"),
           _item(IconsConstants.account, "الحساب"),
         ];
@@ -190,6 +190,7 @@ class _MainPageState extends State<MainPage> {
           _item(IconsConstants.orders, "الزيارات"),
           _item(IconsConstants.category, "الدكاترة"),
           _item(IconsConstants.money, "التارجت"),
+          _item(IconsConstants.category, "التخصصات"),
           _item(IconsConstants.account, "الحساب"),
         ];
 
@@ -287,6 +288,7 @@ class _MainPageState extends State<MainPage> {
           const VisitView(),
           const DoctorListView(),
           const TargetDashboardScreen(),
+          const SpecializationView(),
           const AccountView(),
         ][index];
 
