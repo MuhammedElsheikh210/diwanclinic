@@ -12,13 +12,19 @@ class ReservationModel {
   final String? patientPhone;
   final String? paidAmount;
   final String? restAmount;
-   String? fcmToken_patient;
-   String? fcmToken_assist;
+  String? fcmToken_patient;
+  String? fcmToken_assist;
   final String? totalFees;
   final String? appointmentDateTime;
   String? status;
   int? order_num;
   final int? order_finished;
+
+  /// 🔥 Composite key (NOT stored, just computed)
+  String? get clinicShiftComposite {
+    if (clinicKey == null || shiftKey == null) return null;
+    return "${clinicKey}_${shiftKey}";
+  }
 
   // 🆕 NEW — تم إضافته
   final int? order_reserved;
@@ -141,7 +147,9 @@ class ReservationModel {
     if (prescriptionUrl3 != null) data['prescription_url_3'] = prescriptionUrl3;
     if (prescriptionUrl4 != null) data['prescription_url_4'] = prescriptionUrl4;
     if (prescriptionUrl5 != null) data['prescription_url_5'] = prescriptionUrl5;
-
+    if (clinicKey != null && shiftKey != null) {
+      data['clinic_shift_key'] = "${clinicKey}_${shiftKey}";
+    }
     data['is_ordered'] = (isOrdered ?? false) ? 1 : 0;
     data['has_feedback'] = (hasFeedback ?? false) ? 1 : 0;
 

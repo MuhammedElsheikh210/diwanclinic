@@ -28,6 +28,7 @@ void main() {
       final dbService = DatabaseService();
       await dbService.database;
       await dbService.checkTables();
+    //  await dbService.deleteDatabaseFile();
 
       // 🔹 Storage
       await StorageService().init();

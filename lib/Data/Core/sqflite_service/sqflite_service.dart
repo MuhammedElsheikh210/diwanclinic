@@ -22,7 +22,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 53, // update version when schema changes
+      version: 54, // update version when schema changes
       onCreate: _onCreate,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
@@ -159,6 +159,7 @@ class DatabaseService {
           fcmToken_assist TEXT,
           create_at INTEGER,
           doctor_key TEXT,
+          clinic_shift_key TEXT,
           doctor_name TEXT,
           transfer_image TEXT,
           order_num INTEGER,

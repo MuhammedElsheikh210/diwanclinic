@@ -1,4 +1,5 @@
 import '../../../../../../index/index_main.dart';
+import 'dart:developer' as developer;
 
 class ReservationViewModel extends GetxController {
   // Managers
@@ -33,17 +34,19 @@ class ReservationViewModel extends GetxController {
   List<ReservationModel> completedForReport = [];
 
   // Computed Stats
-  int get completedCount => completeDayReservations
-      .where((r) => r?.status == ReservationStatus.completed.value)
-      .length;
+  int get completedCount =>
+      completeDayReservations
+          .where((r) => r?.status == ReservationStatus.completed.value)
+          .length;
 
-  int get waitingCount => completeDayReservations
-      .where(
-        (r) =>
-            r?.status == ReservationStatus.approved.value ||
-            r?.status == ReservationStatus.inProgress.value,
-      )
-      .length;
+  int get waitingCount =>
+      completeDayReservations
+          .where(
+            (r) =>
+                r?.status == ReservationStatus.approved.value ||
+                r?.status == ReservationStatus.inProgress.value,
+          )
+          .length;
 
   int get totalCount => completeDayReservations.length;
 
@@ -132,8 +135,8 @@ class ReservationViewModel extends GetxController {
         onSelect: (shift) async {
           selectedShift = shift;
 
-          await getReservations(isFilter: false);
-          getSyncReservations(initLocalData: true);
+          await getReservations(isFilter: true);
+          getSyncReservations();
 
           update();
         },
@@ -164,7 +167,7 @@ class ReservationViewModel extends GetxController {
             hideShiftSelector = true;
 
             await getReservations(isFilter: true);
-            getSyncReservations(initLocalData: true);
+            getSyncReservations();
           }
           // ✅ أكثر من شيفت → افتح Dialog
           else {
@@ -184,33 +187,93 @@ class ReservationViewModel extends GetxController {
     );
   }
 
-  void getSyncReservations({bool? initLocalData}) {
+  void getSyncReservations() {
+    const tag = "VM_SYNC";
+
+    bool isReloading = false;
+
+    SyncLogger.info(tag, "Starting sync listener");
+    SyncLogger.info(
+      tag,
+      "Clinic: ${selectedClinic?.key} | Date: $appointmentDate",
+    );
+
     syncService.listen(
       selectedClinic: selectedClinic,
       appointmentDate: appointmentDate,
 
       onAddLocal: (model) async {
-        initLocalData = null;
-        await actionManager.addReservation(model, localOnly: true);
+        SyncLogger.info(tag, "onAddLocal -> ${model.key}");
+
+        try {
+          await actionManager.addReservation(model, localOnly: true);
+
+          SyncLogger.success(tag, "Added locally -> ${model.key}");
+
+          _updateListInMemory(model);
+        } catch (e) {
+          SyncLogger.error(tag, "Error in onAddLocal", e);
+        }
       },
 
       onUpdatedLocal: (model) async {
-        initLocalData = null;
-        await actionManager.updateReservation(
-          model,
-          isSyncing: true,
-          localOnly: true,
-        );
+        SyncLogger.info(tag, "onUpdatedLocal -> ${model.key}");
+
+        try {
+          await actionManager.updateReservation(
+            model,
+            isSyncing: true,
+            localOnly: true,
+          );
+
+          SyncLogger.success(tag, "Updated locally -> ${model.key}");
+
+          _updateListInMemory(model);
+        } catch (e) {
+          SyncLogger.error(tag, "Error in onUpdatedLocal", e);
+        }
       },
 
       onReloadLocal: () {
-        // pass true in get clinic to not make call here
-        print("call here");
-        if (initLocalData == null) {
-          getReservations(isFilter: false);
+        if (isReloading) {
+          SyncLogger.warning(tag, "Reload skipped (already reloading)");
+          return;
         }
+
+        if (isSyncing) {
+          SyncLogger.warning(tag, "Reload skipped (still syncing)");
+          return;
+        }
+
+        SyncLogger.info(tag, "Reload triggered");
+
+        isReloading = true;
+
+        Future.microtask(() async {
+          try {
+            await getReservations(isFilter: false);
+            SyncLogger.success(tag, "Reload completed");
+          } catch (e) {
+            SyncLogger.error(tag, "Reload failed", e);
+          }
+
+          isReloading = false;
+        });
       },
     );
+  }
+
+  void _updateListInMemory(ReservationModel model) {
+    final index =
+        listReservations?.indexWhere((e) => e?.key == model.key) ?? -1;
+
+    if (index != -1) {
+      listReservations![index] = model;
+    } else {
+      listReservations?.insert(0, model);
+    }
+
+    update();
   }
 
   // Change reservation status with optimized async handling + logging
@@ -344,7 +407,7 @@ extension ReservationData on ReservationViewModel {
       appointmentDate: appointmentDate,
       selectedClinic: selectedClinic,
       shiftKey: selectedShift!.key,
-      isFiltered: false,
+      isFiltered: isFilter ?? false,
       fromOnline: fromOnline,
     );
 
@@ -363,7 +426,7 @@ extension ReservationData on ReservationViewModel {
     final filtered = await queryManager.getReservations(
       appointmentDate: appointmentDate,
       query: query,
-      isFiltered: false,
+      isFiltered: isFilter ?? false,
       fromOnline: fromOnline,
     );
 
@@ -412,10 +475,39 @@ extension ReservationData on ReservationViewModel {
       client.key!,
     );
 
-    selectedPatientLastVisit = reservation == null
-        ? "لا يوجد كشف سابق"
-        : DatesUtilis.humanizeTimestamp(reservation.createAt);
+    selectedPatientLastVisit =
+        reservation == null
+            ? "لا يوجد كشف سابق"
+            : DatesUtilis.humanizeTimestamp(reservation.createAt);
 
     update();
+  }
+}
+
+class SyncLogger {
+  static const bool enableLogs = true;
+
+  static void _log(String level, String tag, String message) {
+    if (!enableLogs) return;
+
+    final time = DateTime.now().toIso8601String();
+
+    developer.log("[$time] [$level] [$tag] $message", name: "SYNC_ENGINE");
+  }
+
+  static void info(String tag, String message) {
+    _log("INFO", tag, message);
+  }
+
+  static void success(String tag, String message) {
+    _log("SUCCESS", tag, message);
+  }
+
+  static void warning(String tag, String message) {
+    _log("WARNING", tag, message);
+  }
+
+  static void error(String tag, String message, [Object? error]) {
+    _log("ERROR", tag, "$message | $error");
   }
 }
