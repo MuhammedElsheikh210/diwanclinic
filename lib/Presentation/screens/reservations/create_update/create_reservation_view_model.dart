@@ -168,13 +168,16 @@ class CreateReservationViewModel extends GetxController {
         voidCallBack: (data) {
           shiftList = data;
 
-          shiftItems = (data ?? [])
-              .whereType<ShiftModel>()
-              .map(
-                (s) =>
-                    GenericListModel(key: s.key ?? "", name: s.name ?? "فترة"),
-              )
-              .toList();
+          shiftItems =
+              (data ?? [])
+                  .whereType<ShiftModel>()
+                  .map(
+                    (s) => GenericListModel(
+                      key: s.key ?? "",
+                      name: s.name ?? "فترة",
+                    ),
+                  )
+                  .toList();
 
           // ✅ لو شيفت واحد بس → اختاره تلقائي
           if (shiftItems.length == 1) {
@@ -189,9 +192,8 @@ class CreateReservationViewModel extends GetxController {
                 (e) => e.key == shift_key,
               );
             } catch (_) {
-              selectedShiftModel = shiftItems.isNotEmpty
-                  ? shiftItems.first
-                  : null;
+              selectedShiftModel =
+                  shiftItems.isNotEmpty ? shiftItems.first : null;
             }
           }
 
@@ -338,8 +340,7 @@ class CreateReservationViewModel extends GetxController {
       ),
       query: SQLiteQueryParams(
         is_filtered: false,
-        where:
-            """
+        where: """
         appointment_date_time = ?
         AND clinic_key = ?
         AND shift_key = ?
@@ -500,9 +501,10 @@ class CreateReservationViewModel extends GetxController {
       reservation = existingReservation!.copyWith(
         // ❗ keep original key / createAt / order_num / status
         patientKey: clientUser?.key,
-        patientName: selectedType == "زيارة مندوب"
-            ? delegateNameController.text
-            : patientNameController.text,
+        patientName:
+            selectedType == "زيارة مندوب"
+                ? delegateNameController.text
+                : patientNameController.text,
         patientPhone: patientPhoneController.text,
         reservationType: selectedType,
         appointmentDateTime: companyNameController.text,
@@ -529,14 +531,15 @@ class CreateReservationViewModel extends GetxController {
       fcmToken_patient: clientUser?.fcmToken,
       patientKey: clientUser?.key,
       patientUid: clientUser?.uid,
-      patientName: selectedType == "زيارة مندوب"
-          ? delegateNameController.text
-          : patientNameController.text,
+      patientName:
+          selectedType == "زيارة مندوب"
+              ? delegateNameController.text
+              : patientNameController.text,
       patientPhone: patientPhoneController.text,
       assistantKey:
           LocalUser().getUserData().userType?.name == Strings.assistant
-          ? LocalUser().getUserData().key
-          : null,
+              ? LocalUser().getUserData().key
+              : null,
       reservationType: selectedType,
       appointmentDateTime: companyNameController.text,
       paidAmount: paidAmountController.text,
@@ -760,7 +763,7 @@ class CreateReservationViewModel extends GetxController {
       key: reservation.patientUid ?? "",
       data: reservation,
       voidCallBack: (_) async {
-        refreshListView();
+        //  refreshListView();
         Get.back();
         Loader.showSuccess("تم تحديث الحجز بنجاح");
       },

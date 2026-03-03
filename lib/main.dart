@@ -1,4 +1,6 @@
 import 'dart:developer';
+import 'package:package_info_plus/package_info_plus.dart';
+
 import 'index/index_main.dart';
 
 /// 🔔 MUST be top-level
@@ -25,6 +27,8 @@ void main() {
       ]);
 
       // 🔹 Local DB
+      // 🔹 Local DB
+      //  await DatabaseService().deleteDatabaseFile(); // 🔥 TEMP FIX
       final dbService = DatabaseService();
       await dbService.database;
       await dbService.checkTables();
@@ -34,6 +38,10 @@ void main() {
 
       // 🔔 Notification Core
       await NotificationService().initCore();
+
+      final apns = await FirebaseMessaging.instance.getAPNSToken();
+      log("APNS DIRECT CHECK: $apns");
+      log("BUNDLE ID: ${await PackageInfo.fromPlatform()}");
 
       // 🔥 Remote Config
       await FirebaseRemoteConfigService().checkForceUpdate();

@@ -1,4 +1,5 @@
 import '../../../../../../index/index_main.dart';
+import 'dart:developer' as developer;
 
 class ReservationViewModel extends GetxController {
   // Managers
@@ -33,17 +34,19 @@ class ReservationViewModel extends GetxController {
   List<ReservationModel> completedForReport = [];
 
   // Computed Stats
-  int get completedCount => completeDayReservations
-      .where((r) => r?.status == ReservationStatus.completed.value)
-      .length;
+  int get completedCount =>
+      completeDayReservations
+          .where((r) => r?.status == ReservationStatus.completed.value)
+          .length;
 
-  int get waitingCount => completeDayReservations
-      .where(
-        (r) =>
-            r?.status == ReservationStatus.approved.value ||
-            r?.status == ReservationStatus.inProgress.value,
-      )
-      .length;
+  int get waitingCount =>
+      completeDayReservations
+          .where(
+            (r) =>
+                r?.status == ReservationStatus.approved.value ||
+                r?.status == ReservationStatus.inProgress.value,
+          )
+          .length;
 
   int get totalCount => completeDayReservations.length;
 
@@ -133,7 +136,8 @@ class ReservationViewModel extends GetxController {
           selectedShift = shift;
 
           await getReservations(isFilter: false);
-          getSyncReservations(initLocalData: true);
+          print("getSyncReservations call");
+          getSyncReservations();
 
           update();
         },
@@ -164,7 +168,8 @@ class ReservationViewModel extends GetxController {
             hideShiftSelector = true;
 
             await getReservations(isFilter: true);
-            getSyncReservations(initLocalData: true);
+            print("getSyncReservations call");
+            getSyncReservations();
           }
           // ✅ أكثر من شيفت → افتح Dialog
           else {
@@ -184,33 +189,76 @@ class ReservationViewModel extends GetxController {
     );
   }
 
-  void getSyncReservations({bool? initLocalData}) {
+  void getSyncReservations() {
+    const tag = "VM_SYNC";
+
+    SyncLogger.info(tag, "Starting Sync Engine (Memory Mode)");
+
     syncService.listen(
       selectedClinic: selectedClinic,
       appointmentDate: appointmentDate,
 
+      // 🔹 Add
       onAddLocal: (model) async {
-        initLocalData = null;
+        SyncLogger.info(tag, "ADD → ${model.key}");
+
         await actionManager.addReservation(model, localOnly: true);
+
+        _updateListInMemory(model);
+
+        SyncLogger.success(tag, "ADD Completed → ${model.key}");
       },
 
+      // 🔹 Update
       onUpdatedLocal: (model) async {
-        initLocalData = null;
+        SyncLogger.info(tag, "UPDATE → ${model.key}");
+
         await actionManager.updateReservation(
           model,
           isSyncing: true,
           localOnly: true,
         );
+
+        _updateListInMemory(model);
+
+        SyncLogger.success(tag, "UPDATE Completed → ${model.key}");
       },
 
+      // ❌ مفيش Reload تاني
       onReloadLocal: () {
-        // pass true in get clinic to not make call here
-        print("call here");
-        if (initLocalData == null) {
-          getReservations(isFilter: false);
-        }
+        SyncLogger.info(tag, "Reload skipped (Memory Mode Active)");
       },
     );
+  }
+
+  void _updateListInMemory(ReservationModel model) {
+    const tag = "MEMORY_UPDATE";
+
+    if (listReservations == null) {
+      listReservations = [];
+    }
+
+    // حدث أو أضف في completeDayReservations
+    final dayIndex = completeDayReservations.indexWhere(
+      (e) => e?.key == model.key,
+    );
+
+    if (dayIndex != -1) {
+      completeDayReservations[dayIndex] = model;
+    } else {
+      completeDayReservations.insert(0, model);
+    }
+
+    // 🔥 أعد بناء القائمة بالترتيب الصحيح
+    final rebuilt = queueManager.buildFinalList(
+      completeDayReservations.whereType<ReservationModel>().toList(),
+    );
+
+    listReservations = rebuilt;
+
+    SyncLogger.success(tag, "Rebuilt list safely → ${model.key}");
+
+    update();
   }
 
   // Change reservation status with optimized async handling + logging
@@ -238,7 +286,8 @@ class ReservationViewModel extends GetxController {
       debugPrint("[$tag] ✅ DB updated successfully");
 
       // 3️⃣ Reload UI data (must await)
-      await getReservations(isFilter: false);
+      // await getReservations(isFilter: false);
+      _updateListInMemory(reservation);
 
       debugPrint("[$tag] 🔁 Reservations reloaded");
 
@@ -337,42 +386,89 @@ extension ReservationData on ReservationViewModel {
     bool? isFilter = false,
     bool? fromOnline,
   }) async {
-    if (appointmentDate == null || selectedShift == null) return;
+    const tag = "GET_RESERVATIONS";
+    final startTime = DateTime.now();
 
-    // 🔹 1) Get full day reservations (with shift filter)
-    final daily = await queryManager.fetchAllReservationsOfDay(
-      appointmentDate: appointmentDate,
-      selectedClinic: selectedClinic,
-      shiftKey: selectedShift!.key,
-      isFiltered: false,
-      fromOnline: fromOnline,
+    SyncLogger.info(
+      tag,
+      "Started | Date: $appointmentDate | Shift: ${selectedShift?.key} | "
+      "Clinic: ${selectedClinic?.key} | fromOnline: $fromOnline | isFilter: $isFilter",
     );
 
-    completeDayReservations = daily;
+    if (appointmentDate == null || selectedShift == null) {
+      SyncLogger.warning(
+        tag,
+        "Blocked → appointmentDate or selectedShift is NULL",
+      );
+      return;
+    }
 
-    // 🔹 2) Build local filter query (already includes shift)
-    final query = filterManager.buildFilters(
-      selectedClinic: selectedClinic,
-      appointmentDate: appointmentDate,
-      selectedShift: selectedShift,
-      selectedTab: selectedTab,
-      isFiltered: isFilter ?? false,
-    );
+    try {
+      // 🔹 1) Fetch full day list
+      SyncLogger.info(tag, "Fetching full day reservations...");
 
-    // 🔹 3) Apply filtered list
-    final filtered = await queryManager.getReservations(
-      appointmentDate: appointmentDate,
-      query: query,
-      isFiltered: false,
-      fromOnline: fromOnline,
-    );
+      final daily = await queryManager.fetchAllReservationsOfDay(
+        appointmentDate: appointmentDate,
+        selectedClinic: selectedClinic,
+        shiftKey: selectedShift!.key,
+        isFiltered: false,
+        fromOnline: fromOnline,
+      );
 
-    listReservations = queueManager.buildFinalList(filtered);
+      completeDayReservations = daily;
 
-    // 🔹 4) Load report
-    await loadDailyReport(fromOnline: fromOnline ?? false);
+      SyncLogger.success(tag, "Full Day Loaded → count: ${daily.length}");
 
-    update();
+      // 🔹 2) Build filters
+      SyncLogger.info(tag, "Building filter query...");
+
+      final query = filterManager.buildFilters(
+        selectedClinic: selectedClinic,
+        appointmentDate: appointmentDate,
+        selectedShift: selectedShift,
+        selectedTab: selectedTab,
+        isFiltered: isFilter ?? false,
+      );
+
+      // 🔹 3) Apply filtered list
+      SyncLogger.info(tag, "Fetching filtered reservations...");
+
+      final filtered = await queryManager.getReservations(
+        appointmentDate: appointmentDate,
+        query: query,
+        isFiltered: false,
+        fromOnline: fromOnline,
+      );
+
+      listReservations = queueManager.buildFinalList(filtered);
+
+      SyncLogger.success(
+        tag,
+        "Filtered Loaded → count: ${listReservations?.length ?? 0}",
+      );
+
+      // 🔹 4) Load report
+      SyncLogger.info(tag, "Loading daily report...");
+
+      await loadDailyReport(fromOnline: fromOnline ?? false);
+
+      SyncLogger.success(
+        tag,
+        "Daily Report Loaded → completed: ${completedForReport.length}",
+      );
+
+      final duration = DateTime.now().difference(startTime);
+
+      SyncLogger.success(
+        tag,
+        "Completed Successfully in ${duration.inMilliseconds} ms",
+      );
+
+      update();
+    } catch (e, stack) {
+      SyncLogger.error(tag, "Failed to load reservations", e);
+      SyncLogger.error(tag, "StackTrace", stack);
+    }
   }
 
   // ------------------------------------------------------------
@@ -412,10 +508,73 @@ extension ReservationData on ReservationViewModel {
       client.key!,
     );
 
-    selectedPatientLastVisit = reservation == null
-        ? "لا يوجد كشف سابق"
-        : DatesUtilis.humanizeTimestamp(reservation.createAt);
+    selectedPatientLastVisit =
+        reservation == null
+            ? "لا يوجد كشف سابق"
+            : DatesUtilis.humanizeTimestamp(reservation.createAt);
 
     update();
+  }
+}
+
+class SyncLogger {
+  static const bool enableLogs = true;
+
+  static void _log(
+    String level,
+    String tag,
+    String message, {
+    Object? error,
+    StackTrace? stackTrace,
+  }) {
+    if (!enableLogs) return;
+
+    final time = DateTime.now().toIso8601String();
+
+    developer.log(
+      "[$time] [$level] [$tag] $message",
+      name: "SYNC_ENGINE",
+      error: error,
+      stackTrace: stackTrace,
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // 🔹 Levels
+  // ─────────────────────────────────────────────
+
+  static void info(String tag, String message) {
+    _log("INFO", tag, message);
+  }
+
+  static void success(String tag, String message) {
+    _log("SUCCESS", tag, message);
+  }
+
+  static void warning(String tag, String message) {
+    _log("WARNING", tag, message);
+  }
+
+  static void error(
+    String tag,
+    String message, [
+    Object? error,
+    StackTrace? stackTrace,
+  ]) {
+    _log("ERROR", tag, message, error: error, stackTrace: stackTrace);
+  }
+
+  // ─────────────────────────────────────────────
+  // 🔥 Performance Helper
+  // ─────────────────────────────────────────────
+
+  static Stopwatch startTimer() {
+    final stopwatch = Stopwatch()..start();
+    return stopwatch;
+  }
+
+  static void endTimer(String tag, String label, Stopwatch stopwatch) {
+    stopwatch.stop();
+    _log("PERFORMANCE", tag, "$label took ${stopwatch.elapsedMilliseconds} ms");
   }
 }

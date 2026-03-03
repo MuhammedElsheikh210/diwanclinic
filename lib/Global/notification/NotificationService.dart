@@ -17,7 +17,7 @@ class NotificationService {
 
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications =
-      FlutterLocalNotificationsPlugin();
+  FlutterLocalNotificationsPlugin();
 
   String? _fcmToken;
   String? _currentTopic;
@@ -113,8 +113,8 @@ class NotificationService {
 
     await _localNotifications
         .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
+        AndroidFlutterLocalNotificationsPlugin
+    >()
         ?.createNotificationChannel(channel);
   }
 
@@ -139,7 +139,10 @@ class NotificationService {
   // 🔔 SUBSCRIBE SAFE
   // ─────────────────────────────────────────────
   Future<void> subscribeAfterLogin() async {
-    final role = LocalUser().getUserData().userType?.name;
+    final role = LocalUser()
+        .getUserData()
+        .userType
+        ?.name;
     if (role == null) return;
 
     final topic = "role_$role";
@@ -183,7 +186,9 @@ class NotificationService {
     );
 
     await _localNotifications.show(
-      DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      DateTime
+          .now()
+          .millisecondsSinceEpoch ~/ 1000,
       notification.title,
       notification.body,
       details,

@@ -32,6 +32,10 @@ class SignUpViewModel extends GetxController {
 
   /// ⭐ MAIN SIGN-UP LOGIC ⭐
   Future<void> signUp() async {
+
+    print(" tokeeen is ${NotificationService().token}");
+    print(" tokeeen is ${await ConstantsData.firebaseToken()}");
+
     final name = nameController.text.trim();
     final phone = phoneController.text.trim();
     final address = addressController.text.trim();
@@ -57,6 +61,7 @@ class SignUpViewModel extends GetxController {
 
       final uid = userCred.user?.uid ?? "";
       final generatedKey = const Uuid().v4();
+
 
       final newUser = LocalUser(
         uid: uid,
