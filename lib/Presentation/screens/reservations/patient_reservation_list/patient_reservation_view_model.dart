@@ -167,11 +167,8 @@ class ReservationPatientViewModel extends GetxController {
 
       // 1️⃣ Update main reservation
       await ReservationService().updateReservationData(
-        date: updated.appointmentDateTime ?? "",
-        isPatient: true,
-        doctorUid: updated.doctorKey,
+
         reservation: updated,
-        localOnly: false,
         voidCallBack: (_) {},
       );
 
@@ -214,7 +211,6 @@ class ReservationPatientViewModel extends GetxController {
     if (date == null) return 0;
 
     await ReservationService().getReservationsData(
-      data: FirebaseFilter(orderBy: "appointment_date_time", equalTo: date),
       query: SQLiteQueryParams(), // ignored online
       voidCallBack: (list) {
         count = list
@@ -415,10 +411,8 @@ class ReservationPatientViewModel extends GetxController {
             reservation.hasFeedback = true;
             // 🔄 Update reservation in SQLite + sync
             await ReservationService().updateReservationData(
-              date: reservation.appointmentDateTime ?? "",
               reservation: reservation,
-              doctorUid: reservation.doctorKey,
-              isPatient: true,
+
               voidCallBack: (_) {
                 ReservationService().updatePatientReservationData(
                   key: reservation.key ?? "",
@@ -511,11 +505,8 @@ class ReservationPatientViewModel extends GetxController {
     bool localOnly = false,
   }) async {
     await ReservationService().updateReservationData(
-      date: reservation.appointmentDateTime ?? "",
-      isPatient: true,
-      doctorUid: reservation.doctorKey,
+
       reservation: reservation,
-      localOnly: localOnly,
       voidCallBack: (_) {
         updatePatientReservation(reservation);
         Loader.dismiss();
@@ -545,7 +536,6 @@ class ReservationPatientViewModel extends GetxController {
   /// Delete reservation
   void deleteReservation(ReservationModel reservation) {
     ReservationService().deleteReservationData(
-      date: reservation.appointmentDateTime ?? "",
       reservationKey: reservation.key ?? "",
       voidCallBack: (_) => getReservations(),
     );

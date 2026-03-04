@@ -26,9 +26,7 @@ class PatientForAssistantProfileHistoryViewModel extends GetxController {
           patientModel = patients[0];
 
           ReservationService().getReservationsData(
-            date: DateFormat('dd/MM/yyyy').format(DateTime.now()),
 
-            data: FirebaseFilter(),
             query: SQLiteQueryParams(
               orderBy: 'create_at ${Strings.desc}', // ✅ get latest first
               is_filtered: true,
@@ -100,7 +98,6 @@ class PatientForAssistantProfileHistoryViewModel extends GetxController {
   updateReservation(ReservationModel reserv_model) {
     reserv_model.status = "completed";
     ReservationService().updateReservationData(
-      date: reserv_model.appointmentDateTime ?? "",
       reservation: reserv_model,
       voidCallBack: (status) {
         Get.back();

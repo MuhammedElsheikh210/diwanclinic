@@ -70,7 +70,7 @@ class DoctorDetailsViewModel extends GetxController {
       return;
     }
 
-    final date = DateFormat("dd-MM-yyyy").format(selectedDate!);
+    final date = DateFormat("dd/MM/yyyy").format(selectedDate!);
 
     await LegacyQueueService().getOpenCloseDaysByDateData(
       date: date,
@@ -93,7 +93,7 @@ class DoctorDetailsViewModel extends GetxController {
   }
 
   String _formatLegacyDate(DateTime date) {
-    return DateFormat("dd-MM-yyyy").format(date);
+    return DateFormat("dd/MM/yyyy").format(date);
   }
 
   Future<void> loadLegacyQueueForSelectedDate() async {
@@ -160,11 +160,12 @@ class DoctorDetailsViewModel extends GetxController {
   // ─────────────────────────────────────────────
   // 🔹 Setup Reservation Types
   void _initReservationTypes() {
-    reservationTypeItems = reservationTypes
-        .asMap()
-        .entries
-        .map((e) => GenericListModel(key: 'type_${e.key}', name: e.value))
-        .toList();
+    reservationTypeItems =
+        reservationTypes
+            .asMap()
+            .entries
+            .map((e) => GenericListModel(key: 'type_${e.key}', name: e.value))
+            .toList();
   }
 
   Future<void> loadExpectedOrderFromExistingData() async {
@@ -182,11 +183,6 @@ class DoctorDetailsViewModel extends GetxController {
     int doneCount = 0;
 
     await ReservationService().getReservationsData(
-      date: formattedDate,
-      data: FirebaseFilter(orderBy: "shift_key", equalTo: selectedShift?.key),
-      isPatient: true,
-      doctorUid: doctor.uid,
-      fromOnline: true,
       query: SQLiteQueryParams(),
       voidCallBack: (list) {
         for (final r in list) {
@@ -227,19 +223,17 @@ class DoctorDetailsViewModel extends GetxController {
     int count = 0;
 
     await ReservationService().getReservationsData(
-      date: formattedDate,
-      data: FirebaseFilter(),
-      fromOnline: true,
       query: SQLiteQueryParams(),
       voidCallBack: (list) {
-        count = list
-            .where(
-              (r) =>
-                  r != null &&
-                  (r.status == ReservationStatus.approved.value ||
-                      r.status == ReservationStatus.inProgress.value),
-            )
-            .length;
+        count =
+            list
+                .where(
+                  (r) =>
+                      r != null &&
+                      (r.status == ReservationStatus.approved.value ||
+                          r.status == ReservationStatus.inProgress.value),
+                )
+                .length;
       },
     );
 
@@ -281,15 +275,16 @@ class DoctorDetailsViewModel extends GetxController {
           listClinics = data;
           isLoadingClinics = false;
 
-          clinicItems = (listClinics ?? [])
-              .whereType<ClinicModel>()
-              .map(
-                (c) => GenericListModel(
-                  key: c.key ?? "",
-                  name: c.title ?? "عيادة بدون اسم",
-                ),
-              )
-              .toList();
+          clinicItems =
+              (listClinics ?? [])
+                  .whereType<ClinicModel>()
+                  .map(
+                    (c) => GenericListModel(
+                      key: c.key ?? "",
+                      name: c.title ?? "عيادة بدون اسم",
+                    ),
+                  )
+                  .toList();
 
           if (listClinics?.isNotEmpty == true) {
             selectedClinic = listClinics!.first;
@@ -338,22 +333,24 @@ class DoctorDetailsViewModel extends GetxController {
           Loader.dismiss();
 
           // 🔍 Filter shifts by clinicKey
-          final filteredShifts = (data)
-              .whereType<ShiftModel>()
-              .where((s) => s.clinicKey == clinic.key)
-              .toList();
+          final filteredShifts =
+              (data)
+                  .whereType<ShiftModel>()
+                  .where((s) => s.clinicKey == clinic.key)
+                  .toList();
 
           listShifts = filteredShifts;
 
           // 🧩 Convert to dropdown items
-          shiftItems = filteredShifts
-              .map(
-                (s) => GenericListModel(
-                  key: s.key ?? "",
-                  name: "${s.name ?? "فترة"} (${s.dayOfWeek ?? ""})",
-                ),
-              )
-              .toList();
+          shiftItems =
+              filteredShifts
+                  .map(
+                    (s) => GenericListModel(
+                      key: s.key ?? "",
+                      name: "${s.name ?? "فترة"} (${s.dayOfWeek ?? ""})",
+                    ),
+                  )
+                  .toList();
 
           selectedShift = listShifts?.first;
           isLoadingShifts = false;
@@ -362,7 +359,7 @@ class DoctorDetailsViewModel extends GetxController {
       );
     } catch (e, stack) {
       Loader.dismiss();
-    //  Loader.showError("فشل تحميل الفترات");
+      //  Loader.showError("فشل تحميل الفترات");
       debugPrint("❌ [Shifts] Error while loading shifts: $e");
       debugPrint(stack.toString());
       isLoadingShifts = false;
@@ -478,20 +475,19 @@ class DoctorDetailsViewModel extends GetxController {
         appointmentDateTime: formattedDate,
         createAt: DateTime.now().millisecondsSinceEpoch,
         //  order_num: nextOrder,
-        paidAmount: selectedClinic?.reserveWithDeposit == 1
-            ? depositAmount.toStringAsFixed(2)
-            : totalAmount?.toStringAsFixed(2),
-        restAmount: selectedClinic?.reserveWithDeposit == 1
-            ? ((totalAmount ?? 0) - depositAmount).toStringAsFixed(2)
-            : "0",
+        paidAmount:
+            selectedClinic?.reserveWithDeposit == 1
+                ? depositAmount.toStringAsFixed(2)
+                : totalAmount?.toStringAsFixed(2),
+        restAmount:
+            selectedClinic?.reserveWithDeposit == 1
+                ? ((totalAmount ?? 0) - depositAmount).toStringAsFixed(2)
+                : "0",
         status: ReservationStatus.pending.value,
       );
 
       // 🔹 Step 6: Save reservation in Firebase & local DB
       await ReservationService().addReservationData(
-        date: reservation.appointmentDateTime ?? "",
-        doctorUid: reservation.doctorKey ?? "",
-        isPatient: true,
         reservation: reservation,
         voidCallBack: (_) async {
           await addPatientReservation(reservation);
@@ -517,6 +513,24 @@ class DoctorDetailsViewModel extends GetxController {
       Loader.dismiss();
       Loader.showError("❌ حدث خطأ أثناء إنشاء الحجز: $e");
       debugPrint("Reservation creation error: $e");
+    }
+  }
+
+  String _normalizeDate(String date) {
+    try {
+      if (date.contains("/")) {
+        final parsed = DateFormat("dd/MM/yyyy").parse(date);
+        return DateFormat("dd-MM-yyyy").format(parsed);
+      }
+
+      if (date.contains("-")) {
+        final parsed = DateFormat("dd-MM-yyyy").parse(date);
+        return DateFormat("dd-MM-yyyy").format(parsed);
+      }
+
+      return date;
+    } catch (_) {
+      return date.replaceAll("/", "-");
     }
   }
 

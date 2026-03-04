@@ -42,36 +42,40 @@ class _ReservationViewState extends State<ReservationView> {
 
           body: Container(
             color: AppColors.white,
-            child: ListView(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 0.h),
-              children: [
-                isGrid
-                    ? const SizedBox()
-                    : ReservationReportWidget(controller: controller),
-                isGrid ? const SizedBox() : const SizedBox(height: 10),
-                isGrid
-                    ? const SizedBox()
-                    : StatsSection(controller: controller),
+            child: RefreshIndicator(
+              onRefresh: () async {
+                await controller.getReservations();
+                controller.update();
+              },
+              child: ListView(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 0.h),
+                children: [
+                  isGrid
+                      ? const SizedBox()
+                      : ReservationReportWidget(controller: controller),
 
-                // ReservationViewOptionsBar(
-                //   isGrid: isGrid,
-                //   onToggleView: () {
-                //     setState(() => isGrid = !isGrid);
-                //   },
-                //   controller: controller,
-                // ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10.0),
-                  child: _buildTabs(controller),
-                ),
+                  isGrid ? const SizedBox() : const SizedBox(height: 10),
 
-                isGrid
-                    ? _buildReservationNotebook(reservations, controller)
-                    : _buildReservationList(reservations, controller, context),
-              ],
+                  isGrid
+                      ? const SizedBox()
+                      : StatsSection(controller: controller),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10.0),
+                    child: _buildTabs(controller),
+                  ),
+
+                  isGrid
+                      ? _buildReservationNotebook(reservations, controller)
+                      : _buildReservationList(
+                        reservations,
+                        controller,
+                        context,
+                      ),
+                ],
+              ),
             ),
           ),
-
           floatingActionButton: FloatingActionButton(
             backgroundColor: ColorResources.COLOR_Primary,
             child: const Icon(Icons.add, color: Colors.white, size: 28),
@@ -91,6 +95,9 @@ class _ReservationViewState extends State<ReservationView> {
                   ),
                 );
               } else {
+                print(
+                  "total reservation is ${controller.listReservations?.length}",
+                );
                 Get.delete<CreateReservationViewModel>();
                 Get.to(
                   () => CreateReservationView(
@@ -128,7 +135,7 @@ class _ReservationViewState extends State<ReservationView> {
             isSelected: controller.selectedTab == 0,
             onTap: () {
               controller.selectedTab = 0;
-              controller.getReservations(isFilter: false);
+              controller.getReservations();
               controller.update();
               setState(() {});
             },
@@ -138,7 +145,7 @@ class _ReservationViewState extends State<ReservationView> {
             isSelected: controller.selectedTab == 1,
             onTap: () {
               controller.selectedTab = 1;
-              controller.getReservations(isFilter: false);
+              controller.getReservations();
               controller.update();
               setState(() {});
             },
@@ -215,18 +222,20 @@ class _ReservationViewState extends State<ReservationView> {
             margin: const EdgeInsets.only(bottom: 6),
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
             decoration: BoxDecoration(
-              color: status == ReservationNewStatus.inProgress
-                  ? AppColors.primary.withValues(alpha: 0.06)
-                  : status == ReservationNewStatus.completed
-                  ? AppColors.tag_icon_warning.withValues(alpha: 0.06)
-                  : (status == ReservationNewStatus.approved && ahead <= 0)
-                  ? AppColors.successBackground.withValues(alpha: 0.15)
-                  : AppColors.white,
+              color:
+                  status == ReservationNewStatus.inProgress
+                      ? AppColors.primary.withValues(alpha: 0.06)
+                      : status == ReservationNewStatus.completed
+                      ? AppColors.tag_icon_warning.withValues(alpha: 0.06)
+                      : (status == ReservationNewStatus.approved && ahead <= 0)
+                      ? AppColors.successBackground.withValues(alpha: 0.15)
+                      : AppColors.white,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: status == ReservationNewStatus.inProgress
-                    ? AppColors.primary.withValues(alpha: 0.4)
-                    : AppColors.borderNeutralPrimary.withValues(alpha: 0.3),
+                color:
+                    status == ReservationNewStatus.inProgress
+                        ? AppColors.primary.withValues(alpha: 0.4)
+                        : AppColors.borderNeutralPrimary.withValues(alpha: 0.3),
               ),
             ),
             child: Row(
@@ -293,11 +302,11 @@ class _ReservationViewState extends State<ReservationView> {
                     reservation.reservationType == "كشف مستعجل"
                         ? const SizedBox()
                         : Text(
-                            statusText,
-                            style: context.typography.smMedium.copyWith(
-                              color: statusColor,
-                            ),
+                          statusText,
+                          style: context.typography.smMedium.copyWith(
+                            color: statusColor,
                           ),
+                        ),
                     const SizedBox(height: 5),
                     Row(
                       mainAxisSize: MainAxisSize.min,
@@ -489,9 +498,10 @@ class _TabItem extends StatelessWidget {
           child: Text(
             label,
             style: context.typography.mdMedium.copyWith(
-              color: isSelected
-                  ? AppColors.primary
-                  : AppColors.textSecondaryParagraph,
+              color:
+                  isSelected
+                      ? AppColors.primary
+                      : AppColors.textSecondaryParagraph,
             ),
           ),
         ),

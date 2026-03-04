@@ -192,9 +192,7 @@ class NotificationController extends GetxController {
     );
     updated.fcmToken_assist = LocalUser().getUserData().fcmToken;
     await ReservationService().updateReservationData(
-      date: reservation.appointmentDateTime ?? "",
       reservation: updated,
-      localOnly: false,
       voidCallBack: (_) async {
         await _afterApprove(updated, notificationKey);
 
@@ -278,9 +276,7 @@ class NotificationController extends GetxController {
     );
     updated.fcmToken_assist = LocalUser().getUserData().fcmToken;
     await ReservationService().updateReservationData(
-      date: reservation.appointmentDateTime ?? "",
       reservation: updated,
-      localOnly: false,
       voidCallBack: (_) async {
         await _afterReject(updated, notificationKey);
 
@@ -330,8 +326,7 @@ class NotificationController extends GetxController {
     int lastOrderNum = 0;
 
     await ReservationService().getReservationsData(
-      date: date,
-      data: FirebaseFilter(),
+
       query: SQLiteQueryParams(
         is_filtered: true,
         where: """

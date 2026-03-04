@@ -47,12 +47,19 @@ class RouteWelcomeMiddleWare extends GetMiddleware {
     // ---------------------------------------------------------
     // 4️⃣ USER LOGGED IN → REDIRECT BASED ON TYPE
     // ---------------------------------------------------------
+    // final targetRoute =
+    //     (user.userType == UserType.patient ||
+    //         user.userType == UserType.pharmacy ||
+    //         user.userType == UserType.sales)
+    //     ? mainpage
+    //     : syncView;
+
     final targetRoute =
         (user.userType == UserType.patient ||
-            user.userType == UserType.pharmacy ||
-            user.userType == UserType.sales)
-        ? mainpage
-        : syncView;
+                user.userType == UserType.pharmacy ||
+                user.userType == UserType.sales)
+            ? mainpage
+            : mainpage;
 
     if (route != targetRoute) {
       return RouteSettings(name: targetRoute);

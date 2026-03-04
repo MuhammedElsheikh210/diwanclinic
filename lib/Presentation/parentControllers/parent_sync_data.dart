@@ -49,20 +49,7 @@ class ParentSyncService extends GetxController {
 
         final today = DateFormat('dd/MM/yyyy').format(DateTime.now());
 
-        // 🔥 STEP 2) NORMAL RESERVATIONS
-        await reservationService.getReservationsData(
-          data: FirebaseFilter(),
-          date: today,
-          fromOnline: true,
-          query: SQLiteQueryParams(
-            is_filtered: true,
-            where: "doctor_key = ? AND appointment_date_time = ?",
-            whereArgs: [doctorKey, today],
-          ),
-          voidCallBack: (reservations) async {
-            progress.value += incrementValue;
-          },
-        );
+
 
         // 🔥 STEP 3) Clinics
         await clinicService.getClinicsData(
@@ -101,20 +88,7 @@ class ParentSyncService extends GetxController {
 
         final today = DateFormat('dd/MM/yyyy').format(DateTime.now());
 
-        // 🔥 STEP 2) RESERVATIONS
-        await reservationService.getReservationsData(
-          data: FirebaseFilter(),
-          date: today,
-          fromOnline: true,
-          query: SQLiteQueryParams(
-            is_filtered: true,
-            where: "doctor_key = ? AND appointment_date_time = ?",
-            whereArgs: [doctorKey, today],
-          ),
-          voidCallBack: (_) async {
-            progress.value += incrementValue;
-          },
-        );
+
 
         // 🔥 STEP 3) CLINIC
         await clinicService.getClinicsData(

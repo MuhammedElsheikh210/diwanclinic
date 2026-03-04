@@ -73,17 +73,19 @@ class ReservationDoctorViewModel extends GetxController {
     "متابعة",
   ];
 
-  int get completedCount => dayReservations
-      .where((r) => r.status == ReservationStatus.completed.value)
-      .length;
+  int get completedCount =>
+      dayReservations
+          .where((r) => r.status == ReservationStatus.completed.value)
+          .length;
 
-  int get pendingCount => dayReservations
-      .where(
-        (r) =>
-            r.status == ReservationStatus.approved.value ||
-            r.status == ReservationStatus.inProgress.value,
-      )
-      .length;
+  int get pendingCount =>
+      dayReservations
+          .where(
+            (r) =>
+                r.status == ReservationStatus.approved.value ||
+                r.status == ReservationStatus.inProgress.value,
+          )
+          .length;
 
   int get totalCount => completedCount + pendingCount;
 
@@ -116,19 +118,21 @@ class ReservationDoctorViewModel extends GetxController {
       data: {},
       doctorKey: _doctorKey ?? "",
       voidCallBack: (data) {
-        final filtered = data
-            .whereType<ShiftModel>()
-            .where((s) => s.clinicKey == clinicKey)
-            .toList();
+        final filtered =
+            data
+                .whereType<ShiftModel>()
+                .where((s) => s.clinicKey == clinicKey)
+                .toList();
 
-        shiftDropdownItems = filtered
-            .map(
-              (s) => GenericListModel(
-                key: s.key,
-                name: "${s.name ?? ""} (${s.dayOfWeek ?? ""})",
-              ),
-            )
-            .toList();
+        shiftDropdownItems =
+            filtered
+                .map(
+                  (s) => GenericListModel(
+                    key: s.key,
+                    name: "${s.name ?? ""} (${s.dayOfWeek ?? ""})",
+                  ),
+                )
+                .toList();
 
         update();
         completer.complete();
@@ -151,8 +155,6 @@ class ReservationDoctorViewModel extends GetxController {
   // ─────────────────────────────────────────────
   void loadDayStats() {
     ReservationService().getReservationsData(
-      date: appointment_date_time,
-      data: FirebaseFilter(),
       query: SQLiteQueryParams(
         is_filtered: true,
         where: "appointment_date_time = ? AND doctor_key = ?",
@@ -276,9 +278,7 @@ class ReservationDoctorViewModel extends GetxController {
     bool localOnly = false,
   }) async {
     await ReservationService().addReservationData(
-      date: reservation.appointmentDateTime ?? "",
       reservation: reservation,
-      localOnly: localOnly,
       voidCallBack: (_) {},
     );
   }
@@ -290,9 +290,7 @@ class ReservationDoctorViewModel extends GetxController {
     if (isSyncing && !localOnly) return;
 
     await ReservationService().updateReservationData(
-      date: reservation.appointmentDateTime ?? "",
       reservation: reservation,
-      localOnly: localOnly,
       voidCallBack: (_) {},
     );
   }
@@ -342,33 +340,36 @@ class ReservationDoctorViewModel extends GetxController {
     );
 
     ReservationService().getReservationsData(
-      date: appointment_date_time,
-      data: FirebaseFilter(),
       query: query,
       voidCallBack: (list) {
         Loader.dismiss();
         final all = list.whereType<ReservationModel>().toList();
 
-        final inProgress = all
-            .where((r) => r.status == ReservationStatus.inProgress.value)
-            .toList();
+        final inProgress =
+            all
+                .where((r) => r.status == ReservationStatus.inProgress.value)
+                .toList();
 
-        final approved = all
-            .where((r) => r.status == ReservationStatus.approved.value)
-            .toList();
+        final approved =
+            all
+                .where((r) => r.status == ReservationStatus.approved.value)
+                .toList();
 
-        final completed = all
-            .where((r) => r.status == ReservationStatus.completed.value)
-            .toList();
+        final completed =
+            all
+                .where((r) => r.status == ReservationStatus.completed.value)
+                .toList();
 
-        final cancelled = all
-            .where(
-              (r) =>
-                  r.status == ReservationStatus.cancelledByUser.value ||
-                  r.status == ReservationStatus.cancelledByAssistant.value ||
-                  r.status == ReservationStatus.cancelledByDoctor.value,
-            )
-            .toList();
+        final cancelled =
+            all
+                .where(
+                  (r) =>
+                      r.status == ReservationStatus.cancelledByUser.value ||
+                      r.status ==
+                          ReservationStatus.cancelledByAssistant.value ||
+                      r.status == ReservationStatus.cancelledByDoctor.value,
+                )
+                .toList();
 
         final queue = reorderedQueue(approved);
 
@@ -389,9 +390,10 @@ class ReservationDoctorViewModel extends GetxController {
   // QUEUE HELPERS
   // ─────────────────────────────────────────────
   List<ReservationModel> reorderedQueue(List<ReservationModel> list) {
-    final waiting = list
-        .where((r) => r.status == ReservationStatus.approved.value)
-        .toList();
+    final waiting =
+        list
+            .where((r) => r.status == ReservationStatus.approved.value)
+            .toList();
 
     waiting.sort(
       (a, b) => (a.order_num ?? 9999).compareTo(b.order_num ?? 9999),
@@ -460,7 +462,6 @@ class ReservationDoctorViewModel extends GetxController {
   // ─────────────────────────────────────────────
   void deleteReservation(ReservationModel reservation) {
     ReservationService().deleteReservationData(
-      date: reservation.appointmentDateTime ?? "",
       reservationKey: reservation.key ?? "",
       voidCallBack: (_) => getReservations(),
     );

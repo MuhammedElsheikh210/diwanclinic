@@ -32,7 +32,7 @@ class CreateLegacyQueueViewModel extends GetxController {
       valueController.text = model.value?.toString() ?? "";
 
       try {
-        final parsed = DateFormat("dd-MM-yyyy").parse(model.date ?? "");
+        final parsed = DateFormat("dd/MM/yyyy").parse(model.date ?? "");
         selectedTimestamp = parsed.millisecondsSinceEpoch;
         formattedDate = model.date;
       } catch (_) {}
@@ -105,7 +105,7 @@ class CreateLegacyQueueViewModel extends GetxController {
   void setDate(Timestamp timestamp) {
     final dateTime = timestamp.toDate();
     selectedTimestamp = dateTime.millisecondsSinceEpoch;
-    formattedDate = DateFormat("dd-MM-yyyy").format(dateTime);
+    formattedDate = DateFormat("dd/MM/yyyy").format(dateTime);
     update();
   }
 

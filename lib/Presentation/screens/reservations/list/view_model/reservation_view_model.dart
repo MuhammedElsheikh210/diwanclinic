@@ -1,14 +1,16 @@
+import 'package:intl/intl.dart';
+
 import '../../../../../../index/index_main.dart';
-import 'dart:developer' as developer;
 
 class ReservationViewModel extends GetxController {
   // Managers
-  late final ReservationSyncService syncService;
   late final ReservationQueueManager queueManager;
   late final ReservationFilterManager filterManager;
   late final ReservationActionManager actionManager;
   late final ReservationQueryManager queryManager;
   bool hideShiftSelector = false;
+  bool _isListening = false;
+  bool _isProcessingStatus = false;
 
   // Services
   final PrescriptionUploadService prescriptionService =
@@ -82,12 +84,10 @@ class ReservationViewModel extends GetxController {
     filterManager = ReservationFilterManager();
     actionManager = ReservationActionManager();
     queryManager = ReservationQueryManager();
-    syncService = ReservationSyncService(controller: this);
   }
 
   @override
   void onClose() {
-    syncService.dispose();
     super.onClose();
   }
 
@@ -135,9 +135,29 @@ class ReservationViewModel extends GetxController {
         onSelect: (shift) async {
           selectedShift = shift;
 
-          await getReservations(isFilter: false);
-          print("getSyncReservations call");
-          getSyncReservations();
+          // 🔥 دايمًا اعمل normalize
+          appointmentDate ??= DateFormat("dd/MM/yyyy").format(DateTime.now());
+
+          final normalizedDate = AppDateFormatter.normalize(appointmentDate);
+
+          if (!_isListening) {
+            ReservationService().startListening(
+              doctorKey: LocalUser().getUserData().doctorKey ?? "",
+              date: normalizedDate,
+              onChanged: (model) {
+                _updateListInMemory(model);
+              },
+              onRemoved: (key) {
+                completeDayReservations.removeWhere((e) => e?.key == key);
+                listReservations?.removeWhere((e) => e?.key == key);
+                update();
+              },
+            );
+            _isListening = true;
+          }
+
+            await getReservations();
+
 
           update();
         },
@@ -162,14 +182,29 @@ class ReservationViewModel extends GetxController {
             data,
           );
 
-          // ✅ حالة شيفت واحد فقط
           if (shiftDropdownItems!.length == 1) {
             selectedShift = shiftDropdownItems!.first;
-            hideShiftSelector = true;
 
-            await getReservations(isFilter: true);
-            print("getSyncReservations call");
-            getSyncReservations();
+            appointmentDate ??= DateFormat("dd/MM/yyyy").format(DateTime.now());
+            await getReservations();
+            if (!_isListening) {
+              ReservationService().startListening(
+                doctorKey: LocalUser().getUserData().doctorKey ?? "",
+                date: appointmentDate!,
+
+                onChanged: (model) {
+                  _updateListInMemory(model);
+                },
+
+                onRemoved: (key) {
+                  completeDayReservations.removeWhere((e) => e?.key == key);
+                  listReservations?.removeWhere((e) => e?.key == key);
+                  update();
+                },
+              );
+
+              _isListening = true;
+            }
           }
           // ✅ أكثر من شيفت → افتح Dialog
           else {
@@ -189,56 +224,14 @@ class ReservationViewModel extends GetxController {
     );
   }
 
-  void getSyncReservations() {
-    const tag = "VM_SYNC";
-
-    SyncLogger.info(tag, "Starting Sync Engine (Memory Mode)");
-
-    syncService.listen(
-      selectedClinic: selectedClinic,
-      appointmentDate: appointmentDate,
-
-      // 🔹 Add
-      onAddLocal: (model) async {
-        SyncLogger.info(tag, "ADD → ${model.key}");
-
-        await actionManager.addReservation(model, localOnly: true);
-
-        _updateListInMemory(model);
-
-        SyncLogger.success(tag, "ADD Completed → ${model.key}");
-      },
-
-      // 🔹 Update
-      onUpdatedLocal: (model) async {
-        SyncLogger.info(tag, "UPDATE → ${model.key}");
-
-        await actionManager.updateReservation(
-          model,
-          isSyncing: true,
-          localOnly: true,
-        );
-
-        _updateListInMemory(model);
-
-        SyncLogger.success(tag, "UPDATE Completed → ${model.key}");
-      },
-
-      // ❌ مفيش Reload تاني
-      onReloadLocal: () {
-        SyncLogger.info(tag, "Reload skipped (Memory Mode Active)");
-      },
-    );
-  }
-
   void _updateListInMemory(ReservationModel model) {
-    const tag = "MEMORY_UPDATE";
-
-    if (listReservations == null) {
-      listReservations = [];
+    if (fromUpdate == true) {
+      fromUpdate = false;
+      return; // ignore any server echo for this change
     }
 
-    // حدث أو أضف في completeDayReservations
+    listReservations ??= [];
+
     final dayIndex = completeDayReservations.indexWhere(
       (e) => e?.key == model.key,
     );
@@ -249,62 +242,45 @@ class ReservationViewModel extends GetxController {
       completeDayReservations.insert(0, model);
     }
 
-    // 🔥 أعد بناء القائمة بالترتيب الصحيح
     final rebuilt = queueManager.buildFinalList(
       completeDayReservations.whereType<ReservationModel>().toList(),
     );
 
     listReservations = rebuilt;
 
-    SyncLogger.success(tag, "Rebuilt list safely → ${model.key}");
-
     update();
   }
 
-  // Change reservation status with optimized async handling + logging
   Future<void> changeReservationStatus({
     required ReservationModel reservation,
     required ReservationStatus newStatus,
     String? cancelReason,
   }) async {
+    if (_isProcessingStatus) return;
+
+    _isProcessingStatus = true;
     Loader.show();
 
-    const String tag = "ReservationStatusChange";
-    final startTime = DateTime.now();
-
-    debugPrint("[$tag] 🔄 Start changing status to: ${newStatus.value}");
-    debugPrint("[$tag] Reservation ID: ${reservation.key}");
-
     try {
-      // 1️⃣ Update locally
       reservation.status = newStatus.value;
       fromUpdate = true;
 
-      // 2️⃣ Persist in DB (THIS must await)
-      await actionManager.updateReservation(reservation, isSyncing: false);
+      await actionManager.updateReservation(reservation);
 
-      debugPrint("[$tag] ✅ DB updated successfully");
-
-      // 3️⃣ Reload UI data (must await)
-      // await getReservations(isFilter: false);
       _updateListInMemory(reservation);
 
-      debugPrint("[$tag] 🔁 Reservations reloaded");
-
-      // 4️⃣ Run side effects in background (no await)
       _runSideEffectsInBackground(reservation, newStatus, cancelReason);
 
       Loader.showSuccess("تم تحديث الحالة إلى ${newStatus.label}");
     } catch (e, stack) {
-      debugPrint("[$tag] ❌ ERROR: $e");
-      debugPrint("[$tag] Stack: $stack");
+      debugPrint("❌ changeReservationStatus Error: $e");
+      debugPrintStack(stackTrace: stack);
+
       Loader.showError("حدث خطأ أثناء تحديث الحالة");
+    } finally {
+      _isProcessingStatus = false;
+      update();
     }
-
-    final duration = DateTime.now().difference(startTime);
-    debugPrint("[$tag] ⏱ Completed in ${duration.inMilliseconds}ms");
-
-    update();
   }
 
   void _runSideEffectsInBackground(
@@ -312,57 +288,68 @@ class ReservationViewModel extends GetxController {
     ReservationStatus newStatus,
     String? cancelReason,
   ) {
-    const String tag = "ReservationSideEffects";
+    unawaited(_handleSideEffects(reservation, newStatus, cancelReason));
+  }
 
-    Future.microtask(() async {
-      try {
-        debugPrint("[$tag] 🚀 Running side effects for ${newStatus.value}");
-
-        switch (newStatus) {
-          case ReservationStatus.approved:
-          case ReservationStatus.completed:
-            await NotificationHandler().sendStatusNotification(
-              newStatus: newStatus,
-              reservation: reservation,
-              toToken: reservation.fcmToken_patient ?? "",
-            );
-
-            await WhatsAppStatusMessageService.sendStatusWhatsAppMessage(
-              reservation: reservation,
-              clinic: selectedClinic,
-              newStatus: newStatus,
-            );
-            break;
-
-          case ReservationStatus.cancelledByAssistant:
-          case ReservationStatus.cancelledByDoctor:
-          case ReservationStatus.cancelledByUser:
-            await NotificationHandler().sendStatusNotification(
-              newStatus: newStatus,
-              reservation: reservation,
-              toToken: reservation.fcmToken_patient ?? "",
-              cancelReason: cancelReason,
-            );
-            break;
-
-          default:
-            break;
-        }
-
-        // Queue update only if completed
-        if (newStatus == ReservationStatus.completed) {
-          await queueManager.notifyApprovedQueueUpdate(
-            allReservations:
-                listReservations?.whereType<ReservationModel>().toList() ?? [],
-          );
-        }
-
-        debugPrint("[$tag] ✅ Side effects completed");
-      } catch (e, stack) {
-        debugPrint("[$tag] ❌ Background error: $e");
-        debugPrint("[$tag] Stack: $stack");
+  Future<void> _handleSideEffects(
+    ReservationModel reservation,
+    ReservationStatus newStatus,
+    String? cancelReason,
+  ) async {
+    try {
+      // 1️⃣ Send Status Notification
+      if (_shouldSendStatusNotification(newStatus)) {
+        await _sendStatusNotification(reservation, newStatus, cancelReason);
       }
-    });
+
+      // 2️⃣ Queue Update ONLY if completed
+      if (newStatus == ReservationStatus.completed) {
+        await _handleQueueUpdate();
+      }
+    } catch (e, stack) {
+      debugPrint("❌ SideEffects Error: $e");
+      debugPrintStack(stackTrace: stack);
+    }
+  }
+
+  bool _shouldSendStatusNotification(ReservationStatus status) {
+    return [
+      ReservationStatus.approved,
+      ReservationStatus.completed,
+      ReservationStatus.cancelledByAssistant,
+      ReservationStatus.cancelledByDoctor,
+      ReservationStatus.cancelledByUser,
+    ].contains(status);
+  }
+
+  Future<void> _sendStatusNotification(
+    ReservationModel reservation,
+    ReservationStatus newStatus,
+    String? cancelReason,
+  ) async {
+    await NotificationHandler().sendStatusNotification(
+      newStatus: newStatus,
+      reservation: reservation,
+      toToken: reservation.fcmToken_patient ?? "",
+      cancelReason: cancelReason,
+    );
+
+    if (newStatus == ReservationStatus.completed ||
+        newStatus == ReservationStatus.approved) {
+      await WhatsAppStatusMessageService.sendStatusWhatsAppMessage(
+        reservation: reservation,
+        clinic: selectedClinic,
+        newStatus: newStatus,
+      );
+    }
+  }
+
+  Future<void> _handleQueueUpdate() async {
+    final snapshot = List<ReservationModel>.from(
+      listReservations?.whereType<ReservationModel>().toList() ?? [],
+    );
+
+    await queueManager.notifyApprovedQueueUpdate(allReservations: snapshot);
   }
 
   Future<void> handleMakeOrder(ReservationModel reservation) async {
@@ -370,7 +357,7 @@ class ReservationViewModel extends GetxController {
       () => OrderMedicineScreen(
         reservation: reservation,
         onConfirmed: (ReservationModel p1) {
-          actionManager.updateReservation(p1, isSyncing: false);
+          actionManager.updateReservation(p1);
           Get.offAll(() => const MainPage(initialIndex: 2), binding: Binding());
         },
       ),
@@ -380,128 +367,133 @@ class ReservationViewModel extends GetxController {
 }
 
 extension ReservationData on ReservationViewModel {
-  // ------------------------------------------------------------
-  // Fetch reservations
-  Future<void> getReservations({
-    bool? isFilter = false,
-    bool? fromOnline,
-  }) async {
-    const tag = "GET_RESERVATIONS";
-    final startTime = DateTime.now();
+  // ============================================================
+  // 🔹 Fetch Reservations (PARALLEL + SAFE)
+  // ============================================================
 
-    SyncLogger.info(
-      tag,
-      "Started | Date: $appointmentDate | Shift: ${selectedShift?.key} | "
-      "Clinic: ${selectedClinic?.key} | fromOnline: $fromOnline | isFilter: $isFilter",
-    );
+  Future<void> getReservations() async {
+    final doctorKey = LocalUser().getUserData().doctorKey;
 
-    if (appointmentDate == null || selectedShift == null) {
-      SyncLogger.warning(
-        tag,
-        "Blocked → appointmentDate or selectedShift is NULL",
-      );
+    debugPrint("══════════════════════════════");
+    debugPrint("📅 getReservations CALLED");
+    debugPrint("DoctorKey: $doctorKey");
+    debugPrint("AppointmentDate: $appointmentDate");
+    debugPrint("SelectedShift: ${selectedShift?.key}");
+    debugPrint("SelectedClinic: ${selectedClinic?.key}");
+    debugPrint("══════════════════════════════");
+
+    if (doctorKey == null ||
+        doctorKey.isEmpty ||
+        appointmentDate == null ||
+        selectedShift == null) {
+      debugPrint("⛔ getReservations ABORTED");
       return;
     }
 
+    final normalizedDate = AppDateFormatter.normalize(appointmentDate);
+
+    debugPrint("📅 Normalized Date: $normalizedDate");
+
     try {
-      // 🔹 1) Fetch full day list
-      SyncLogger.info(tag, "Fetching full day reservations...");
+      await Future.wait([
+        fetchDailyReservations(normalizedDate),
+        fetchFilteredReservations(normalizedDate),
+        loadDailyReport(normalizedDate),
+      ]);
 
-      final daily = await queryManager.fetchAllReservationsOfDay(
-        appointmentDate: appointmentDate,
-        selectedClinic: selectedClinic,
-        shiftKey: selectedShift!.key,
-        isFiltered: false,
-        fromOnline: fromOnline,
-      );
-
-      completeDayReservations = daily;
-
-      SyncLogger.success(tag, "Full Day Loaded → count: ${daily.length}");
-
-      // 🔹 2) Build filters
-      SyncLogger.info(tag, "Building filter query...");
-
-      final query = filterManager.buildFilters(
-        selectedClinic: selectedClinic,
-        appointmentDate: appointmentDate,
-        selectedShift: selectedShift,
-        selectedTab: selectedTab,
-        isFiltered: isFilter ?? false,
-      );
-
-      // 🔹 3) Apply filtered list
-      SyncLogger.info(tag, "Fetching filtered reservations...");
-
-      final filtered = await queryManager.getReservations(
-        appointmentDate: appointmentDate,
-        query: query,
-        isFiltered: false,
-        fromOnline: fromOnline,
-      );
-
-      listReservations = queueManager.buildFinalList(filtered);
-
-      SyncLogger.success(
-        tag,
-        "Filtered Loaded → count: ${listReservations?.length ?? 0}",
-      );
-
-      // 🔹 4) Load report
-      SyncLogger.info(tag, "Loading daily report...");
-
-      await loadDailyReport(fromOnline: fromOnline ?? false);
-
-      SyncLogger.success(
-        tag,
-        "Daily Report Loaded → completed: ${completedForReport.length}",
-      );
-
-      final duration = DateTime.now().difference(startTime);
-
-      SyncLogger.success(
-        tag,
-        "Completed Successfully in ${duration.inMilliseconds} ms",
-      );
+      debugPrint("✅ All reservation queries finished");
 
       update();
     } catch (e, stack) {
-      SyncLogger.error(tag, "Failed to load reservations", e);
-      SyncLogger.error(tag, "StackTrace", stack);
+      debugPrint("❌ getReservations ERROR: $e");
+      debugPrintStack(stackTrace: stack);
     }
   }
 
-  // ------------------------------------------------------------
-  // Load daily financial report
-  Future<void> loadDailyReport({bool? fromOnline}) async {
-    if (appointmentDate == null || selectedShift == null) return;
+  // ============================================================
+  // 🔹 Fetch All Reservations For The Day
+  // ============================================================
+
+  Future<void> fetchDailyReservations(String normalizedDate) async {
+    final daily = await queryManager.fetchByDateAndClinic(
+      appointmentDate: normalizedDate,
+      selectedClinic: selectedClinic,
+      shiftKey: selectedShift!.key,
+    );
+
+    debugPrint("📊 Daily Reservations Count: ${daily.length}");
+
+    completeDayReservations = daily;
+  }
+
+  // ============================================================
+  // 🔹 Fetch Filtered Reservations
+  // ============================================================
+
+  Future<void> fetchFilteredReservations(String normalizedDate) async {
+    final query = filterManager.buildFilters(
+      selectedClinic: selectedClinic,
+      appointmentDate: normalizedDate,
+      selectedShift: selectedShift,
+      selectedTab: selectedTab,
+    );
+
+    debugPrint("🧠 Filter Built: $query");
+
+    final filtered = await queryManager.getReservations(query: query);
+
+    debugPrint("📊 Filtered Reservations Count: ${filtered.length}");
+
+    listReservations = queueManager.buildFinalList(filtered);
+
+    debugPrint("📦 Final List Count: ${listReservations?.length}");
+  }
+
+  // ============================================================
+  // 🔹 Daily Financial Report
+  // ============================================================
+
+  Future<void> loadDailyReport(String normalizedDate) async {
+    if (selectedShift == null) return;
 
     completedForReport = await queryManager.getCompletedReservationsForReport(
-      appointmentDate: appointmentDate,
+      appointmentDate: normalizedDate,
       shiftKey: selectedShift!.key,
-      isFiltered: false,
-      fromOnline: fromOnline,
+    );
+
+    debugPrint(
+      "💰 Completed Reservations For Report: ${completedForReport.length}",
     );
   }
 
-  // ------------------------------------------------------------
-  // Get total reservations count
+  // ============================================================
+  // 🔹 Total Reservations Today
+  // ============================================================
+
   Future<int> getTotalTodayReservations() async {
     if (appointmentDate == null || selectedShift == null) {
       return 0;
     }
 
-    return await queryManager.getTotalByDate(
-      appointmentDate: appointmentDate,
+    final normalizedDate = AppDateFormatter.normalize(appointmentDate);
+
+    final total = await queryManager.getTotalByDate(
+      appointmentDate: normalizedDate,
       shiftKey: selectedShift!.key,
-      isFiltered: false,
     );
+
+    debugPrint("📊 Total Today Reservations: $total");
+
+    return total;
   }
 
-  // ------------------------------------------------------------
-  // Get last visit for patient
+  // ============================================================
+  // 🔹 Last Completed Reservation For Patient
+  // ============================================================
+
   Future<void> getLastReservationDateForPatient(LocalUser client) async {
     selectedPatientLastVisit = null;
+
     update();
 
     final reservation = await queryManager.getLastCompletedForPatient(
@@ -514,67 +506,5 @@ extension ReservationData on ReservationViewModel {
             : DatesUtilis.humanizeTimestamp(reservation.createAt);
 
     update();
-  }
-}
-
-class SyncLogger {
-  static const bool enableLogs = true;
-
-  static void _log(
-    String level,
-    String tag,
-    String message, {
-    Object? error,
-    StackTrace? stackTrace,
-  }) {
-    if (!enableLogs) return;
-
-    final time = DateTime.now().toIso8601String();
-
-    developer.log(
-      "[$time] [$level] [$tag] $message",
-      name: "SYNC_ENGINE",
-      error: error,
-      stackTrace: stackTrace,
-    );
-  }
-
-  // ─────────────────────────────────────────────
-  // 🔹 Levels
-  // ─────────────────────────────────────────────
-
-  static void info(String tag, String message) {
-    _log("INFO", tag, message);
-  }
-
-  static void success(String tag, String message) {
-    _log("SUCCESS", tag, message);
-  }
-
-  static void warning(String tag, String message) {
-    _log("WARNING", tag, message);
-  }
-
-  static void error(
-    String tag,
-    String message, [
-    Object? error,
-    StackTrace? stackTrace,
-  ]) {
-    _log("ERROR", tag, message, error: error, stackTrace: stackTrace);
-  }
-
-  // ─────────────────────────────────────────────
-  // 🔥 Performance Helper
-  // ─────────────────────────────────────────────
-
-  static Stopwatch startTimer() {
-    final stopwatch = Stopwatch()..start();
-    return stopwatch;
-  }
-
-  static void endTimer(String tag, String label, Stopwatch stopwatch) {
-    stopwatch.stop();
-    _log("PERFORMANCE", tag, "$label took ${stopwatch.elapsedMilliseconds} ms");
   }
 }

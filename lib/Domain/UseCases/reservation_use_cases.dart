@@ -6,110 +6,90 @@ class ReservationUseCases {
 
   ReservationUseCases(this._repository);
 
-  // ------------------------------------------------------------
-  // 🔹 ADD RESERVATION
-  // ------------------------------------------------------------
-  Future<Either<AppError, SuccessModel>> addReservation(
-    ReservationModel reservation,
-    String date, {
-    bool localOnly = false,
-    bool isPatient = false,
-    String? doctorUid,
-  }) {
-    return _repository.addReservationDomain(
-      reservation.toJson(),
-      reservation.key ?? "",
-      date,
-      localOnly: localOnly,
-      isPatient: isPatient,
-      doctorUid: doctorUid,
-    );
-  }
+  // ============================================================
+  // 🔥 START REALTIME LISTENING (Reservations Only)
+  // ============================================================
 
-  // ------------------------------------------------------------
-  // 🔹 UPDATE RESERVATION
-  // ------------------------------------------------------------
-  Future<Either<AppError, SuccessModel>> updateReservation(
-    ReservationModel reservation, {
-    bool localOnly = false,
+  void startListening({
+    required String doctorKey,
     required String date,
-    bool isPatient = false,
-    String? doctorUid,
+    required Function(ReservationModel model) onChanged,
+    required Function(String key) onRemoved,
   }) {
-    return _repository.updateReservationDomain(
-      reservation.toJson(),
-      reservation.key ?? "",
-      date,
-      localOnly: localOnly,
-      isPatient: isPatient,
-      doctorUid: doctorUid,
+    _repository.startListening(
+      doctorKey: doctorKey,
+      date: date,
+      onChanged: onChanged,
+      onRemoved: onRemoved,
     );
   }
 
-  // ------------------------------------------------------------
-  // 🔹 DELETE RESERVATION
-  // ------------------------------------------------------------
-  Future<Either<AppError, SuccessModel>> deleteReservation(
-    String key,
-    String date, {
-    bool isPatient = false,
-    String? doctorUid,
-  }) {
-    return _repository.deleteReservationDomain(
-      {},
-      key,
-      date,
-      isPatient: isPatient,
-      doctorUid: doctorUid,
-    );
+  // ============================================================
+  // 🔹 RESERVATIONS (Offline First)
+  // ============================================================
+
+  Future<Either<AppError, Unit>> addReservation(
+      ReservationModel reservation,
+      ) {
+    return _repository.addReservationDomain(reservation);
   }
 
-  // ------------------------------------------------------------
-  // 🔹 GET RESERVATIONS (LIST)
-  // ------------------------------------------------------------
+  Future<Either<AppError, Unit>> updateReservation(
+      ReservationModel reservation,
+      ) {
+    return _repository.updateReservationDomain(reservation);
+  }
+
+  Future<Either<AppError, Unit>> deleteReservation(
+      String key,
+      ) {
+    return _repository.deleteReservationDomain(key);
+  }
+
   Future<Either<AppError, List<ReservationModel?>>> getReservations(
-    FirebaseFilter data,
-    SQLiteQueryParams query,
-    bool? fromOnline,
-    String date, {
-    bool isPatient = false,
-    String? doctorUid,
-  }) {
-    return _repository.getReservationsDomain(
-      data.toJson(),
-      query,
-      fromOnline,
-      query.is_filtered,
-      date,
-      isPatient: isPatient,
-      doctorUid: doctorUid,
+      SQLiteQueryParams query,
+      ) {
+    return _repository.getReservationsDomain(query);
+  }
+
+  // ============================================================
+  // ⭐ PATIENT META (Remote Direct)
+  // ============================================================
+
+  Future<Either<AppError, SuccessModel>> addPatientReservationMeta(
+      ReservationModel meta,
+      String patientKey,
+      ) {
+    return _repository.addPatientReservationMetaDomain(
+      meta,
+      patientKey,
+    );
+  }
+
+  Future<Either<AppError, SuccessModel>> updatePatientReservation(
+      ReservationModel meta,
+      String key,
+      ) {
+    return _repository.updatePatientReservationDomain(
+      meta,
+      key,
+    );
+  }
+
+  Future<Either<AppError, List<ReservationModel>>>
+  getPatientReservationsMeta(
+      String patientKey,
+      ) {
+    return _repository.getPatientReservationsMetaDomain(
+      patientKey,
     );
   }
 
   // ============================================================
-  // ⭐ NEW — PATIENT META USE CASES
+  // 🔥 STOP LISTENING
   // ============================================================
 
-  /// ➕ Add meta record
-  Future<Either<AppError, SuccessModel>> addPatientReservationMeta(
-    ReservationModel meta,
-    String patientKey,
-  ) {
-    return _repository.addPatientReservationMetaDomain(meta, patientKey);
-  }
-
-  /// 🔍 Get meta list
-  Future<Either<AppError, List<ReservationModel>>> getPatientReservationsMeta(
-    String patientKey,
-  ) {
-    return _repository.getPatientReservationsMetaDomain(patientKey);
-  }
-
-  /// 🔄 NEW — Update patient reservation meta
-  Future<Either<AppError, SuccessModel>> updatePatientReservation(
-      ReservationModel data,
-    String key,
-  ) {
-    return _repository.updatePatientReservationDomain(data, key);
+  void dispose() {
+    _repository.dispose();
   }
 }

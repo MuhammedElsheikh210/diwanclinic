@@ -70,8 +70,6 @@ class IncomeViewModel extends GetxController {
     );
 
     ReservationService().getReservationsData(
-      date: date,
-      data: FirebaseFilter(orderBy: "status",equalTo: "completed"),
       query: query,
       voidCallBack: (list) {
         todayReservations = list.whereType<ReservationModel>().toList();

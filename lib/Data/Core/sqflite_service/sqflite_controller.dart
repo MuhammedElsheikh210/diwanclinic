@@ -85,26 +85,42 @@ class BaseSQLiteDataSourceRepo<T> {
     }
   }
 
-  /// Add a new item.
-  /// Add a new item with full debug logging.
   Future<void> addItem(T item) async {
     final dbValue = await db;
     final key = getId(item);
 
     if (key == null) {
-      throw Exception("❌ [ERROR] - Key is null, cannot add item.");
+      print("❌ SQLITE ADD FAILED → Key is NULL");
+      throw Exception("Key is null, cannot add item.");
     }
 
     try {
       final jsonData = toJson(item);
 
-      await dbValue.insert(
+      print("🟢 SQLITE INSERT START");
+      print("Table: $tableName");
+      print("Key: $key");
+      print("Data: $jsonData");
+
+      final result = await dbValue.insert(
         tableName,
         jsonData,
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
+      print("✅ SQLITE INSERT SUCCESS → rowId: $result");
+
+      // 🔥 Verify immediately after insert
+      final verify = await dbValue.query(
+        tableName,
+        where: 'key = ?',
+        whereArgs: [key],
+      );
+
+      print("🔎 VERIFY COUNT: ${verify.length}");
     } catch (e, s) {
+      print("❌ SQLITE INSERT ERROR: $e");
+      print("STACK: $s");
     }
   }
 

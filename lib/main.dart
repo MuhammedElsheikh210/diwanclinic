@@ -3,6 +3,10 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import 'index/index_main.dart';
 
+import 'dart:developer';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'index/index_main.dart';
+
 /// 🔔 MUST be top-level
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
@@ -18,7 +22,7 @@ void main() {
       // 🔥 Firebase
       await Firebase.initializeApp();
 
-      // 🔔 Register background handler (VERY IMPORTANT)
+      // 🔔 Background notifications
       FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
       // 🔹 Lock Orientation
@@ -27,8 +31,6 @@ void main() {
       ]);
 
       // 🔹 Local DB
-      // 🔹 Local DB
-      //  await DatabaseService().deleteDatabaseFile(); // 🔥 TEMP FIX
       final dbService = DatabaseService();
       await dbService.database;
       await dbService.checkTables();
@@ -41,15 +43,24 @@ void main() {
 
       final apns = await FirebaseMessaging.instance.getAPNSToken();
       log("APNS DIRECT CHECK: $apns");
-      log("BUNDLE ID: ${await PackageInfo.fromPlatform()}");
+      log("BUNDLE INFO: ${await PackageInfo.fromPlatform()}");
 
       // 🔥 Remote Config
       await FirebaseRemoteConfigService().checkForceUpdate();
 
-      // 🔹 Bindings
+      // 🔹 Register Dependencies
       Binding().dependencies();
 
-      // 🎨 ThemeScope (AFTER everything)
+      // // ============================================================
+      // // 🔥 START SYNC ENGINE (AFTER DEPENDENCIES)
+      // // ============================================================
+      //
+      // final syncController = Get.find<ReservationSyncController>();
+      // syncController.init();
+
+      // ============================================================
+
+      // 🎨 ThemeScope
       final app = await ThemeScopeWidget.initialize(const MyApp());
 
       runApp(

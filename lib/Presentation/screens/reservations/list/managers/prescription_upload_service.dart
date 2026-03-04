@@ -38,7 +38,6 @@ class PrescriptionUploadService {
 
       // 🔥 Save to local + cloud
       await ReservationService().updateReservationData(
-        date: reservation.appointmentDateTime ?? "",
         reservation: reservation,
         voidCallBack: (_) {},
       );

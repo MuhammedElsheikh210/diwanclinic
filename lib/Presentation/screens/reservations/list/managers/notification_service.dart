@@ -19,8 +19,7 @@ class ReservationNotificationService {
       List<ReservationModel> todayReservations = [];
 
       await ReservationService().getReservationsData(
-        date: today,
-        data: FirebaseFilter(),
+
         query: SQLiteQueryParams(
           is_filtered: true,
           where: "appointment_date_time = ?",

@@ -209,7 +209,6 @@ class CreateReservationFromPatientViewModel extends GetxController {
 
   void createReservation(ReservationModel reservation) {
     ReservationService().addReservationData(
-      date: reservation.appointmentDateTime ?? "",
       reservation: reservation,
       voidCallBack: (_) {
         refreshListView();
@@ -220,7 +219,6 @@ class CreateReservationFromPatientViewModel extends GetxController {
 
   void updateReservation(ReservationModel reservation) {
     ReservationService().updateReservationData(
-      date: reservation.appointmentDateTime ?? "",
       reservation: reservation,
       voidCallBack: (_) {
         refreshListView();

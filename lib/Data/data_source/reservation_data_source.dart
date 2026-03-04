@@ -1,61 +1,51 @@
 import '../../index/index_main.dart';
 
 abstract class ReservationDataSourceRepo {
-  // ------------------------------------------------------------
-  // 📌 Main Reservations (Doctor Side)
-  // ------------------------------------------------------------
+  // ============================================================
+  // 🔹 LOCAL RESERVATIONS (Offline First)
+  // ============================================================
 
-  Future<List<ReservationModel?>> getReservations(
-    Map<String, dynamic> data,
-    SQLiteQueryParams query,
-    bool? fromOnline,
-    bool? isFiltered,
-    String date, {
-    bool isPatient = false,
-    String? doctorUid,
-  });
+  /// Always read from SQLite (source of truth for UI)
+  Future<List<ReservationModel?>> getReservations(SQLiteQueryParams query);
 
-  Future<SuccessModel> addReservation(
-    Map<String, dynamic> data,
-    String key,
-    String date, {
-    bool localOnly = false,
-    bool isPatient = false,
-    String? doctorUid,
-  });
+  /// Optimistic add (syncStatus = pendingCreate)
+  Future<void> addReservation(ReservationModel model);
 
-  Future<SuccessModel> deleteReservation(
-    Map<String, dynamic> data,
-    String key,
-    String date, {
-    bool isPatient = false,
-    String? doctorUid,
-  });
+  /// Optimistic update (pendingUpdate)
+  Future<void> updateReservation(ReservationModel model);
 
-  Future<SuccessModel> updateReservation(
-    Map<String, dynamic> data,
-    String key,
-    String date, {
-    bool localOnly = false,
-    bool isPatient = false,
-    String? doctorUid,
-  });
+  /// Soft delete (pendingDelete + isDeleted = true)
+  Future<void> deleteReservation(String key);
 
-  // ------------------------------------------------------------
-  // ⭐ NEW: Patient Reservation META (Used in Patient App)
-  // ------------------------------------------------------------
+  // ============================================================
+  // 🔹 SYNC ENGINE CONTROL
+  // ============================================================
 
-  /// ➕ Add patient reservation metadata (date + doctor uid + type + key)
+  /// Called when server pushes data (Realtime)
+  Future<void> upsertFromServer(ReservationModel model);
+
+  /// Mark local record as synced after successful push
+  Future<void> markAsSynced(String key, {int? serverUpdatedAt});
+
+  /// Get all non-synced records (for SyncWorker)
+  Future<List<ReservationModel>> getPendingReservations();
+
+  // ============================================================
+  // ⭐ PATIENT META (Remote Direct - Separate Firebase Path)
+  // ============================================================
+
+  /// Add patient reservation meta (Remote Only)
   Future<SuccessModel> addPatientReservationMeta(
     ReservationModel meta,
     String patientKey,
   );
 
-  /// 🔍 Get all patient reservation metadata
-  Future<List<ReservationModel>> getPatientReservationsMeta(String patientKey);
-
+  /// Update patient reservation meta (Remote Only)
   Future<SuccessModel> updatePatientReservation(
     ReservationModel meta,
     String key,
   );
+
+  /// Get patient reservation meta list (Remote Only)
+  Future<List<ReservationModel>> getPatientReservationsMeta(String patientKey);
 }

@@ -44,8 +44,7 @@ class PatientProfileAllHistoryViewModel extends GetxController {
   // ─────────────────────────────────────────────
   Future<void> _loadLocalReservations(String patientKey) async {
     await ReservationService().getReservationsData(
-      date: null,
-      data: FirebaseFilter(), // ignored (local)
+
       query: SQLiteQueryParams(
         is_filtered: true,
         where: "patient_key = ?",

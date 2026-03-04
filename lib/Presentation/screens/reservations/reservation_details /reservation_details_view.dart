@@ -825,7 +825,6 @@ class ReservationAssistantDetailsView extends StatelessWidget {
 
     await controller.actionManager.updateReservation(
       reservation,
-      isSyncing: false,
     );
     await controller.getReservations();
     controller.update();

@@ -72,9 +72,7 @@ class MainPageViewModel extends GetxController {
       print("⬇ Downloading reservations from Firebase...");
 
       await ReservationService().getReservationsData(
-        data: FirebaseFilter(),
-        date: today,
-        fromOnline: true,
+
         query: SQLiteQueryParams(),
         voidCallBack: (_) {},
       );

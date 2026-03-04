@@ -22,7 +22,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 54, // ⬅️ زودنا الفيرجن عشان نضمن إعادة الإنشاء
+      version: 55, // ⬅️ زودنا الفيرجن عشان نضمن إعادة الإنشاء
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onConfigure: (db) async {
@@ -149,43 +149,61 @@ class DatabaseService {
     // reservations
     // ===========================
     await db.execute('''
-      CREATE TABLE IF NOT EXISTS reservations (
-        key TEXT PRIMARY KEY,
-        patient_uid TEXT,
-        fcmToken_patient TEXT,
-        fcmToken_assist TEXT,
-        create_at INTEGER,
-        doctor_key TEXT,
-        doctor_name TEXT,
-        transfer_image TEXT,
-        order_num INTEGER,
-        order_finished INTEGER,
-        order_reserved INTEGER,
-        patient_key TEXT,
-        assistant_key TEXT,
-        shift_key TEXT,
-        patient_name TEXT,
-        patient_phone TEXT,
-        status TEXT,
-        paid_amount TEXT,
-        rest_amount TEXT,
-        total_fees TEXT,
-        appointment_date_time TEXT,
-        waiting_num TEXT,
-        clinic_key TEXT,
-        reservation_type TEXT,
-        allergies TEXT,
-        diagnosis TEXT,
-        temperature TEXT,
-        weight TEXT,
-        height TEXT,
-        prescription_url_1 TEXT,
-        prescription_url_2 TEXT,
-        is_ordered INTEGER DEFAULT 0,
-        has_feedback INTEGER DEFAULT 0
-      );
-    ''');
+  CREATE TABLE IF NOT EXISTS reservations (
+    key TEXT PRIMARY KEY,
 
+    patient_uid TEXT,
+    fcmToken_patient TEXT,
+    fcmToken_assist TEXT,
+
+    create_at INTEGER,
+    updated_at INTEGER,
+    server_updated_at INTEGER,
+
+    sync_status TEXT,
+    is_deleted INTEGER DEFAULT 0,
+
+    doctor_key TEXT,
+    doctor_name TEXT,
+
+    transfer_image TEXT,
+
+    order_num INTEGER,
+    order_finished INTEGER,
+    order_reserved INTEGER,
+
+    patient_key TEXT,
+    assistant_key TEXT,
+    shift_key TEXT,
+
+    patient_name TEXT,
+    patient_phone TEXT,
+
+    status TEXT,
+
+    paid_amount TEXT,
+    rest_amount TEXT,
+    total_fees TEXT,
+
+    appointment_date_time TEXT,
+    waiting_num TEXT,
+
+    clinic_key TEXT,
+    reservation_type TEXT,
+
+    allergies TEXT,
+    diagnosis TEXT,
+    temperature TEXT,
+    weight TEXT,
+    height TEXT,
+
+    prescription_url_1 TEXT,
+    prescription_url_2 TEXT,
+
+    is_ordered INTEGER DEFAULT 0,
+    has_feedback INTEGER DEFAULT 0
+  );
+''');
     // ===========================
     // reservations_order
     // ===========================

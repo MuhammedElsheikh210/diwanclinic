@@ -48,7 +48,7 @@ class ReservationDateAppBar extends StatelessWidget
                       'dd/MM/yyyy',
                     ).format(d);
 
-                    controller.getReservations(isFilter: true);
+                    controller.getReservations();
                     controller.update();
                   },
                 ),

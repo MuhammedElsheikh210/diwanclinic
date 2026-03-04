@@ -218,12 +218,12 @@ class CreateReservationViewModel extends GetxController {
     }
 
     final formatted = companyNameController.text;
-    final legacyDate = DateFormat(
-      'dd-MM-yyyy',
-    ).format(DateFormat('dd/MM/yyyy').parse(formatted));
+    final legacyDate =
+        formatted.contains('/') ? _convertSlashToDash(formatted) : formatted;
 
     // 1️⃣ حمّل الكشكول للشيفت الجديد
     await loadLegacyQueueForDate(legacyDate);
+
 
     // 2️⃣ حمّل حالة اليوم (مفتوح / مغلق)
     await loadOpenCloseStatusForDate(legacyDate);
@@ -293,11 +293,11 @@ class CreateReservationViewModel extends GetxController {
     // 1️⃣ خزّن التاريخ
     create_at = date.millisecondsSinceEpoch;
 
-    final formatted = DateFormat('dd/MM/yyyy').format(date);
+    final formatted = _toDashFormat(date);
     companyNameController.text = formatted;
 
     // 2️⃣ حمّل الكشكول للتاريخ الجديد
-    await loadLegacyQueueForDate(DateFormat('dd-MM-yyyy').format(date));
+    await loadLegacyQueueForDate(DateFormat('dd/MM/yyyy').format(date));
 
     // 3️⃣ احسب عدد حجوزات السيستم في اليوم ده
     total_reservations = await getTotalTodayReservations(formatted);
@@ -333,11 +333,6 @@ class CreateReservationViewModel extends GetxController {
     final placeholders = List.filled(cancelledStatuses.length, '?').join(',');
 
     await ReservationService().getReservationsData(
-      date: date,
-      data: FirebaseFilter(
-        orderBy: "shift_key",
-        equalTo: shift_key, // 🔥 فلترة فايربيز بالشيفت
-      ),
       query: SQLiteQueryParams(
         is_filtered: false,
         where: """
@@ -392,22 +387,19 @@ class CreateReservationViewModel extends GetxController {
     // Date → parse either dd/MM/yyyy or yyyy-MM-dd
     if (reservation.appointmentDateTime != null) {
       try {
-        final parsed = DateFormat(
-          "dd/MM/yyyy",
-        ).parse(reservation.appointmentDateTime!);
+        final parsed = DateFormat("dd/MM/yyyy")
+            .parse(_convertSlashToDash(reservation.appointmentDateTime!));
+
         create_at = parsed.millisecondsSinceEpoch;
       } catch (_) {
         try {
-          final parsed = DateFormat(
-            "yyyy-MM-dd",
-          ).parse(reservation.appointmentDateTime!);
+          final parsed = DateFormat("dd/MM/yyyy",).parse(reservation.appointmentDateTime!);
           create_at = parsed.millisecondsSinceEpoch;
         } catch (_) {
           create_at = DateTime.now().millisecondsSinceEpoch;
         }
       }
     }
-
     // 👇 اضبط سعر الحجز أثناء التعديل من غير تغيير المدفوع
     switch (reservation.reservationType) {
       case "كشف جديد":
@@ -475,15 +467,17 @@ class CreateReservationViewModel extends GetxController {
     List<ReservationModel?> activeList,
     ClinicModel? clinicModel,
   ) async {
-    if (isDayClosed)
-      return Loader.showError("🚫 هذا اليوم مغلق ولا يمكن الحجز فيه");
+    if (isDayClosed) {
+      Loader.showError("🚫 هذا اليوم مغلق ولا يمكن الحجز فيه");
+      return;
+    }
 
     if (!validateStep()) {
       Loader.showError("⚠️ يرجى ملء جميع الحقول المطلوبة");
       return;
     }
 
-    // 🔹 Create account if patient does not exist
+    // 🔹 Ensure patient account exists
     if (clientUser == null) {
       await _createClientAccount();
       if (clientUser == null) {
@@ -492,67 +486,94 @@ class CreateReservationViewModel extends GetxController {
       }
     }
 
-    ReservationModel reservation;
+    final now = DateTime.now().millisecondsSinceEpoch;
 
-    // =====================================================================
+    // ============================================================
     // 🟦 UPDATE MODE
-    // =====================================================================
+    // ============================================================
     if (is_update && existingReservation != null) {
-      reservation = existingReservation!.copyWith(
-        // ❗ keep original key / createAt / order_num / status
+      final updatedReservation = existingReservation!.copyWith(
         patientKey: clientUser?.key,
+        patientUid: clientUser?.uid,
+        fcmTokenPatient: clientUser?.fcmToken,
+
         patientName:
             selectedType == "زيارة مندوب"
                 ? delegateNameController.text
                 : patientNameController.text,
+
         patientPhone: patientPhoneController.text,
         reservationType: selectedType,
-        appointmentDateTime: companyNameController.text,
+
+        appointmentDateTime:
+            companyNameController.text.contains('/')
+                ? _convertSlashToDash(companyNameController.text)
+                : companyNameController.text,
+
         paidAmount: paidAmountController.text,
         restAmount: restAmountController.text,
         clinicKey: clinic_key,
         shiftKey: shift_key,
+
+        // 🔥 IMPORTANT
+        updatedAt: now,
+        syncStatus: SyncStatus.pendingUpdate,
       );
 
-      // updateReservation will trigger refreshListView which re-fetches and reorders
-      updateReservation(reservation, activeList, clinicModel);
+      updateReservation(updatedReservation, activeList, clinicModel);
       return;
     }
 
-    // =====================================================================
+    // ============================================================
     // 🟩 CREATE MODE
-    // =====================================================================
+    // ============================================================
+
     final parsedOrderNum = int.tryParse(resOrderController.text) ?? 0;
 
-    reservation = ReservationModel(
+    final newReservation = ReservationModel(
       key: const Uuid().v4(),
+
       doctorKey: LocalUser().getUserData().doctorKey,
       doctorName: LocalUser().getUserData().doctorName,
+
       fcmToken_patient: clientUser?.fcmToken,
       patientKey: clientUser?.key,
       patientUid: clientUser?.uid,
+
       patientName:
           selectedType == "زيارة مندوب"
               ? delegateNameController.text
               : patientNameController.text,
+
       patientPhone: patientPhoneController.text,
+
       assistantKey:
           LocalUser().getUserData().userType?.name == Strings.assistant
               ? LocalUser().getUserData().key
               : null,
+
       reservationType: selectedType,
-      appointmentDateTime: companyNameController.text,
+
+      appointmentDateTime:
+          companyNameController.text.contains('/')
+              ? _convertSlashToDash(companyNameController.text)
+              : companyNameController.text,
+
       paidAmount: paidAmountController.text,
       restAmount: restAmountController.text,
+
       clinicKey: clinic_key,
       shiftKey: shift_key,
+
       order_num: parsedOrderNum,
-      // ✅ set order_reserved initially same as order_num
-      createAt: DateTime.now().millisecondsSinceEpoch,
+
+      createAt: now,
+      updatedAt: now,
+      syncStatus: SyncStatus.pendingCreate,
       status: ReservationStatus.approved.value,
     );
 
-    createReservation(reservation);
+    createReservation(newReservation);
   }
 
   Future<void> getLastReservationDateHuman(LocalUser client) async {
@@ -568,7 +589,6 @@ class CreateReservationViewModel extends GetxController {
       );
 
       await ReservationService().getReservationsData(
-        data: FirebaseFilter(), // ignored because local
         query: query,
         voidCallBack: (reservations) {
           if (reservations.isEmpty) {
@@ -714,14 +734,29 @@ class CreateReservationViewModel extends GetxController {
         paidAmountController.text.trim().isNotEmpty;
   }
 
-  void createReservation(ReservationModel reservation) {
-    ReservationService().addReservationData(
-      date: reservation.appointmentDateTime ?? "",
-      reservation: reservation,
-      voidCallBack: (_) async {
-        createPatientReservation(reservation);
-      },
-    );
+  void createReservation(ReservationModel reservation) async {
+    Loader.show();
+
+    try {
+      // 1️⃣ Add Local (Optimistic)
+      await ReservationService().addReservationData(
+        reservation: reservation,
+        voidCallBack: (_) {},
+      );
+
+      // // 2️⃣ FAST PUSH → Remote immediately
+      // await Get.find<ReservationSyncController>().pushSingleReservation(
+      //   reservation,
+      // );
+
+      //  await getReservations();
+
+      // 3️⃣ Create patient meta
+      createPatientReservation(reservation);
+    } catch (e) {
+      Loader.dismiss();
+      Loader.showError("حدث خطأ أثناء إنشاء الحجز");
+    }
   }
 
   void createPatientReservation(ReservationModel reservation) {
@@ -748,14 +783,17 @@ class CreateReservationViewModel extends GetxController {
     ReservationModel reservation,
     List<ReservationModel?> activeList,
     ClinicModel? clinicModel,
-  ) {
-    ReservationService().updateReservationData(
-      date: reservation.appointmentDateTime ?? "",
+  ) async {
+    await ReservationService().updateReservationData(
       reservation: reservation,
-      voidCallBack: (_) async {
-        updatePatientReservation(reservation);
-      },
+      voidCallBack: (_) {},
     );
+
+    // await Get.find<ReservationSyncController>().pushSingleReservation(
+    //   reservation,
+    // );
+
+    updatePatientReservation(reservation);
   }
 
   void updatePatientReservation(ReservationModel reservation) {
@@ -819,4 +857,26 @@ String convertArabicToEnglishNumbers(String input) {
     input = input.replaceAll(arabic[i], english[i]);
   }
   return input;
+}
+
+String _toDashFormat(DateTime date) {
+  return DateFormat('dd/MM/yyyy').format(date);
+}
+
+String _convertSlashToDash(String date) {
+  try {
+    if (date.contains('/')) {
+      final parsed = DateFormat('dd/MM/yyyy').parse(date);
+      return DateFormat('dd/MM/yyyy').format(parsed);
+    }
+
+    if (date.contains('-')) {
+      final parsed = DateFormat('dd-MM-yyyy').parse(date);
+      return DateFormat('dd/MM/yyyy').format(parsed);
+    }
+
+    return date;
+  } catch (_) {
+    return date.replaceAll('-', '/');
+  }
 }

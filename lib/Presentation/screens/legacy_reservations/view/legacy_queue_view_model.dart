@@ -85,7 +85,7 @@ class LegacyQueueViewModel extends GetxController {
   void getData() {
     if (!_shiftInitialized || selectedShift == null) return;
 
-    final formatted = DateFormat('dd-MM-yyyy').format(selectedDate);
+    final formatted = DateFormat('dd/MM/yyyy').format(selectedDate);
 
     service.getLegacyQueueByDateData(
       date: formatted,

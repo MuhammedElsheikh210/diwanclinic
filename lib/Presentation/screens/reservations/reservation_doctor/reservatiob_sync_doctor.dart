@@ -23,7 +23,7 @@ class ReservationDocTorSyncService {
     final user = LocalUser().getUserData();
     final doctorKey = user.doctorKey ?? user.uid ?? "";
 
-    final String today = DateFormat('dd-MM-yyyy').format(DateTime.now());
+    final String today = DateFormat('dd/MM/yyyy').format(DateTime.now());
     final String basePath = 'doctors/$doctorKey/reservations/$today';
 
     final dbRef = FirebaseDatabase.instance.ref(basePath);

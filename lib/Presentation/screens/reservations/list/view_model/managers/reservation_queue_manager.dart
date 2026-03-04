@@ -37,30 +37,31 @@ class ReservationQueueManager {
 
   // Build final ordered reservation list for UI
   List<ReservationModel> buildFinalList(List<ReservationModel> all) {
-    final pending = all
-        .where((r) => r.status == ReservationStatus.pending.value)
-        .toList();
+    final pending =
+        all.where((r) => r.status == ReservationStatus.pending.value).toList();
 
-    final inProgress = all
-        .where((r) => r.status == ReservationStatus.inProgress.value)
-        .toList();
+    final inProgress =
+        all
+            .where((r) => r.status == ReservationStatus.inProgress.value)
+            .toList();
 
-    final approved = all
-        .where((r) => r.status == ReservationStatus.approved.value)
-        .toList();
+    final approved =
+        all.where((r) => r.status == ReservationStatus.approved.value).toList();
 
-    final completed = all
-        .where((r) => r.status == ReservationStatus.completed.value)
-        .toList();
+    final completed =
+        all
+            .where((r) => r.status == ReservationStatus.completed.value)
+            .toList();
 
-    final cancelled = all
-        .where(
-          (r) =>
-              r.status == ReservationStatus.cancelledByAssistant.value ||
-              r.status == ReservationStatus.cancelledByUser.value ||
-              r.status == ReservationStatus.cancelledByDoctor.value,
-        )
-        .toList();
+    final cancelled =
+        all
+            .where(
+              (r) =>
+                  r.status == ReservationStatus.cancelledByAssistant.value ||
+                  r.status == ReservationStatus.cancelledByUser.value ||
+                  r.status == ReservationStatus.cancelledByDoctor.value,
+            )
+            .toList();
 
     final queue = reorderApprovedQueue(approved);
 
@@ -73,17 +74,16 @@ class ReservationQueueManager {
     debugPrint("🔔 Starting notifyApprovedQueueUpdate...");
     debugPrint("📊 Total reservations: ${allReservations.length}");
 
-    final approvedQueue = allReservations
-        .where((r) => r.status == ReservationStatus.approved.value)
-        .toList();
+    final approvedQueue =
+        allReservations
+            .where((r) => r.status == ReservationStatus.approved.value)
+            .toList();
 
     debugPrint("✅ Approved reservations count: ${approvedQueue.length}");
 
     approvedQueue.sort(
       (a, b) => (a.order_num ?? 9999).compareTo(b.order_num ?? 9999),
     );
-
-    debugPrint("🔢 Queue sorted by order_num");
 
     for (int i = 0; i < approvedQueue.length; i++) {
       final r = approvedQueue[i];
@@ -101,9 +101,10 @@ class ReservationQueueManager {
 
       final ahead = i;
 
-      final body = ahead == 0
-          ? "دورك الآن ✨ تفضل بالاستعداد للدخول"
-          : "قبلك $ahead حالات، نرجو الاستعداد";
+      final body =
+          ahead == 0
+              ? "دورك الآن ✨ تفضل بالاستعداد للدخول"
+              : "قبلك $ahead حالات، نرجو الاستعداد";
 
       try {
         await NotificationHandler().sendCustomNotification(

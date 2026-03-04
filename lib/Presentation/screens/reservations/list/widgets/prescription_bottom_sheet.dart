@@ -1,11 +1,6 @@
 import 'dart:io';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../../index/index_main.dart';
 
 class PrescriptionBottomSheetWidget extends StatefulWidget {
@@ -259,7 +254,6 @@ class _PrescriptionBottomSheetWidgetState
       }
 
       await ReservationService().updateReservationData(
-        date: widget.reservation.appointmentDateTime ?? "",
         reservation: widget.reservation,
         voidCallBack: (_) => widget.onUpdated(),
       );
@@ -307,16 +301,18 @@ class _PrescriptionBottomSheetWidgetState
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: showNetworkImage
-                    ? CachedNetworkImage(
-                        imageUrl: networkUrl!,
-                        fit: BoxFit.cover,
-                        errorWidget: (_, __, ___) => const Icon(
-                          Icons.broken_image,
-                          color: AppColors.errorForeground,
-                        ),
-                      )
-                    : Image.file(localFile!, fit: BoxFit.cover),
+                child:
+                    showNetworkImage
+                        ? CachedNetworkImage(
+                          imageUrl: networkUrl!,
+                          fit: BoxFit.cover,
+                          errorWidget:
+                              (_, __, ___) => const Icon(
+                                Icons.broken_image,
+                                color: AppColors.errorForeground,
+                              ),
+                        )
+                        : Image.file(localFile!, fit: BoxFit.cover),
               ),
             )
           else

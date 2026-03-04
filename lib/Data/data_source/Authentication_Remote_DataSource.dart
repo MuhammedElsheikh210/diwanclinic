@@ -29,7 +29,7 @@ abstract class AuthenticationDataSourceRepo {
 
 }
 
-enum SyncStatus {
+enum SyncStatusAuth {
   client, // waiting to sync
   reservation, // currently syncing
   // sync failed

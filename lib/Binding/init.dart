@@ -1,4 +1,4 @@
-
+import 'package:firebase_database/firebase_database.dart';
 import '../index/index_main.dart';
 
 class Binding implements Bindings {
@@ -14,9 +14,8 @@ class Binding implements Bindings {
       fenix: true,
     );
 
-
     Get.lazyPut<DoctorListRemoteDataSource>(
-          () => DoctorListRemoteDataSourceImpl(Get.find()),
+      () => DoctorListRemoteDataSourceImpl(Get.find()),
       fenix: true,
     );
 
@@ -51,11 +50,9 @@ class Binding implements Bindings {
     );
 
     Get.lazyPut<DoctorSuggestionDataSourceRepo>(
-          () => DoctorSuggestionDataSourceRepoImpl(Get.find()),
+      () => DoctorSuggestionDataSourceRepoImpl(Get.find()),
       fenix: true,
     );
-
-
 
     // ───────────── 🆕 Archive Patient Data Source ─────────────
     Get.lazyPut<ArchivePatientDataSourceRepo>(
@@ -74,7 +71,7 @@ class Binding implements Bindings {
     );
 
     Get.lazyPut<DoctorListRepository>(
-          () => DoctorListRepositoryImpl(Get.find()),
+      () => DoctorListRepositoryImpl(Get.find()),
       fenix: true,
     );
 
@@ -203,8 +200,36 @@ class Binding implements Bindings {
       fenix: true,
     );
 
+    // 🔹 Local DataSource
+    Get.lazyPut<ReservationDataSourceRepo>(
+      () => ReservationDataSourceRepoImpl(Get.find()),
+      fenix: true,
+    );
+
+    // ───────────── Reservation (Clean Architecture Version) ─────────────
+
+    // 🔹 Connectivity
+    Get.lazyPut<ConnectivityService>(() => ConnectivityService(), fenix: true);
+
+    // 🔹 Local DataSource (SQLite)
+    Get.lazyPut<ReservationDataSourceRepo>(
+      () => ReservationDataSourceRepoImpl(Get.find()),
+      fenix: true,
+    );
+
+    // 🔹 Remote DataSource (Firebase Realtime)
+    Get.lazyPut<ReservationRemoteDataSource>(
+      () => ReservationRemoteDataSourceImpl(FirebaseDatabase.instance),
+      fenix: true,
+    );
+
+    // 🔹 Repository (Controls Local + Remote)
     Get.lazyPut<ReservationRepository>(
-      () => ReservationRepositoryImpl(Get.find()),
+      () => ReservationRepositoryImpl(
+        Get.find<ReservationDataSourceRepo>(),
+        Get.find<ReservationRemoteDataSource>(),
+        Get.find<ConnectivityService>(), // 🔥 مهم
+      ),
       fenix: true,
     );
 

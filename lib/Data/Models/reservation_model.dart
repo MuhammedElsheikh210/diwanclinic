@@ -1,3 +1,36 @@
+enum SyncStatus { synced, pendingCreate, pendingUpdate, pendingDelete, failed }
+
+SyncStatus syncStatusFromString(String? value) {
+  switch (value) {
+    case 'pending_create':
+      return SyncStatus.pendingCreate;
+    case 'pending_update':
+      return SyncStatus.pendingUpdate;
+    case 'pending_delete':
+      return SyncStatus.pendingDelete;
+    case 'failed':
+      return SyncStatus.failed;
+    default:
+      return SyncStatus.synced;
+  }
+}
+
+String syncStatusToString(SyncStatus status) {
+  switch (status) {
+    case SyncStatus.pendingCreate:
+      return 'pending_create';
+    case SyncStatus.pendingUpdate:
+      return 'pending_update';
+    case SyncStatus.pendingDelete:
+      return 'pending_delete';
+    case SyncStatus.failed:
+      return 'failed';
+    case SyncStatus.synced:
+    default:
+      return 'synced';
+  }
+}
+
 class ReservationModel {
   final String? key;
   final int? createAt;
@@ -12,13 +45,19 @@ class ReservationModel {
   final String? patientPhone;
   final String? paidAmount;
   final String? restAmount;
-   String? fcmToken_patient;
-   String? fcmToken_assist;
+  String? fcmToken_patient;
+  String? fcmToken_assist;
   final String? totalFees;
   final String? appointmentDateTime;
   String? status;
   int? order_num;
   final int? order_finished;
+
+  // 🔥 OFFLINE SYNC FIELDS
+  SyncStatus syncStatus;
+  int? updatedAt; // local update timestamp
+  int? serverUpdatedAt; // last known server timestamp
+  bool isDeleted;
 
   // 🆕 NEW — تم إضافته
   final int? order_reserved;
@@ -56,6 +95,10 @@ class ReservationModel {
     this.fcmToken_assist,
     this.patientName,
     this.patientPhone,
+    this.syncStatus = SyncStatus.synced,
+    this.updatedAt,
+    this.serverUpdatedAt,
+    this.isDeleted = false,
     this.order_num,
     this.shiftKey,
     this.patientUid,
@@ -98,6 +141,10 @@ class ReservationModel {
   // 🔹 Convert to JSON
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
+    data['sync_status'] = syncStatusToString(syncStatus);
+    if (updatedAt != null) data['updated_at'] = updatedAt;
+    if (serverUpdatedAt != null) data['server_updated_at'] = serverUpdatedAt;
+    data['is_deleted'] = isDeleted ? 1 : 0;
 
     if (key?.isNotEmpty == true) data['key'] = key;
     if (fcmToken_patient?.isNotEmpty == true)
@@ -152,6 +199,13 @@ class ReservationModel {
   factory ReservationModel.fromJson(Map<String, dynamic> json) {
     return ReservationModel(
       key: json['key'],
+      syncStatus: syncStatusFromString(json['sync_status']),
+      updatedAt: _toInt(json['updated_at']),
+      serverUpdatedAt: _toInt(json['server_updated_at']),
+      isDeleted:
+          json['is_deleted'] == 1 ||
+          json['is_deleted'] == true ||
+          json['is_deleted'] == "1",
       fcmToken_patient: json['fcmToken_patient'],
       fcmToken_assist: json['fcmToken_assist'],
       patientUid: json['patient_uid'],
@@ -205,6 +259,10 @@ class ReservationModel {
     String? fcmTokenPatient,
     String? fcmTokenAssist,
     String? patientUid,
+    SyncStatus? syncStatus,
+    int? updatedAt,
+    int? serverUpdatedAt,
+    bool? isDeleted,
     String? transfer_image,
     int? createAt,
     int? order_finished,
@@ -243,6 +301,10 @@ class ReservationModel {
       fcmToken_assist: fcmTokenAssist ?? this.fcmToken_assist,
       fcmToken_patient: fcmTokenPatient ?? this.fcmToken_patient,
       patientUid: patientUid ?? this.patientUid,
+      syncStatus: syncStatus ?? this.syncStatus,
+      updatedAt: updatedAt ?? this.updatedAt,
+      serverUpdatedAt: serverUpdatedAt ?? this.serverUpdatedAt,
+      isDeleted: isDeleted ?? this.isDeleted,
       transfer_image: transfer_image ?? this.transfer_image,
       order_num: order_num ?? this.order_num,
       order_finished: order_finished ?? this.order_finished,

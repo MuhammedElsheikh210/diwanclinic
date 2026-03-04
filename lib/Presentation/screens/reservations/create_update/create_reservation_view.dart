@@ -52,6 +52,7 @@ class _CreateReservationViewState extends State<CreateReservationView> {
     vm.loadShiftsForClinic();
     final totalReservation = widget.total_reservations + 1;
     vm.resOrderController.text = totalReservation.toString();
+    print("totalReservation in create is ${widget.total_reservations}");
     vm.total_reservations = totalReservation;
 
     final today = DateTime.now();
