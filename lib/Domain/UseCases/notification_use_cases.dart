@@ -7,33 +7,59 @@ class NotificationUseCases {
 
   NotificationUseCases(this._repository);
 
-  Future<Either<AppError, SuccessModel>> addNotification(
+  // ============================================================
+  // 🔥 REALTIME CONTROL
+  // ============================================================
+
+  Future<void> startListening() {
+    return _repository.startListening();
+  }
+
+  Future<void> dispose() {
+    return _repository.dispose();
+  }
+
+  Stream<NotificationModel> get onAdded => _repository.onAdded;
+
+  Stream<NotificationModel> get onChanged => _repository.onChanged;
+
+  Stream<String> get onRemoved => _repository.onRemoved;
+
+  // ============================================================
+  // 🌐 FETCH (ONLINE)
+  // ============================================================
+
+  Future<Either<AppError, List<NotificationModel>>> fetchNotifications(
+    Map<String, dynamic> firebaseFilter,
+  ) {
+    return _repository.fetchNotificationsDomain(firebaseFilter);
+  }
+
+  // ============================================================
+  // ➕ CREATE
+  // ============================================================
+
+  Future<Either<AppError, Unit>> createNotification(
     NotificationModel notification,
   ) {
-    return _repository.addNotificationDomain(
-      notification.toJson(),
-      notification.key ?? "",
-    );
+    return _repository.createNotificationDomain(notification);
   }
 
-  Future<Either<AppError, SuccessModel>> updateNotification(
+  // ============================================================
+  // 🔄 UPDATE
+  // ============================================================
+
+  Future<Either<AppError, Unit>> updateNotification(
     NotificationModel notification,
   ) {
-    return _repository.updateNotificationDomain(
-      notification.toJson(),
-      notification.key ?? "",
-    );
+    return _repository.updateNotificationDomain(notification);
   }
 
-  Future<Either<AppError, SuccessModel>> deleteNotification(String key) {
-    return _repository.deleteNotificationDomain({}, key);
-  }
+  // ============================================================
+  // ❌ DELETE
+  // ============================================================
 
-  Future<Either<AppError, List<NotificationModel?>>> getNotifications(
-    Map<String, dynamic> data,
-    SQLiteQueryParams query,
-    bool? isFiltered,
-  ) {
-    return _repository.getNotificationsDomain(data, query, isFiltered);
+  Future<Either<AppError, Unit>> deleteNotification(String key) {
+    return _repository.deleteNotificationDomain(key);
   }
 }

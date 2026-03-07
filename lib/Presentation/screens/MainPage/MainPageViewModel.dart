@@ -20,6 +20,8 @@ class MainPageViewModel extends GetxController {
 
   final ReservationService _reservationService = ReservationService();
   final AuthenticationService _authService = AuthenticationService();
+  final NotificationPatentService _notificationService =
+      NotificationPatentService();
 
   // ============================================================
   // 🚀 INIT
@@ -30,16 +32,13 @@ class MainPageViewModel extends GetxController {
     super.onInit();
 
     await _loadCurrentUserFromOnline();
-    print("uset type is ${userType}");
+    print("user type is $userType");
 
     // 🔥 Start realtime listeners
     await _startClientsRealtime();
     await _startReservationsRealtime();
+    await _startNotificationsRealtime(); // 🔔 NEW
   }
-
-  // ============================================================
-  // 👤 LOAD CURRENT USER (LOCAL ONLY)
-  // ============================================================
 
   // ============================================================
   // 👤 LOAD CURRENT USER (ONLINE FIRST)
@@ -64,7 +63,7 @@ class MainPageViewModel extends GetxController {
           userType = user.userType;
 
           print("✅ User loaded ONLINE → ${user.userType}");
-          print("✅ User loaded ONLINE → ${user.clinicKey}");
+          print("✅ User clinicKey → ${user.clinicKey}");
           update();
         },
       );
@@ -101,6 +100,21 @@ class MainPageViewModel extends GetxController {
   }
 
   // ============================================================
+  // 🔔 NOTIFICATIONS REALTIME (NEW)
+  // ============================================================
+
+  Future<void> _startNotificationsRealtime() async {
+    final clinicKey = LocalUser().getUserData().clinicKey ?? "";
+    if (clinicKey.isEmpty) return;
+
+    print("🔔 GLOBAL Notifications Realtime START");
+
+    await _notificationService.startListening();
+
+    print("✅ GLOBAL Notifications Realtime RUNNING");
+  }
+
+  // ============================================================
   // 🛑 DISPOSE
   // ============================================================
 
@@ -108,6 +122,7 @@ class MainPageViewModel extends GetxController {
   void onClose() {
     _reservationService.dispose();
     _authService.dispose();
+    _notificationService.dispose(); // 🔔 NEW
     super.onClose();
   }
 }

@@ -1,8 +1,10 @@
 import 'package:firebase_database/firebase_database.dart';
 import '../../../../index/index_main.dart';
 
+import '../../../../index/index_main.dart';
+
 class NotificationController extends GetxController {
-  final ParentNotificationService _service = ParentNotificationService();
+  final NotificationPatentService _service = NotificationPatentService();
 
   List<NotificationModel?> notifications = [];
 
@@ -12,113 +14,69 @@ class NotificationController extends GetxController {
   /// 🔔 unread notifications count
   int get unreadCount => notifications.where((n) => n?.isRead == false).length;
 
-  // 🔄 Firebase listeners
-  StreamSubscription<DatabaseEvent>? _addSub;
-  StreamSubscription<DatabaseEvent>? _changeSub;
-  StreamSubscription<DatabaseEvent>? _removeSub;
-
   // ─────────────────────────────────────────────
   // INIT
   // ─────────────────────────────────────────────
   @override
   void onInit() {
     super.onInit();
-
-    fetchNotifications();
-    final user = LocalUser().getUserData();
-    final bool isAssistant = user.userType?.name == "assistant";
+    _initRealtime();
   }
 
-  // ---------------------------------------------------------------------------
-  // 📥 FETCH NOTIFICATIONS (REALTIME ONLY)
-  // ---------------------------------------------------------------------------
-  Future<void> fetchNotifications() async {
-    final user = LocalUser().getUserData();
-    final userKey = user.uid;
-    print("userKey is ${userKey}");
+  Future<void> markAllAsRead() async {
+    final unread = notifications.where((n) => n?.isRead == false).toList();
 
-    if (userKey == null || userKey.isEmpty) {
-      update();
-      return;
+    if (unread.isEmpty) return;
+
+    for (final notif in unread) {
+      final updated = notif!.copyWith(isRead: true);
+
+      await _service.updateNotificationData(
+        notification: updated,
+        voidCallBack: (_) {},
+      );
     }
+
+    notifications =
+        notifications.map((n) => n?.copyWith(isRead: true)).toList();
 
     update();
-
-    final ref = FirebaseDatabase.instance.ref("notifications");
-
-    /// 👇 1️⃣ check once if there is any data
-    final snapshot = await ref.get();
-    if (!snapshot.exists) {
-      // 🔴 no notifications at all
-      notifications.clear();
-      update();
-    }
-
-    // 🟢 ADDED
-    _addSub = ref.onChildAdded.listen((event) {
-      if (event.snapshot.value == null) return;
-
-      final data = Map<String, dynamic>.from(event.snapshot.value as Map);
-
-      if (data["to_key"] != userKey) return;
-
-      final model = NotificationModel.fromJson(data)..key = event.snapshot.key;
-
-      _upsertNotification(model);
-
-      update();
-    });
-
-    // 🔄 UPDATED
-    _changeSub = ref.onChildChanged.listen((event) {
-      if (event.snapshot.value == null) return;
-
-      final data = Map<String, dynamic>.from(event.snapshot.value as Map);
-
-      if (data["to_key"] != userKey) return;
-
-      final model = NotificationModel.fromJson(data)..key = event.snapshot.key;
-
-      _upsertNotification(model);
-      update();
-    });
-
-    // ❌ REMOVED
-    _removeSub = ref.onChildRemoved.listen((event) {
-      final key = event.snapshot.key;
-      if (key == null) return;
-
-      notifications.removeWhere((n) => n?.key == key);
-      update();
-    });
   }
 
-  // ---------------------------------------------------------------------------
-  // 🔁 ADD OR UPDATE IN MEMORY
-  // ---------------------------------------------------------------------------
-  void _upsertNotification(NotificationModel model) {
-    final index = notifications.indexWhere((n) => n?.key == model.key);
+  void _initRealtime() async {
+    await _service.startListening();
 
-    if (index == -1) {
-      notifications.insert(0, model);
-    } else {
-      notifications[index] = model;
-    }
+    _service.onNotificationAdded = (model) {
+      onRealtimeAdd(model);
+    };
 
-    // 🔽 newest → oldest
-    notifications.sort(
-      (a, b) => (b?.createAt ?? 0).compareTo(a?.createAt ?? 0),
-    );
+    _service.onNotificationUpdated = (model) {
+      onRealtimeUpdate(model);
+    };
+
+    _service.onNotificationRemoved = (key) {
+      onRealtimeDelete(key);
+    };
   }
 
-  // ---------------------------------------------------------------------------
-  // MARK AS READ (Firebase only)
-  // ---------------------------------------------------------------------------
-  Future<void> markAsRead(NotificationModel notif) async {
-    await FirebaseDatabase.instance.ref("notifications/${notif.key}").update({
-      "is_read": true,
-    });
-    // 🔥 realtime will update UI
+  // ─────────────────────────────────────────────
+  // REALTIME HANDLERS
+  // ─────────────────────────────────────────────
+
+  void onRealtimeAdd(NotificationModel model) {
+    final exists = notifications.any((n) => n?.key == model.key);
+    if (exists) return;
+
+    notifications.insert(0, model);
+    _sort();
+    update();
+  }
+
+  void onRealtimeUpdate(NotificationModel model) {
+    notifications =
+        notifications.map((n) => n?.key == model.key ? model : n).toList();
+    _sort();
+    update();
   }
 
   void onRealtimeDelete(String notificationKey) {
@@ -126,24 +84,93 @@ class NotificationController extends GetxController {
     update();
   }
 
-  // ─────────────────────────────────────────────
-  // REALTIME
-  // ─────────────────────────────────────────────
-  void onRealtimeAdd(NotificationModel model) {
-    final exists = notifications.any((n) => n?.key == model.key);
-    if (exists) return;
+  void _sort() {
+    notifications.sort(
+      (a, b) => (b?.createAt ?? 0).compareTo(a?.createAt ?? 0),
+    );
+  }
 
-    notifications.insert(0, model);
+  // ─────────────────────────────────────────────
+  // MARK AS READ
+  // ─────────────────────────────────────────────
+
+  Future<void> markAsRead(NotificationModel notif) async {
+    final updated = notif.copyWith(isRead: true);
+
+    await _service.updateNotificationData(
+      notification: updated,
+      voidCallBack: (_) {},
+    );
+
+    notifications =
+        notifications.map((n) => n?.key == notif.key ? updated : n).toList();
+
     update();
   }
 
-  void onRealtimeUpdate(NotificationModel model) {
-    notifications = notifications
-        .map((n) => n?.key == model.key ? model : n)
-        .toList();
+  Future<void> _markNotificationAsRead(String key) async {
+    final notif = notifications.firstWhereOrNull((n) => n?.key == key);
+    if (notif == null) return;
+
+    final updated = notif.copyWith(isRead: true);
+
+    await _service.updateNotificationData(
+      notification: updated,
+      voidCallBack: (_) {},
+    );
+
+    notifications =
+        notifications.map((n) => n?.key == key ? updated : n).toList();
+
     update();
   }
 
+  // ─────────────────────────────────────────────
+  // ➕ ADD NOTIFICATION (MANUAL / SYSTEM)
+  // ─────────────────────────────────────────────
+
+  Future<void> addNotification({
+    required String title,
+    required String body,
+    required String toKey,
+    String? notificationType,
+    Map<String, dynamic>? extraData,
+  }) async {
+    final user = LocalUser().getUserData();
+
+    final newNotif = NotificationModel(
+      key: const Uuid().v4(),
+      fromKey: user.key,
+      toKey: toKey,
+      title: title,
+      body: body,
+      notificationType: notificationType,
+      extraData: extraData,
+      userType: user.userType?.name,
+      createAt: DateTime.now().millisecondsSinceEpoch,
+      isRead: false,
+    );
+
+    await _service.addNotificationData(
+      notification: newNotif,
+      voidCallBack: (_) {},
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // CLEAN UP
+  // ─────────────────────────────────────────────
+
+  @override
+  void onClose() {
+    titleController.dispose();
+    bodyController.dispose();
+    _service.dispose();
+    super.onClose();
+  }
+}
+
+extension NotificationFeature on NotificationController {
   // ─────────────────────────────────────────────
   // FETCH NOTIFICATIONS
   // ─────────────────────────────────────────────
@@ -222,9 +249,13 @@ class NotificationController extends GetxController {
       key: reservation.key ?? "",
       data: reservation.copyWith(status: ReservationStatus.approved.value),
       voidCallBack: (_) async {
-        await _markNotificationAsRead(notificationKey);
+        // ✅ تحديث الإشعار نفسه
+        await _updateNotificationAfterAction(
+          notificationKey: notificationKey,
+          newStatus: ReservationStatus.approved.value,
+        );
 
-        // 🔥 2) امسح باقي إشعارات نفس الحجز
+        // 🔥 حذف باقي إشعارات نفس الحجز
         await _removeOtherReservationNotifications(
           reservationKey: reservation.key!,
           exceptNotificationKey: notificationKey,
@@ -232,7 +263,6 @@ class NotificationController extends GetxController {
 
         Loader.dismiss();
         Loader.showSuccess("تم قبول الحجز");
-        // getNotifications();
       },
     );
   }
@@ -242,9 +272,11 @@ class NotificationController extends GetxController {
     required String exceptNotificationKey,
   }) async {
     // 1️⃣ هات كل الإشعارات الخاصة بنفس الحجز
-    await _service.getNotificationsData(
-      data: FirebaseFilter(orderBy: "reservation_key", equalTo: reservationKey),
-      query: SQLiteQueryParams(),
+    await _service.getNotificationsOnlineData(
+      firebaseFilter: FirebaseFilter(
+        orderBy: "reservation_key",
+        equalTo: reservationKey,
+      ),
       voidCallBack: (list) async {
         for (final notif in list) {
           if (notif == null) continue;
@@ -308,12 +340,47 @@ class NotificationController extends GetxController {
         status: ReservationStatus.cancelledByAssistant.value,
       ),
       voidCallBack: (_) async {
-        await _markNotificationAsRead(notificationKey);
+        // ✅ تحديث الإشعار نفسه
+        await _updateNotificationAfterAction(
+          notificationKey: notificationKey,
+          newStatus: ReservationStatus.cancelledByAssistant.value,
+        );
+
         Loader.dismiss();
         Loader.showSuccess("تم رفض الحجز");
-        //   getNotifications();
       },
     );
+  }
+
+  Future<void> _updateNotificationAfterAction({
+    required String notificationKey,
+    required String newStatus,
+  }) async {
+    final notif = notifications.firstWhereOrNull(
+      (n) => n?.key == notificationKey,
+    );
+    if (notif == null) return;
+
+    Map<String, dynamic>? extra = notif.extraData;
+
+    if (extra != null) {
+      extra = Map<String, dynamic>.from(extra);
+      extra["status"] = newStatus;
+    }
+
+    final updated = notif.copyWith(isRead: true, extraData: extra);
+
+    await _service.updateNotificationData(
+      notification: updated,
+      voidCallBack: (_) {},
+    );
+
+    notifications =
+        notifications
+            .map((n) => n?.key == notificationKey ? updated : n)
+            .toList();
+
+    update();
   }
 
   // ─────────────────────────────────────────────
@@ -326,7 +393,6 @@ class NotificationController extends GetxController {
     int lastOrderNum = 0;
 
     await ReservationService().getReservationsData(
-
       query: SQLiteQueryParams(
         is_filtered: true,
         where: """
@@ -354,27 +420,6 @@ class NotificationController extends GetxController {
     );
 
     return lastOrderNum + 1;
-  }
-
-  // ─────────────────────────────────────────────
-  // MARK AS READ
-  // ─────────────────────────────────────────────
-  Future<void> _markNotificationAsRead(String key) async {
-    final notif = notifications.firstWhereOrNull((n) => n?.key == key);
-    if (notif == null) return;
-
-    final updated = notif.copyWith(isRead: true);
-
-    await _service.addNotificationData(
-      notification: updated,
-      voidCallBack: (_) {},
-    );
-
-    notifications = notifications
-        .map((n) => n?.key == key ? updated : n)
-        .toList();
-
-    update();
   }
 
   // ─────────────────────────────────────────────
@@ -417,41 +462,6 @@ class NotificationController extends GetxController {
   }
 
   // ─────────────────────────────────────────────
-  // ➕ ADD NOTIFICATION (MANUAL / SYSTEM)
-  // ─────────────────────────────────────────────
-  Future<void> addNotification({
-    required String title,
-    required String body,
-    required String toKey,
-    String? notificationType,
-    Map<String, dynamic>? extraData,
-  }) async {
-    final user = LocalUser().getUserData();
-
-    final newNotif = NotificationModel(
-      key: const Uuid().v4(),
-      fromKey: user.key,
-      toKey: toKey,
-      title: title,
-      body: body,
-      notificationType: notificationType,
-      extraData: extraData,
-      userType: user.userType?.name,
-      createAt: DateTime.now().millisecondsSinceEpoch,
-      isRead: false,
-    );
-
-    await _service.addNotificationData(
-      notification: newNotif,
-      voidCallBack: (status) {
-        if (status == ResponseStatus.success) {
-          // getNotifications(); // refresh local list
-        }
-      },
-    );
-  }
-
-  // ─────────────────────────────────────────────
   // DIALOG
   // ─────────────────────────────────────────────
   Future<bool> _showConfirmDialog({
@@ -464,34 +474,27 @@ class NotificationController extends GetxController {
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        title: Text(title, style: context.typography.lgBold),
-        content: Text(message, style: context.typography.mdRegular),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("إلغاء"),
+      builder:
+          (_) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+            title: Text(title, style: context.typography.lgBold),
+            content: Text(message, style: context.typography.mdRegular),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text("إلغاء"),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: confirmColor),
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(confirmText),
+              ),
+            ],
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: confirmColor),
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(confirmText),
-          ),
-        ],
-      ),
     );
 
     return result ?? false;
-  }
-
-  // ─────────────────────────────────────────────
-  // CLEAN UP
-  // ─────────────────────────────────────────────
-  @override
-  void onClose() {
-    titleController.dispose();
-    bodyController.dispose();
-    super.onClose();
   }
 }

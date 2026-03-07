@@ -132,8 +132,11 @@ class Binding implements Bindings {
       fenix: true,
     );
 
-    Get.lazyPut<NotificationDataSourceRepo>(
-      () => NotificationDataSourceRepoImpl(Get.find()),
+    Get.lazyPut<NotificationRemoteDataSource>(
+      () => NotificationRemoteDataSourceImpl(
+        FirebaseDatabase.instance,
+        Get.find<ClientSourceRepo>(),
+      ),
       fenix: true,
     );
 
@@ -239,9 +242,11 @@ class Binding implements Bindings {
       fenix: true,
     );
     Get.lazyPut<NotificationRepository>(
-      () => NotificationRepositoryImpl(Get.find()),
+      () =>
+          NotificationRepositoryImpl(Get.find<NotificationRemoteDataSource>()),
       fenix: true,
     );
+
     Get.lazyPut<VisitRepository>(
       () => VisitRepositoryImpl(Get.find()),
       fenix: true,

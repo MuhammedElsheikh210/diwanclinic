@@ -1,20 +1,41 @@
-
 import '../../index/index_main.dart';
 
-abstract class NotificationDataSourceRepo {
-  /// 🔹 Get all or filtered notifications
-  Future<List<NotificationModel?>> getNotifications(
-      Map<String, dynamic> data,
-      SQLiteQueryParams query,
-      bool? isFiltered,
-      );
+abstract class NotificationRemoteDataSource {
+  // ============================================================
+  // 🔹 CRUD (SERVER)
+  // ============================================================
 
-  /// 🔹 Add new notification
-  Future<SuccessModel> addNotification(Map<String, dynamic> data, String key);
+  Future<void> createNotification(NotificationModel model);
 
-  /// 🔹 Delete specific notification
-  Future<SuccessModel> deleteNotification(Map<String, dynamic> data, String key);
+  Future<void> updateNotification(NotificationModel model);
 
-  /// 🔹 Update existing notification
-  Future<SuccessModel> updateNotification(Map<String, dynamic> data, String key);
+  Future<void> deleteNotification(String key);
+
+  // ============================================================
+  // 🌐 FETCH (ONLINE READ)
+  // ============================================================
+
+  /// Fetch notifications from Firebase using filters
+  /// Used for: First load / manual refresh
+  Future<List<NotificationModel>> fetchNotifications(
+    Map<String, dynamic> filters,
+  );
+
+  // ============================================================
+  // 🎧 REALTIME CONTROL
+  // ============================================================
+
+  Future<void> startListening();
+
+  Future<void> stopListening();
+
+  // ============================================================
+  // 🔥 REALTIME STREAMS
+  // ============================================================
+
+  Stream<NotificationModel> get onAdded;
+
+  Stream<NotificationModel> get onChanged;
+
+  Stream<String> get onRemoved;
 }

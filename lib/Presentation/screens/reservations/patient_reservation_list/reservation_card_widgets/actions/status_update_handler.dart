@@ -15,7 +15,7 @@ class NotificationHandler {
     required String notificationType,
     required Map<String, dynamic> extraData,
   }) async {
-    final parentService = ParentNotificationService();
+    final parentService = NotificationPatentService();
 
     await sendAction((status) async {
       debugPrint("📬 FCM response → toKey=$toKey | status=$status");
@@ -105,7 +105,7 @@ class NotificationHandler {
     required ReservationStatus newStatus,
     required ReservationModel reservation,
     required String toToken,
-     String? cancelReason,
+    String? cancelReason,
   }) async {
     final userKey = reservation.patientUid;
     if (toToken.isEmpty || userKey == null) return;
@@ -127,7 +127,7 @@ class NotificationHandler {
         return notificationService.sendToToken(
           token: toToken,
           title: titleBody.$1,
-          body:cancelReason ?? titleBody.$2,
+          body: cancelReason ?? titleBody.$2,
           voidCallBack: callback,
         );
       },

@@ -2,28 +2,41 @@ import 'package:dartz/dartz.dart';
 import '../../index/index_main.dart';
 
 abstract class NotificationRepository {
-  /// 🔹 Get all or filtered notifications
-  Future<Either<AppError, List<NotificationModel?>>> getNotificationsDomain(
-      Map<String, dynamic> data,
-      SQLiteQueryParams query,
-      bool? isFiltered,
+  // ============================================================
+  // 🔥 REALTIME CONTROL
+  // ============================================================
+
+  Future<void> startListening();
+
+  Future<void> dispose();
+
+  // ============================================================
+  // 🔥 REALTIME STREAMS (Expose to upper layers)
+  // ============================================================
+
+  Stream<NotificationModel> get onAdded;
+
+  Stream<NotificationModel> get onChanged;
+
+  Stream<String> get onRemoved;
+
+  // ============================================================
+  // 🌐 ONLINE NOTIFICATIONS (Firebase Direct)
+  // ============================================================
+
+  Future<Either<AppError, List<NotificationModel>>> fetchNotificationsDomain(
+      Map<String, dynamic> firebaseFilter,
       );
 
-  /// 🔹 Add new notification
-  Future<Either<AppError, SuccessModel>> addNotificationDomain(
-      Map<String, dynamic> data,
-      String key,
+  Future<Either<AppError, Unit>> createNotificationDomain(
+      NotificationModel model,
       );
 
-  /// 🔹 Delete notification
-  Future<Either<AppError, SuccessModel>> deleteNotificationDomain(
-      Map<String, dynamic> data,
-      String key,
+  Future<Either<AppError, Unit>> updateNotificationDomain(
+      NotificationModel model,
       );
 
-  /// 🔹 Update existing notification
-  Future<Either<AppError, SuccessModel>> updateNotificationDomain(
-      Map<String, dynamic> data,
+  Future<Either<AppError, Unit>> deleteNotificationDomain(
       String key,
       );
 }

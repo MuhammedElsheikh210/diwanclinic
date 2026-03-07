@@ -37,7 +37,7 @@ class OrderStatusService {
     if (token.isEmpty || toKey == null) return;
 
     final notificationService = NotificationManagerService();
-    final parentService = ParentNotificationService();
+    final parentService = NotificationPatentService();
 
     await notificationService.sendToToken(
       token: userType ? order.fcmToken ?? "" : token,

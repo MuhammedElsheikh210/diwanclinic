@@ -78,7 +78,7 @@ class NotificationHandler {
             },
           );
 
-          await ParentNotificationService().addNotificationData(
+          await NotificationPatentService().addNotificationData(
             notification: notification,
             voidCallBack: (_) {},
           );

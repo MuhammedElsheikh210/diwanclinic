@@ -2,8 +2,24 @@ import 'package:diwanclinic/Presentation/screens/notification/notification_item.
 import 'package:intl/intl.dart';
 import '../../../../index/index_main.dart';
 
-class NotificationsView extends StatelessWidget {
+class NotificationsView extends StatefulWidget {
   const NotificationsView({super.key});
+
+  @override
+  State<NotificationsView> createState() => _NotificationsViewState();
+}
+
+class _NotificationsViewState extends State<NotificationsView> {
+  @override
+  void initState() {
+    super.initState();
+
+    // بعد ما الصفحة تترسم
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final controller = Get.find<NotificationController>();
+      controller.markAllAsRead();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,19 +61,17 @@ class NotificationsView extends StatelessWidget {
                   final notif = controller.notifications[index];
                   if (notif == null) return const SizedBox.shrink();
 
-                  final formattedDate = notif.createAt != null
-                      ? DateFormat('dd/MM/yyyy').format(
-                          DateTime.fromMillisecondsSinceEpoch(notif.createAt!),
-                        )
-                      : '';
+                  final formattedDate =
+                      notif.createAt != null
+                          ? DateFormat('dd/MM/yyyy').format(
+                            DateTime.fromMillisecondsSinceEpoch(
+                              notif.createAt!,
+                            ),
+                          )
+                          : '';
 
                   final bool isNewReservation =
                       notif.notificationType == "new_reservation";
-
-                  final bool isUnread = !(notif.isRead ?? false);
-
-                  final bool showActions =
-                      isAssistant && isNewReservation && isUnread;
 
                   ReservationModel? reservation;
                   if (notif.extraData != null &&
@@ -67,6 +81,12 @@ class NotificationsView extends StatelessWidget {
                     );
                   }
 
+                  final bool isPending =
+                      reservation?.status == ReservationStatus.pending.value;
+
+                  final bool showActions =
+                      isAssistant && isNewReservation && isPending;
+
                   return Padding(
                     padding: EdgeInsets.only(bottom: 12.h),
                     child: NotificationItem(
@@ -75,26 +95,28 @@ class NotificationsView extends StatelessWidget {
                       date: formattedDate,
                       isPatient: currentUser.userType?.name == "patient",
                       imageUrl: reservation?.transfer_image,
-                      isUnread: isUnread,
+                      isUnread: isPending,
                       showActions: showActions,
 
                       // ✅ ACCEPT
-                      onAccept: showActions && reservation != null
-                          ? () => controller.confirmApproveReservation(
-                              context: context,
-                              reservation: reservation!,
-                              notificationKey: notif.key!,
-                            )
-                          : null,
+                      onAccept:
+                          showActions && reservation != null
+                              ? () => controller.confirmApproveReservation(
+                                context: context,
+                                reservation: reservation!,
+                                notificationKey: notif.key!,
+                              )
+                              : null,
 
                       // ❌ REJECT
-                      onReject: showActions && reservation != null
-                          ? () => controller.confirmRejectReservation(
-                              context: context,
-                              reservation: reservation!,
-                              notificationKey: notif.key!,
-                            )
-                          : null,
+                      onReject:
+                          showActions && reservation != null
+                              ? () => controller.confirmRejectReservation(
+                                context: context,
+                                reservation: reservation!,
+                                notificationKey: notif.key!,
+                              )
+                              : null,
                     ),
                   );
                 },

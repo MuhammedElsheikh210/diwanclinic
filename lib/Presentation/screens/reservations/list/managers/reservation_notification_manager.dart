@@ -4,17 +4,19 @@ class NotificationCleanupService {
   static Future<void> removeReservationNotifications({
     required String reservationKey,
   }) async {
-    final service = ParentNotificationService();
+    final service = NotificationPatentService();
 
-    await service.getNotificationsData(
-      data: FirebaseFilter(orderBy: "reservation_key", equalTo: reservationKey),
-      query: SQLiteQueryParams(),
+    await service.getNotificationsOnlineData(
+      firebaseFilter: FirebaseFilter(
+        orderBy: "reservation_key",
+        equalTo: reservationKey,
+      ),
       voidCallBack: (list) async {
         for (final notif in list) {
-          if (notif?.key == null) continue;
+          if (notif.key == null) continue;
 
           await service.deleteNotificationData(
-            notificationKey: notif!.key!,
+            notificationKey: notif.key!,
             voidCallBack: (_) {
               Loader.dismiss();
               NotificationController controller = initController(
