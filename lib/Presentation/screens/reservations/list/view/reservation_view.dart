@@ -94,9 +94,6 @@ class _ReservationViewState extends State<ReservationView> {
                   ),
                 );
               } else {
-                print(
-                  "total reservation is ${controller.listReservations?.length}",
-                );
                 Get.delete<CreateReservationViewModel>();
                 Get.to(
                   () => CreateReservationView(
@@ -206,7 +203,6 @@ class _ReservationViewState extends State<ReservationView> {
 
         return InkWell(
           onTap: () {
-            print("donnnne");
             Get.to(
               () => ReservationAssistantDetailsView(
                 reservation: reservation,

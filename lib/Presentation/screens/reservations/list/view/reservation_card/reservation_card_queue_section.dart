@@ -23,6 +23,7 @@ class ReservationCardQueueSection extends StatelessWidget {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+
       children: [
         if (ahead == 0)
           Text(

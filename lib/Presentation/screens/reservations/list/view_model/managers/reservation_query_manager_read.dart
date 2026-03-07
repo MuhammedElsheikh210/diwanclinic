@@ -6,10 +6,20 @@ class ReservationQueryManager {
   }) async {
     List<ReservationModel> result = [];
 
+    // 🧾 DEBUG LOGS
+    print("══════════════════════════════");
+    print("📥 Reservation Query Params:");
+    print("➡️ WHERE     : ${query.where}");
+    print("➡️ WHERE ARGS: ${query.whereArgs}");
+    print("➡️ ORDER BY  : ${query.orderBy}");
+    print("➡️ LIMIT     : ${query.limit}");
+    print("══════════════════════════════");
+
     await ReservationService().getReservationsData(
       query: query,
       voidCallBack: (list) {
         result = list.whereType<ReservationModel>().toList();
+        print("📦 Result Count: ${result.length}");
       },
     );
 

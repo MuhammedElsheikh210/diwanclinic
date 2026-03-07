@@ -17,24 +17,8 @@ class ReservationRepositoryImpl implements ReservationRepository {
 
   bool _isListening = false;
 
-  // ============================================================
-  // 🧠 INITIAL SYNC BARRIER
-  // ============================================================
 
-  final Completer<void> _initialSyncCompleter = Completer();
-  bool _initialBatchHandled = false;
 
-  Future<void> get initialSyncDone => _initialSyncCompleter.future;
-
-  void _markInitialSyncDone() {
-    if (!_initialBatchHandled) {
-      _initialBatchHandled = true;
-      if (!_initialSyncCompleter.isCompleted) {
-        log("✅ Initial Reservations Sync Completed");
-        _initialSyncCompleter.complete();
-      }
-    }
-  }
 
   // ============================================================
   // 🌊 STREAM CONTROLLERS
@@ -67,7 +51,6 @@ class ReservationRepositoryImpl implements ReservationRepository {
     log("🎧 Start Listening Reservations → doctor: $doctorKey");
 
     _processedKeys.clear();
-    _initialBatchHandled = false;
 
     await _remote.startListening(doctorKey: doctorKey);
 
@@ -89,7 +72,6 @@ class ReservationRepositoryImpl implements ReservationRepository {
 
       _addedController.add(model);
 
-      _markInitialSyncDone();
     });
 
     _changedSub = _remote.onChanged.listen((model) async {
@@ -103,7 +85,6 @@ class ReservationRepositoryImpl implements ReservationRepository {
 
       _changedController.add(model);
 
-      _markInitialSyncDone();
     });
 
     _removedSub = _remote.onRemoved.listen((key) async {
@@ -114,7 +95,6 @@ class ReservationRepositoryImpl implements ReservationRepository {
 
       _removedController.add(key);
 
-      _markInitialSyncDone();
     });
 
     _isListening = true;
@@ -152,7 +132,6 @@ class ReservationRepositoryImpl implements ReservationRepository {
   ) async {
     try {
       log("⏳ Waiting for Initial Sync...");
-      await initialSyncDone;
 
       log("📦 Fetch Reservations From SQLite");
 
@@ -177,15 +156,14 @@ class ReservationRepositoryImpl implements ReservationRepository {
   ) async {
     try {
       await _local.addReservation(model);
-
-      if (await _connectivity.isOnline()) {
+     print("start track add ");
         await _remote.createReservation(model);
 
-        await _local.markAsSynced(
-          model.key!,
-          serverUpdatedAt: DateTime.now().millisecondsSinceEpoch,
-        );
-      }
+        // await _local.markAsSynced(
+        //   model.key!,
+        //   serverUpdatedAt: DateTime.now().millisecondsSinceEpoch,
+        // );
+
 
       return const Right(unit);
     } catch (e) {
@@ -204,14 +182,13 @@ class ReservationRepositoryImpl implements ReservationRepository {
     try {
       await _local.updateReservation(model);
 
-      if (await _connectivity.isOnline()) {
         await _remote.updateReservation(model);
 
-        await _local.markAsSynced(
-          model.key!,
-          serverUpdatedAt: DateTime.now().millisecondsSinceEpoch,
-        );
-      }
+        // await _local.markAsSynced(
+        //   model.key!,
+        //   serverUpdatedAt: DateTime.now().millisecondsSinceEpoch,
+        // );
+
 
       return const Right(unit);
     } catch (e) {
@@ -235,14 +212,13 @@ class ReservationRepositoryImpl implements ReservationRepository {
 
       await _local.deleteReservation(key);
 
-      if (await _connectivity.isOnline()) {
         await _remote.deleteReservation(model);
 
-        await _local.markAsSynced(
-          key,
-          serverUpdatedAt: DateTime.now().millisecondsSinceEpoch,
-        );
-      }
+        // await _local.markAsSynced(
+        //   key,
+        //   serverUpdatedAt: DateTime.now().millisecondsSinceEpoch,
+        // );
+
 
       return const Right(unit);
     } catch (e) {

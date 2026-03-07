@@ -31,16 +31,17 @@ class _OrdersViewState extends State<OrdersView> {
             backgroundColor: AppColors.white,
             elevation: 1,
           ),
-          body: controller.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : Column(
-                  children: [
-                    _buildTodaySummary(controller, context),
-                    _buildMonthlySummary(controller, context),
-                    const SizedBox(height: 10),
-                    _buildTabs(context, controller),
-                  ],
-                ),
+          body:
+              controller.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : Column(
+                    children: [
+                      // _buildTodaySummary(controller, context),
+                      // _buildMonthlySummary(controller, context),
+                      // const SizedBox(height: 10),
+                      _buildTabs(context, controller),
+                    ],
+                  ),
         );
       },
     );
@@ -51,14 +52,15 @@ class _OrdersViewState extends State<OrdersView> {
   // ============================================================
 
   Widget _buildTodaySummary(OrderController controller, BuildContext context) {
-    final completedToday = controller.finishedOrders.where((o) {
-      if (o == null) return false;
-      final date = DateTime.fromMillisecondsSinceEpoch(o.createdAt ?? 0);
-      final now = DateTime.now();
-      return date.day == now.day &&
-          date.month == now.month &&
-          date.year == now.year;
-    }).length;
+    final completedToday =
+        controller.finishedOrders.where((o) {
+          if (o == null) return false;
+          final date = DateTime.fromMillisecondsSinceEpoch(o.createdAt ?? 0);
+          final now = DateTime.now();
+          return date.day == now.day &&
+              date.month == now.month &&
+              date.year == now.year;
+        }).length;
 
     final activated = completedToday >= 3;
     final remaining = activated ? 0 : (3 - completedToday);
@@ -89,17 +91,17 @@ class _OrdersViewState extends State<OrdersView> {
 
           activated
               ? Text(
-                  "✔ تم تفعيل العمولة (5٪ على جميع الطلبات)",
-                  style: context.typography.mdMedium.copyWith(
-                    color: AppColors.successForeground,
-                  ),
-                )
-              : Text(
-                  "باقي $remaining طلب لتفعيل العمولة",
-                  style: context.typography.mdMedium.copyWith(
-                    color: Colors.orange,
-                  ),
+                "✔ تم تفعيل العمولة (5٪ على جميع الطلبات)",
+                style: context.typography.mdMedium.copyWith(
+                  color: AppColors.successForeground,
                 ),
+              )
+              : Text(
+                "باقي $remaining طلب لتفعيل العمولة",
+                style: context.typography.mdMedium.copyWith(
+                  color: Colors.orange,
+                ),
+              ),
 
           const SizedBox(height: 14),
           Divider(color: Colors.grey.shade300),
@@ -169,10 +171,7 @@ class _OrdersViewState extends State<OrdersView> {
                 unselectedLabelStyle: context.typography.mdMedium,
                 indicatorSize: TabBarIndicatorSize.tab,
                 dividerColor: Colors.transparent,
-                tabs: const [
-                  Tab(text: "مكتملة"),
-                  Tab(text: "قيد التنفيذ"),
-                ],
+                tabs: const [Tab(text: "مكتملة"), Tab(text: "قيد التنفيذ")],
               ),
             ),
 

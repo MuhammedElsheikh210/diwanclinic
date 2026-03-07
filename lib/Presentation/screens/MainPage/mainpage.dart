@@ -41,7 +41,7 @@ class _MainPageState extends State<MainPage> {
               // BODY
               body:
                   controller.userType == null
-                      ? const ReservationsShimmer()
+                      ? const ProLoadingScreen()
                       : _buildBody(
                         currentIndex,
                         controller.userType ?? UserType.patient,
@@ -325,74 +325,61 @@ class _MainPageState extends State<MainPage> {
   }
 }
 
-class ReservationsShimmer extends StatelessWidget {
-  const ReservationsShimmer({super.key});
-
-  Widget box({double? w, double? h, double r = 12}) {
-    return Container(
-      width: w,
-      height: h,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(r),
-      ),
-    );
-  }
+class ProLoadingScreen extends StatelessWidget {
+  const ProLoadingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Shimmer.fromColors(
-      baseColor: Colors.grey.shade300,
-      highlightColor: Colors.grey.shade100,
-      child: Container(
-        color: const Color(0xffF5F6FA),
-        child: Column(
-          children: [
-            SizedBox(height: 20.h),
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Spacer(flex: 1),
 
-            // 🔹 Header Filters
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              child: Row(
-                children: [
-                  box(w: 48.w, h: 48.h, r: 14),
-                  SizedBox(width: 12.w),
-                  box(w: 120.w, h: 48.h, r: 14),
-                  SizedBox(width: 12.w),
-                  Expanded(child: box(h: 48.h, r: 14)),
-                ],
+              // 🔷 LOGO
+              Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F5E9), // أخضر فاتح من الهوية
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(30),
+
+                  child: Image.asset(Images.splash, fit: BoxFit.contain),
+                ),
               ),
-            ),
 
-            SizedBox(height: 18.h),
+              const SizedBox(height: 20),
 
-            // 🔹 Tabs
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              child: Row(
-                children: [
-                  Expanded(child: box(h: 42.h, r: 16)),
-                  SizedBox(width: 12.w),
-                  Expanded(child: box(h: 42.h, r: 16)),
-                ],
+              Text(
+                "نظام إدارة العيادات الذكي",
+                style: context.typography.mdMedium,
               ),
-            ),
 
-            SizedBox(height: 20.h),
+              const Spacer(),
 
-            // 🔹 Reservation Card
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              child: box(h: 120.h, r: 20),
-            ),
+              // 🔷 LOADER
+              const CupertinoActivityIndicator(
+                radius: 50,
+                color: AppColors.primary,
+              ),
 
-            SizedBox(height: 12.h),
+              const SizedBox(height: 20),
 
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              child: box(h: 120.h, r: 20),
-            ),
-          ],
+              const Text(
+                "جاري تجهيز مساحة العمل...",
+                style: TextStyle(fontSize: 14, color: Colors.black45),
+              ),
+
+              const Spacer(flex: 2),
+            ],
+          ),
         ),
       ),
     );

@@ -571,6 +571,8 @@ class CreateReservationViewModel extends GetxController {
       syncStatus: SyncStatus.pendingCreate,
       status: ReservationStatus.approved.value,
     );
+    print("clinic key is ${clinic_key}");
+    print("newReservation  is ${newReservation.toJson()}");
     createReservation(newReservation);
   }
 
@@ -740,18 +742,11 @@ class CreateReservationViewModel extends GetxController {
       // 1️⃣ Add Local (Optimistic)
       await ReservationService().addReservationData(
         reservation: reservation,
-        voidCallBack: (_) {},
+        voidCallBack: (_) {
+          // 3️⃣ Create patient meta
+          createPatientReservation(reservation);
+        },
       );
-
-      // // 2️⃣ FAST PUSH → Remote immediately
-      // await Get.find<ReservationSyncController>().pushSingleReservation(
-      //   reservation,
-      // );
-
-      //  await getReservations();
-
-      // 3️⃣ Create patient meta
-      createPatientReservation(reservation);
     } catch (e) {
       Loader.dismiss();
       Loader.showError("حدث خطأ أثناء إنشاء الحجز");
