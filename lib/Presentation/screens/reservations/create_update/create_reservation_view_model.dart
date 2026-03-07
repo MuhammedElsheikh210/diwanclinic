@@ -125,13 +125,11 @@ class CreateReservationViewModel extends GetxController {
         if (data.isNotEmpty) {
           // 👈 أول عنصر كفاية لأن اليوم واحد
           final item = data.first;
-          print("item in day close is ${item?.toJson()}");
           if (item != null && item.isClosed == true) {
             isDayClosed = true;
           }
         }
 
-        print("isDayClosed is ${isDayClosed}");
         update();
       },
     );
@@ -219,11 +217,10 @@ class CreateReservationViewModel extends GetxController {
 
     final formatted = companyNameController.text;
     final legacyDate =
-        formatted.contains('/') ? _convertSlashToDash(formatted) : formatted;
+        formatted.contains('/') ? normalizeToDashDate(formatted) : formatted;
 
     // 1️⃣ حمّل الكشكول للشيفت الجديد
     await loadLegacyQueueForDate(legacyDate);
-
 
     // 2️⃣ حمّل حالة اليوم (مفتوح / مغلق)
     await loadOpenCloseStatusForDate(legacyDate);
@@ -297,7 +294,7 @@ class CreateReservationViewModel extends GetxController {
     companyNameController.text = formatted;
 
     // 2️⃣ حمّل الكشكول للتاريخ الجديد
-    await loadLegacyQueueForDate(DateFormat('dd/MM/yyyy').format(date));
+    await loadLegacyQueueForDate(DateFormat('dd-MM-yyyy').format(date));
 
     // 3️⃣ احسب عدد حجوزات السيستم في اليوم ده
     total_reservations = await getTotalTodayReservations(formatted);
@@ -310,7 +307,6 @@ class CreateReservationViewModel extends GetxController {
 
   void recalculateOrderNum() {
     final int systemCount = total_reservations;
-    print("systemCount is ${systemCount}");
 
     if (isFromLegacyQueue) {
       // 🟦 من الكشكول → إدخال يدوي
@@ -387,13 +383,16 @@ class CreateReservationViewModel extends GetxController {
     // Date → parse either dd/MM/yyyy or yyyy-MM-dd
     if (reservation.appointmentDateTime != null) {
       try {
-        final parsed = DateFormat("dd/MM/yyyy")
-            .parse(_convertSlashToDash(reservation.appointmentDateTime!));
+        final parsed = DateFormat(
+          "dd-MM-yyyy",
+        ).parse(normalizeToDashDate(reservation.appointmentDateTime!));
 
         create_at = parsed.millisecondsSinceEpoch;
       } catch (_) {
         try {
-          final parsed = DateFormat("dd/MM/yyyy",).parse(reservation.appointmentDateTime!);
+          final parsed = DateFormat(
+            "dd-MM-yyyy",
+          ).parse(reservation.appointmentDateTime!);
           create_at = parsed.millisecondsSinceEpoch;
         } catch (_) {
           create_at = DateTime.now().millisecondsSinceEpoch;
@@ -507,7 +506,7 @@ class CreateReservationViewModel extends GetxController {
 
         appointmentDateTime:
             companyNameController.text.contains('/')
-                ? _convertSlashToDash(companyNameController.text)
+                ? normalizeToDashDate(companyNameController.text)
                 : companyNameController.text,
 
         paidAmount: paidAmountController.text,
@@ -556,7 +555,7 @@ class CreateReservationViewModel extends GetxController {
 
       appointmentDateTime:
           companyNameController.text.contains('/')
-              ? _convertSlashToDash(companyNameController.text)
+              ? normalizeToDashDate(companyNameController.text)
               : companyNameController.text,
 
       paidAmount: paidAmountController.text,
@@ -572,7 +571,6 @@ class CreateReservationViewModel extends GetxController {
       syncStatus: SyncStatus.pendingCreate,
       status: ReservationStatus.approved.value,
     );
-
     createReservation(newReservation);
   }
 
@@ -860,23 +858,40 @@ String convertArabicToEnglishNumbers(String input) {
 }
 
 String _toDashFormat(DateTime date) {
-  return DateFormat('dd/MM/yyyy').format(date);
+  return DateFormat('dd-MM-yyyy').format(date);
 }
 
-String _convertSlashToDash(String date) {
+String normalizeToDashDate(String? date) {
+  if (date == null || date.isEmpty) {
+    return DateFormat('dd-MM-yyyy').format(DateTime.now());
+  }
+
   try {
+    // dd/MM/yyyy
     if (date.contains('/')) {
       final parsed = DateFormat('dd/MM/yyyy').parse(date);
-      return DateFormat('dd/MM/yyyy').format(parsed);
+      return DateFormat('dd-MM-yyyy').format(parsed);
     }
 
-    if (date.contains('-')) {
-      final parsed = DateFormat('dd-MM-yyyy').parse(date);
-      return DateFormat('dd/MM/yyyy').format(parsed);
+    // yyyy-MM-dd
+    if (RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(date)) {
+      final parsed = DateFormat('yyyy-MM-dd').parse(date);
+      return DateFormat('dd-MM-yyyy').format(parsed);
+    }
+
+    // dd-MM-yyyy (already correct)
+    if (RegExp(r'^\d{2}-\d{2}-\d{4}$').hasMatch(date)) {
+      return date;
+    }
+
+    // fallback
+    final parsed = DateTime.tryParse(date);
+    if (parsed != null) {
+      return DateFormat('dd-MM-yyyy').format(parsed);
     }
 
     return date;
   } catch (_) {
-    return date.replaceAll('-', '/');
+    return DateFormat('dd-MM-yyyy').format(DateTime.now());
   }
 }

@@ -21,12 +21,25 @@ class MainPageViewModel extends GetxController {
   StreamSubscription<DatabaseEvent>? _clientsSyncSubscription;
   bool _isClientsSyncing = false;
   int _lastHandledTimestamp = 0;
+  final ReservationService _reservationService = ReservationService();
 
   @override
   Future<void> onInit() async {
     super.onInit();
     await _fetchUserFromFirebase();
     _listenToClientsSync(); // 🔥 هنا
+    await _startReservationsRealtime();
+  }
+
+  Future<void> _startReservationsRealtime() async {
+    final doctorKey = LocalUser().getUserData().doctorKey ?? "";
+    if (doctorKey.isEmpty) return;
+
+    print("🚀 GLOBAL Reservations Realtime START");
+
+    await _reservationService.startListening(doctorKey: doctorKey);
+
+    print("✅ GLOBAL Reservations Realtime RUNNING");
   }
 
   void _listenToClientsSync() {
@@ -53,7 +66,6 @@ class MainPageViewModel extends GetxController {
       print("🔄 Clients Realtime Sync Triggered");
 
       await _runClientsFullSync();
-      await _runReservationsFullSync();
 
       await ref.update({"last_update_timestamp": lastAdd});
 
@@ -63,25 +75,6 @@ class MainPageViewModel extends GetxController {
     });
   }
 
-  Future<void> _runReservationsFullSync() async {
-    try {
-      print("⬇ Clearing local reservations...");
-
-      final today = DateFormat('dd/MM/yyyy').format(DateTime.now());
-
-      print("⬇ Downloading reservations from Firebase...");
-
-      await ReservationService().getReservationsData(
-
-        query: SQLiteQueryParams(),
-        voidCallBack: (_) {},
-      );
-
-      print("✅ Reservations synced successfully");
-    } catch (e) {
-      print("❌ Reservations Sync Error: $e");
-    }
-  }
 
   Future<void> _runClientsFullSync() async {
     try {

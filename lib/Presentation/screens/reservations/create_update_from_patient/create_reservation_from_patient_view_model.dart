@@ -152,7 +152,7 @@ class CreateReservationFromPatientViewModel extends GetxController {
     String? formattedDate;
     if (create_at != null) {
       formattedDate = DateFormat(
-        "dd/MM/yyyy",
+        "dd-MM-yyyy",
       ).format(DateTime.fromMillisecondsSinceEpoch(create_at!));
     }
 

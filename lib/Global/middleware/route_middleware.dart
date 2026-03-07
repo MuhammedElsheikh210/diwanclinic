@@ -59,7 +59,7 @@ class RouteWelcomeMiddleWare extends GetMiddleware {
                 user.userType == UserType.pharmacy ||
                 user.userType == UserType.sales)
             ? mainpage
-            : mainpage;
+            : syncView;
 
     if (route != targetRoute) {
       return RouteSettings(name: targetRoute);

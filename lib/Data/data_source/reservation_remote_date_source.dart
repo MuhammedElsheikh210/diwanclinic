@@ -7,13 +7,26 @@ abstract class ReservationRemoteDataSource {
 
   Future<void> deleteReservation(ReservationModel model);
 
-  Future<void> listenToReservations({
-    required String doctorKey,
-    required String date,
-    required Function(ReservationModel model) onAdded,
-    required Function(ReservationModel model) onChanged,
-    required Function(String key) onRemoved,
-  });
+  // ============================================================
+  // 🎧 REALTIME CONTROL
+  // ============================================================
 
+  /// Start realtime listening to doctor's reservations
+  Future<void> startListening({required String doctorKey});
+
+  /// Stop all active listeners
   Future<void> stopListening();
+
+  // ============================================================
+  // 🔥 REALTIME STREAMS
+  // ============================================================
+
+  /// Emits when a reservation is added
+  Stream<ReservationModel> get onAdded;
+
+  /// Emits when a reservation is updated
+  Stream<ReservationModel> get onChanged;
+
+  /// Emits when a reservation is deleted
+  Stream<String> get onRemoved;
 }

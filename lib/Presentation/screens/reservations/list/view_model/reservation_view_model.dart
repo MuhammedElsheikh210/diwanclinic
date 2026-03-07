@@ -12,6 +12,8 @@ class ReservationViewModel extends GetxController {
   bool _isListening = false;
   bool _isProcessingStatus = false;
 
+  final ReservationService _reservationService = ReservationService();
+
   // Services
   final PrescriptionUploadService prescriptionService =
       PrescriptionUploadService();
@@ -21,6 +23,7 @@ class ReservationViewModel extends GetxController {
   bool? fromUpdate;
   bool isSyncing = false;
   bool _isInitialLoad = true;
+  Timer? _refreshTimer;
 
   int selectedTab = 0;
   int completedReservation = 0;
@@ -77,6 +80,7 @@ class ReservationViewModel extends GetxController {
   Future<void> onInit() async {
     super.onInit();
     _initManagers();
+    _listenToGlobalReservationEvents();
   }
 
   void _initManagers() {
@@ -84,11 +88,6 @@ class ReservationViewModel extends GetxController {
     filterManager = ReservationFilterManager();
     actionManager = ReservationActionManager();
     queryManager = ReservationQueryManager();
-  }
-
-  @override
-  void onClose() {
-    super.onClose();
   }
 
   // Fetch clinics
@@ -136,28 +135,11 @@ class ReservationViewModel extends GetxController {
           selectedShift = shift;
 
           // 🔥 دايمًا اعمل normalize
-          appointmentDate ??= DateFormat("dd/MM/yyyy").format(DateTime.now());
+          appointmentDate ??= DateFormat("dd-MM-yyyy").format(DateTime.now());
 
-          final normalizedDate = AppDateFormatter.normalize(appointmentDate);
+          //  await _startRealtime();
 
-          if (!_isListening) {
-            ReservationService().startListening(
-              doctorKey: LocalUser().getUserData().doctorKey ?? "",
-              date: normalizedDate,
-              onChanged: (model) {
-                _updateListInMemory(model);
-              },
-              onRemoved: (key) {
-                completeDayReservations.removeWhere((e) => e?.key == key);
-                listReservations?.removeWhere((e) => e?.key == key);
-                update();
-              },
-            );
-            _isListening = true;
-          }
-
-            await getReservations();
-
+          await getReservations();
 
           update();
         },
@@ -185,26 +167,10 @@ class ReservationViewModel extends GetxController {
           if (shiftDropdownItems!.length == 1) {
             selectedShift = shiftDropdownItems!.first;
 
-            appointmentDate ??= DateFormat("dd/MM/yyyy").format(DateTime.now());
+            appointmentDate ??= DateFormat("dd-MM-yyyy").format(DateTime.now());
+
+            //   await _startRealtime();
             await getReservations();
-            if (!_isListening) {
-              ReservationService().startListening(
-                doctorKey: LocalUser().getUserData().doctorKey ?? "",
-                date: appointmentDate!,
-
-                onChanged: (model) {
-                  _updateListInMemory(model);
-                },
-
-                onRemoved: (key) {
-                  completeDayReservations.removeWhere((e) => e?.key == key);
-                  listReservations?.removeWhere((e) => e?.key == key);
-                  update();
-                },
-              );
-
-              _isListening = true;
-            }
           }
           // ✅ أكثر من شيفت → افتح Dialog
           else {
@@ -222,33 +188,6 @@ class ReservationViewModel extends GetxController {
         update();
       },
     );
-  }
-
-  void _updateListInMemory(ReservationModel model) {
-    if (fromUpdate == true) {
-      fromUpdate = false;
-      return; // ignore any server echo for this change
-    }
-
-    listReservations ??= [];
-
-    final dayIndex = completeDayReservations.indexWhere(
-      (e) => e?.key == model.key,
-    );
-
-    if (dayIndex != -1) {
-      completeDayReservations[dayIndex] = model;
-    } else {
-      completeDayReservations.insert(0, model);
-    }
-
-    final rebuilt = queueManager.buildFinalList(
-      completeDayReservations.whereType<ReservationModel>().toList(),
-    );
-
-    listReservations = rebuilt;
-
-    update();
   }
 
   Future<void> changeReservationStatus({
@@ -364,9 +303,126 @@ class ReservationViewModel extends GetxController {
       binding: Binding(),
     );
   }
+
+  @override
+  void onClose() {
+    _reservationService.dispose();
+    super.onClose();
+  }
 }
 
 extension ReservationData on ReservationViewModel {
+  void _listenToGlobalReservationEvents() {
+    final service = ReservationService();
+
+    service.onReservationAdded = (reservation) {
+      if (!_belongsToCurrentFilters(reservation)) return;
+
+      _updateListInMemory(reservation);
+    };
+
+    service.onReservationUpdated = (reservation) {
+      if (!_belongsToCurrentFilters(reservation)) return;
+
+      _updateListInMemory(reservation);
+    };
+
+    service.onReservationRemoved = (key) {
+      completeDayReservations.removeWhere((e) => e?.key == key);
+
+      final rebuilt = queueManager.buildFinalList(
+        completeDayReservations.whereType<ReservationModel>().toList(),
+      );
+
+      listReservations = rebuilt;
+      update();
+    };
+  }
+
+  bool _belongsToCurrentFilters(ReservationModel r) {
+    print("modeeel is ${r.toJson()}");
+    if (appointmentDate == null) return false;
+    if (selectedShift == null) return false;
+    if (selectedClinic == null) return false;
+
+    final reservationDate = AppDateFormatter.normalize(r.appointmentDateTime);
+
+    final screenDate = AppDateFormatter.normalize(appointmentDate);
+
+    return reservationDate == screenDate &&
+        r.shiftKey == selectedShift!.key &&
+        r.clinicKey == selectedClinic!.key;
+  }
+
+  // Future<void> _startRealtime() async {
+  //   if (_isListening) {
+  //     debugPrint("🟡 Realtime already running — skip");
+  //     return;
+  //   }
+  //
+  //   final doctorKey = LocalUser().getUserData().doctorKey ?? "";
+  //
+  //   debugPrint("🚀 START REALTIME SYNC (Background)");
+  //
+  //   // 1️⃣ شغّل الريلتايم
+  //   await _reservationService.startListening(doctorKey: doctorKey);
+  //
+  //   // 2️⃣ اربط الأحداث بالـ ViewModel
+  //   _reservationService.onReservationAdded = (reservation) {
+  //     debugPrint("🟢 VM received added reservation → ${reservation.key}");
+  //     _updateListInMemory(reservation);
+  //   };
+  //
+  //   _reservationService.onReservationUpdated = (reservation) {
+  //     debugPrint("🟡 VM received updated reservation → ${reservation.key}");
+  //     _updateListInMemory(reservation);
+  //   };
+  //
+  //   _reservationService.onReservationRemoved = (key) {
+  //     debugPrint("🔴 VM received removed reservation → $key");
+  //
+  //     completeDayReservations.removeWhere((e) => e?.key == key);
+  //
+  //     final rebuilt = queueManager.buildFinalList(
+  //       completeDayReservations.whereType<ReservationModel>().toList(),
+  //     );
+  //
+  //     listReservations = rebuilt;
+  //     update();
+  //   };
+  //
+  //   _isListening = true;
+  //   debugPrint("✅ Realtime Sync Running");
+  // }
+
+  void _updateListInMemory(ReservationModel model) {
+    if (fromUpdate == true) {
+      fromUpdate = false;
+      return;
+    }
+
+    // 1️⃣ حدث قائمة اليوم
+    final index = completeDayReservations.indexWhere(
+      (e) => e?.key == model.key,
+    );
+
+    if (index != -1) {
+      completeDayReservations[index] = model;
+    } else {
+      completeDayReservations.insert(0, model);
+    }
+
+    // 2️⃣ 👈 أعد تطبيق الفلاتر
+    final rebuilt = queueManager.buildFinalList(
+      completeDayReservations.whereType<ReservationModel>().toList(),
+    );
+
+    listReservations = rebuilt;
+
+    // 3️⃣ حدث الشاشة
+    update();
+  }
+
   // ============================================================
   // 🔹 Fetch Reservations (PARALLEL + SAFE)
   // ============================================================
@@ -374,25 +430,14 @@ extension ReservationData on ReservationViewModel {
   Future<void> getReservations() async {
     final doctorKey = LocalUser().getUserData().doctorKey;
 
-    debugPrint("══════════════════════════════");
-    debugPrint("📅 getReservations CALLED");
-    debugPrint("DoctorKey: $doctorKey");
-    debugPrint("AppointmentDate: $appointmentDate");
-    debugPrint("SelectedShift: ${selectedShift?.key}");
-    debugPrint("SelectedClinic: ${selectedClinic?.key}");
-    debugPrint("══════════════════════════════");
-
     if (doctorKey == null ||
         doctorKey.isEmpty ||
         appointmentDate == null ||
         selectedShift == null) {
-      debugPrint("⛔ getReservations ABORTED");
       return;
     }
 
     final normalizedDate = AppDateFormatter.normalize(appointmentDate);
-
-    debugPrint("📅 Normalized Date: $normalizedDate");
 
     try {
       await Future.wait([
@@ -421,8 +466,6 @@ extension ReservationData on ReservationViewModel {
       shiftKey: selectedShift!.key,
     );
 
-    debugPrint("📊 Daily Reservations Count: ${daily.length}");
-
     completeDayReservations = daily;
   }
 
@@ -438,15 +481,9 @@ extension ReservationData on ReservationViewModel {
       selectedTab: selectedTab,
     );
 
-    debugPrint("🧠 Filter Built: $query");
-
     final filtered = await queryManager.getReservations(query: query);
 
-    debugPrint("📊 Filtered Reservations Count: ${filtered.length}");
-
     listReservations = queueManager.buildFinalList(filtered);
-
-    debugPrint("📦 Final List Count: ${listReservations?.length}");
   }
 
   // ============================================================
@@ -460,10 +497,6 @@ extension ReservationData on ReservationViewModel {
       appointmentDate: normalizedDate,
       shiftKey: selectedShift!.key,
     );
-
-    debugPrint(
-      "💰 Completed Reservations For Report: ${completedForReport.length}",
-    );
   }
 
   // ============================================================
@@ -475,14 +508,12 @@ extension ReservationData on ReservationViewModel {
       return 0;
     }
 
-    final normalizedDate = AppDateFormatter.normalize(appointmentDate);
+    final normalizedDate = AppDateFormatter.toDash(appointmentDate);
 
     final total = await queryManager.getTotalByDate(
       appointmentDate: normalizedDate,
       shiftKey: selectedShift!.key,
     );
-
-    debugPrint("📊 Total Today Reservations: $total");
 
     return total;
   }

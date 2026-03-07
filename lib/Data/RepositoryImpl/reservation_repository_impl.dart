@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 import 'package:dartz/dartz.dart';
 import '../../index/index_main.dart';
@@ -9,93 +10,109 @@ class ReservationRepositoryImpl implements ReservationRepository {
 
   ReservationRepositoryImpl(this._local, this._remote, this._connectivity);
 
-  // ============================================================
-  // 🔥 REALTIME LISTENER
-  // ============================================================
   final Set<String> _processedKeys = {};
+  StreamSubscription? _addedSub;
+  StreamSubscription? _changedSub;
+  StreamSubscription? _removedSub;
+
+  // ============================================================
+  // 🌊 STREAM CONTROLLERS (Expose to upper layers)
+  // ============================================================
+
+  final _addedController = StreamController<ReservationModel>.broadcast();
+  final _changedController = StreamController<ReservationModel>.broadcast();
+  final _removedController = StreamController<String>.broadcast();
+
   @override
-  void startListening({
-    required String doctorKey,
-    required String date,
-    required Function(ReservationModel model) onChanged,
-    required Function(String key) onRemoved,
-  }) {
+  Stream<ReservationModel> get onAdded => _addedController.stream;
+
+  @override
+  Stream<ReservationModel> get onChanged => _changedController.stream;
+
+  @override
+  Stream<String> get onRemoved => _removedController.stream;
+
+  // ============================================================
+  // 🎧 REALTIME SYNC (Firebase → SQLite → Streams)
+  // ============================================================
+
+  @override
+  Future<void> startListening({required String doctorKey}) async {
     log("🎧 Start Listening Reservations → doctor: $doctorKey");
+
     _processedKeys.clear();
-    _remote.listenToReservations(
-      doctorKey: doctorKey,
-      date: date,
+    await _remote.startListening(doctorKey: doctorKey);
 
-      // ========================================================
-      // ➕ ADDED FROM FIREBASE
-      // ========================================================
+    _addedSub = _remote.onAdded.listen((model) async {
+      final key = model.key;
+      if (key == null) return;
 
-      onAdded: (model) async {
-        if (model.key == null) return;
+      if (_processedKeys.contains(key)) {
+        log("⚠️ Duplicate Ignored → $key");
+        return;
+      }
 
-        if (_processedKeys.contains(model.key)) {
-          log("⚠️ Duplicate Event Ignored → ${model.key}");
-          return;
-        }
+      _processedKeys.add(key);
 
-        _processedKeys.add(model.key!);
+      log("🔥 Firebase Added → $key");
+      await _local.upsertFromServer(model);
+      log("💾 Saved To SQLite → $key");
 
-        log("🔥 Firebase Added → ${model.key}");
+      // ✅ Forward event
+      _addedController.add(model);
+    });
 
-        await _local.upsertFromServer(model);
+    _changedSub = _remote.onChanged.listen((model) async {
+      final key = model.key;
+      if (key == null) return;
 
-        log("💾 Saved To SQLite → ${model.key}");
+      log("🔄 Firebase Changed → $key");
+      await _local.upsertFromServer(model);
+      log("💾 SQLite Updated → $key");
 
-        onChanged(model);
-      },
+      // ✅ Forward event
+      _changedController.add(model);
+    });
 
-      // ========================================================
-      // 🔄 CHANGED FROM FIREBASE
-      // ========================================================
+    _removedSub = _remote.onRemoved.listen((key) async {
+      log("❌ Firebase Removed → $key");
+      await _local.deleteReservation(key);
+      log("💾 SQLite Deleted → $key");
 
-      onChanged: (model) async {
-        if (model.key == null) return;
-
-        log("🔄 Firebase Changed → ${model.key}");
-
-        await _local.upsertFromServer(model);
-
-        log("💾 SQLite Updated → ${model.key}");
-
-        onChanged(model);
-      },
-
-      // ========================================================
-      // ❌ REMOVED FROM FIREBASE
-      // ========================================================
-
-      onRemoved: (key) async {
-        log("❌ Firebase Removed → $key");
-
-        await _local.deleteReservation(key);
-
-        log("💾 SQLite Deleted → $key");
-
-        onRemoved(key);
-      },
-    );
-  }
-
-  @override
-  void dispose() {
-    log("🛑 Stop Listening Reservations");
-    _processedKeys.clear();
-    _remote.stopListening();
+      // ✅ Forward event
+      _removedController.add(key);
+    });
   }
 
   // ============================================================
-  // 📦 GET (Always From Local)
+  // 🛑 STOP REALTIME
+  // ============================================================
+
+  @override
+  Future<void> dispose() async {
+    log("🛑 Stop Listening Reservations");
+
+    _processedKeys.clear();
+
+    await _addedSub?.cancel();
+    await _changedSub?.cancel();
+    await _removedSub?.cancel();
+
+    await _remote.stopListening();
+
+    await _addedController.close();
+    await _changedController.close();
+    await _removedController.close();
+  }
+
+  // ============================================================
+  // 📦 GET (LOCAL ONLY)
   // ============================================================
 
   @override
   Future<Either<AppError, List<ReservationModel?>>> getReservationsDomain(
-      SQLiteQueryParams query,
-      ) async {
+    SQLiteQueryParams query,
+  ) async {
     try {
       log("📦 Fetch Reservations From SQLite");
 
@@ -111,40 +128,30 @@ class ReservationRepositoryImpl implements ReservationRepository {
   }
 
   // ============================================================
-  // ➕ CREATE (Offline First + Instant Remote If Online)
+  // ➕ CREATE (Offline First)
   // ============================================================
 
   @override
   Future<Either<AppError, Unit>> addReservationDomain(
-      ReservationModel model,
-      ) async {
+    ReservationModel model,
+  ) async {
     try {
       log("➕ Add Reservation → ${model.key}");
 
-      // 1️⃣ Save Locally First
       await _local.addReservation(model);
 
-      log("💾 Saved Locally → ${model.key}");
-
-      // 2️⃣ If Online → Push Immediately
       if (await _connectivity.isOnline()) {
-        log("🌐 Internet Available → Push To Firebase");
-
         await _remote.createReservation(model);
 
         await _local.markAsSynced(
           model.key!,
           serverUpdatedAt: DateTime.now().millisecondsSinceEpoch,
         );
-
-        log("☁️ Synced With Firebase → ${model.key}");
-      } else {
-        log("📴 Offline → Will Sync Later");
       }
 
       return const Right(unit);
     } catch (e) {
-      log("❌ Add Reservation Error → $e");
+      log("❌ Add Error → $e");
       return Left(AppError(e.toString()));
     }
   }
@@ -155,28 +162,18 @@ class ReservationRepositoryImpl implements ReservationRepository {
 
   @override
   Future<Either<AppError, Unit>> updateReservationDomain(
-      ReservationModel model,
-      ) async {
+    ReservationModel model,
+  ) async {
     try {
-      log("🔄 Update Reservation → ${model.key}");
-
       await _local.updateReservation(model);
 
-      log("💾 SQLite Updated → ${model.key}");
-
       if (await _connectivity.isOnline()) {
-        log("🌐 Internet Available → Update Firebase");
-
         await _remote.updateReservation(model);
 
         await _local.markAsSynced(
           model.key!,
           serverUpdatedAt: DateTime.now().millisecondsSinceEpoch,
         );
-
-        log("☁️ Firebase Updated → ${model.key}");
-      } else {
-        log("📴 Offline → Update Pending Sync");
       }
 
       return const Right(unit);
@@ -193,35 +190,22 @@ class ReservationRepositoryImpl implements ReservationRepository {
   @override
   Future<Either<AppError, Unit>> deleteReservationDomain(String key) async {
     try {
-      log("❌ Delete Reservation → $key");
-
       final all = await _local.getReservations(
         SQLiteQueryParams(where: "key = ?", whereArgs: [key]),
       );
 
       final model = all.firstOrNull;
-      if (model == null) {
-        log("⚠️ Reservation Not Found In SQLite → $key");
-        return const Right(unit);
-      }
+      if (model == null) return const Right(unit);
 
       await _local.deleteReservation(key);
 
-      log("💾 SQLite Soft Delete → $key");
-
       if (await _connectivity.isOnline()) {
-        log("🌐 Internet Available → Delete Firebase");
-
         await _remote.deleteReservation(model);
 
         await _local.markAsSynced(
           key,
           serverUpdatedAt: DateTime.now().millisecondsSinceEpoch,
         );
-
-        log("☁️ Firebase Deleted → $key");
-      } else {
-        log("📴 Offline → Delete Pending Sync");
       }
 
       return const Right(unit);
@@ -232,39 +216,31 @@ class ReservationRepositoryImpl implements ReservationRepository {
   }
 
   // ============================================================
-  // ⭐ PATIENT META (Remote Only)
+  // ⭐ PATIENT META
   // ============================================================
 
   @override
   Future<Either<AppError, SuccessModel>> addPatientReservationMetaDomain(
-      ReservationModel meta,
-      String patientKey,
-      ) async {
+    ReservationModel meta,
+    String patientKey,
+  ) async {
     try {
-      log("⭐ Add Patient Reservation Meta");
-
       final result = await _local.addPatientReservationMeta(meta, patientKey);
-
       return Right(result);
     } catch (e) {
-      log("❌ Add Patient Meta Error → $e");
       return Left(AppError(e.toString()));
     }
   }
 
   @override
   Future<Either<AppError, SuccessModel>> updatePatientReservationDomain(
-      ReservationModel meta,
-      String key,
-      ) async {
+    ReservationModel meta,
+    String key,
+  ) async {
     try {
-      log("⭐ Update Patient Reservation Meta");
-
       final result = await _local.updatePatientReservation(meta, key);
-
       return Right(result);
     } catch (e) {
-      log("❌ Update Patient Meta Error → $e");
       return Left(AppError(e.toString()));
     }
   }
@@ -273,15 +249,9 @@ class ReservationRepositoryImpl implements ReservationRepository {
   Future<Either<AppError, List<ReservationModel>>>
   getPatientReservationsMetaDomain(String patientKey) async {
     try {
-      log("⭐ Fetch Patient Reservations Meta");
-
       final result = await _local.getPatientReservationsMeta(patientKey);
-
-      log("⭐ Patient Reservations Count → ${result.length}");
-
       return Right(result);
     } catch (e) {
-      log("❌ Fetch Patient Meta Error → $e");
       return Left(AppError(e.toString()));
     }
   }

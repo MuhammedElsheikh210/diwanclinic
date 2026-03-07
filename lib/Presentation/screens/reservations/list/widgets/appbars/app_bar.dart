@@ -45,7 +45,7 @@ class ReservationDateAppBar extends StatelessWidget
                     final d = timestamp.toDate();
                     controller.create_at = d.millisecondsSinceEpoch;
                     controller.appointmentDate = DateFormat(
-                      'dd/MM/yyyy',
+                      'dd-MM-yyyy',
                     ).format(d);
 
                     controller.getReservations();

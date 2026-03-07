@@ -1,19 +1,25 @@
 import 'package:dartz/dartz.dart';
+
 import '../../index/index_main.dart';
 
 abstract class ReservationRepository {
   // ============================================================
-  // 🔥 REALTIME (Reservations Only)
+  // 🔥 REALTIME CONTROL (Firebase → SQLite Sync Only)
   // ============================================================
 
-  void startListening({
-    required String doctorKey,
-    required String date,
-    required Function(ReservationModel model) onChanged,
-    required Function(String key) onRemoved,
-  });
+  Future<void> startListening({required String doctorKey});
 
-  void dispose();
+  Future<void> dispose();
+
+  // ============================================================
+  // 🔥 REALTIME STREAMS (Expose to upper layers)
+  // ============================================================
+
+  Stream<ReservationModel> get onAdded;
+
+  Stream<ReservationModel> get onChanged;
+
+  Stream<String> get onRemoved;
 
   // ============================================================
   // 🔹 LOCAL RESERVATIONS (Offline First)

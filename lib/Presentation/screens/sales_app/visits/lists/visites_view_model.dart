@@ -13,7 +13,7 @@ class VisitViewModel extends GetxController {
 
   String get formattedSelectedDate => selectedDate == null
       ? "كل الزيارات"
-      : DateFormat('dd/MM/yyyy').format(selectedDate!);
+      : DateFormat('dd-MM-yyyy').format(selectedDate!);
 
   /// ================= Dashboard Stats =================
 

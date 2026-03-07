@@ -1,41 +1,70 @@
 // ignore_for_file: avoid_renaming_method_parameters
+
+import 'dart:async';
 import '../../../index/index_main.dart';
 
 class ReservationService {
+  // ============================================================
+  // 🧠 SINGLETON
+  // ============================================================
+
+  static final ReservationService _instance = ReservationService._internal();
+
+  factory ReservationService() => _instance;
+
+  ReservationService._internal();
+
   final ReservationUseCases useCase = initController(
     () => ReservationUseCases(Get.find()),
   );
 
   // ============================================================
-  // 🔥 START REALTIME LISTENING (Reservations Only)
+  // 🎧 REALTIME CALLBACKS (For ViewModels)
   // ============================================================
 
-  void startListening({
-    required String doctorKey,
-    required String date,
-    required Function(ReservationModel model) onChanged,
-    required Function(String key) onRemoved,
-    VoidCallback? onInitialLoadComplete,
-  }) {
-    bool _firstBatch = true;
+  Function(ReservationModel reservation)? onReservationAdded;
+  Function(ReservationModel reservation)? onReservationUpdated;
+  Function(String key)? onReservationRemoved;
 
-    useCase.startListening(
-      doctorKey: doctorKey,
-      date: date,
-      onChanged: (model) {
-        if (_firstBatch) {
-          _firstBatch = false;
-          onInitialLoadComplete?.call(); // 🔥 أول ما الداتا الأولى تخلص
-          return;
-        }
+  StreamSubscription? _addedSub;
+  StreamSubscription? _changedSub;
+  StreamSubscription? _removedSub;
 
-        onChanged(model);
-      },
-      onRemoved: (key) {
-        if (_firstBatch) return;
-        onRemoved(key);
-      },
-    );
+  bool _isListening = false;
+
+  // ============================================================
+  // 🔥 START REALTIME SYNC (Firebase → SQLite → UI)
+  // ============================================================
+
+  Future<void> startListening({required String doctorKey}) async {
+    if (_isListening) {
+      print("🟡 ReservationService already listening — skip");
+      return;
+    }
+
+    print("🎧 ReservationService START listening");
+
+    await useCase.startListening(doctorKey: doctorKey);
+
+    // 👂 Listen to realtime events from UseCases
+    _addedSub = useCase.onAdded.listen((reservation) {
+      print("📡 Service Event → ADDED ${reservation.key}");
+      onReservationAdded?.call(reservation);
+    });
+
+    _changedSub = useCase.onChanged.listen((reservation) {
+      print("📡 Service Event → CHANGED ${reservation.key}");
+      onReservationUpdated?.call(reservation);
+    });
+
+    _removedSub = useCase.onRemoved.listen((key) {
+      print("📡 Service Event → REMOVED $key");
+      onReservationRemoved?.call(key);
+    });
+
+    _isListening = true;
+
+    print("✅ ReservationService listening ACTIVE");
   }
 
   // ============================================================
@@ -55,7 +84,7 @@ class ReservationService {
   }
 
   // ============================================================
-  // 🔹 UPDATE RESERVATION (Optimistic)
+  // 🔹 UPDATE RESERVATION
   // ============================================================
 
   Future<void> updateReservationData({
@@ -71,7 +100,7 @@ class ReservationService {
   }
 
   // ============================================================
-  // 🔹 DELETE RESERVATION (Soft Delete)
+  // 🔹 DELETE RESERVATION
   // ============================================================
 
   Future<void> deleteReservationData({
@@ -103,7 +132,7 @@ class ReservationService {
   }
 
   // ============================================================
-  // ⭐ PATIENT META (Remote Direct)
+  // ⭐ PATIENT META
   // ============================================================
 
   Future<void> addPatientReservationMeta({
@@ -144,10 +173,8 @@ class ReservationService {
     );
   }
 
-  // 🔹 Helper (Async direct return)
   Future<List<ReservationModel>> getPatientMetaAsync(String patientKey) async {
     final result = await useCase.getPatientReservationsMeta(patientKey);
-
     return result.fold((l) => <ReservationModel>[], (r) => r);
   }
 
@@ -161,10 +188,22 @@ class ReservationService {
   }
 
   // ============================================================
-  // 🔥 STOP LISTENING
+  // 🛑 STOP REALTIME SYNC
   // ============================================================
 
-  void dispose() {
-    useCase.dispose();
+  Future<void> dispose() async {
+    print("🛑 ReservationService dispose");
+
+    _isListening = false;
+
+    await _addedSub?.cancel();
+    await _changedSub?.cancel();
+    await _removedSub?.cancel();
+
+    _addedSub = null;
+    _changedSub = null;
+    _removedSub = null;
+
+    await useCase.dispose();
   }
 }

@@ -52,7 +52,6 @@ class _CreateReservationViewState extends State<CreateReservationView> {
     vm.loadShiftsForClinic();
     final totalReservation = widget.total_reservations + 1;
     vm.resOrderController.text = totalReservation.toString();
-    print("totalReservation in create is ${widget.total_reservations}");
     vm.total_reservations = totalReservation;
 
     final today = DateTime.now();
@@ -66,7 +65,7 @@ class _CreateReservationViewState extends State<CreateReservationView> {
         widget.reservation!.appointmentDateTime!.isNotEmpty) {
       try {
         selectedDate = DateFormat(
-          'dd/MM/yyyy',
+          'dd-MM-yyyy',
         ).parse(widget.reservation!.appointmentDateTime!);
       } catch (_) {
         selectedDate = today;
@@ -85,16 +84,16 @@ class _CreateReservationViewState extends State<CreateReservationView> {
     // 🔹 اضبط التاريخ في الـ ViewModel
     vm.create_at = selectedDate.millisecondsSinceEpoch;
     vm.companyNameController.text = DateFormat(
-      'dd/MM/yyyy',
+      'dd-MM-yyyy',
     ).format(selectedDate);
 
     // 🔹 حمّل حالة اليوم (مفتوح / مغلق)
     vm.loadOpenCloseStatusForDate(
-      DateFormat('dd/MM/yyyy').format(selectedDate),
+      DateFormat('dd-MM-yyyy').format(selectedDate),
     );
 
     // 🔹 حمّل حالة اليوم (مفتوح / مغلق)
-    vm.loadLegacyQueueForDate(DateFormat('dd/MM/yyyy').format(selectedDate));
+    vm.loadLegacyQueueForDate(DateFormat('dd-MM-yyyy').format(selectedDate));
 
     // 🔹 حمّل بيانات العيادة + المريض
     vm.getClinicList(
@@ -583,7 +582,7 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                             timeStamp.millisecondsSinceEpoch;
 
                                         final formatted = DateFormat(
-                                          'dd/MM/yyyy',
+                                          'dd-MM-yyyy',
                                         ).format(pickedDate);
 
                                         if (formatted !=

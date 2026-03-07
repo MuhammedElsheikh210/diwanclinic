@@ -22,7 +22,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 55, // ⬅️ زودنا الفيرجن عشان نضمن إعادة الإنشاء
+      version: 56, // ⬅️ زودنا الفيرجن عشان نضمن إعادة الإنشاء
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onConfigure: (db) async {
@@ -86,6 +86,7 @@ class DatabaseService {
         token TEXT,
         client_name TEXT,
         phone TEXT,
+        doctorQualifications TEXT,
         whats_app_phone TEXT,
         image TEXT,
         profile_image TEXT,

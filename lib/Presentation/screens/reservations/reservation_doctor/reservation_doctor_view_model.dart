@@ -147,7 +147,7 @@ class ReservationDoctorViewModel extends GetxController {
   // ─────────────────────────────────────────────
   void _setupDefaultDate() {
     final now = DateTime.now();
-    appointment_date_time = DateFormat('dd/MM/yyyy').format(now);
+    appointment_date_time = DateFormat('dd-MM-yyyy').format(now);
   }
 
   // ─────────────────────────────────────────────
@@ -254,7 +254,7 @@ class ReservationDoctorViewModel extends GetxController {
 
     if (create_at != null) {
       final date = DateFormat(
-        'dd/MM/yyyy',
+        'dd-MM-yyyy',
       ).format(DateTime.fromMillisecondsSinceEpoch(create_at!.toInt()));
 
       filters.add({

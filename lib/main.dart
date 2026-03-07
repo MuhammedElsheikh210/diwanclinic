@@ -31,6 +31,7 @@ void main() {
       ]);
 
       // 🔹 Local DB
+       DatabaseService().deleteDatabaseFile();
       final dbService = DatabaseService();
       await dbService.database;
       await dbService.checkTables();

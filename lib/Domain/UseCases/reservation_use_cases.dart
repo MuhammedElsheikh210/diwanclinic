@@ -7,22 +7,24 @@ class ReservationUseCases {
   ReservationUseCases(this._repository);
 
   // ============================================================
-  // 🔥 START REALTIME LISTENING (Reservations Only)
+  // 🔥 START REALTIME SYNC (Firebase → SQLite)
   // ============================================================
 
-  void startListening({
+  Future<void> startListening({
     required String doctorKey,
-    required String date,
-    required Function(ReservationModel model) onChanged,
-    required Function(String key) onRemoved,
   }) {
-    _repository.startListening(
-      doctorKey: doctorKey,
-      date: date,
-      onChanged: onChanged,
-      onRemoved: onRemoved,
-    );
+    return _repository.startListening(doctorKey: doctorKey);
   }
+
+  // ============================================================
+  // 🔥 REALTIME STREAMS (Expose to Service / ViewModel)
+  // ============================================================
+
+  Stream<ReservationModel> get onAdded => _repository.onAdded;
+
+  Stream<ReservationModel> get onChanged => _repository.onChanged;
+
+  Stream<String> get onRemoved => _repository.onRemoved;
 
   // ============================================================
   // 🔹 RESERVATIONS (Offline First)
@@ -53,7 +55,7 @@ class ReservationUseCases {
   }
 
   // ============================================================
-  // ⭐ PATIENT META (Remote Direct)
+  // ⭐ PATIENT META
   // ============================================================
 
   Future<Either<AppError, SuccessModel>> addPatientReservationMeta(
@@ -86,10 +88,10 @@ class ReservationUseCases {
   }
 
   // ============================================================
-  // 🔥 STOP LISTENING
+  // 🛑 STOP REALTIME SYNC
   // ============================================================
 
-  void dispose() {
-    _repository.dispose();
+  Future<void> dispose() {
+    return _repository.dispose();
   }
 }

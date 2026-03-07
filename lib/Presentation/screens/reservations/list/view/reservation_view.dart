@@ -24,7 +24,6 @@ class _ReservationViewState extends State<ReservationView> {
   @override
   Widget build(BuildContext context) {
     return GetBuilder<ReservationViewModel>(
-      init: controller,
       builder: (controller) {
         final reservations = controller.listReservations;
 

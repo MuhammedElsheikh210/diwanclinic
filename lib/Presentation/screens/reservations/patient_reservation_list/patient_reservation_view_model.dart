@@ -197,7 +197,7 @@ class ReservationPatientViewModel extends GetxController {
 
   Future<void> setupDefaultDate() async {
     final now = DateTime.now();
-    appointment_date_time = DateFormat('dd/MM/yyyy').format(now);
+    appointment_date_time = DateFormat('dd-MM-yyyy').format(now);
 
     totalCompleted = await getCompletedCountForToday();
 
@@ -291,7 +291,7 @@ class ReservationPatientViewModel extends GetxController {
         if (first != null) {
           final legacyDate = DateFormat(
             'dd-MM-yyyy',
-          ).format(DateFormat('dd/MM/yyyy').parse(first.appointmentDateTime!));
+          ).format(DateFormat('dd-MM-yyyy').parse(first.appointmentDateTime!));
 
           await loadLegacyQueueCount(
             doctorUid: first.doctorKey ?? "",
@@ -590,7 +590,7 @@ class ReservationPatientViewModel extends GetxController {
     }
     if (create_at != null) {
       final date = DateFormat(
-        'dd/MM/yyyy',
+        'dd-MM-yyyy',
       ).format(DateTime.fromMillisecondsSinceEpoch(create_at!.toInt()));
       filters.add({
         "label": "التاريخ: $date",
