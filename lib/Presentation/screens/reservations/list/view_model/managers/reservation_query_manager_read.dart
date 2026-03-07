@@ -104,15 +104,14 @@ class ReservationQueryManager {
   Future<LocalUser?> getPatientByKey(String patientKey) async {
     LocalUser? result;
 
-    await AuthenticationService().getClientsLocalData(
-      isFiltered: false,
+    await AuthenticationService().getClientsData(
       query: SQLiteQueryParams(
         where: "key = ?",
         whereArgs: [patientKey],
         limit: 1,
       ),
-      voidCallBack: (List<LocalUser?> clients) {
-        if (clients.isNotEmpty) {
+      voidCallBack: (clients) {
+        if (clients.isNotEmpty && clients.first != null) {
           result = clients.first;
         }
       },

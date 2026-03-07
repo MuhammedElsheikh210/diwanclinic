@@ -66,11 +66,10 @@ class LoginViewModel extends GetxController {
     Loader.show();
 
     final firebaseSignInUseCase = initController(
-          () => FirebaseSignIn_UseCase(Get.find()),
+      () => FirebaseSignIn_UseCase(Get.find()),
     );
 
-    final Either<AppError, UserCredential> result =
-    await firebaseSignInUseCase(
+    final Either<AppError, UserCredential> result = await firebaseSignInUseCase(
       FirebaseAuthModel(
         "${phone.value}@link.com",
         textEditingControllerPassword.text.isEmpty
@@ -80,10 +79,10 @@ class LoginViewModel extends GetxController {
     );
 
     result.fold(
-          (error) {
+      (error) {
         Loader.showError(error.messege);
       },
-          (credential) async {
+      (credential) async {
         Loader.showSuccess("تم تسجيل الدخول بنجاح");
         await getUserData(credential.user?.uid ?? "");
       },
@@ -105,7 +104,8 @@ class LoginViewModel extends GetxController {
       phone: phone.value,
       identifier: "${phone.value}@link.com",
       isCompleteProfile: 0,
-      fcmToken: newToken, // ممكن يكون null عادي
+      fcmToken: newToken,
+      // ممكن يكون null عادي
       userType: UserType.admin,
       password: password.value,
     );
@@ -124,19 +124,21 @@ class LoginViewModel extends GetxController {
   // ─────────────────────────────
 
   Future<void> getUserData(String uid) async {
-    AuthenticationService().getSingleClientsData(
-      filrebaseFilter: FirebaseFilter(equalTo: uid, orderBy: "token"),
-      voidCallBack: (user) async {
+    await AuthenticationService().getClientsData(
+      query: SQLiteQueryParams(where: "token = ?", whereArgs: [uid], limit: 1),
+      voidCallBack: (users) async {
         Loader.dismiss();
 
-        final newToken = NotificationService().token;
-
-        if (user == null) {
+        if (users.isEmpty || users.first == null) {
+          // 🆕 أول مرة المستخدم يدخل
           await saveUserToFirebaseRealtime(uid);
           return;
         }
 
-        // تحديث التوكن فقط لو موجود
+        var user = users.first!;
+        final newToken = NotificationService().token;
+
+        // 🔄 Update FCM token if changed
         if (newToken != null &&
             (user.fcmToken == null || user.fcmToken != newToken)) {
           final updatedUser = user.copyWith(fcmToken: newToken);
@@ -159,7 +161,7 @@ class LoginViewModel extends GetxController {
   // ─────────────────────────────
 
   Future<void> _finalizeLogin(LocalUser user) async {
-     user.saveLocal();
+    user.saveLocal();
 
     // subscribe آمن (NotificationService فيه حماية pending)
     await NotificationService().subscribeAfterLogin();
@@ -196,8 +198,7 @@ class LoginViewModel extends GetxController {
     final ref = FirebaseDatabase.instance.ref("sync_meta/clients");
 
     await ref.update({
-      "last_add_data_timestamp":
-      DateTime.now().millisecondsSinceEpoch,
+      "last_add_data_timestamp": DateTime.now().millisecondsSinceEpoch,
     });
   }
 
@@ -213,7 +214,7 @@ class LoginViewModel extends GetxController {
 
     if (!exists) {
       Get.offAll(
-            () => const SyncMedicineView(),
+        () => const SyncMedicineView(),
         binding: SyncMedicineBinding(),
       );
       return;
@@ -227,7 +228,7 @@ class LoginViewModel extends GetxController {
 
     if (count == null || count == 0) {
       Get.offAll(
-            () => const SyncMedicineView(),
+        () => const SyncMedicineView(),
         binding: SyncMedicineBinding(),
       );
     } else {

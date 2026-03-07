@@ -42,7 +42,6 @@ class OrderMedicineViewModel extends GetxController {
   bool isWhatsAppSame = true;
   bool phoneError = false;
 
-
   // ===============================
   @override
   void onInit() {
@@ -63,7 +62,6 @@ class OrderMedicineViewModel extends GetxController {
     phoneController.addListener(() {
       update();
     });
-
 
     if (whatsappController.text.isEmpty ||
         whatsappController.text == phoneController.text) {
@@ -116,14 +114,12 @@ class OrderMedicineViewModel extends GetxController {
     return !phoneError && !addressError;
   }
 
-
   bool _isValidEgyptPhone(String phone) {
     final cleaned = phone.trim();
 
     final regex = RegExp(r'^01[0-2,5]{1}[0-9]{8}$');
     return regex.hasMatch(cleaned);
   }
-
 
   void toggleWhatsAppSame(bool? value) {
     isWhatsAppSame = value ?? true;
@@ -314,11 +310,10 @@ class OrderMedicineViewModel extends GetxController {
     final completer = Completer<LocalUser>();
 
     await AuthenticationService().getClientsData(
-      firebaseFilter: FirebaseFilter(orderBy: "userType", equalTo: "pharmacy"),
       query: SQLiteQueryParams(
-        is_filtered: false,
         where: "userType = ?",
         whereArgs: ["pharmacy"],
+        limit: 1,
       ),
       voidCallBack: (users) {
         if (users.isNotEmpty && users.first != null) {

@@ -240,18 +240,13 @@ class DoctorDetailsViewModel extends GetxController {
     return count;
   }
 
-  getAssistantData() async {
+  Future<void> getAssistantData() async {
     await AuthenticationService().getClientsData(
-      firebaseFilter: FirebaseFilter(
-        orderBy: "clinic_key",
-        equalTo: selectedClinic?.key ?? "",
-      ),
       query: SQLiteQueryParams(
-        is_filtered: false,
-        where: "clinic_key = ?", // user UID saved as `token`
+        where: "clinic_key = ?",
         whereArgs: [selectedClinic?.key ?? ""],
       ),
-      voidCallBack: (List<LocalUser?> users) async {
+      voidCallBack: (users) async {
         Loader.dismiss();
         assisList = users;
         update();

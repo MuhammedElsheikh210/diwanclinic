@@ -622,16 +622,17 @@ class CreateReservationViewModel extends GetxController {
   }
 
   Future<void> getPatientData(ReservationModel reservation) async {
-    AuthenticationService().getClientsLocalData(
+    AuthenticationService().getClientsData(
       query: SQLiteQueryParams(
         where: "key = ?",
         whereArgs: [reservation.patientKey ?? ""],
-        is_filtered: true,
+        limit: 1,
       ),
-      voidCallBack: (user) {
+      voidCallBack: (users) {
         Loader.dismiss();
-        if (user.isNotEmpty) {
-          clientUser = user[0];
+
+        if (users.isNotEmpty && users.first != null) {
+          clientUser = users.first;
           populateFields(reservation);
         }
 

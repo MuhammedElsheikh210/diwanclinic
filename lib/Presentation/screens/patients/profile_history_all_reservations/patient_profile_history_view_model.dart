@@ -14,17 +14,21 @@ class PatientProfileAllHistoryViewModel extends GetxController {
     try {
       Loader.show();
 
-      // 1️⃣ Fetch Patient Info from Firebase ONLY
-      await AuthenticationService().getSingleClientsData(
-        filrebaseFilter: FirebaseFilter(orderBy: "key", equalTo: patientKey),
-        voidCallBack: (user) async {
-          if (user == null) {
+      // 1️⃣ Fetch Patient Info from LOCAL SQLite
+      await AuthenticationService().getClientsData(
+        query: SQLiteQueryParams(
+          where: "key = ?",
+          whereArgs: [patientKey],
+          limit: 1,
+        ),
+        voidCallBack: (users) async {
+          if (users.isEmpty || users.first == null) {
             Loader.dismiss();
             Loader.showError("لم يتم العثور على بيانات العميل");
             return;
           }
 
-          patientModel = user;
+          patientModel = users.first!;
 
           // 2️⃣ Fetch local reservations for this patient
           await _loadLocalReservations(patientKey);
@@ -44,7 +48,6 @@ class PatientProfileAllHistoryViewModel extends GetxController {
   // ─────────────────────────────────────────────
   Future<void> _loadLocalReservations(String patientKey) async {
     await ReservationService().getReservationsData(
-
       query: SQLiteQueryParams(
         is_filtered: true,
         where: "patient_key = ?",

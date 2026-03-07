@@ -152,7 +152,10 @@ class ReservationViewModel extends GetxController {
     if (selectedClinic == null) return;
 
     ShiftService().getShiftsData(
-      data: FirebaseFilter(orderBy: "clinicKey", equalTo: selectedClinic!.key),
+      data: FirebaseFilter(
+        orderBy: "clinicKey",
+        equalTo: LocalUser().getUserData().clinicKey,
+      ),
       query: SQLiteQueryParams(
         is_filtered: true,
         where: "clinicKey = ?",

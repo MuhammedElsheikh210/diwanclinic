@@ -11,17 +11,15 @@ class AssistantViewModel extends GetxController {
 
   void getData() {
     final doctorUid = LocalUser().getUserData().uid ?? "";
+
     AuthenticationService().getClientsData(
-      firebaseFilter: FirebaseFilter(orderBy: "doctor_key", equalTo: doctorUid),
-      query: SQLiteQueryParams(where: "doctor_key", whereArgs: [doctorUid]),
+      query: SQLiteQueryParams(
+        where: "doctor_key = ? AND userType = ?",
+        whereArgs: [doctorUid, "assistant"],
+      ),
       voidCallBack: (data) {
         Loader.dismiss();
-
-        // filter assistants only
-        listAssistants = (data as List<LocalUser?>?)
-            ?.where((u) => u?.userType?.name == Strings.assistant)
-            .toList();
-
+        listAssistants = data;
         update();
       },
     );

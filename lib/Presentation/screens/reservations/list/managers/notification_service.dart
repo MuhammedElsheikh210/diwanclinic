@@ -19,7 +19,6 @@ class ReservationNotificationService {
       List<ReservationModel> todayReservations = [];
 
       await ReservationService().getReservationsData(
-
         query: SQLiteQueryParams(
           is_filtered: true,
           where: "appointment_date_time = ?",
@@ -37,11 +36,12 @@ class ReservationNotificationService {
       }
 
       // 🔥 filter only pending + approved + in_progress
-      todayReservations = todayReservations.where((r) {
-        return r.status == ReservationStatus.pending.value ||
-            r.status == ReservationStatus.approved.value ||
-            r.status == ReservationStatus.inProgress.value;
-      }).toList();
+      todayReservations =
+          todayReservations.where((r) {
+            return r.status == ReservationStatus.pending.value ||
+                r.status == ReservationStatus.approved.value ||
+                r.status == ReservationStatus.inProgress.value;
+          }).toList();
 
       if (todayReservations.isEmpty) {
         Loader.dismiss();
@@ -56,16 +56,15 @@ class ReservationNotificationService {
         final clientKey = r.patientKey;
         if (clientKey == null) continue;
 
-        await AuthenticationService().getClientsLocalData(
+        await AuthenticationService().getClientsData(
           query: SQLiteQueryParams(
-            is_filtered: true,
             where: "key = ?",
             whereArgs: [clientKey],
+            limit: 1,
           ),
           voidCallBack: (list) {
-            if (list.isNotEmpty) {
-              final LocalUser? u = list.first;
-              final token = u?.fcmToken;
+            if (list.isNotEmpty && list.first != null) {
+              final token = list.first!.fcmToken;
 
               if (token != null && token.isNotEmpty) {
                 tokens.add(token);

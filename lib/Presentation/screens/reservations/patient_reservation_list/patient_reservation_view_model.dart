@@ -99,7 +99,8 @@ class ReservationPatientViewModel extends GetxController {
     legacyQueueCount = 0;
 
     await LegacyQueueService().getLegacyQueueByDateData(
-      date: date, // dd-MM-yyyy
+      date: date,
+      // dd-MM-yyyy
       isPatient: true,
       firebaseFilter: FirebaseFilter(
         orderBy: "clinicShiftKey",
@@ -167,7 +168,6 @@ class ReservationPatientViewModel extends GetxController {
 
       // 1️⃣ Update main reservation
       await ReservationService().updateReservationData(
-
         reservation: updated,
         voidCallBack: (_) {},
       );
@@ -213,10 +213,11 @@ class ReservationPatientViewModel extends GetxController {
     await ReservationService().getReservationsData(
       query: SQLiteQueryParams(), // ignored online
       voidCallBack: (list) {
-        count = list
-            .whereType<ReservationModel>()
-            .where((r) => r.status == ReservationStatus.completed.value)
-            .length;
+        count =
+            list
+                .whereType<ReservationModel>()
+                .where((r) => r.status == ReservationStatus.completed.value)
+                .length;
       },
     );
 
@@ -231,9 +232,8 @@ class ReservationPatientViewModel extends GetxController {
     final myOrder = current.order_num ?? 0;
     if (myOrder == 0) return 0;
 
-    final activeOnlineAhead = listReservations!
-        .whereType<ReservationModel>()
-        .where((r) {
+    final activeOnlineAhead =
+        listReservations!.whereType<ReservationModel>().where((r) {
           final sameDay = r.appointmentDateTime == current.appointmentDateTime;
 
           final rOrder = r.order_num ?? 0;
@@ -247,8 +247,7 @@ class ReservationPatientViewModel extends GetxController {
               r.status == ReservationStatus.inProgress.value;
 
           return sameDay && isBeforeMe && isActive;
-        })
-        .length;
+        }).length;
 
     // 🔥 legacy محسوب وموجود
     return legacyQueueCount + activeOnlineAhead;
@@ -338,18 +337,21 @@ class ReservationPatientViewModel extends GetxController {
 
     Loader.show();
 
-    AuthenticationService().getSingleClientsData(
-      filrebaseFilter: FirebaseFilter(
-        equalTo: reservation.patientKey!,
-        orderBy: "key",
+    AuthenticationService().getClientsData(
+      query: SQLiteQueryParams(
+        where: "key = ?",
+        whereArgs: [reservation.patientKey!],
+        limit: 1,
       ),
-      voidCallBack: (user) {
+      voidCallBack: (users) {
         Loader.dismiss();
 
-        if (user == null) {
+        if (users.isEmpty || users.first == null) {
           Loader.showError("لم يتم العثور على بيانات العميل");
           return;
         }
+
+        final user = users.first!;
 
         showModalBottomSheet(
           context: context,
@@ -358,13 +360,14 @@ class ReservationPatientViewModel extends GetxController {
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          builder: (_) => OrderConfirmationSheet(
-            reservation: reservation,
-            user: user,
-            onConfirmed: (updatedReservation) {
-              updateReservation(updatedReservation);
-            },
-          ),
+          builder:
+              (_) => OrderConfirmationSheet(
+                reservation: reservation,
+                user: user,
+                onConfirmed: (updatedReservation) {
+                  updateReservation(updatedReservation);
+                },
+              ),
         );
       },
     );
@@ -381,18 +384,19 @@ class ReservationPatientViewModel extends GetxController {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       isScrollControlled: true,
-      builder: (_) => PrescriptionPatientBottomSheetWidget(
-        reservation: reservation,
-        onUpdated: () {
-          getReservations();
-          HomePatientController controller = initController(
-            () => HomePatientController(),
-          );
-          controller.reservationVM.getReservations();
-          controller.update();
-          update();
-        },
-      ),
+      builder:
+          (_) => PrescriptionPatientBottomSheetWidget(
+            reservation: reservation,
+            onUpdated: () {
+              getReservations();
+              HomePatientController controller = initController(
+                () => HomePatientController(),
+              );
+              controller.reservationVM.getReservations();
+              controller.update();
+              update();
+            },
+          ),
     );
   }
 
@@ -505,7 +509,6 @@ class ReservationPatientViewModel extends GetxController {
     bool localOnly = false,
   }) async {
     await ReservationService().updateReservationData(
-
       reservation: reservation,
       voidCallBack: (_) {
         updatePatientReservation(reservation);

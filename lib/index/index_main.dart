@@ -70,10 +70,8 @@ export '../Data/Core/firebase_client.dart';
 export '../Domain/entity/firebase_model/firebase_model.dart';
 
 export '../Data/data_source/firebase_data_source.dart';
-export '../../Domain/UseCases/Authentication_UseCases/addClient_USeCase.dart';
 export '../Global/Utils/general_lists.dart';
 
-export '../../Domain/UseCases/Authentication_UseCases/deleteClientUseCase.dart';
 export 'package:flutter_localizations/flutter_localizations.dart';
 export '../Presentation/Widgets/generic_crud_widget/create/BottomNavigation_Next_previous.dart';
 export '../Presentation/Widgets/generic_crud_widget/create/IconButtonBottomNavigation.dart';
@@ -216,7 +214,7 @@ export '../Presentation/screens/expenses/expenses/expense_create/expense_creats_
 export '../Presentation/Widgets/cards/expense_card.dart';
 export '../Presentation/screens/expenses/expenses/lists/widget/expense_header.dart';
 export '../Domain/entity/transactions/refund_policy_entity.dart';
-export '../Domain/UseCases/Authentication_UseCases/auth_use_cases.dart';
+export '../Domain/UseCases/auth_use_cases.dart';
 export '../Presentation/screens/expenses/category_expense/lists/category_view.dart';
 export '../Presentation/screens/expenses/category_expense/lists/category_view_model.dart';
 export '../Presentation/Widgets/banner/states_banner.dart';
@@ -286,7 +284,7 @@ export 'package:diwanclinic/Presentation/screens/patients/create_update/create_p
 export 'package:diwanclinic/Presentation/screens/patients/list/patient_view_model.dart';
 export 'package:diwanclinic/Presentation/screens/patients/list/widgets/patient_card.dart';
 export 'package:diwanclinic/Presentation/screens/patients/list/patient_view.dart';
-export 'package:diwanclinic/Presentation/parentControllers/reservation/reservation_service.dart';
+export 'package:diwanclinic/Presentation/parentControllers/reservation_service.dart';
 export 'package:diwanclinic/Presentation/screens/reservations/create_update/create_reservation_view.dart';
 export 'package:diwanclinic/Presentation/screens/reservations/create_update/create_reservation_view_model.dart';
 export 'package:diwanclinic/Presentation/screens/reservations/list/view_model/reservation_view_model.dart';
@@ -565,7 +563,7 @@ export 'package:diwanclinic/Presentation/screens/sales_app/doctor_list/create/cr
 export 'package:diwanclinic/Presentation/screens/notes/view.dart';
 export 'package:diwanclinic/Presentation/screens/sales_app/doctor_list/read/doctor_list_view.dart';
 export 'package:diwanclinic/Presentation/screens/sales_app/visits/lists/widgets/visit_date_app_bar.dart';
-export 'package:diwanclinic/Presentation/parentControllers/reservation/sync_reservation_worker.dart';
-export 'package:diwanclinic/Presentation/parentControllers/reservation/reservation_sync_controller.dart';
 export 'package:diwanclinic/Data/data_source/reservation_remote_date_source.dart';
 export 'package:diwanclinic/Global/Utils/sqflite/date_formatter.dart';
+export 'package:diwanclinic/Data/data_source/authentication_remote_data_source.dart';
+export 'package:diwanclinic/Data/data_source_impl/authentication_remote_datasource_impl.dart';

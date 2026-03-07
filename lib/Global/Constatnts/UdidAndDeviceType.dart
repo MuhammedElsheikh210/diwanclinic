@@ -10,13 +10,13 @@ class ConstantsData {
   }
 
   static Future<String?> udid() async {
-   // String udid = await Udid.udid;
+    // String udid = await Udid.udid;
     return "udid";
   }
 
   static Future<String?> firebaseToken() async {
-    String? token = await FirebaseMessaging.instance.getToken();
-    print("token in fb is $token");
-    return token;
+    //  String? token = await FirebaseMessaging.instance.getToken();
+    // print("token in fb is $token");
+    return "token";
   }
 }

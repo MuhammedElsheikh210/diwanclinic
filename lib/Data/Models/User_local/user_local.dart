@@ -1,6 +1,5 @@
 import '../../../index/index_main.dart';
 
-// 🔹 LocalUser model
 class LocalUser {
   String? uid;
   String? key;
@@ -25,27 +24,32 @@ class LocalUser {
   String? clinicKey;
   String? code;
 
-  // 🔹 Social links
+  // Social
   String? facebookLink;
   String? instagramLink;
   String? tiktokLink;
 
-  // 🔹 Payout / transfers
+  // Transfers
   String? transferNumber;
   int? isInstaPay;
   int? isElectronicWallet;
 
-  // 🔹 NEW FIELDS
+  // Extra
   int? show_file_number;
   int? file_number;
   int? remote_reservation_ability;
 
-  // 🔹 Notification token
+  // Notifications
   String? fcmToken;
 
-  // 🔹 Rating fields
+  // Rating
   double? totalRate;
   int? numberOfRates;
+
+  // Sync
+  int updatedAt;
+  int? serverUpdatedAt;
+  bool isDeleted;
 
   LocalUser({
     this.uid,
@@ -82,12 +86,19 @@ class LocalUser {
     this.facebookLink,
     this.instagramLink,
     this.tiktokLink,
-  });
+    int? updatedAt,
+    this.serverUpdatedAt,
+    this.isDeleted = false,
+  }) : updatedAt = updatedAt ?? DateTime.now().millisecondsSinceEpoch;
 
-  // ─────────────────────────────────────────────
-  // 🔹 From JSON
-  // ─────────────────────────────────────────────
+  // ============================================================
+  // FROM JSON
+  // ============================================================
+
   factory LocalUser.fromJson(Map<String, dynamic> json) {
+    int safeInt(dynamic v) =>
+        v is int ? v : int.tryParse(v?.toString() ?? '0') ?? 0;
+
     return LocalUser(
       uid: json['token'],
       key: json['key'],
@@ -101,7 +112,7 @@ class LocalUser {
       coverImage: json['cover_image'] ?? json['coverImage'],
       name: json['client_name'] ?? json['name'],
       address: json['address'],
-      createAt: json['createAt'],
+      createAt: safeInt(json['createAt']),
       password: json['password'],
       identifier: json['identifier'],
       userType: UserTypeExtension.fromString(json['userType']),
@@ -111,90 +122,83 @@ class LocalUser {
       clinicKey: json['clinic_key'],
       code: json['code'],
       transferNumber: json['transfer_number'],
-      isInstaPay: json['is_insta_pay'],
-      isElectronicWallet: json['is_electronic_wallet'],
-
-      show_file_number: json['show_file_number'],
-      file_number: json['file_number'],
-      remote_reservation_ability: json['remote_reservation_ability'],
-
+      isInstaPay: safeInt(json['is_insta_pay']),
+      isElectronicWallet: safeInt(json['is_electronic_wallet']),
+      show_file_number: safeInt(json['show_file_number']),
+      file_number: safeInt(json['file_number']),
+      remote_reservation_ability: safeInt(json['remote_reservation_ability']),
       fcmToken: json['fcm_token'],
-
       facebookLink: json['facebook_link'],
       instagramLink: json['instagram_link'],
       tiktokLink: json['tiktok_link'],
-
-      totalRate: (json['total_rate'] is int)
-          ? (json['total_rate'] as int).toDouble()
-          : (json['total_rate'] as double?) ?? 0.0,
-
-      numberOfRates: json['number_of_rates'] is int
-          ? json['number_of_rates']
-          : int.tryParse(json['number_of_rates']?.toString() ?? '0'),
+      totalRate:
+          (json['total_rate'] is int)
+              ? (json['total_rate'] as int).toDouble()
+              : (json['total_rate'] as double?) ?? 0.0,
+      numberOfRates: safeInt(json['number_of_rates']),
+      updatedAt: safeInt(json['updated_at']),
+      serverUpdatedAt: json['server_updated_at'],
+      isDeleted: json['is_deleted'] == 1,
     );
   }
 
-  // ─────────────────────────────────────────────
-  // 🔹 To JSON
-  // ─────────────────────────────────────────────
+  // ============================================================
+  // TO JSON
+  // ============================================================
+
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = {};
 
-    if (uid != null) data['token'] = uid;
-    if (key != null) data['key'] = key;
-    if (doctorQualifications != null)
-      data['doctorQualifications'] = doctorQualifications;
-    if (specialize_key != null) data['specialize_key'] = specialize_key;
-    if (specializationName != null)
-      data['specialization_name'] = specializationName;
-
-    if (image != null) data['image'] = image;
-    if (profileImage != null) data['profile_image'] = profileImage;
-    if (coverImage != null) data['cover_image'] = coverImage;
-
-    if (phone != null) data['phone'] = phone;
-    if (whatsAppPhone != null) data['whats_app_phone'] = whatsAppPhone;
-    if (name != null) data['client_name'] = name;
-    if (address != null) data['address'] = address;
-    if (isCompleteProfile != null)
-      data['isCompleteProfile'] = isCompleteProfile;
-    if (createAt != null) data['createAt'] = createAt;
-    if (password != null) data['password'] = password;
-    if (identifier != null) data['identifier'] = identifier;
-    if (userType != null) data['userType'] = userType!.name;
-
-    if (doctorKey != null) data['doctor_key'] = doctorKey;
-    if (doctorName != null) data['doctor_name'] = doctorName;
-    if (salesKey != null) data['sales_key'] = salesKey;
-    if (clinicKey != null) data['clinic_key'] = clinicKey;
-    if (code != null) data['code'] = code;
-
-    if (transferNumber != null) data['transfer_number'] = transferNumber;
-    if (isInstaPay != null) data['is_insta_pay'] = isInstaPay;
-    if (isElectronicWallet != null)
-      data['is_electronic_wallet'] = isElectronicWallet;
-
-    if (show_file_number != null) data['show_file_number'] = show_file_number;
-    if (file_number != null) data['file_number'] = file_number;
-    if (remote_reservation_ability != null) {
-      data['remote_reservation_ability'] = remote_reservation_ability;
+    void put(String key, dynamic value) {
+      if (value != null) data[key] = value;
     }
 
-    if (fcmToken != null) data['fcm_token'] = fcmToken;
+    put('token', uid);
+    put('key', key);
+    put('doctorQualifications', doctorQualifications);
+    put('specialize_key', specialize_key);
+    put('specialization_name', specializationName);
+    put('image', image);
+    put('profile_image', profileImage);
+    put('cover_image', coverImage);
+    put('phone', phone);
+    put('whats_app_phone', whatsAppPhone);
+    put('client_name', name);
+    put('address', address);
+    put('isCompleteProfile', isCompleteProfile);
+    put('createAt', createAt);
+    put('password', password);
+    put('identifier', identifier);
+    put('userType', userType?.name);
+    put('doctor_key', doctorKey);
+    put('doctor_name', doctorName);
+    put('sales_key', salesKey);
+    put('clinic_key', clinicKey);
+    put('code', code);
+    put('transfer_number', transferNumber);
+    put('is_insta_pay', isInstaPay);
+    put('is_electronic_wallet', isElectronicWallet);
+    put('show_file_number', show_file_number);
+    put('file_number', file_number);
+    put('remote_reservation_ability', remote_reservation_ability);
+    put('fcm_token', fcmToken);
+    put('facebook_link', facebookLink);
+    put('instagram_link', instagramLink);
+    put('tiktok_link', tiktokLink);
+    put('total_rate', totalRate);
+    put('number_of_rates', numberOfRates);
 
-    if (facebookLink != null) data['facebook_link'] = facebookLink;
-    if (instagramLink != null) data['instagram_link'] = instagramLink;
-    if (tiktokLink != null) data['tiktok_link'] = tiktokLink;
-
-    if (totalRate != null) data['total_rate'] = totalRate;
-    if (numberOfRates != null) data['number_of_rates'] = numberOfRates;
+    put('updated_at', updatedAt);
+    put('server_updated_at', serverUpdatedAt);
+    put('is_deleted', isDeleted ? 1 : 0);
 
     return data;
   }
 
-  // ─────────────────────────────────────────────
-  // 🔹 Copy With
-  // ─────────────────────────────────────────────
+  // ============================================================
+  // COPY WITH (FULL)
+  // ============================================================
+
   LocalUser copyWith({
     String? uid,
     String? key,
@@ -202,7 +206,6 @@ class LocalUser {
     int? isCompleteProfile,
     String? identifier,
     String? password,
-    String? doctorQualifications,
     String? image,
     String? profileImage,
     String? coverImage,
@@ -215,6 +218,7 @@ class LocalUser {
     int? createAt,
     String? doctorKey,
     String? doctorName,
+    String? doctorQualifications,
     String? salesKey,
     String? clinicKey,
     String? code,
@@ -225,16 +229,18 @@ class LocalUser {
     int? file_number,
     int? remote_reservation_ability,
     String? fcmToken,
+    double? totalRate,
+    int? numberOfRates,
     String? facebookLink,
     String? instagramLink,
     String? tiktokLink,
-    double? totalRate,
-    int? numberOfRates,
+    int? updatedAt,
+    int? serverUpdatedAt,
+    bool? isDeleted,
   }) {
     return LocalUser(
       uid: uid ?? this.uid,
       key: key ?? this.key,
-      doctorQualifications: doctorQualifications ?? this.doctorQualifications,
       userType: userType ?? this.userType,
       isCompleteProfile: isCompleteProfile ?? this.isCompleteProfile,
       identifier: identifier ?? this.identifier,
@@ -251,6 +257,7 @@ class LocalUser {
       createAt: createAt ?? this.createAt,
       doctorKey: doctorKey ?? this.doctorKey,
       doctorName: doctorName ?? this.doctorName,
+      doctorQualifications: doctorQualifications ?? this.doctorQualifications,
       salesKey: salesKey ?? this.salesKey,
       clinicKey: clinicKey ?? this.clinicKey,
       code: code ?? this.code,
@@ -262,11 +269,14 @@ class LocalUser {
       remote_reservation_ability:
           remote_reservation_ability ?? this.remote_reservation_ability,
       fcmToken: fcmToken ?? this.fcmToken,
+      totalRate: totalRate ?? this.totalRate,
+      numberOfRates: numberOfRates ?? this.numberOfRates,
       facebookLink: facebookLink ?? this.facebookLink,
       instagramLink: instagramLink ?? this.instagramLink,
       tiktokLink: tiktokLink ?? this.tiktokLink,
-      totalRate: totalRate ?? this.totalRate,
-      numberOfRates: numberOfRates ?? this.numberOfRates,
+      updatedAt: updatedAt ?? this.updatedAt,
+      serverUpdatedAt: serverUpdatedAt ?? this.serverUpdatedAt,
+      isDeleted: isDeleted ?? this.isDeleted,
     );
   }
 }

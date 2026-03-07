@@ -16,24 +16,14 @@ class DoctorViewModel extends GetxController {
   /// ✅ Fetch Doctors (filtered by specialization key)
   void getData() {
     AuthenticationService().getClientsData(
-      firebaseFilter: FirebaseFilter(
-        orderBy: "specialize_key",
-        equalTo: specializeKey,
+      query: SQLiteQueryParams(
+        where:
+            "specialize_key = ? AND userType = ? AND remote_reservation_ability = ?",
+        whereArgs: [specializeKey, "doctor", 1],
       ),
-      query: SQLiteQueryParams(is_filtered: false),
-      isFiltered: false,
       voidCallBack: (data) {
         Loader.dismiss();
-
-        // ✅ Filter ONLY doctors who allow remote reservations
-        listDoctors = (data as List<LocalUser?>?)
-            ?.where(
-              (user) =>
-                  user?.userType == UserType.doctor &&
-                  (user?.remote_reservation_ability ?? 0) == 1,
-            )
-            .toList();
-
+        listDoctors = data;
         update();
       },
     );

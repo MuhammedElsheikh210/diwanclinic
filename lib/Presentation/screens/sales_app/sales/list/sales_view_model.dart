@@ -11,10 +11,10 @@ class SalesViewModel extends GetxController {
 
   void getData() {
     AuthenticationService().getClientsData(
-      firebaseFilter: FirebaseFilter(orderBy: "userType", equalTo: "sales"),
+      query: SQLiteQueryParams(where: "userType = ?", whereArgs: ["sales"]),
       voidCallBack: (data) {
         Loader.dismiss();
-        listSales = data as List<LocalUser?>?;
+        listSales = data;
         update();
       },
     );

@@ -7,13 +7,36 @@ class Binding implements Bindings {
     // ───────────── Core ─────────────
     Get.lazyPut<ClientSourceRepo>(() => ClientSourceRepo(), fenix: true);
     Get.lazyPut<FirebaseClient>(() => FirebaseClient(), fenix: true);
+    Get.lazyPut<ConnectivityService>(() => ConnectivityService(), fenix: true);
 
-    // ───────────── Data Sources ─────────────
+    // ───────────── Authentication (Fixed Clean Architecture) ─────────────
+
+    // 🔹 Local DS
     Get.lazyPut<AuthenticationDataSourceRepo>(
-      () => AuthenticationRemoteDataSourceImpl(Get.find()),
+      () => AuthenticationDataSourceRepoImpl(),
       fenix: true,
     );
 
+    // 🔹 Remote DS
+    Get.lazyPut<AuthenticationRemoteDataSource>(
+      () => AuthenticationRemoteDataSourceImpl(
+        FirebaseDatabase.instance,
+        Get.find<ClientSourceRepo>(),
+      ),
+      fenix: true,
+    );
+
+    // 🔹 Repository
+    Get.lazyPut<AuthenticationRepository>(
+      () => AuthenticationRepositoryImpl(
+        Get.find<AuthenticationDataSourceRepo>(),
+        Get.find<AuthenticationRemoteDataSource>(),
+        Get.find<ConnectivityService>(),
+      ),
+      fenix: true,
+    );
+
+    // ───────────── Data Sources ─────────────
     Get.lazyPut<DoctorListRemoteDataSource>(
       () => DoctorListRemoteDataSourceImpl(Get.find()),
       fenix: true,
@@ -54,7 +77,6 @@ class Binding implements Bindings {
       fenix: true,
     );
 
-    // ───────────── 🆕 Archive Patient Data Source ─────────────
     Get.lazyPut<ArchivePatientDataSourceRepo>(
       () => ArchivePatientDataSourceRepoImpl(Get.find()),
       fenix: true,
@@ -62,16 +84,6 @@ class Binding implements Bindings {
 
     Get.lazyPut<DoctorDataSourceRepo>(
       () => DoctorDataSourceRepoImpl(Get.find()),
-      fenix: true,
-    );
-
-    Get.lazyPut<MedicineRepository>(
-      () => MedicineRepositoryImpl(Get.find()),
-      fenix: true,
-    );
-
-    Get.lazyPut<DoctorListRepository>(
-      () => DoctorListRepositoryImpl(Get.find()),
       fenix: true,
     );
 
@@ -87,11 +99,6 @@ class Binding implements Bindings {
 
     Get.lazyPut<ClinicDataSourceRepo>(
       () => ClinicDataSourceRepoImpl(Get.find()),
-      fenix: true,
-    );
-
-    Get.lazyPut<ReservationDataSourceRepo>(
-      () => ReservationDataSourceRepoImpl(Get.find()),
       fenix: true,
     );
 
@@ -130,150 +137,115 @@ class Binding implements Bindings {
       fenix: true,
     );
 
-    Get.lazyPut<DoctorSuggestionRepository>(
-      () => DoctorSuggestionRepositoryImpl(Get.find()),
-      fenix: true,
-    );
-
     Get.lazyPut<VisitDataSourceRepo>(
       () => VisitDataSourceRepoImpl(Get.find()),
       fenix: true,
     );
 
-    // ───────────── 🆕 Archive Form Data Source ─────────────
     Get.lazyPut<ArchiveFormDataSourceRepo>(
       () => ArchiveFormDataSourceRepoImpl(Get.find()),
       fenix: true,
     );
 
-    // ───────────── Repositories ─────────────
-    Get.lazyPut<AuthenticationRepository>(
-      () => AuthenticationRepoImpl(Get.find()),
-      fenix: true,
-    );
+    // ───────────── Reservation (Fixed Clean Architecture) ─────────────
 
-    Get.lazyPut<LegacyQueueRepository>(
-      () => LegacyQueueRepositoryImpl(Get.find()),
-      fenix: true,
-    );
-
-    Get.lazyPut<CategoryRepository>(
-      () => CategoryRepositoryImpl(Get.find()),
-      fenix: true,
-    );
-
-    Get.lazyPut<SyncRepository>(() => SyncRepoImpl(Get.find()), fenix: true);
-
-    Get.lazyPut<TransactionsRepository>(
-      () => TransactionsRepositoryImpl(Get.find()),
-      fenix: true,
-    );
-
-    // ───────────── 🆕 Archive Patient Repository ─────────────
-    Get.lazyPut<ArchivePatientRepository>(
-      () => ArchivePatientRepositoryImpl(Get.find()),
-      fenix: true,
-    );
-
-    Get.lazyPut<FirebaseRepository>(
-      () => FirebaseRepoImpl(Get.find()),
-      fenix: true,
-    );
-
-    Get.lazyPut<DoctorRepository>(
-      () => DoctorRepositoryImpl(Get.find()),
-      fenix: true,
-    );
-
-    Get.lazyPut<PatientRepository>(
-      () => PatientRepositoryImpl(Get.find()),
-      fenix: true,
-    );
-
-    Get.lazyPut<AssistantRepository>(
-      () => AssistantRepositoryImpl(Get.find()),
-      fenix: true,
-    );
-
-    Get.lazyPut<ClinicRepository>(
-      () => ClinicRepositoryImpl(Get.find()),
-      fenix: true,
-    );
-
-    // 🔹 Local DataSource
     Get.lazyPut<ReservationDataSourceRepo>(
       () => ReservationDataSourceRepoImpl(Get.find()),
       fenix: true,
     );
 
-    // ───────────── Reservation (Clean Architecture Version) ─────────────
-
-    // 🔹 Connectivity
-    Get.lazyPut<ConnectivityService>(() => ConnectivityService(), fenix: true);
-
-    // 🔹 Local DataSource (SQLite)
-    Get.lazyPut<ReservationDataSourceRepo>(
-      () => ReservationDataSourceRepoImpl(Get.find()),
-      fenix: true,
-    );
-
-    // 🔹 Remote DataSource (Firebase Realtime)
     Get.lazyPut<ReservationRemoteDataSource>(
       () => ReservationRemoteDataSourceImpl(FirebaseDatabase.instance),
       fenix: true,
     );
 
-    // 🔹 Repository (Controls Local + Remote)
     Get.lazyPut<ReservationRepository>(
       () => ReservationRepositoryImpl(
         Get.find<ReservationDataSourceRepo>(),
         Get.find<ReservationRemoteDataSource>(),
-        Get.find<ConnectivityService>(), // 🔥 مهم
+        Get.find<ConnectivityService>(),
       ),
       fenix: true,
     );
 
+    // ───────────── Repositories ─────────────
+    Get.lazyPut<MedicineRepository>(
+      () => MedicineRepositoryImpl(Get.find()),
+      fenix: true,
+    );
+    Get.lazyPut<DoctorListRepository>(
+      () => DoctorListRepositoryImpl(Get.find()),
+      fenix: true,
+    );
+    Get.lazyPut<LegacyQueueRepository>(
+      () => LegacyQueueRepositoryImpl(Get.find()),
+      fenix: true,
+    );
+    Get.lazyPut<CategoryRepository>(
+      () => CategoryRepositoryImpl(Get.find()),
+      fenix: true,
+    );
+    Get.lazyPut<SyncRepository>(() => SyncRepoImpl(Get.find()), fenix: true);
+    Get.lazyPut<TransactionsRepository>(
+      () => TransactionsRepositoryImpl(Get.find()),
+      fenix: true,
+    );
+    Get.lazyPut<ArchivePatientRepository>(
+      () => ArchivePatientRepositoryImpl(Get.find()),
+      fenix: true,
+    );
+    Get.lazyPut<FirebaseRepository>(
+      () => FirebaseRepoImpl(Get.find()),
+      fenix: true,
+    );
+    Get.lazyPut<DoctorRepository>(
+      () => DoctorRepositoryImpl(Get.find()),
+      fenix: true,
+    );
+    Get.lazyPut<PatientRepository>(
+      () => PatientRepositoryImpl(Get.find()),
+      fenix: true,
+    );
+    Get.lazyPut<AssistantRepository>(
+      () => AssistantRepositoryImpl(Get.find()),
+      fenix: true,
+    );
+    Get.lazyPut<ClinicRepository>(
+      () => ClinicRepositoryImpl(Get.find()),
+      fenix: true,
+    );
     Get.lazyPut<FilesRepository>(
       () => FilesRepositoryImpl(Get.find()),
       fenix: true,
     );
-
     Get.lazyPut<TransferRepository>(
       () => TransferRepositoryImpl(Get.find()),
       fenix: true,
     );
-
     Get.lazyPut<ShiftRepository>(
       () => ShiftRepositoryImpl(Get.find()),
       fenix: true,
     );
-
     Get.lazyPut<DoctorReviewRepository>(
       () => DoctorReviewRepositoryImpl(Get.find()),
       fenix: true,
     );
-
     Get.lazyPut<IncomeRepository>(
       () => IncomeRepositoryImpl(Get.find()),
       fenix: true,
     );
-
     Get.lazyPut<OrderRepository>(
       () => OrderRepositoryImpl(Get.find()),
       fenix: true,
     );
-
     Get.lazyPut<NotificationRepository>(
       () => NotificationRepositoryImpl(Get.find()),
       fenix: true,
     );
-
     Get.lazyPut<VisitRepository>(
       () => VisitRepositoryImpl(Get.find()),
       fenix: true,
     );
-
-    // ───────────── 🆕 Archive Form Repository ─────────────
     Get.lazyPut<ArchiveFormRepository>(
       () => ArchiveFormRepositoryImpl(Get.find()),
       fenix: true,
@@ -283,65 +255,14 @@ class Binding implements Bindings {
     Get.lazyPut<ClinicUseCases>(() => ClinicUseCases(Get.find()));
     Get.lazyPut<NotificationUseCases>(() => NotificationUseCases(Get.find()));
     Get.lazyPut<VisitUseCases>(() => VisitUseCases(Get.find()));
-    // ───────────── 🆕 Archive Patient Use Cases ─────────────
     Get.lazyPut<ArchivePatientUseCases>(
       () => ArchivePatientUseCases(Get.find()),
     );
-
-    // ───────────── 🆕 Archive Form Use Cases ─────────────
     Get.lazyPut<ArchiveFormUseCases>(() => ArchiveFormUseCases(Get.find()));
 
-    // ───────────── View Models / Controllers ─────────────
+    // ───────────── ViewModels ─────────────
     Get.lazyPut<LoginViewModel>(() => LoginViewModel());
-    Get.lazyPut<CalenderViewModel>(() => CalenderViewModel());
-    Get.lazyPut<OtpViewModel>(() => OtpViewModel());
-    Get.lazyPut<ParentSyncService>(() => ParentSyncService());
-    Get.lazyPut<SyncViewModel>(() => SyncViewModel());
-    Get.lazyPut<CategoryExpenseViewModel>(() => CategoryExpenseViewModel());
-    Get.lazyPut<ClinicViewModel>(() => ClinicViewModel());
-    Get.lazyPut<CreateClinicViewModel>(() => CreateClinicViewModel());
-    Get.lazyPut<CreateAssistantViewModel>(() => CreateAssistantViewModel());
-    Get.lazyPut<AssistantViewModel>(() => AssistantViewModel());
-    Get.lazyPut<PatientViewModel>(() => PatientViewModel());
-    Get.lazyPut<CreatePatientViewModel>(() => CreatePatientViewModel());
-    Get.lazyPut<CreateReservationViewModel>(() => CreateReservationViewModel());
-    Get.lazyPut<ReservationViewModel>(() => ReservationViewModel());
-    Get.lazyPut<ShiftViewModel>(() => ShiftViewModel());
-    Get.lazyPut<CreateShiftViewModel>(() => CreateShiftViewModel());
-    Get.lazyPut<ReservationDoctorViewModel>(() => ReservationDoctorViewModel());
-    Get.lazyPut<PatientProfileHistoryViewModel>(
-      () => PatientProfileHistoryViewModel(),
-    );
-    Get.lazyPut<PatientProfileAllHistoryViewModel>(
-      () => PatientProfileAllHistoryViewModel(),
-    );
-    Get.lazyPut<AccountViewModel>(() => AccountViewModel());
-    Get.lazyPut<ChatViewModel>(() => ChatViewModel());
-    Get.lazyPut<ProfileViewModel>(() => ProfileViewModel());
-    Get.lazyPut<PatientForAssistantProfileHistoryViewModel>(
-      () => PatientForAssistantProfileHistoryViewModel(),
-    );
-    Get.lazyPut<DoctorFeedbackViewModel>(() => DoctorFeedbackViewModel());
     Get.lazyPut<MainPageViewModel>(() => MainPageViewModel());
-    Get.lazyPut<SpecializationViewModel>(() => SpecializationViewModel());
-    Get.lazyPut<PharmacyViewModel>(() => PharmacyViewModel());
-    Get.lazyPut<CreatePharmacyViewModel>(() => CreatePharmacyViewModel());
-    Get.lazyPut<ReservationPatientViewModel>(
-      () => ReservationPatientViewModel(),
-    );
-
-    // ───────────── 🆕 Archive Form View Models ─────────────
-    Get.lazyPut<CreateArchiveFormViewModel>(() => CreateArchiveFormViewModel());
-
-    // ───────────── Pricing Search ─────────────
-    Get.lazyPut<PricingSearchController>(() => PricingSearchController());
-    Get.lazyPut<HomePatientController>(() => HomePatientController());
-
-    // ───────────── 🆕 Archive Patient View Models ─────────────
-    Get.lazyPut<ArchivePatientViewModel>(() => ArchivePatientViewModel());
-
-    Get.lazyPut<CreateArchivePatientViewModel>(
-      () => CreateArchivePatientViewModel(),
-    );
+    Get.lazyPut<ReservationViewModel>(() => ReservationViewModel());
   }
 }

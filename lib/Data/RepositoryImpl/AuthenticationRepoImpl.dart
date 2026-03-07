@@ -1,115 +1,213 @@
-// ignore_for_file: non_constant_identifier_names
-
+import 'dart:async';
+import 'dart:developer';
 import 'package:dartz/dartz.dart';
 import '../../index/index_main.dart';
 
-class AuthenticationRepoImpl extends AuthenticationRepository {
-  final AuthenticationDataSourceRepo _authenticationRemoteDataSourceImpl;
+class AuthenticationRepositoryImpl implements AuthenticationRepository {
+  final AuthenticationDataSourceRepo _local;
+  final AuthenticationRemoteDataSource _remote;
+  final ConnectivityService _connectivity;
 
-  AuthenticationRepoImpl(this._authenticationRemoteDataSourceImpl);
+  AuthenticationRepositoryImpl(this._local, this._remote, this._connectivity);
+
+  final Set<String> _processedKeys = {};
+
+  StreamSubscription? _addedSub;
+  StreamSubscription? _changedSub;
+  StreamSubscription? _removedSub;
+
+  // ============================================================
+  // 🌊 STREAM CONTROLLERS
+  // ============================================================
+
+  final _addedController = StreamController<LocalUser>.broadcast();
+  final _changedController = StreamController<LocalUser>.broadcast();
+  final _removedController = StreamController<String>.broadcast();
 
   @override
-  Future<Either<AppError, SuccessModel>> addClient_domain(
-    Map<String, dynamic> data,
-    String key,
-  ) async {
-    try {
-      final result = await _authenticationRemoteDataSourceImpl.addClient(
-        data,
-        key,
-      );
-      return right(result);
-    } catch (e) {
-      return left(AppError(e.toString()));
-    }
+  Stream<LocalUser> get onAdded => _addedController.stream;
+
+  @override
+  Stream<LocalUser> get onChanged => _changedController.stream;
+
+  @override
+  Stream<String> get onRemoved => _removedController.stream;
+
+  // ============================================================
+  // 🎧 REALTIME SYNC (Firebase → SQLite → Streams)
+  // ============================================================
+
+  @override
+  Future<void> startListening() async {
+    log("🎧 Start Listening Clients");
+
+    _processedKeys.clear();
+    await _remote.startListening();
+
+    _addedSub?.cancel();
+    _changedSub?.cancel();
+    _removedSub?.cancel();
+
+    _addedSub = _remote.onAdded.listen((model) async {
+      final key = model.key;
+      if (key == null) return;
+
+      if (_processedKeys.contains(key)) return;
+      _processedKeys.add(key);
+
+      log("🔥 Client Added → $key");
+
+      await _local.upsertFromServer(model);
+      _addedController.add(model);
+    });
+
+    _changedSub = _remote.onChanged.listen((model) async {
+      final key = model.key;
+      if (key == null) return;
+
+      log("🔄 Client Updated → $key");
+
+      await _local.upsertFromServer(model);
+      _changedController.add(model);
+    });
+
+    _removedSub = _remote.onRemoved.listen((key) async {
+      log("❌ Client Removed → $key");
+
+      await _local.deleteClient(key);
+      _removedController.add(key);
+    });
   }
 
-  @override
-  Future<Either<AppError, SuccessModel>> deleteClient_domain(
-    Map<String, dynamic> data,
-    String key,
-  ) async {
-    try {
-      final result = await _authenticationRemoteDataSourceImpl.deleteClient(
-        data,
-        key,
-      );
-      return right(result);
-    } catch (e) {
-      return left(AppError(e.toString()));
-    }
-  }
+  // ============================================================
+  // 🛑 STOP REALTIME
+  // ============================================================
 
   @override
-  Future<Either<AppError, SuccessModel>> updateClient_domain(
-    Map<String, dynamic> data,
-    String key,
-  ) async {
-    try {
-      final result = await _authenticationRemoteDataSourceImpl.updateClient(
-        data,
-        key,
-      );
-      return right(result);
-    } catch (e) {
-      return left(AppError(e.toString()));
-    }
+  Future<void> dispose() async {
+    _processedKeys.clear();
+
+    await _addedSub?.cancel();
+    await _changedSub?.cancel();
+    await _removedSub?.cancel();
+
+    await _remote.stopListening();
+
+    if (!_addedController.isClosed) await _addedController.close();
+    if (!_changedController.isClosed) await _changedController.close();
+    if (!_removedController.isClosed) await _removedController.close();
   }
 
-  @override
-  Future<Either<AppError, LocalUser?>> getClientIndividual_domain(
-    Map<String, dynamic> data,
-  ) async {
-    try {
-      final result = await _authenticationRemoteDataSourceImpl
-          .getClient_Individual(data);
-      return right(result);
-    } catch (e) {
-      return left(AppError(e.toString()));
-    }
-  }
+  // ============================================================
+  // 📦 GET CLIENTS (LOCAL ONLY)
+  // ============================================================
 
   @override
-  Future<Either<AppError, List<LocalUser?>>> getClients_domain(
-    Map<String, dynamic> data,
+  Future<Either<AppError, List<LocalUser?>>> getClientsDomain(
     SQLiteQueryParams query,
-    bool? isFiltered,
   ) async {
     try {
-      final result = await _authenticationRemoteDataSourceImpl.getClients(
-        data,
-        query,
-        isFiltered,
-      );
-      return right(result);
+      final result = await _local.getClients(query);
+      return Right(result);
     } catch (e) {
-      try {
-        final localResult = await _authenticationRemoteDataSourceImpl
-            .getClients_local(data, query, isFiltered);
-        return right(localResult);
-      } catch (localError) {
-        return left(AppError(localError.toString()));
+      return Left(AppError(e.toString()));
+    }
+  }
+
+  // ============================================================
+  // 🌐 GET CLIENTS (ONLINE → SAVE LOCAL → RETURN)
+  // ============================================================
+
+  @override
+  Future<Either<AppError, List<LocalUser?>>> getClientsOnlineDomain(
+    Map<String, dynamic> firebaseFilter,
+  ) async {
+    try {
+      if (!await _connectivity.isOnline()) {
+        return Left(AppError("No internet connection"));
       }
+
+      final remoteList = await _remote.fetchClients(firebaseFilter);
+
+      for (final user in remoteList) {
+        await _local.upsertFromServer(user);
+      }
+
+      return Right(remoteList);
+    } catch (e) {
+      return Left(AppError(e.toString()));
     }
   }
+
+  // ============================================================
+  // ➕ ADD CLIENT (Offline First)
+  // ============================================================
 
   @override
-  Future<Either<AppError, List<LocalUser?>>> getClientsLocal_domain(
-    Map<String, dynamic> data,
-    SQLiteQueryParams query,
-    bool? isFiltered,
-  ) async {
+  Future<Either<AppError, Unit>> addClientDomain(LocalUser model) async {
     try {
-      final result = await _authenticationRemoteDataSourceImpl.getClients_local(
-        data,
-        query,
-        isFiltered,
-      );
-      return right(result);
+      await _local.addClient(model);
+
+      if (await _connectivity.isOnline()) {
+        await _remote.createClient(model);
+
+        await _local.markAsSynced(
+          model.key!,
+          serverUpdatedAt: DateTime.now().millisecondsSinceEpoch,
+        );
+      }
+
+      return const Right(unit);
     } catch (e) {
-      return left(AppError(e.toString()));
+      return Left(AppError(e.toString()));
     }
   }
 
+  // ============================================================
+  // 🔄 UPDATE CLIENT
+  // ============================================================
 
+  @override
+  Future<Either<AppError, Unit>> updateClientDomain(LocalUser model) async {
+    try {
+      await _local.updateClient(model);
+
+      if (await _connectivity.isOnline()) {
+        await _remote.updateClient(model);
+
+        await _local.markAsSynced(
+          model.key!,
+          serverUpdatedAt: DateTime.now().millisecondsSinceEpoch,
+        );
+      }
+
+      return const Right(unit);
+    } catch (e) {
+      return Left(AppError(e.toString()));
+    }
+  }
+
+  // ============================================================
+  // ❌ DELETE CLIENT
+  // ============================================================
+
+  @override
+  Future<Either<AppError, Unit>> deleteClientDomain(String key) async {
+    try {
+      await _local.deleteClient(key);
+
+      if (await _connectivity.isOnline()) {
+        await _remote.deleteClient(key);
+
+        await _local.markAsSynced(
+          key,
+          serverUpdatedAt: DateTime.now().millisecondsSinceEpoch,
+        );
+      }
+
+      return const Right(unit);
+    } catch (e) {
+      return Left(AppError(e.toString()));
+    }
+  }
 }

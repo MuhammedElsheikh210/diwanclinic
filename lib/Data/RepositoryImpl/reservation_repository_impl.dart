@@ -15,8 +15,29 @@ class ReservationRepositoryImpl implements ReservationRepository {
   StreamSubscription? _changedSub;
   StreamSubscription? _removedSub;
 
+  bool _isListening = false;
+
   // ============================================================
-  // 🌊 STREAM CONTROLLERS (Expose to upper layers)
+  // 🧠 INITIAL SYNC BARRIER
+  // ============================================================
+
+  final Completer<void> _initialSyncCompleter = Completer();
+  bool _initialBatchHandled = false;
+
+  Future<void> get initialSyncDone => _initialSyncCompleter.future;
+
+  void _markInitialSyncDone() {
+    if (!_initialBatchHandled) {
+      _initialBatchHandled = true;
+      if (!_initialSyncCompleter.isCompleted) {
+        log("✅ Initial Reservations Sync Completed");
+        _initialSyncCompleter.complete();
+      }
+    }
+  }
+
+  // ============================================================
+  // 🌊 STREAM CONTROLLERS
   // ============================================================
 
   final _addedController = StreamController<ReservationModel>.broadcast();
@@ -33,33 +54,42 @@ class ReservationRepositoryImpl implements ReservationRepository {
   Stream<String> get onRemoved => _removedController.stream;
 
   // ============================================================
-  // 🎧 REALTIME SYNC (Firebase → SQLite → Streams)
+  // 🎧 REALTIME SYNC
   // ============================================================
 
   @override
   Future<void> startListening({required String doctorKey}) async {
+    if (_isListening) {
+      log("🟡 Reservations already listening — skip");
+      return;
+    }
+
     log("🎧 Start Listening Reservations → doctor: $doctorKey");
 
     _processedKeys.clear();
+    _initialBatchHandled = false;
+
     await _remote.startListening(doctorKey: doctorKey);
+
+    await _addedSub?.cancel();
+    await _changedSub?.cancel();
+    await _removedSub?.cancel();
 
     _addedSub = _remote.onAdded.listen((model) async {
       final key = model.key;
       if (key == null) return;
 
-      if (_processedKeys.contains(key)) {
-        log("⚠️ Duplicate Ignored → $key");
-        return;
-      }
-
+      if (_processedKeys.contains(key)) return;
       _processedKeys.add(key);
 
       log("🔥 Firebase Added → $key");
+
       await _local.upsertFromServer(model);
       log("💾 Saved To SQLite → $key");
 
-      // ✅ Forward event
       _addedController.add(model);
+
+      _markInitialSyncDone();
     });
 
     _changedSub = _remote.onChanged.listen((model) async {
@@ -67,21 +97,27 @@ class ReservationRepositoryImpl implements ReservationRepository {
       if (key == null) return;
 
       log("🔄 Firebase Changed → $key");
+
       await _local.upsertFromServer(model);
       log("💾 SQLite Updated → $key");
 
-      // ✅ Forward event
       _changedController.add(model);
+
+      _markInitialSyncDone();
     });
 
     _removedSub = _remote.onRemoved.listen((key) async {
       log("❌ Firebase Removed → $key");
+
       await _local.deleteReservation(key);
       log("💾 SQLite Deleted → $key");
 
-      // ✅ Forward event
       _removedController.add(key);
+
+      _markInitialSyncDone();
     });
+
+    _isListening = true;
   }
 
   // ============================================================
@@ -92,6 +128,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
   Future<void> dispose() async {
     log("🛑 Stop Listening Reservations");
 
+    _isListening = false;
     _processedKeys.clear();
 
     await _addedSub?.cancel();
@@ -100,13 +137,13 @@ class ReservationRepositoryImpl implements ReservationRepository {
 
     await _remote.stopListening();
 
-    await _addedController.close();
-    await _changedController.close();
-    await _removedController.close();
+    if (!_addedController.isClosed) await _addedController.close();
+    if (!_changedController.isClosed) await _changedController.close();
+    if (!_removedController.isClosed) await _removedController.close();
   }
 
   // ============================================================
-  // 📦 GET (LOCAL ONLY)
+  // 📦 GET (WAIT FOR INITIAL SYNC)
   // ============================================================
 
   @override
@@ -114,6 +151,9 @@ class ReservationRepositoryImpl implements ReservationRepository {
     SQLiteQueryParams query,
   ) async {
     try {
+      log("⏳ Waiting for Initial Sync...");
+      await initialSyncDone;
+
       log("📦 Fetch Reservations From SQLite");
 
       final result = await _local.getReservations(query);
@@ -136,8 +176,6 @@ class ReservationRepositoryImpl implements ReservationRepository {
     ReservationModel model,
   ) async {
     try {
-      log("➕ Add Reservation → ${model.key}");
-
       await _local.addReservation(model);
 
       if (await _connectivity.isOnline()) {
@@ -151,7 +189,6 @@ class ReservationRepositoryImpl implements ReservationRepository {
 
       return const Right(unit);
     } catch (e) {
-      log("❌ Add Error → $e");
       return Left(AppError(e.toString()));
     }
   }
@@ -178,7 +215,6 @@ class ReservationRepositoryImpl implements ReservationRepository {
 
       return const Right(unit);
     } catch (e) {
-      log("❌ Update Error → $e");
       return Left(AppError(e.toString()));
     }
   }

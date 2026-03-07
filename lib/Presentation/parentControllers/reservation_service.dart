@@ -1,7 +1,7 @@
 // ignore_for_file: avoid_renaming_method_parameters
 
 import 'dart:async';
-import '../../../index/index_main.dart';
+import '../../index/index_main.dart';
 
 class ReservationService {
   // ============================================================

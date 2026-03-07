@@ -17,13 +17,10 @@ class _MainPageState extends State<MainPage> {
   int backPressCount = 0;
   static const int backThreshold = 2;
 
-  late final UserType? userType;
-
   @override
   void initState() {
     super.initState();
     currentIndex = widget.initialIndex;
-    userType = LocalUser().getUserData().userType;
   }
 
   @override
@@ -37,12 +34,18 @@ class _MainPageState extends State<MainPage> {
         onWillPop: _onBackPressed,
         child: GetBuilder<MainPageViewModel>(
           init: MainPageViewModel(),
-          builder: (_) {
+          builder: (controller) {
             return Scaffold(
               backgroundColor: AppColors.white,
 
               // BODY
-              body: _buildBody(currentIndex),
+              body:
+                  controller.userType == null
+                      ? const ReservationsShimmer()
+                      : _buildBody(
+                        currentIndex,
+                        controller.userType ?? UserType.patient,
+                      ),
 
               // FAB (Patient only)
               // floatingActionButtonLocation: userType == UserType.patient
@@ -53,7 +56,7 @@ class _MainPageState extends State<MainPage> {
               //     : null,
 
               // BOTTOM NAV
-              bottomNavigationBar: _buildBottomNavigationBar(),
+              bottomNavigationBar: _buildBottomNavigationBar(controller),
             );
           },
         ),
@@ -97,16 +100,19 @@ class _MainPageState extends State<MainPage> {
   // ------------------------------------------------------------------
   // 🔵 BOTTOM NAV (ORIGINAL + ASSISTANT BADGE)
   // ------------------------------------------------------------------
-  Widget _buildBottomNavigationBar() {
-    if (userType == null) return const SizedBox.shrink();
+  Widget _buildBottomNavigationBar(MainPageViewModel controller) {
+    if (controller.userType == null) return const SizedBox.shrink();
 
     // assistant only → realtime badge
-    if (userType == UserType.assistant) {
+    if (controller.userType == UserType.assistant) {
       return GetBuilder<NotificationController>(
         init: NotificationController(),
         builder: (notifController) {
           return _buildNavContainer(
-            _bottomItems(notifController: notifController),
+            _bottomItems(
+              notifController: notifController,
+              userType: controller.userType ?? UserType.patient,
+            ),
           );
         },
       );
@@ -144,6 +150,7 @@ class _MainPageState extends State<MainPage> {
   // ------------------------------------------------------------------
   List<BottomNavigationBarItem> _bottomItems({
     NotificationController? notifController,
+    UserType? userType,
   }) {
     switch (userType) {
       case UserType.patient:
@@ -248,7 +255,7 @@ class _MainPageState extends State<MainPage> {
   // ------------------------------------------------------------------
   // 🔵 BODY ROUTING
   // ------------------------------------------------------------------
-  Widget _buildBody(int index) {
+  Widget _buildBody(int index, UserType userType) {
     switch (userType) {
       case UserType.patient:
         return [
@@ -315,5 +322,79 @@ class _MainPageState extends State<MainPage> {
       return false;
     }
     return true;
+  }
+}
+
+class ReservationsShimmer extends StatelessWidget {
+  const ReservationsShimmer({super.key});
+
+  Widget box({double? w, double? h, double r = 12}) {
+    return Container(
+      width: w,
+      height: h,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(r),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey.shade300,
+      highlightColor: Colors.grey.shade100,
+      child: Container(
+        color: const Color(0xffF5F6FA),
+        child: Column(
+          children: [
+            SizedBox(height: 20.h),
+
+            // 🔹 Header Filters
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              child: Row(
+                children: [
+                  box(w: 48.w, h: 48.h, r: 14),
+                  SizedBox(width: 12.w),
+                  box(w: 120.w, h: 48.h, r: 14),
+                  SizedBox(width: 12.w),
+                  Expanded(child: box(h: 48.h, r: 14)),
+                ],
+              ),
+            ),
+
+            SizedBox(height: 18.h),
+
+            // 🔹 Tabs
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              child: Row(
+                children: [
+                  Expanded(child: box(h: 42.h, r: 16)),
+                  SizedBox(width: 12.w),
+                  Expanded(child: box(h: 42.h, r: 16)),
+                ],
+              ),
+            ),
+
+            SizedBox(height: 20.h),
+
+            // 🔹 Reservation Card
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              child: box(h: 120.h, r: 20),
+            ),
+
+            SizedBox(height: 12.h),
+
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              child: box(h: 120.h, r: 20),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

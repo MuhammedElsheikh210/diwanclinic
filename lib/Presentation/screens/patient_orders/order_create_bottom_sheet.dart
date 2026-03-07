@@ -289,11 +289,10 @@ class _OrderConfirmationSheetState extends State<OrderConfirmationSheet> {
     final completer = Completer<LocalUser>();
 
     await AuthenticationService().getClientsData(
-      firebaseFilter: FirebaseFilter(orderBy: "userType", equalTo: "pharmacy"),
       query: SQLiteQueryParams(
-        is_filtered: false,
         where: "userType = ?",
         whereArgs: ["pharmacy"],
+        limit: 1,
       ),
       voidCallBack: (List<LocalUser?> users) {
         Loader.dismiss();

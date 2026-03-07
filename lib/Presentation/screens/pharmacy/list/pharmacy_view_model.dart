@@ -11,10 +11,13 @@ class PharmacyViewModel extends GetxController {
 
   void getData() {
     AuthenticationService().getClientsData(
-      firebaseFilter: FirebaseFilter(orderBy: "userType", equalTo: "pharmacy"),
+      query: SQLiteQueryParams(
+        where: "userType = ?",
+        whereArgs: ["pharmacy"],
+      ),
       voidCallBack: (data) {
         Loader.dismiss();
-        listPharmacies = data as List<LocalUser?>?;
+        listPharmacies = data;
         update();
       },
     );

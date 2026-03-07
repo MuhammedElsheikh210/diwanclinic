@@ -70,7 +70,6 @@ class ParentSyncService extends GetxController {
             where: "doctor_key = ?",
             whereArgs: [doctorKey],
           ),
-          isFiltered: true,
           voidCallBack: (_) async {
             progress.value += incrementValue;
           },
@@ -109,7 +108,6 @@ class ParentSyncService extends GetxController {
         // 🔥 STEP 4) CLIENTS
         await clientService.getClientsData(
           query: SQLiteQueryParams(is_filtered: false),
-          isFiltered: false,
           voidCallBack: (_) async {
             progress.value += incrementValue;
           },

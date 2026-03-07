@@ -33,7 +33,7 @@ class PatientSearchViewModel extends GetxController {
       '%$query%',
       '%$query%',
     ];
-    await AuthenticationService().getClientsLocalData(
+    await AuthenticationService().getClientsData(
       query: SQLiteQueryParams(where: whereClause, whereArgs: whereArgs),
       voidCallBack: (list) {
         listPatients = list;

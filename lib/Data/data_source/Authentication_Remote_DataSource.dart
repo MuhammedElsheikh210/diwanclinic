@@ -1,36 +1,32 @@
 import '../../index/index_main.dart';
 
 abstract class AuthenticationDataSourceRepo {
-  // 🔹 Get all clients or filtered list
-  Future<List<LocalUser?>> getClients(
-    Map<String, dynamic> data,
-    SQLiteQueryParams query,
-    bool? isFiltered,
-  );
+  // ============================================================
+  // 🔹 LOCAL CLIENTS (Offline First)
+  // ============================================================
 
-  Future<List<LocalUser?>> getClients_local(
-    Map<String, dynamic> data,
-    SQLiteQueryParams query,
-    bool? isFiltered,
-  );
+  /// Always read from SQLite (source of truth for UI)
+  Future<List<LocalUser?>> getClients(SQLiteQueryParams query);
 
-  // 🔹 Get single client (by UID or filter)
-  Future<LocalUser?> getClient_Individual(Map<String, dynamic> data);
+  /// Optimistic add (syncStatus = pendingCreate)
+  Future<void> addClient(LocalUser model);
 
-  // 🔹 Add new client
-  Future<SuccessModel> addClient(Map<String, dynamic> data, String key);
+  /// Optimistic update (pendingUpdate)
+  Future<void> updateClient(LocalUser model);
 
-  // 🔹 Delete client
-  Future<SuccessModel> deleteClient(Map<String, dynamic> data, String key);
+  /// Soft delete (pendingDelete + isDeleted = true)
+  Future<void> deleteClient(String key);
 
-  // 🔹 Update client
-  Future<SuccessModel> updateClient(Map<String, dynamic> data, String key);
+  // ============================================================
+  // 🔹 SYNC ENGINE CONTROL
+  // ============================================================
 
+  /// Called when server pushes data (Realtime)
+  Future<void> upsertFromServer(LocalUser model);
 
-}
+  /// Mark local record as synced after successful push
+  Future<void> markAsSynced(String key, {int? serverUpdatedAt});
 
-enum SyncStatusAuth {
-  client, // waiting to sync
-  reservation, // currently syncing
-  // sync failed
+  /// Get all non-synced records (for SyncWorker)
+  Future<List<LocalUser>> getPendingClients();
 }
