@@ -22,7 +22,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 57, // ⬅️ bumped
+      version: 61, // ⬅️ bumped
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onConfigure: (db) async {
@@ -90,7 +90,10 @@ class DatabaseService {
       CREATE TABLE clients (
         key TEXT PRIMARY KEY,
         token TEXT,
+        medical_center_key TEXT,
+        medicalCenterKey TEXT,
         client_name TEXT,
+        doctorKey_fromAdmin TEXT,
         phone TEXT,
         doctorQualifications TEXT,
         whats_app_phone TEXT,
@@ -169,6 +172,7 @@ class DatabaseService {
         key TEXT PRIMARY KEY,
         patient_uid TEXT,
         fcmToken_patient TEXT,
+        medicalCenterKey TEXT,
         fcmToken_assist TEXT,
         create_at INTEGER,
         updated_at INTEGER NOT NULL DEFAULT 0,

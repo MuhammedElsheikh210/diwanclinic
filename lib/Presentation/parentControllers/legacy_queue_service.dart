@@ -71,14 +71,12 @@ class LegacyQueueService {
   }
 
   Future<void> getLegacyQueueByDateData({
-    required String date,
     required FirebaseFilter firebaseFilter, // ✅ استخدام FirebaseFilter
     required Function(List<LegacyQueueModel?>) voidCallBack,
     bool isPatient = false,
     String? doctorUid,
   }) async {
     final result = await useCase.getLegacyQueueByDate(
-      date,
       firebaseFilter.toJson() ?? {}, // 🔥 يتحول Map هنا
       isPatient: isPatient,
       doctorUid: doctorUid,

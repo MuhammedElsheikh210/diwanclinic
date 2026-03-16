@@ -16,10 +16,12 @@ class ApiConstatns {
   // ---------- Dynamic UID ----------
   static String? get uid {
     final user = LocalUser().getUserData();
+    print("user.doctorKey_fromAdmin is ${user.toJson()}");
 
     if (user.userType?.name == Strings.doctor) {
       return user.uid;
     } else {
+      print("doctor key is ${user.doctorKey}");
       return user.doctorKey;
     }
   }
@@ -39,13 +41,15 @@ class ApiConstatns {
 
   static String get doctors => "doctors";
 
+  static String get medicalCenters => "medicalCenters";
+
   static String get patients => "patients";
 
   static String get notifications => "notifications";
 
   static String get assistants => "assistants";
 
-  static String get clinics => "doctors/$uid/clinics";
+  static String get clinics => "doctors";
 
   static String get clinics_patient => "doctors/";
 
@@ -69,7 +73,7 @@ class ApiConstatns {
 
   static String get specializations => "specializations";
 
-  static String get shifts => "doctors/$uid/shifts";
+  static String get shifts => "doctors";
 
   static String get shiftsFromPatient => "doctors/";
 
@@ -90,5 +94,4 @@ class ApiConstatns {
   static String get doctorSuggestions => "doctorSuggestions";
 
   static String get doctorList => "doctorList";
-
 }

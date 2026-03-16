@@ -142,6 +142,7 @@ class Strings {
   static const String assistant = "assistant";
   static const String patient = "patient";
   static const String doctor = "doctor";
+  static const String admin = "admin";
 
   // quert
   static const String desc = "DESC";

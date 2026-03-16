@@ -23,10 +23,7 @@ class CreateOpenclosereservationViewModel extends GetxController {
   // ------------------------------------------------------------
   // 🔹 INIT
   // ------------------------------------------------------------
-  void init(
-      LegacyQueueModel? model, {
-        String? incomingShiftKey,
-      }) {
+  void init(LegacyQueueModel? model, {String? incomingShiftKey}) {
     shiftKey = incomingShiftKey;
 
     if (model != null) {
@@ -37,7 +34,7 @@ class CreateOpenclosereservationViewModel extends GetxController {
       isClosed = model.isClosed ?? false;
 
       try {
-        final parsed = DateFormat("dd/MM/yyyy").parse(model.date ?? "");
+        final parsed = DateFormat("dd-MM-yyyy").parse(model.date ?? "");
         selectedTimestamp = parsed.millisecondsSinceEpoch;
         formattedDate = model.date;
       } catch (_) {}
@@ -54,6 +51,8 @@ class CreateOpenclosereservationViewModel extends GetxController {
 
     ShiftService().getShiftsData(
       data: FirebaseFilter(orderBy: "clinicKey", equalTo: clinicKey),
+      doctorKey: LocalUser().getUserData().doctorKey ?? "",
+
       query: SQLiteQueryParams(
         is_filtered: true,
         where: "clinicKey = ?",
@@ -61,8 +60,9 @@ class CreateOpenclosereservationViewModel extends GetxController {
       ),
       voidCallBack: (data) {
         if (data != null && data.isNotEmpty) {
-          shiftDropdownItems =
-              ShiftModelAdapterUtil.convertShiftListToGeneric(data);
+          shiftDropdownItems = ShiftModelAdapterUtil.convertShiftListToGeneric(
+            data,
+          );
 
           if (shiftDropdownItems!.length == 1) {
             selectedShift = shiftDropdownItems!.first;
@@ -70,8 +70,9 @@ class CreateOpenclosereservationViewModel extends GetxController {
           } else {
             if (shiftKey != null) {
               try {
-                selectedShift = shiftDropdownItems!
-                    .firstWhere((e) => e.key == shiftKey);
+                selectedShift = shiftDropdownItems!.firstWhere(
+                  (e) => e.key == shiftKey,
+                );
               } catch (_) {
                 selectedShift = null;
               }
@@ -99,7 +100,7 @@ class CreateOpenclosereservationViewModel extends GetxController {
   void setDate(Timestamp timestamp) {
     final dateTime = timestamp.toDate();
     selectedTimestamp = dateTime.millisecondsSinceEpoch;
-    formattedDate = DateFormat("dd/MM/yyyy").format(dateTime);
+    formattedDate = DateFormat("dd-MM-yyyy").format(dateTime);
     update();
   }
 
@@ -128,6 +129,7 @@ class CreateOpenclosereservationViewModel extends GetxController {
     final model = LegacyQueueModel(
       key: existing?.key ?? const Uuid().v4(),
       date: formattedDate,
+      shiftName: selectedShift?.name,
       value: int.tryParse(valueController.text) ?? 0,
       clinic_key: LocalUser().getUserData().clinicKey,
       isClosed: isClosed,
@@ -137,15 +139,9 @@ class CreateOpenclosereservationViewModel extends GetxController {
     Loader.show();
 
     if (isUpdate) {
-      service.updateOpenCloseDayData(
-        model: model,
-        voidCallBack: _handleResult,
-      );
+      service.updateOpenCloseDayData(model: model, voidCallBack: _handleResult);
     } else {
-      service.addOpenCloseDayData(
-        model: model,
-        voidCallBack: _handleResult,
-      );
+      service.addOpenCloseDayData(model: model, voidCallBack: _handleResult);
     }
   }
 

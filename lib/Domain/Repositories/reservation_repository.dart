@@ -9,6 +9,8 @@ abstract class ReservationRepository {
 
   Future<void> startListening({required String doctorKey});
 
+  Future<void> stopListening();
+
   Future<void> dispose();
 
   // ============================================================

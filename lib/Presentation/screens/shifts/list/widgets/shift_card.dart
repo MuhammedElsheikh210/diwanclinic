@@ -2,10 +2,15 @@ import '../../../../../index/index_main.dart';
 
 class ShiftCard extends StatelessWidget {
   final ShiftModel shift;
+  final String doctor_key;
   final ShiftViewModel controller;
 
-  const ShiftCard({Key? key, required this.shift, required this.controller})
-    : super(key: key);
+  const ShiftCard({
+    Key? key,
+    required this.shift,
+    required this.controller,
+    required this.doctor_key,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +61,7 @@ class ShiftCard extends StatelessWidget {
                     context: context,
                     child: CreateShiftView(
                       shift: shift,
+                      doctor_key: doctor_key,
                       clinic_key: controller.clinic_key ?? "",
                     ),
                   );

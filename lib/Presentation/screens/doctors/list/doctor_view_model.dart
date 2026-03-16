@@ -1,4 +1,4 @@
-import '../../../../../index/index_main.dart';
+import '../../../../index/index_main.dart';
 
 class DoctorViewModel extends GetxController {
   List<LocalUser?>? listDoctors;
@@ -6,14 +6,19 @@ class DoctorViewModel extends GetxController {
 
   DoctorViewModel({required this.specializeKey});
 
+  /// ✅ NEW Constructor for Medical Center
+  DoctorViewModel.byCenter(String centerKey) : specializeKey = "" {
+    getDoctorsByCenter(centerKey);
+  }
+
   @override
   Future<void> onInit() async {
-    getData();
+    if (specializeKey.isNotEmpty) {
+      getData();
+    }
     super.onInit();
   }
 
-  /// ✅ Fetch Doctors (filtered by specialization key)
-  /// ✅ Fetch Doctors (filtered by specialization key)
   void getData() {
     AuthenticationService().getClientsData(
       query: SQLiteQueryParams(
@@ -22,19 +27,36 @@ class DoctorViewModel extends GetxController {
         whereArgs: [specializeKey, "doctor", 1],
       ),
       voidCallBack: (data) {
-        Loader.dismiss();
         listDoctors = data;
         update();
       },
     );
   }
 
-  /// ✅ Delete a Doctor
+  /// ✅ NEW
+  void getDoctorsByCenter(String centerKey) {
+    print("centerKey is ${centerKey}");
+    AuthenticationService().getClientsData(
+      query: SQLiteQueryParams(
+        where:
+        "medicalCenterKey = ? AND userType = ? AND remote_reservation_ability = ?",
+        whereArgs: [centerKey, "doctor", 1],
+      ),
+      voidCallBack: (data) {
+        print("data in doctors is ${data.length}");
+        listDoctors = data;
+        update();
+      },
+    );
+  }
+
   void deleteDoctor(LocalUser doctor) {
     AuthenticationService().deleteClientsData(
       uid: doctor.uid ?? "",
       voidCallBack: (_) {
-        getData();
+        if (specializeKey.isNotEmpty) {
+          getData();
+        }
       },
     );
   }

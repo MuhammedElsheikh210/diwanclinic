@@ -3,11 +3,19 @@ import '../../../../../index/index_main.dart';
 class AssistantViewModel extends GetxController {
   List<LocalUser?>? listAssistants;
 
-  @override
-  Future<void> onInit() async {
+  /// 🧠 OLD MODE (Doctor Assistants)
+  AssistantViewModel() {
     getData();
-    super.onInit();
   }
+
+  /// 🏥 NEW MODE (Center Assistants)
+  AssistantViewModel.byCenter(String centerKey) {
+    getAssistantsByCenter(centerKey);
+  }
+
+  // =========================================================
+  // 👨‍⚕️ Doctor Assistants
+  // =========================================================
 
   void getData() {
     final doctorUid = LocalUser().getUserData().uid ?? "";
@@ -18,12 +26,30 @@ class AssistantViewModel extends GetxController {
         whereArgs: [doctorUid, "assistant"],
       ),
       voidCallBack: (data) {
-        Loader.dismiss();
         listAssistants = data;
         update();
       },
     );
   }
+
+  // =========================================================
+  // 🏥 Center Assistants
+  // =========================================================
+
+  void getAssistantsByCenter(String centerKey) {
+    AuthenticationService().getClientsData(
+      query: SQLiteQueryParams(
+        where: "medicalCenterKey = ? AND userType = ?",
+        whereArgs: [centerKey, "assistant"],
+      ),
+      voidCallBack: (data) {
+        listAssistants = data;
+        update();
+      },
+    );
+  }
+
+  // =========================================================
 
   void deleteAssistant(LocalUser assistant) {
     AuthenticationService().deleteClientsData(

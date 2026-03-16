@@ -32,7 +32,7 @@ class CreateLegacyQueueViewModel extends GetxController {
       valueController.text = model.value?.toString() ?? "";
 
       try {
-        final parsed = DateFormat("dd/MM/yyyy").parse(model.date ?? "");
+        final parsed = DateFormat("dd-MM-yyyy").parse(model.date ?? "");
         selectedTimestamp = parsed.millisecondsSinceEpoch;
         formattedDate = model.date;
       } catch (_) {}
@@ -55,6 +55,7 @@ class CreateLegacyQueueViewModel extends GetxController {
     try {
       await ShiftService().getShiftsData(
         data: FirebaseFilter(orderBy: "clinicKey", equalTo: clinicKey),
+        doctorKey: LocalUser().getUserData().doctorKey ?? "",
         query: SQLiteQueryParams(
           is_filtered: true,
           where: "clinicKey = ?",
@@ -105,7 +106,7 @@ class CreateLegacyQueueViewModel extends GetxController {
   void setDate(Timestamp timestamp) {
     final dateTime = timestamp.toDate();
     selectedTimestamp = dateTime.millisecondsSinceEpoch;
-    formattedDate = DateFormat("dd/MM/yyyy").format(dateTime);
+    formattedDate = DateFormat("dd-MM-yyyy").format(dateTime);
     update();
   }
 

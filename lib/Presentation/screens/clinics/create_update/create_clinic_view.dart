@@ -2,8 +2,10 @@ import '../../../../../index/index_main.dart';
 
 class CreateClinicView extends StatefulWidget {
   final ClinicModel? clinic;
+  final String? doctorKey;
 
-  const CreateClinicView({Key? key, this.clinic}) : super(key: key);
+  const CreateClinicView({Key? key, this.clinic, this.doctorKey})
+    : super(key: key);
 
   @override
   State<CreateClinicView> createState() => _CreateClinicViewState();
@@ -16,7 +18,10 @@ class _CreateClinicViewState extends State<CreateClinicView> {
   @override
   void initState() {
     super.initState();
+
     final createClinicVM = initController(() => CreateClinicViewModel());
+
+    createClinicVM.doctorKey = widget.doctorKey;
 
     if (widget.clinic != null) {
       createClinicVM.existingClinic = widget.clinic;
@@ -45,20 +50,19 @@ class _CreateClinicViewState extends State<CreateClinicView> {
             iconTheme: const IconThemeData(color: AppColors.white),
           ),
           bottomNavigationBar:
-              /// 🔹 Save Button
-              SafeArea(
-                top: false,
-                child: SizedBox(
-                  height: 80.h,
-                  child: BottomNavigationActions(
-                    rightTitle: controller.is_update
-                        ? "تحديث العيادة"
-                        : "إضافة العيادة",
-                    rightAction: controller.saveClinic,
-                    isRightEnabled: controller.validateStep(),
-                  ),
-                ),
+          /// 🔹 Save Button
+          SafeArea(
+            top: false,
+            child: SizedBox(
+              height: 80.h,
+              child: BottomNavigationActions(
+                rightTitle:
+                    controller.is_update ? "تحديث العيادة" : "إضافة العيادة",
+                rightAction: controller.saveClinic,
+                isRightEnabled: controller.validateStep(),
               ),
+            ),
+          ),
           body: Form(
             key: globalKeyClinic,
             child: KeyboardActions(

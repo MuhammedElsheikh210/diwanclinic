@@ -26,6 +26,8 @@ class LoginViewModel extends GetxController {
 
   @override
   Future<void> onInit() async {
+    String? apns = await FirebaseMessaging.instance.getAPNSToken();
+    print("APNS NOW => $apns");
     LocalUser().removeLocalUser();
     super.onInit();
   }
@@ -96,7 +98,8 @@ class LoginViewModel extends GetxController {
   // ─────────────────────────────
 
   Future<void> saveUserToFirebaseRealtime(String uid) async {
-    final newToken = NotificationService().token;
+    //  final newToken = NotificationService().token;
+    final newToken = await ConstantsData.firebaseToken();
 
     final LocalUser userClient = LocalUser(
       uid: uid,
@@ -137,6 +140,7 @@ class LoginViewModel extends GetxController {
 
         var user = users.first!;
         final newToken = NotificationService().token;
+        //  final newToken = await ConstantsData.firebaseToken();
 
         // 🔄 Update FCM token if changed
         if (newToken != null &&
@@ -177,7 +181,7 @@ class LoginViewModel extends GetxController {
     switch (role) {
       case UserType.assistant:
       case UserType.doctor:
-        Get.offAllNamed(syncView);
+        Get.offAllNamed(mainpage);
         break;
 
       case UserType.pharmacy:
@@ -185,7 +189,6 @@ class LoginViewModel extends GetxController {
         break;
 
       default:
-        await _updateClientsSyncStatus();
         Get.offAllNamed(mainpage);
     }
   }
@@ -193,14 +196,6 @@ class LoginViewModel extends GetxController {
   // ─────────────────────────────
   // SYNC UPDATE
   // ─────────────────────────────
-
-  Future<void> _updateClientsSyncStatus() async {
-    final ref = FirebaseDatabase.instance.ref("sync_meta/clients");
-
-    await ref.update({
-      "last_add_data_timestamp": DateTime.now().millisecondsSinceEpoch,
-    });
-  }
 
   // ─────────────────────────────
   // ASSISTANT DB CHECK

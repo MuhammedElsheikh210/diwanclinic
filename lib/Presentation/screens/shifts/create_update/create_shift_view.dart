@@ -3,9 +3,14 @@ import '../../../../../index/index_main.dart';
 class CreateShiftView extends StatefulWidget {
   final ShiftModel? shift;
   final String clinic_key;
+  final String doctor_key;
 
-  const CreateShiftView({Key? key, this.shift, required this.clinic_key})
-    : super(key: key);
+  const CreateShiftView({
+    Key? key,
+    this.shift,
+    required this.clinic_key,
+    required this.doctor_key,
+  }) : super(key: key);
 
   @override
   State<CreateShiftView> createState() => _CreateShiftViewState();
@@ -20,6 +25,7 @@ class _CreateShiftViewState extends State<CreateShiftView> {
     super.initState();
     final createShiftVM = initController(() => CreateShiftViewModel());
     createShiftVM.clinic_key = widget.clinic_key;
+    createShiftVM.doctor_key = widget.doctor_key;
 
     if (widget.shift != null) {
       createShiftVM.existingShift = widget.shift;
@@ -104,9 +110,8 @@ class _CreateShiftViewState extends State<CreateShiftView> {
               Divider(height: 20.h),
               SafeArea(
                 child: BottomNavigationActions(
-                  rightTitle: controller.isUpdate
-                      ? "تحديث الوردية"
-                      : "إضافة الوردية",
+                  rightTitle:
+                      controller.isUpdate ? "تحديث الوردية" : "إضافة الوردية",
                   rightAction: controller.saveShift,
                   isRightEnabled: controller.validateStep(),
                 ),

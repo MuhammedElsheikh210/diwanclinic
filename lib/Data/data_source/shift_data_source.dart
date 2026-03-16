@@ -1,20 +1,37 @@
 import '../../index/index_main.dart';
 
 abstract class ShiftDataSourceRepo {
-  Future<List<ShiftModel?>> getShifts(
-    Map<String, dynamic> data,
-    SQLiteQueryParams query,
-    bool? isFiltered,
-  );
 
-  Future<List<ShiftModel?>> getShiftssFromPatient(
+  /// 🕒 Get shifts for doctor
+  Future<List<ShiftModel?>> getShifts(
       Map<String, dynamic> data,
       String? doctorKey,
       );
 
-  Future<SuccessModel> addShift(Map<String, dynamic> data, String key);
+  /// 👨‍⚕️ Get shifts for patient view
+  Future<List<ShiftModel?>> getShiftsFromPatient(
+      Map<String, dynamic> data,
+      String? doctorKey,
+      );
 
-  Future<SuccessModel> deleteShift(Map<String, dynamic> data, String key);
+  /// ➕ Add shift
+  Future<SuccessModel> addShift(
+      Map<String, dynamic> data,
+      String key,
+      String? doctorKey,
+      );
 
-  Future<SuccessModel> updateShift(Map<String, dynamic> data, String key);
+  /// ❌ Delete shift
+  Future<SuccessModel> deleteShift(
+      Map<String, dynamic> data,
+      String key,
+      String? doctorKey,
+      );
+
+  /// ✏️ Update shift
+  Future<SuccessModel> updateShift(
+      Map<String, dynamic> data,
+      String key,
+      String? doctorKey,
+      );
 }

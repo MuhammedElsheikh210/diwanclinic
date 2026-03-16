@@ -1,3 +1,4 @@
+
 import 'package:firebase_database/firebase_database.dart';
 import '../index/index_main.dart';
 
@@ -39,6 +40,11 @@ class Binding implements Bindings {
     // ───────────── Data Sources ─────────────
     Get.lazyPut<DoctorListRemoteDataSource>(
       () => DoctorListRemoteDataSourceImpl(Get.find()),
+      fenix: true,
+    );
+
+    Get.lazyPut<MedicalCenterDataSourceRepo>(
+          () => MedicalCenterDataSourceRepoImpl(Get.find()),
       fenix: true,
     );
 
@@ -124,6 +130,11 @@ class Binding implements Bindings {
 
     Get.lazyPut<IncomeDataSourceRepo>(
       () => IncomeDataSourceRepoImpl(Get.find()),
+      fenix: true,
+    );
+
+    Get.lazyPut<MedicalCenterRepository>(
+          () => MedicalCenterRepositoryImpl(Get.find()),
       fenix: true,
     );
 

@@ -5,6 +5,7 @@ abstract class ClinicRepository {
   Future<Either<AppError, List<ClinicModel?>>> getClinicsDomain(
       Map<String, dynamic> data,
       SQLiteQueryParams query,
+      String? doctorKey,
       bool? isFiltered,
       bool? fromOnline,   //
       );
@@ -18,15 +19,18 @@ abstract class ClinicRepository {
   Future<Either<AppError, SuccessModel>> addClinicDomain(
       Map<String, dynamic> data,
       String key,
+      String? doctorKey,
       );
 
   Future<Either<AppError, SuccessModel>> deleteClinicDomain(
       Map<String, dynamic> data,
       String key,
+      String? doctorKey,
       );
 
   Future<Either<AppError, SuccessModel>> updateClinicDomain(
       Map<String, dynamic> data,
       String key,
+      String? doctorKey,
       );
 }

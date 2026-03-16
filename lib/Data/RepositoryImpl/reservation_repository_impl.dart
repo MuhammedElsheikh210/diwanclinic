@@ -105,8 +105,8 @@ class ReservationRepositoryImpl implements ReservationRepository {
   // ============================================================
 
   @override
-  Future<void> dispose() async {
-    log("🛑 Stop Listening Reservations");
+  Future<void> stopListening() async {
+    log("🛑 Stop Reservations Realtime");
 
     _isListening = false;
     _processedKeys.clear();
@@ -116,6 +116,13 @@ class ReservationRepositoryImpl implements ReservationRepository {
     await _removedSub?.cancel();
 
     await _remote.stopListening();
+  }
+
+  @override
+  Future<void> dispose() async {
+    log("🛑 Dispose Reservations");
+
+    await stopListening();
 
     if (!_addedController.isClosed) await _addedController.close();
     if (!_changedController.isClosed) await _changedController.close();

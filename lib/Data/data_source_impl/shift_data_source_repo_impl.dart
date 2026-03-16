@@ -1,4 +1,3 @@
-import 'package:diwanclinic/Data/data_source/shift_data_source.dart';
 import '../../index/index_main.dart';
 
 class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
@@ -6,40 +5,22 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
 
   ShiftDataSourceRepoImpl(this._clientSourceRepo);
 
+  /// 🔹 API Paths
+  String _shiftsPath(String? doctorKey) =>
+      "/${ApiConstatns.shifts}/$doctorKey/shifts.json";
+
+  String _shiftItemPath(String? doctorKey, String key) =>
+      "/${ApiConstatns.shifts}/$doctorKey/shifts/$key.json";
+
+  String _shiftsPatientPath(String? doctorKey) =>
+      "/${ApiConstatns.shiftsFromPatient}/$doctorKey/shifts.json";
+
+  /// 🕒 Get shifts for doctor
   @override
   Future<List<ShiftModel?>> getShifts(
-    Map<String, dynamic> data,
-    SQLiteQueryParams query,
-    bool? isFiltered,
-  ) async {
-    try {
-      final response = await _clientSourceRepo.request(
-        HttpMethod.GET,
-        "/${ApiConstatns.shifts}.json",
-        params: data,
-      );
-
-      if (response == null || response.isEmpty) {
-        return [];
-      }
-
-      final shiftList = handleResponse<ShiftModel>(
-        response,
-        (json) => ShiftModel.fromJson(json),
-      );
-
-      return shiftList;
-    } catch (e) {
-      return [];
-    }
-  }
-
-  /// 🩺 Fetch shifts related to a specific doctor (for patient view)
-  @override
-  Future<List<ShiftModel?>> getShiftssFromPatient(
-    Map<String, dynamic> data,
-    String? doctorKey,
-  ) async {
+      Map<String, dynamic> data,
+      String? doctorKey,
+      ) async {
     try {
       if (doctorKey == null || doctorKey.isEmpty) {
         return [];
@@ -47,7 +28,7 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
 
       final response = await _clientSourceRepo.request(
         HttpMethod.GET,
-        "/${ApiConstatns.shiftsFromPatient}$doctorKey/shifts.json",
+        _shiftsPath(doctorKey),
         params: data,
       );
 
@@ -55,68 +36,106 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
         return [];
       }
 
-      final shifts = handleResponse<ShiftModel>(
+      return handleResponse<ShiftModel>(
         response,
-        (json) => ShiftModel.fromJson(json),
+            (json) => ShiftModel.fromJson(json),
       );
-
-      return shifts;
     } catch (e) {
+      print("❌ getShifts error: $e");
       return [];
     }
   }
 
+  /// 👨‍⚕️ Get shifts for patient
   @override
-  Future<SuccessModel> addShift(Map<String, dynamic> data, String key) async {
+  Future<List<ShiftModel?>> getShiftsFromPatient(
+      Map<String, dynamic> data,
+      String? doctorKey,
+      ) async {
     try {
-      final shift = ShiftModel.fromJson(data);
+      if (doctorKey == null || doctorKey.isEmpty) {
+        return [];
+      }
 
       final response = await _clientSourceRepo.request(
+        HttpMethod.GET,
+        _shiftsPatientPath(doctorKey),
+        params: data,
+      );
+
+      if (response == null || response.isEmpty) {
+        return [];
+      }
+
+      return handleResponse<ShiftModel>(
+        response,
+            (json) => ShiftModel.fromJson(json),
+      );
+    } catch (e) {
+      print("❌ getShiftsFromPatient error: $e");
+      return [];
+    }
+  }
+
+  /// ➕ Add shift
+  @override
+  Future<SuccessModel> addShift(
+      Map<String, dynamic> data,
+      String key,
+      String? doctorKey,
+      ) async {
+    try {
+      final response = await _clientSourceRepo.request(
         HttpMethod.PATCH,
-        "/${ApiConstatns.shifts}/$key.json",
+        _shiftItemPath(doctorKey, key),
         params: data,
       );
 
       return SuccessModel.fromJson(response);
     } catch (e) {
+      print("❌ addShift error: $e");
       return SuccessModel(message: "حدث خطأ أثناء إضافة الفترة");
     }
   }
 
+  /// ❌ Delete shift
   @override
   Future<SuccessModel> deleteShift(
-    Map<String, dynamic> data,
-    String key,
-  ) async {
+      Map<String, dynamic> data,
+      String key,
+      String? doctorKey,
+      ) async {
     try {
       final response = await _clientSourceRepo.request(
         HttpMethod.DELETE,
-        "/${ApiConstatns.shifts}/$key.json",
+        _shiftItemPath(doctorKey, key),
         params: data,
       );
 
       return SuccessModel.fromJson(response ?? {"message": "تم الحذف بنجاح"});
     } catch (e) {
+      print("❌ deleteShift error: $e");
       return SuccessModel(message: "فشل حذف الفترة");
     }
   }
 
+  /// ✏️ Update shift
   @override
   Future<SuccessModel> updateShift(
-    Map<String, dynamic> data,
-    String key,
-  ) async {
+      Map<String, dynamic> data,
+      String key,
+      String? doctorKey,
+      ) async {
     try {
-      final shift = ShiftModel.fromJson(data);
-
       final response = await _clientSourceRepo.request(
         HttpMethod.PATCH,
-        "/${ApiConstatns.shifts}/$key.json",
+        _shiftItemPath(doctorKey, key),
         params: data,
       );
 
       return SuccessModel.fromJson(response);
     } catch (e) {
+      print("❌ updateShift error: $e");
       return SuccessModel(message: "فشل تحديث بيانات الفترة");
     }
   }

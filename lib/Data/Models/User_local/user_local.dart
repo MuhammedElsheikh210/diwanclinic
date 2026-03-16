@@ -3,6 +3,7 @@ import '../../../index/index_main.dart';
 class LocalUser {
   String? uid;
   String? key;
+  String? medicalCenterKey;
   UserType? userType;
   int? isCompleteProfile;
   String? identifier;
@@ -18,6 +19,7 @@ class LocalUser {
   String? address;
   int? createAt;
   String? doctorKey;
+  String? doctorKey_fromAdmin;
   String? doctorName;
   String? doctorQualifications;
   String? salesKey;
@@ -53,6 +55,7 @@ class LocalUser {
 
   LocalUser({
     this.uid,
+    this.doctorKey_fromAdmin,
     this.key,
     this.userType,
     this.isCompleteProfile,
@@ -62,6 +65,7 @@ class LocalUser {
     this.doctorQualifications,
     this.profileImage,
     this.coverImage,
+    this.medicalCenterKey,
     this.phone,
     this.specialize_key,
     this.specializationName,
@@ -101,6 +105,8 @@ class LocalUser {
 
     return LocalUser(
       uid: json['token'],
+      doctorKey_fromAdmin: json['doctorKey_fromAdmin'],
+      medicalCenterKey: json['medicalCenterKey'],
       key: json['key'],
       doctorQualifications: json['doctorQualifications'],
       specialize_key: json['specialize_key'],
@@ -154,6 +160,8 @@ class LocalUser {
     }
 
     put('token', uid);
+    put('doctorKey_fromAdmin', doctorKey_fromAdmin);
+    put('medicalCenterKey', medicalCenterKey);
     put('key', key);
     put('doctorQualifications', doctorQualifications);
     put('specialize_key', specialize_key);
@@ -201,7 +209,9 @@ class LocalUser {
 
   LocalUser copyWith({
     String? uid,
+    String? doctorKey_fromAdmin,
     String? key,
+    String? medicalCenterKey,
     UserType? userType,
     int? isCompleteProfile,
     String? identifier,
@@ -240,6 +250,8 @@ class LocalUser {
   }) {
     return LocalUser(
       uid: uid ?? this.uid,
+      doctorKey_fromAdmin: doctorKey_fromAdmin ?? this.doctorKey_fromAdmin,
+      medicalCenterKey: medicalCenterKey ?? this.medicalCenterKey,
       key: key ?? this.key,
       userType: userType ?? this.userType,
       isCompleteProfile: isCompleteProfile ?? this.isCompleteProfile,

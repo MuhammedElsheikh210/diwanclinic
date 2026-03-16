@@ -420,6 +420,8 @@ class ReservationDoctorViewModel extends GetxController {
 
     ClinicService().getClinicsData(
       data: {},
+      doctorKey: LocalUser().getUserData().uid ?? "",
+
       filrebaseFilter: FirebaseFilter(
         orderBy: "doctor_key",
         equalTo: doctorKey,

@@ -33,10 +33,15 @@ class ClinicService {
 
   Future<void> deleteClinicData({
     required String clinicKey,
+    required String doctorKey,
     required Function(ResponseStatus) voidCallBack,
   }) async {
     Loader.show();
-    final result = await useCase.deleteClinic(clinicKey);
+
+    final result = await useCase.deleteClinic(clinicKey, doctorKey);
+
+    Loader.dismiss();
+
     result.fold(
       (l) => voidCallBack(ResponseStatus.error),
       (r) => voidCallBack(ResponseStatus.success),
@@ -47,6 +52,8 @@ class ClinicService {
   Future<void> getClinicsData({
     required Map<String, dynamic> data,
     required SQLiteQueryParams query,
+    required String doctorKey,
+
     required FirebaseFilter filrebaseFilter,
     bool? isFiltered,
     bool? fromOnline, //
@@ -55,6 +62,7 @@ class ClinicService {
     final result = await useCase.getClinics(
       filrebaseFilter.toJson(),
       query,
+      doctorKey,
       isFiltered,
       fromOnline,
     );

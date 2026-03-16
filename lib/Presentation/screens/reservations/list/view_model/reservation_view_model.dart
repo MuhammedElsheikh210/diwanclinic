@@ -35,6 +35,11 @@ class ReservationViewModel extends GetxController {
   List<ReservationModel?>? listReservations;
   List<ReservationModel?> completeDayReservations = [];
   List<ReservationModel> completedForReport = [];
+  List<LocalUser?>? centerDoctors;
+  LocalUser? selectedDoctor;
+  bool isLoadingDoctors = false;
+
+  bool get isCenterMode => LocalUser().getUserData().medicalCenterKey != null;
 
   // Computed Stats
   int get completedCount =>
@@ -73,12 +78,52 @@ class ReservationViewModel extends GetxController {
     "متابعة",
   ];
 
-  // Lifecycle
   @override
   Future<void> onInit() async {
     super.onInit();
+    if (isCenterMode) {
+      loadDoctorsOfCenter();
+    }
     _initManagers();
     _listenToGlobalReservationEvents();
+  }
+
+  Future<void> loadDoctorsOfCenter() async {
+    final centerKey = LocalUser().getUserData().medicalCenterKey;
+    if (centerKey == null) return;
+
+    isLoadingDoctors = true;
+    update();
+
+    AuthenticationService().getClientsData(
+      query: SQLiteQueryParams(
+        where: "medicalCenterKey = ? AND userType = ?",
+        whereArgs: [centerKey, "doctor"],
+      ),
+      voidCallBack: (data) async {
+        centerDoctors = data;
+
+        // ✅ اختار أول دكتور تلقائيًا
+        if (data.isNotEmpty) {
+          selectedDoctor = data.first;
+
+          final doctorKey = selectedDoctor?.uid ?? "";
+          MainPageViewModel mainPageViewModel = initController(
+            () => MainPageViewModel(),
+          );
+          // 🔥 start realtime reservations
+          await mainPageViewModel.startReservationsRealtime(
+            doctorKey: doctorKey,
+          );
+
+          // 📍 تحميل العيادات
+          await getClinicList();
+        }
+
+        isLoadingDoctors = false;
+        update();
+      },
+    );
   }
 
   void _initManagers() {
@@ -91,10 +136,18 @@ class ReservationViewModel extends GetxController {
   // Fetch clinics
   Future<void> getClinicList() async {
     final clinicKey = LocalUser().getUserData().clinicKey ?? "";
+    final medicalCenterKey = LocalUser().getUserData().medicalCenterKey ?? "";
+
+    final FirebaseFilter? filter =
+        medicalCenterKey.isNotEmpty
+            ? null
+            : FirebaseFilter(orderBy: "key", equalTo: clinicKey);
 
     ClinicService().getClinicsData(
       data: {},
-      filrebaseFilter: FirebaseFilter(orderBy: "key", equalTo: clinicKey),
+      doctorKey:
+          selectedDoctor?.uid ?? LocalUser().getUserData().doctorKey ?? "",
+      filrebaseFilter: filter ?? FirebaseFilter(),
       query: SQLiteQueryParams(),
       voidCallBack: (data) async {
         listClinic = data;
@@ -105,10 +158,8 @@ class ReservationViewModel extends GetxController {
             data,
           );
 
-          // 🧹 شيل العناصر الـ null
           final clinics = data.whereType<ClinicModel>().toList();
 
-          // ✅ اختار العيادة بالـ key
           selectedClinic = clinics.firstWhere(
             (clinic) => clinic.key == clinicKey,
             orElse: () => clinics.first,
@@ -147,11 +198,24 @@ class ReservationViewModel extends GetxController {
   Future<void> getShiftList() async {
     if (selectedClinic == null) return;
 
+    final doctorKey =
+        isCenterMode
+            ? selectedDoctor?.uid
+            : LocalUser().getUserData().doctorKey;
+
+    final medicalCenterKey = LocalUser().getUserData().medicalCenterKey ?? "";
+
+    final FirebaseFilter? filter =
+        medicalCenterKey.isNotEmpty
+            ? null
+            : FirebaseFilter(
+              orderBy: "clinicKey",
+              equalTo: LocalUser().getUserData().clinicKey,
+            );
+
     ShiftService().getShiftsData(
-      data: FirebaseFilter(
-        orderBy: "clinicKey",
-        equalTo: LocalUser().getUserData().clinicKey,
-      ),
+      data: filter ?? FirebaseFilter(),
+      doctorKey: doctorKey ?? "",
       query: SQLiteQueryParams(),
       voidCallBack: (data) async {
         if (data != null && data.isNotEmpty) {
@@ -166,7 +230,7 @@ class ReservationViewModel extends GetxController {
 
             await getReservations();
           }
-          // ✅ أكثر من شيفت → افتح Dialog
+          // أكثر من شيفت
           else {
             hideShiftSelector = false;
 
@@ -315,10 +379,10 @@ extension ReservationData on ReservationViewModel {
       _updateListInMemory(reservation);
     };
 
-    service.onReservationUpdated = (reservation) {
+    service.onReservationUpdated = (reservation) async {
       if (!_belongsToCurrentFilters(reservation)) return;
 
-      _updateListInMemory(reservation);
+      await getReservations();
     };
 
     service.onReservationRemoved = (key) {
@@ -375,12 +439,11 @@ extension ReservationData on ReservationViewModel {
     update();
   }
 
-  // ============================================================
-  // 🔹 Fetch Reservations (PARALLEL + SAFE)
-  // ============================================================
-
   Future<void> getReservations() async {
-    final doctorKey = LocalUser().getUserData().doctorKey;
+    final doctorKey =
+        isCenterMode
+            ? selectedDoctor?.uid
+            : LocalUser().getUserData().doctorKey;
 
     if (doctorKey == null ||
         doctorKey.isEmpty ||
@@ -396,6 +459,7 @@ extension ReservationData on ReservationViewModel {
         fetchDailyReservations(normalizedDate),
         fetchFilteredReservations(normalizedDate),
         loadDailyReport(normalizedDate),
+        getTotalTodayReservations(),
       ]);
 
       debugPrint("✅ All reservation queries finished");
@@ -407,23 +471,16 @@ extension ReservationData on ReservationViewModel {
     }
   }
 
-  // ============================================================
-  // 🔹 Fetch All Reservations For The Day
-  // ============================================================
-
   Future<void> fetchDailyReservations(String normalizedDate) async {
     final daily = await queryManager.fetchByDateAndClinic(
       appointmentDate: normalizedDate,
       selectedClinic: selectedClinic,
       shiftKey: selectedShift!.key,
+      medicalCenterKey: LocalUser().getUserData().medicalCenterKey,
     );
 
     completeDayReservations = daily;
   }
-
-  // ============================================================
-  // 🔹 Fetch Filtered Reservations
-  // ============================================================
 
   Future<void> fetchFilteredReservations(String normalizedDate) async {
     final query = filterManager.buildFilters(
@@ -438,10 +495,6 @@ extension ReservationData on ReservationViewModel {
     listReservations = queueManager.buildFinalList(filtered);
   }
 
-  // ============================================================
-  // 🔹 Daily Financial Report
-  // ============================================================
-
   Future<void> loadDailyReport(String normalizedDate) async {
     if (selectedShift == null) return;
 
@@ -451,11 +504,9 @@ extension ReservationData on ReservationViewModel {
     );
   }
 
-  // ============================================================
-  // 🔹 Total Reservations Today
-  // ============================================================
-
   Future<int> getTotalTodayReservations() async {
+    print("appointmentDate is ${appointmentDate}");
+    print("selectedShift is ${selectedShift}");
     if (appointmentDate == null || selectedShift == null) {
       return 0;
     }
@@ -468,10 +519,6 @@ extension ReservationData on ReservationViewModel {
 
     return total;
   }
-
-  // ============================================================
-  // 🔹 Last Completed Reservation For Patient
-  // ============================================================
 
   Future<void> getLastReservationDateForPatient(LocalUser client) async {
     selectedPatientLastVisit = null;

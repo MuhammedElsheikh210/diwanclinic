@@ -39,7 +39,10 @@ class ClinicCard extends StatelessWidget {
                 onTap: () {
                   Get.delete<CreateClinicViewModel>();
                   Get.to(
-                    () => CreateClinicView(clinic: clinic),
+                    () => CreateClinicView(
+                      clinic: clinic,
+                      doctorKey: controller.doctorKey,
+                    ),
                     binding: Binding(),
                   );
                 },

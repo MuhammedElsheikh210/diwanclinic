@@ -19,7 +19,7 @@ class ReservationService {
   );
 
   // ============================================================
-  // 🎧 REALTIME CALLBACKS (For ViewModels)
+  // 🎧 REALTIME CALLBACKS
   // ============================================================
 
   Function(ReservationModel reservation)? onReservationAdded;
@@ -31,22 +31,35 @@ class ReservationService {
   StreamSubscription? _removedSub;
 
   bool _isListening = false;
+  String? _currentDoctorKey;
 
   // ============================================================
-  // 🔥 START REALTIME SYNC (Firebase → SQLite → UI)
+  // 🔥 START REALTIME SYNC
   // ============================================================
 
   Future<void> startListening({required String doctorKey}) async {
+    if (doctorKey.isEmpty) return;
+
     if (_isListening) {
-      print("🟡 ReservationService already listening — skip");
+      await useCase.stopListening();
+    }
+
+    // 🟡 لو نفس الدكتور متغيرش
+    if (_currentDoctorKey == doctorKey && _isListening) {
+      print("🟡 ReservationService already listening for this doctor");
       return;
     }
 
-    print("🎧 ReservationService START listening");
+    // 🔄 لو فيه listener قديم
+    if (_isListening) {
+      print("🔄 Switching doctor → restarting listener");
+      await stopListening();
+    }
+
+    print("🎧 ReservationService START listening → $doctorKey");
 
     await useCase.startListening(doctorKey: doctorKey);
 
-    // 👂 Listen to realtime events from UseCases
     _addedSub = useCase.onAdded.listen((reservation) {
       print("📡 Service Event → ADDED ${reservation.key}");
       onReservationAdded?.call(reservation);
@@ -62,13 +75,35 @@ class ReservationService {
       onReservationRemoved?.call(key);
     });
 
+    _currentDoctorKey = doctorKey;
     _isListening = true;
 
     print("✅ ReservationService listening ACTIVE");
   }
 
   // ============================================================
-  // 🔹 ADD RESERVATION (Optimistic)
+  // 🛑 STOP REALTIME ONLY
+  // ============================================================
+
+  Future<void> stopListening() async {
+    print("🛑 ReservationService stopListening");
+
+    await _addedSub?.cancel();
+    await _changedSub?.cancel();
+    await _removedSub?.cancel();
+
+    _addedSub = null;
+    _changedSub = null;
+    _removedSub = null;
+
+    _isListening = false;
+    _currentDoctorKey = null;
+
+    await useCase.stopListening(); // مهم لو عندك listeners في datasource
+  }
+
+  // ============================================================
+  // 🔹 ADD RESERVATION
   // ============================================================
 
   Future<void> addReservationData({
@@ -116,7 +151,7 @@ class ReservationService {
   }
 
   // ============================================================
-  // 🔹 GET RESERVATIONS (Always Local)
+  // 🔹 GET RESERVATIONS (LOCAL)
   // ============================================================
 
   Future<void> getReservationsData({
@@ -179,7 +214,7 @@ class ReservationService {
   }
 
   // ============================================================
-  // 🔹 CLEAR LOCAL (Debug only)
+  // 🔹 CLEAR LOCAL
   // ============================================================
 
   Future<void> clearLocalReservations() async {
@@ -188,21 +223,13 @@ class ReservationService {
   }
 
   // ============================================================
-  // 🛑 STOP REALTIME SYNC
+  // 🛑 DISPOSE SERVICE
   // ============================================================
 
   Future<void> dispose() async {
     print("🛑 ReservationService dispose");
 
-    _isListening = false;
-
-    await _addedSub?.cancel();
-    await _changedSub?.cancel();
-    await _removedSub?.cancel();
-
-    _addedSub = null;
-    _changedSub = null;
-    _removedSub = null;
+    await stopListening();
 
     await useCase.dispose();
   }

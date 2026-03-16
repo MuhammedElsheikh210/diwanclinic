@@ -99,7 +99,6 @@ class ReservationPatientViewModel extends GetxController {
     legacyQueueCount = 0;
 
     await LegacyQueueService().getLegacyQueueByDateData(
-      date: date,
       // dd-MM-yyyy
       isPatient: true,
       firebaseFilter: FirebaseFilter(

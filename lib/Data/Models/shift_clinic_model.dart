@@ -2,12 +2,12 @@ class ShiftModel {
   final String? key;
   final String? clinicKey;
   final String? doctorKey;
-  final String? name;          // e.g., Morning, Evening
-  final String? dayOfWeek;     // e.g., Sunday, Monday
-  final String? startTime;     // e.g., 09:00
-  final String? endTime;       // e.g., 13:00
-  final int? capacity;         // max patients allowed per shift
-  final String? uid;           // owner (doctor/clinic manager)
+  final String? name; // e.g., Morning, Evening
+  final String? dayOfWeek; // e.g., Sunday, Monday
+  final String? startTime; // e.g., 09:00
+  final String? endTime; // e.g., 13:00
+  final int? capacity; // max patients allowed per shift
+  final String? uid; // owner (doctor/clinic manager)
 
   ShiftModel({
     this.key,
@@ -26,14 +26,15 @@ class ShiftModel {
     return ShiftModel(
       key: json['key'] as String?,
       clinicKey: json['clinicKey'] as String?,
-      doctorKey: json['doctorKey'] as String?,
+      doctorKey: json['doctorKey'],
       name: json['name'] as String?,
       dayOfWeek: json['dayOfWeek'] as String?,
       startTime: json['startTime'] as String?,
       endTime: json['endTime'] as String?,
-      capacity: json['capacity'] is int
-          ? json['capacity'] as int
-          : int.tryParse(json['capacity']?.toString() ?? ''),
+      capacity:
+          json['capacity'] is int
+              ? json['capacity'] as int
+              : int.tryParse(json['capacity']?.toString() ?? ''),
       uid: json['uid'] as String?,
     );
   }

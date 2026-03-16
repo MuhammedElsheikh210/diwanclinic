@@ -222,14 +222,14 @@ class Routes {
         binding: Binding(),
         transition: Transition.cupertino,
       ),
-      GetPage(
-        name: syncView,
-        page: () => const SyncView(),
-        transitionDuration: const Duration(milliseconds: 500),
-        binding: Binding(),
-        transition: Transition.cupertino,
-        // middlewares: [RouteWelcomeMiddleWare(priority: 1)],
-      ),
+      // GetPage(
+      //   name: syncView,
+      //   page: () => const SyncView(),
+      //   transitionDuration: const Duration(milliseconds: 500),
+      //   binding: Binding(),
+      //   transition: Transition.cupertino,
+      //   // middlewares: [RouteWelcomeMiddleWare(priority: 1)],
+      // ),
 
       GetPage(
         name: expenseView,

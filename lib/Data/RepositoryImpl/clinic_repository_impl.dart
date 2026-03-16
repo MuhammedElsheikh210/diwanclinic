@@ -10,23 +10,26 @@ class ClinicRepositoryImpl extends ClinicRepository {
   Future<Either<AppError, List<ClinicModel?>>> getClinicsDomain(
     Map<String, dynamic> data,
     SQLiteQueryParams query,
+    String? doctorKey,
     bool? isFiltered,
-    bool? fromOnline, //
+    bool? fromOnline,
   ) async {
     try {
       final result = await _clinicDataSourceRepo.getClinics(
         data,
         query,
+        doctorKey,
         isFiltered,
         fromOnline: fromOnline,
       );
+
       return Right(result);
     } catch (e) {
       return Left(AppError(e.toString()));
     }
   }
 
-  /// 🩺 Get clinics for a specific doctor (used by patients)
+  /// 🩺 Get clinics for patient
   @override
   Future<Either<AppError, List<ClinicModel?>>> getClinicsFromPatientDomain(
     Map<String, dynamic> data,
@@ -37,6 +40,7 @@ class ClinicRepositoryImpl extends ClinicRepository {
         data,
         doctorKey,
       );
+
       return Right(result);
     } catch (e) {
       return Left(AppError(e.toString()));
@@ -47,9 +51,15 @@ class ClinicRepositoryImpl extends ClinicRepository {
   Future<Either<AppError, SuccessModel>> addClinicDomain(
     Map<String, dynamic> data,
     String key,
+    String? doctorKey,
   ) async {
     try {
-      final result = await _clinicDataSourceRepo.addClinic(data, key);
+      final result = await _clinicDataSourceRepo.addClinic(
+        data,
+        doctorKey,
+        key,
+      );
+
       return Right(result);
     } catch (e) {
       return Left(AppError(e.toString()));
@@ -60,9 +70,15 @@ class ClinicRepositoryImpl extends ClinicRepository {
   Future<Either<AppError, SuccessModel>> deleteClinicDomain(
     Map<String, dynamic> data,
     String key,
+    String? doctorKey,
   ) async {
     try {
-      final result = await _clinicDataSourceRepo.deleteClinic(data, key);
+      final result = await _clinicDataSourceRepo.deleteClinic(
+        data,
+        doctorKey,
+        key,
+      );
+
       return Right(result);
     } catch (e) {
       return Left(AppError(e.toString()));
@@ -73,9 +89,15 @@ class ClinicRepositoryImpl extends ClinicRepository {
   Future<Either<AppError, SuccessModel>> updateClinicDomain(
     Map<String, dynamic> data,
     String key,
+    String? doctorKey,
   ) async {
     try {
-      final result = await _clinicDataSourceRepo.updateClinic(data, key);
+      final result = await _clinicDataSourceRepo.updateClinic(
+        data,
+        doctorKey,
+        key,
+      );
+
       return Right(result);
     } catch (e) {
       return Left(AppError(e.toString()));

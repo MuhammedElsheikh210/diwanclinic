@@ -6,8 +6,14 @@ import '../../../../../index/index_main.dart';
 class DoctorCard extends StatelessWidget {
   final LocalUser doctor;
   final DoctorViewModel controller;
+  final bool? fromAdmin;
 
-  const DoctorCard({super.key, required this.doctor, required this.controller});
+  const DoctorCard({
+    super.key,
+    required this.doctor,
+    required this.controller,
+    this.fromAdmin,
+  });
 
   bool get isAdmin {
     final currentUser = LocalUser().getUserData();
@@ -20,7 +26,14 @@ class DoctorCard extends StatelessWidget {
 
     return InkWell(
       borderRadius: BorderRadius.circular(16.r),
-      onTap: () => Get.to(() => DoctorDetailsView(doctor: doctor)),
+      onTap:
+          () =>
+              fromAdmin == true
+                  ? Get.to(
+                    () => ClinicView(doctorKey: doctor.uid),
+                    binding: Binding(),
+                  )
+                  : Get.to(() => DoctorDetailsView(doctor: doctor)),
       child: Container(
         margin: EdgeInsets.symmetric(vertical: 6.h, horizontal: 6.w),
         padding: EdgeInsets.all(14.w),
@@ -45,15 +58,16 @@ class DoctorCard extends StatelessWidget {
               backgroundColor: AppColors.primary.withValues(alpha: 0.15),
               backgroundImage:
                   doctor.profileImage != null && doctor.profileImage!.isNotEmpty
-                  ? NetworkImage(doctor.profileImage!)
-                  : null,
-              child: doctor.profileImage == null || doctor.profileImage!.isEmpty
-                  ? Icon(
-                      Icons.person_rounded,
-                      color: AppColors.primary,
-                      size: 30.sp,
-                    )
-                  : null,
+                      ? NetworkImage(doctor.profileImage!)
+                      : null,
+              child:
+                  doctor.profileImage == null || doctor.profileImage!.isEmpty
+                      ? Icon(
+                        Icons.person_rounded,
+                        color: AppColors.primary,
+                        size: 30.sp,
+                      )
+                      : null,
             ),
 
             SizedBox(width: 12.w),
@@ -87,25 +101,25 @@ class DoctorCard extends StatelessWidget {
                   doctor.totalRate == 0.0
                       ? const SizedBox()
                       : Padding(
-                          padding: const EdgeInsets.only(top: 5.0),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.star,
-                                color: AppColors.yellowForeground,
-                                size: 18,
+                        padding: const EdgeInsets.only(top: 5.0),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.star,
+                              color: AppColors.yellowForeground,
+                              size: 18,
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              "${doctor.totalRate?.toStringAsFixed(1) ?? '0.0'} "
+                              "(${doctor.numberOfRates ?? 0})",
+                              style: typography.smRegular.copyWith(
+                                color: AppColors.textSecondaryParagraph,
                               ),
-                              SizedBox(width: 4.w),
-                              Text(
-                                "${doctor.totalRate?.toStringAsFixed(1) ?? '0.0'} "
-                                "(${doctor.numberOfRates ?? 0})",
-                                style: typography.smRegular.copyWith(
-                                  color: AppColors.textSecondaryParagraph,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
+                      ),
 
                   // 📱 Phone Number
                   if (doctor.phone != null && doctor.phone!.isNotEmpty)
@@ -153,10 +167,11 @@ class DoctorCard extends StatelessWidget {
                     controller.deleteDoctor(doctor);
                   }
                 },
-                itemBuilder: (context) => [
-                  const PopupMenuItem(value: 'edit', child: Text("تعديل")),
-                  const PopupMenuItem(value: 'delete', child: Text("حذف")),
-                ],
+                itemBuilder:
+                    (context) => [
+                      const PopupMenuItem(value: 'edit', child: Text("تعديل")),
+                      const PopupMenuItem(value: 'delete', child: Text("حذف")),
+                    ],
               ),
           ],
         ),

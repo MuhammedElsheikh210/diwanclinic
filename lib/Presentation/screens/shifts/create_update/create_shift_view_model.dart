@@ -7,6 +7,7 @@ class CreateShiftViewModel extends GetxController {
 
   List<ClinicModel?>? listClinics;
   String? clinic_key;
+  String? doctor_key;
 
   bool isUpdate = false;
   ShiftModel? existingShift;
@@ -41,6 +42,7 @@ class CreateShiftViewModel extends GetxController {
           startTime: startTimeController.text,
           endTime: endTimeController.text,
           clinicKey: clinic_key,
+          doctorKey:doctor_key ?? ""
         );
 
     isUpdate ? updateShift(shift) : createShift(shift);

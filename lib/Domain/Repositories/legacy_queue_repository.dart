@@ -4,7 +4,6 @@ import '../../index/index_main.dart';
 
 abstract class LegacyQueueRepository {
   Future<Either<AppError, List<LegacyQueueModel?>>> getLegacyQueueByDateDomain(
-    String date,
     Map<String, dynamic> params, {
     bool isPatient = false,
     String? doctorUid,

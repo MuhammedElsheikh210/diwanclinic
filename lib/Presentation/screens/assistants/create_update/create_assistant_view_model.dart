@@ -10,6 +10,9 @@ class CreateAssistantViewModel extends GetxController {
   ClinicModel? selectedClinic;
   bool is_update = false;
   LocalUser? existingAssistant; // ✅ hold assistant being edited
+  final String? medicalCenterKey;
+
+  CreateAssistantViewModel({this.medicalCenterKey});
 
   @override
   void onInit() {
@@ -41,6 +44,7 @@ class CreateAssistantViewModel extends GetxController {
       name: nameController.text,
       phone: phoneController.text,
       password: phoneController.text,
+      medicalCenterKey: medicalCenterKey,
       clinicKey: selectedClinic?.key,
     );
 
@@ -73,11 +77,12 @@ class CreateAssistantViewModel extends GetxController {
         phone: phoneController.text,
         identifier: email,
         password: password,
+        medicalCenterKey: medicalCenterKey,
         userType: UserType.assistant,
         isCompleteProfile: 1,
         name: nameController.text,
-        doctorKey: LocalUser().getUserData().uid,
-        doctorName: LocalUser().getUserData().name,
+      //  doctorKey:medicalCenterKey == null ? LocalUser().getUserData().uid : null,
+      //  doctorName: medicalCenterKey == null ? LocalUser().getUserData().name : null,
         clinicKey: selectedClinic?.key,
       );
 
@@ -104,6 +109,8 @@ class CreateAssistantViewModel extends GetxController {
 
     ClinicService().getClinicsData(
       data: {},
+      doctorKey: LocalUser().getUserData().doctorKey ?? "",
+
       filrebaseFilter: FirebaseFilter(),
       query: SQLiteQueryParams(
         is_filtered: true,

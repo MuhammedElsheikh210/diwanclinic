@@ -79,6 +79,8 @@ class ReservationModel {
   String? prescriptionUrl4;
   String? prescriptionUrl5;
 
+  String? medicalCenterKey;
+
   // NEW
   bool? isOrdered;
 
@@ -89,6 +91,7 @@ class ReservationModel {
     this.key,
     this.transfer_image,
     this.createAt,
+    this.medicalCenterKey,
     this.doctorKey,
     this.doctorName,
     this.fcmToken_patient,
@@ -160,6 +163,8 @@ class ReservationModel {
     if (order_reserved != null) data['order_reserved'] = order_reserved;
 
     if (createAt != null) data['create_at'] = createAt;
+    if (medicalCenterKey != null) data['medicalCenterKey'] = medicalCenterKey;
+
     if (shiftKey?.isNotEmpty == true) data['shift_key'] = shiftKey;
     if (patientName?.isNotEmpty == true) data['patient_name'] = patientName;
     if (patientPhone?.isNotEmpty == true) data['patient_phone'] = patientPhone;
@@ -199,6 +204,7 @@ class ReservationModel {
   factory ReservationModel.fromJson(Map<String, dynamic> json) {
     return ReservationModel(
       key: json['key'],
+      medicalCenterKey: json['medicalCenterKey'],
       syncStatus: syncStatusFromString(json['sync_status']),
       updatedAt: _toInt(json['updated_at']),
       serverUpdatedAt: _toInt(json['server_updated_at']),
@@ -259,6 +265,7 @@ class ReservationModel {
     String? fcmTokenPatient,
     String? fcmTokenAssist,
     String? patientUid,
+    String? medicalCenterKey,
     SyncStatus? syncStatus,
     int? updatedAt,
     int? serverUpdatedAt,
@@ -298,6 +305,7 @@ class ReservationModel {
   }) {
     return ReservationModel(
       key: key ?? this.key,
+      medicalCenterKey: medicalCenterKey ?? this.medicalCenterKey,
       fcmToken_assist: fcmTokenAssist ?? this.fcmToken_assist,
       fcmToken_patient: fcmTokenPatient ?? this.fcmToken_patient,
       patientUid: patientUid ?? this.patientUid,

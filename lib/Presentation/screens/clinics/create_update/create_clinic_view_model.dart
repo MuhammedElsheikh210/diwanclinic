@@ -10,7 +10,7 @@ class CreateClinicViewModel extends GetxController {
   final TextEditingController whatsappController = TextEditingController();
   final TextEditingController appointmentsController = TextEditingController();
   final TextEditingController urgentPolicyController = TextEditingController();
-
+  String? doctorKey;
   // 🔹 Consultation Prices
   final TextEditingController consultationPriceController =
       TextEditingController();
@@ -65,7 +65,7 @@ class CreateClinicViewModel extends GetxController {
           whatsappNum: whatsappController.text,
           urgentPolicy: int.tryParse(urgentPolicyController.text),
           appointments: appointmentsController.text,
-          doctorKey: LocalUser().getUserData().uid,
+          doctorKey: doctorKey ?? LocalUser().getUserData().uid,
           consultationPrice: consultationPriceController.text,
           followUpPrice: followUpPriceController.text,
           urgentConsultationPrice: urgentConsultationPriceController.text,
@@ -86,7 +86,7 @@ class CreateClinicViewModel extends GetxController {
           whatsappNum: whatsappController.text,
           appointments: appointmentsController.text,
           urgentPolicy: int.tryParse(urgentPolicyController.text),
-          doctorKey: LocalUser().getUserData().uid,
+          doctorKey: doctorKey ?? LocalUser().getUserData().uid,
           consultationPrice: consultationPriceController.text,
           followUpPrice: followUpPriceController.text,
           urgentConsultationPrice: urgentConsultationPriceController.text,

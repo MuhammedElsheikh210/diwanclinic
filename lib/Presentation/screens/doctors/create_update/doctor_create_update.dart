@@ -5,12 +5,14 @@ class CreateDoctorView extends StatefulWidget {
   final String specializeKey;
   final String? specializName;
   final LocalUser? doctor;
+  final String? medicalCenterKey;
 
   const CreateDoctorView({
     Key? key,
     required this.specializeKey,
     this.specializName,
     this.doctor,
+    this.medicalCenterKey,
   }) : super(key: key);
 
   @override
@@ -18,22 +20,22 @@ class CreateDoctorView extends StatefulWidget {
 }
 
 class _CreateDoctorViewState extends State<CreateDoctorView> {
-  final HandleKeyboardService keyboardService = HandleKeyboardService();
   final GlobalKey<FormState> globalKeyDoctor = GlobalKey<FormState>();
+
+  late final CreateDoctorViewModel vm;
 
   @override
   void initState() {
     super.initState();
 
-    final vm = initController(
+    vm = initController(
       () => CreateDoctorViewModel(
         specializeKey: widget.specializeKey,
         specializeName: widget.specializName ?? "",
+        medicalCenterKey: widget.medicalCenterKey,
       ),
     );
 
-    vm.specializationNameController.text =
-        widget.doctor?.specializationName ?? widget.specializName ?? "";
     if (widget.doctor != null) {
       vm.nameController.text = widget.doctor?.name ?? "";
       vm.phoneController.text = widget.doctor?.phone ?? "";
@@ -43,8 +45,6 @@ class _CreateDoctorViewState extends State<CreateDoctorView> {
       vm.facebookController.text = widget.doctor?.facebookLink ?? "";
       vm.instagramController.text = widget.doctor?.instagramLink ?? "";
       vm.tiktokController.text = widget.doctor?.tiktokLink ?? "";
-      vm.specializationNameController.text =
-          widget.doctor?.specializationName ?? widget.specializName ?? "";
       vm.isUpdate = true;
       vm.existingDoctor = widget.doctor;
       vm.update();
@@ -63,10 +63,6 @@ class _CreateDoctorViewState extends State<CreateDoctorView> {
         ),
       ),
       body: GetBuilder<CreateDoctorViewModel>(
-        init: CreateDoctorViewModel(
-          specializeKey: widget.specializeKey,
-          specializeName: widget.specializName ?? "",
-        ),
         builder: (controller) {
           return SingleChildScrollView(
             child: Form(
@@ -74,7 +70,7 @@ class _CreateDoctorViewState extends State<CreateDoctorView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  /// 🩺 Profile Image Picker
+                  /// 🩺 Profile Image
                   GestureDetector(
                     onTap: controller.pickProfileImage,
                     child: Center(
@@ -83,58 +79,26 @@ class _CreateDoctorViewState extends State<CreateDoctorView> {
                         backgroundColor: AppColors.primary.withValues(
                           alpha: 0.1,
                         ),
-                        backgroundImage: controller.profileImageFile != null
-                            ? FileImage(controller.profileImageFile!)
-                            : (widget.doctor?.profileImage != null
-                                  ? NetworkImage(widget.doctor!.profileImage!)
-                                  : null),
+                        backgroundImage:
+                            controller.profileImageFile != null
+                                ? FileImage(controller.profileImageFile!)
+                                : (widget.doctor?.profileImage != null
+                                    ? NetworkImage(widget.doctor!.profileImage!)
+                                    : null),
                         child:
                             controller.profileImageFile == null &&
-                                widget.doctor?.profileImage == null
-                            ? const Icon(
-                                Icons.camera_alt,
-                                color: AppColors.primary,
-                              )
-                            : null,
+                                    widget.doctor?.profileImage == null
+                                ? const Icon(
+                                  Icons.camera_alt,
+                                  color: AppColors.primary,
+                                )
+                                : null,
                       ),
                     ),
                   ),
                   SizedBox(height: 15.h),
 
-                  /// 🏞 Cover Image Picker
-                  GestureDetector(
-                    onTap: controller.pickCoverImage,
-                    child: Container(
-                      height: 120.h,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12.r),
-                        color: AppColors.primary.withValues(alpha: 0.05),
-                        image: controller.coverImageFile != null
-                            ? DecorationImage(
-                                fit: BoxFit.cover,
-                                image: FileImage(controller.coverImageFile!),
-                              )
-                            : (widget.doctor?.coverImage != null
-                                  ? DecorationImage(
-                                      fit: BoxFit.cover,
-                                      image: NetworkImage(
-                                        widget.doctor!.coverImage!,
-                                      ),
-                                    )
-                                  : null),
-                      ),
-                      child: Center(
-                        child: Icon(
-                          Icons.add_photo_alternate,
-                          color: AppColors.primary,
-                          size: 30.sp,
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 15.h),
-
+                  /// 👨‍⚕️ Name
                   CustomInputField(
                     label: "اسم الطبيب",
                     controller: controller.nameController,
@@ -145,9 +109,9 @@ class _CreateDoctorViewState extends State<CreateDoctorView> {
                   ),
                   SizedBox(height: 10.h),
 
+                  /// 📱 Phone
                   CustomInputField(
                     label: "رقم الهاتف",
-
                     controller: controller.phoneController,
                     hintText: "ادخل رقم الهاتف",
                     focusNode: FocusNode(),
@@ -166,57 +130,42 @@ class _CreateDoctorViewState extends State<CreateDoctorView> {
                   ),
                   SizedBox(height: 10.h),
 
-                  CustomInputField(
-                    label: "اسم التخصص",
-                    controller: controller.specializationNameController,
-                    hintText: "ادخل اسم التخصص",
-                    focusNode: FocusNode(),
-                    keyboardType: TextInputType.name,
-                    validator: InputValidators.combine([notEmptyValidator]),
-                  ),
-                  SizedBox(height: 10.h),
+                  /// 🧠 Specialization Dropdown
+                  if (controller.specializations != null)
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20.w),
+                      child: DropdownButtonFormField<CategoryEntity>(
+                        value: controller.selectedSpecialization,
+                        decoration: const InputDecoration(
+                          labelText: "اختر التخصص",
+                        ),
+                        items:
+                            controller.specializations!
+                                .where((e) => e != null)
+                                .map(
+                                  (e) => DropdownMenuItem(
+                                    value: e,
+                                    child: Text(e!.name ?? ""),
+                                  ),
+                                )
+                                .toList(),
+                        onChanged: controller.selectSpecialization,
+                      ),
+                    ),
 
+                  SizedBox(height: 20.h),
+
+                  /// 📜 Qualifications
                   CustomInputField(
                     label: "المؤهلات",
                     controller: controller.qualificationsController,
                     hintText: "المؤهلات",
                     focusNode: FocusNode(),
                     keyboardType: TextInputType.name,
-                    validator: InputValidators.combine([notEmptyValidator]),
+                    validator: InputValidators.combine([]),
                   ),
-                  SizedBox(height: 10.h),
 
-                  SizedBox(height: 10.h),
-
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 20.w,
-                      vertical: 10.h,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        AppText(
-                          text: "السماح بالحجز عن بُعد",
-                          textStyle: context.typography.lgBold.copyWith(
-                            color: AppColors.textDisplay,
-                          ),
-                        ),
-
-                        GetBuilder<CreateDoctorViewModel>(
-                          builder: (controller) {
-                            return Switch(
-                              value: controller.remoteReservationAbility == 1,
-                              activeColor: AppColors.primary,
-                              onChanged: (v) {
-                                controller.setRemoteReservationAbility(v);
-                              },
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
+                  SizedBox(height: 20.h),
 
                   CustomInputField(
                     label: "رابط إنستجرام",
@@ -226,7 +175,7 @@ class _CreateDoctorViewState extends State<CreateDoctorView> {
                     keyboardType: TextInputType.name,
                     validator: InputValidators.combine([]),
                   ),
-                  SizedBox(height: 10.h),
+                  SizedBox(height: 20.h),
 
                   CustomInputField(
                     label: "رابط فيسبوك",
@@ -248,11 +197,11 @@ class _CreateDoctorViewState extends State<CreateDoctorView> {
                   ),
                   SizedBox(height: 20.h),
 
+                  /// ✅ Save Button
                   SafeArea(
                     child: BottomNavigationActions(
-                      rightTitle: controller.isUpdate
-                          ? "تحديث الطبيب"
-                          : "إضافة الطبيب",
+                      rightTitle:
+                          controller.isUpdate ? "تحديث الطبيب" : "إضافة الطبيب",
                       rightAction: () {
                         if (globalKeyDoctor.currentState?.validate() ?? false) {
                           controller.saveDoctor();

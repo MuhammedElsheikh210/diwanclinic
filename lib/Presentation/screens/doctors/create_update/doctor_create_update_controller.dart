@@ -4,6 +4,7 @@ import '../../../../../index/index_main.dart';
 class CreateDoctorViewModel extends GetxController {
   final String specializeKey;
   final String specializeName;
+  final String? medicalCenterKey;
 
   final TextEditingController nameController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
@@ -19,20 +20,70 @@ class CreateDoctorViewModel extends GetxController {
   File? profileImageFile;
   File? coverImageFile;
 
-  /// NEW FIELD → Remote reservation ability (0 off, 1 on)
-  int remoteReservationAbility = 0;
+  int remoteReservationAbility = 1;
 
   bool isUpdate = false;
   LocalUser? existingDoctor;
 
+  /// 🧠 NEW → Specializations
+  List<CategoryEntity?>? specializations;
+  CategoryEntity? selectedSpecialization;
+
   CreateDoctorViewModel({
     required this.specializeKey,
     required this.specializeName,
+    this.medicalCenterKey,
   });
 
   final _picker = ImagePicker();
 
-  /// 🔹 Pick Profile Image
+  // ================== INIT ==================
+
+  @override
+  void onInit() {
+    super.onInit();
+
+    nameController.addListener(() => update());
+    phoneController.addListener(() => update());
+
+    /// If opened from specialization screen → preselect
+    if (specializeKey.isNotEmpty) {
+      selectedSpecialization = CategoryEntity(
+        key: specializeKey,
+        name: specializeName,
+      );
+    }
+
+    /// Load specializations if opened from medical center
+    if (medicalCenterKey != null) {
+      getSpecializations();
+    }
+
+    if (existingDoctor != null) {
+      remoteReservationAbility =
+          existingDoctor?.remote_reservation_ability ?? 0;
+    }
+  }
+
+  // ================== SPECIALIZATIONS ==================
+
+  void getSpecializations() {
+    CategoryService().getAllCategoriesData(
+      voidCallBack: (data) {
+        specializations = data;
+        update();
+      },
+    );
+  }
+
+  void selectSpecialization(CategoryEntity? value) {
+    selectedSpecialization = value;
+    specializationNameController.text = value?.name ?? "";
+    update();
+  }
+
+  // ================== IMAGE PICKERS ==================
+
   Future<void> pickProfileImage() async {
     final picked = await _picker.pickImage(source: ImageSource.gallery);
     if (picked != null) {
@@ -41,7 +92,6 @@ class CreateDoctorViewModel extends GetxController {
     }
   }
 
-  /// 🔹 Pick Cover Image
   Future<void> pickCoverImage() async {
     final picked = await _picker.pickImage(source: ImageSource.gallery);
     if (picked != null) {
@@ -50,7 +100,6 @@ class CreateDoctorViewModel extends GetxController {
     }
   }
 
-  /// 🔹 Upload Image
   Future<String?> _uploadImage(File file, String folder) async {
     try {
       final fileName = "${DateTime.now().millisecondsSinceEpoch}.jpg";
@@ -65,26 +114,15 @@ class CreateDoctorViewModel extends GetxController {
     }
   }
 
-  @override
-  void onInit() {
-    super.onInit();
-    nameController.addListener(() => update());
-    phoneController.addListener(() => update());
+  // ================== SETTINGS ==================
 
-    /// If doctor exists (EDIT MODE), load remote reservation ability
-    if (existingDoctor != null) {
-      remoteReservationAbility =
-          existingDoctor?.remote_reservation_ability ?? 0;
-    }
-  }
-
-  /// 🔹 Toggle remote ability (used from UI switch)
   void setRemoteReservationAbility(bool value) {
     remoteReservationAbility = value ? 1 : 0;
     update();
   }
 
-  /// 🔹 Save doctor (create/update)
+  // ================== SAVE ==================
+
   Future<void> saveDoctor() async {
     if (!validateStep()) {
       Loader.showError("يرجى إدخال جميع البيانات بشكل صحيح");
@@ -110,7 +148,6 @@ class CreateDoctorViewModel extends GetxController {
     }
   }
 
-  /// 🔹 Update existing doctor
   void _updateDoctor(LocalUser doctor, String? profileUrl, String? coverUrl) {
     final updatedDoctor = doctor.copyWith(
       name: nameController.text,
@@ -120,10 +157,12 @@ class CreateDoctorViewModel extends GetxController {
       facebookLink: facebookController.text,
       instagramLink: instagramController.text,
       tiktokLink: tiktokController.text,
-      specializationName: specializationNameController.text,
+      specializationName: selectedSpecialization?.name,
+      specialize_key: selectedSpecialization?.key,
       profileImage: profileUrl ?? doctor.profileImage,
       coverImage: coverUrl ?? doctor.coverImage,
-      remote_reservation_ability: remoteReservationAbility, // NEW
+      remote_reservation_ability: remoteReservationAbility,
+      medicalCenterKey: medicalCenterKey ?? doctor.medicalCenterKey,
     );
 
     AuthenticationService().updateClientsData(
@@ -136,7 +175,6 @@ class CreateDoctorViewModel extends GetxController {
     );
   }
 
-  /// 🔹 Create new doctor account
   Future<void> _createDoctorAccount(
     String? profileUrl,
     String? coverUrl,
@@ -159,16 +197,18 @@ class CreateDoctorViewModel extends GetxController {
         facebookLink: facebookController.text,
         instagramLink: instagramController.text,
         tiktokLink: tiktokController.text,
-        specializationName: specializationNameController.text,
+
+        specializationName: selectedSpecialization?.name,
+        specialize_key: selectedSpecialization?.key,
         identifier: email,
         password: password,
         userType: UserType.doctor,
-        specialize_key: specializeKey,
+        medicalCenterKey: medicalCenterKey,
         profileImage: profileUrl,
         coverImage: coverUrl,
         isCompleteProfile: 0,
         name: nameController.text,
-        remote_reservation_ability: remoteReservationAbility, // NEW
+        remote_reservation_ability: remoteReservationAbility,
       );
 
       AuthenticationService().addClientsData(
@@ -184,17 +224,31 @@ class CreateDoctorViewModel extends GetxController {
     }
   }
 
+  // ================== REFRESH ==================
+
   void refreshListView() {
-    final doctorVM = initController(
-      () => DoctorViewModel(specializeKey: specializeKey),
-    );
-    doctorVM.getData();
-    doctorVM.update();
+    if (medicalCenterKey != null && medicalCenterKey!.isNotEmpty) {
+      final doctorVM = initController(
+        () => DoctorViewModel.byCenter(medicalCenterKey!),
+      );
+      doctorVM.getDoctorsByCenter(medicalCenterKey!);
+      doctorVM.update();
+    } else {
+      final doctorVM = initController(
+        () => DoctorViewModel(specializeKey: specializeKey),
+      );
+      doctorVM.getData();
+      doctorVM.update();
+    }
     Get.back();
   }
 
+  // ================== VALIDATION ==================
+
   bool validateStep() {
-    return nameController.text.isNotEmpty && phoneController.text.isNotEmpty;
+    return nameController.text.isNotEmpty &&
+        phoneController.text.isNotEmpty &&
+        selectedSpecialization != null;
   }
 
   @override

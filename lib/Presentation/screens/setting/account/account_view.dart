@@ -183,7 +183,7 @@ class AccountView extends StatelessWidget {
                   _menuItemWithStatus(
                     context,
                     icon: Icons.description_outlined,
-                    label: "الكشوفات الورقية",
+                    label: "كشوفات الكشكول",
                     isEnabled: true, // 👈 On / Off الكشوفات الورقية
                     onTap: () => Get.toNamed(legacyQueueView),
                   ),

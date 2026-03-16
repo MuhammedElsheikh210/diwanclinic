@@ -12,7 +12,10 @@ class LegacyQueueView extends StatelessWidget {
           backgroundColor: AppColors.white,
 
           /// 📅 Date Picker AppBar
-          appBar: LegacyQueueDateAppBar(controller: controller),
+          appBar: AppBar(
+            backgroundColor: AppColors.white,
+            title: Text("كشوفات الكشكول", style: context.typography.lgBold),
+          ),
 
           floatingActionButton: FloatingActionButton(
             onPressed: () {
@@ -25,17 +28,19 @@ class LegacyQueueView extends StatelessWidget {
             child: const Icon(Icons.add),
           ),
 
-          body: controller.list == null
-              ? const ShimmerLoader()
-              : controller.list!.isEmpty
-              ? const NoDataWidget()
-              : ListView.builder(
-                  itemCount: controller.list!.length,
-                  itemBuilder: (_, i) => LegacyQueueCard(
-                    model: controller.list![i]!,
-                    controller: controller,
+          body:
+              controller.list == null
+                  ? const ShimmerLoader()
+                  : controller.list!.isEmpty
+                  ? const NoDataWidget()
+                  : ListView.builder(
+                    itemCount: controller.list!.length,
+                    itemBuilder:
+                        (_, i) => LegacyQueueCard(
+                          model: controller.list![i]!,
+                          controller: controller,
+                        ),
                   ),
-                ),
         );
       },
     );

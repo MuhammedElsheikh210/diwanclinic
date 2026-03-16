@@ -49,106 +49,125 @@ class _CreateAssistantViewState extends State<CreateAssistantView> {
               return Container(
                 decoration: const BoxDecoration(
                   color: AppColors.white,
-                  borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(20),
-                  ),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                 ),
-                padding: EdgeInsets.symmetric( vertical: 10.h),
+                padding: EdgeInsets.symmetric(vertical: 10.h),
                 child: KeyboardActions(
                   config: keyboardService.buildConfig(context, keys),
                   child: Form(
                     key: globalKeyAssistant,
                     child: SingleChildScrollView(
                       controller: scrollController,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Header
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                controller.is_update
-                                    ? "تحديث مساعد"
-                                    : "إضافة مساعد جديد",
-                                style: context.typography.mdBold,
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.close),
-                                onPressed: () => Navigator.of(context).pop(),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 10.h),
-
-                          // 🔹 Assistant Name
-                          CustomInputField(
-                            label: "اسم المساعد",
-                            controller: controller.nameController,
-                            hintText: "ادخل اسم المساعد",
-                            validator:
-                            InputValidators.combine([notEmptyValidator]),
-                            focusNode: keyboardService.getFocusNode(keys[0]),
-                            keyboardType: TextInputType.name,
-                          ),
-                          SizedBox(height: 20.h),
-
-                          // 🔹 Clinics Dropdown
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                            child: DropdownButtonFormField<ClinicModel>(
-                              value: controller.selectedClinic,
-                              items: controller.list_clinics?.map((clinic) {
-                                return DropdownMenuItem<ClinicModel>(
-                                  value: clinic,
-                                  child: Text(clinic?.title ?? "بدون اسم"),
-                                );
-                              }).toList(),
-                              onChanged: (val) {
-                                controller.selectedClinic = val;
-                                controller.update();
-                              },
-                              decoration: InputDecoration(
-                                labelText: "اختر العيادة",
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 15.0,
+                          vertical: 10,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Header
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  controller.is_update
+                                      ? "تحديث مساعد"
+                                      : "إضافة مساعد جديد",
+                                  style: context.typography.mdBold,
                                 ),
+                                IconButton(
+                                  icon: const Icon(Icons.close),
+                                  onPressed: () => Navigator.of(context).pop(),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 10.h),
+
+                            // 🔹 Assistant Name
+                            CustomInputField(
+                              label: "اسم المساعد",
+                              controller: controller.nameController,
+                              hintText: "ادخل اسم المساعد",
+                              validator: InputValidators.combine([
+                                notEmptyValidator,
+                              ]),
+                              focusNode: keyboardService.getFocusNode(keys[0]),
+                              keyboardType: TextInputType.name,
+                            ),
+                            controller.medicalCenterKey != null
+                                ? const SizedBox()
+                                : SizedBox(height: 20.h),
+
+                            // 🔹 Clinics Dropdown
+                            controller.medicalCenterKey != null
+                                ? const SizedBox()
+                                : Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 15.0,
+                                  ),
+                                  child: DropdownButtonFormField<ClinicModel>(
+                                    value: controller.selectedClinic,
+                                    items:
+                                        controller.list_clinics?.map((clinic) {
+                                          return DropdownMenuItem<ClinicModel>(
+                                            value: clinic,
+                                            child: Text(
+                                              clinic?.title ?? "بدون اسم",
+                                            ),
+                                          );
+                                        }).toList(),
+                                    onChanged: (val) {
+                                      controller.selectedClinic = val;
+                                      controller.update();
+                                    },
+                                    decoration: InputDecoration(
+                                      labelText: "اختر العيادة",
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    validator:
+                                        (val) =>
+                                            val == null
+                                                ? "يجب اختيار عيادة"
+                                                : null,
+                                  ),
+                                ),
+                            SizedBox(height: 20.h),
+
+                            // 🔹 Phone
+                            CustomInputField(
+                              label: "الهاتف",
+                              controller: controller.phoneController,
+                              hintText: "ادخل الهاتف",
+                              validator: InputValidators.combine([
+                                notEmptyValidator,
+                              ]),
+                              focusNode: keyboardService.getFocusNode(keys[1]),
+                              keyboardType: TextInputType.phone,
+                            ),
+                            SizedBox(height: 30.h),
+
+                            // 🔹 Bottom Button
+                            SafeArea(
+                              child: BottomNavigationActions(
+                                rightTitle:
+                                    controller.is_update
+                                        ? "تحديث المساعد"
+                                        : "إضافة المساعد",
+                                rightAction: () {
+                                  if (globalKeyAssistant.currentState
+                                          ?.validate() ??
+                                      false) {
+                                    controller.saveAssistant();
+                                  }
+                                },
+                                isRightEnabled: controller.validateStep(),
                               ),
-                              validator: (val) =>
-                              val == null ? "يجب اختيار عيادة" : null,
                             ),
-                          ),
-                          SizedBox(height: 20.h),
-
-                          // 🔹 Phone
-                          CustomInputField(
-                            label: "الهاتف",
-                            controller: controller.phoneController,
-                            hintText: "ادخل الهاتف",
-                            validator:
-                            InputValidators.combine([notEmptyValidator]),
-                            focusNode: keyboardService.getFocusNode(keys[1]),
-                            keyboardType: TextInputType.phone,
-                          ),
-                          SizedBox(height: 30.h),
-
-                          // 🔹 Bottom Button
-                          SafeArea(
-                            child: BottomNavigationActions(
-                              rightTitle: controller.is_update
-                                  ? "تحديث المساعد"
-                                  : "إضافة المساعد",
-                              rightAction: () {
-                                if (globalKeyAssistant.currentState
-                                    ?.validate() ??
-                                    false) {
-                                  controller.saveAssistant();
-                                }
-                              },
-                              isRightEnabled: controller.validateStep(),
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -160,5 +179,4 @@ class _CreateAssistantViewState extends State<CreateAssistantView> {
       },
     );
   }
-
 }

@@ -53,13 +53,11 @@ class LegacyQueueUseCases {
   }
 
   Future<Either<AppError, List<LegacyQueueModel?>>> getLegacyQueueByDate(
-    String date,
     Map<String, dynamic> params, {
     bool isPatient = false,
     String? doctorUid,
   }) {
     return _repository.getLegacyQueueByDateDomain(
-      date,
       params,
       isPatient: isPatient,
       doctorUid: doctorUid,

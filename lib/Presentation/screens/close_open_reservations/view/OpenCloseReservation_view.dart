@@ -14,7 +14,10 @@ class OpenclosereservationView extends StatelessWidget {
           backgroundColor: AppColors.white,
 
           /// 📅 Date Picker AppBar
-          appBar: OpenclosereservationDateAppBar(controller: controller),
+          appBar: AppBar(
+            backgroundColor: AppColors.white,
+            title: Text("إدارة أيام العمل", style: context.typography.lgBold),
+          ),
 
           /// ➕ Add / Edit Day
           floatingActionButton: FloatingActionButton(
@@ -29,17 +32,19 @@ class OpenclosereservationView extends StatelessWidget {
             child: const Icon(Icons.add, color: Colors.white),
           ),
 
-          body: controller.list == null
-              ? const ShimmerLoader()
-              : controller.list!.isEmpty
-              ? const NoDataWidget()
-              : ListView.builder(
-                  itemCount: controller.list!.length,
-                  itemBuilder: (_, i) => OpenclosereservationCard(
-                    model: controller.list![i]!,
-                    controller: controller,
+          body:
+              controller.list == null
+                  ? const ShimmerLoader()
+                  : controller.list!.isEmpty
+                  ? const NoDataWidget()
+                  : ListView.builder(
+                    itemCount: controller.list!.length,
+                    itemBuilder:
+                        (_, i) => OpenclosereservationCard(
+                          model: controller.list![i]!,
+                          controller: controller,
+                        ),
                   ),
-                ),
         );
       },
     );

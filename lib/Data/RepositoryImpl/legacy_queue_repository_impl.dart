@@ -10,16 +10,13 @@ class LegacyQueueRepositoryImpl extends LegacyQueueRepository {
   // 🧾 Legacy Queue
   // ------------------------------------------------------------
   @override
-  Future<Either<AppError, List<LegacyQueueModel?>>>
-  getLegacyQueueByDateDomain(
-      String date,
-      Map<String, dynamic> data, {
-        bool isPatient = false,
-        String? doctorUid,
-      }) async {
+  Future<Either<AppError, List<LegacyQueueModel?>>> getLegacyQueueByDateDomain(
+    Map<String, dynamic> data, {
+    bool isPatient = false,
+    String? doctorUid,
+  }) async {
     try {
       final result = await _dataSource.getLegacyQueueByDate(
-        date,
         data,
         isPatient: isPatient,
         doctorUid: doctorUid,
@@ -38,11 +35,11 @@ class LegacyQueueRepositoryImpl extends LegacyQueueRepository {
   @override
   Future<Either<AppError, List<LegacyQueueModel?>>>
   getOpenCloseDaysByDateDomain(
-      String date,
-      Map<String, dynamic> data, {
-        bool isPatient = false,
-        String? doctorUid,
-      }) async {
+    String date,
+    Map<String, dynamic> data, {
+    bool isPatient = false,
+    String? doctorUid,
+  }) async {
     try {
       final result = await _dataSource.getOpenCloseDaysByDate(
         date,
@@ -63,12 +60,12 @@ class LegacyQueueRepositoryImpl extends LegacyQueueRepository {
   // ------------------------------------------------------------
   @override
   Future<Either<AppError, SuccessModel>> addLegacyQueueDomain(
-      String date,
-      String key,
-      Map<String, dynamic> data, {
-        bool isPatient = false,
-        String? doctorUid,
-      }) async {
+    String date,
+    String key,
+    Map<String, dynamic> data, {
+    bool isPatient = false,
+    String? doctorUid,
+  }) async {
     try {
       final result = await _dataSource.addLegacyQueue(
         date,
@@ -90,12 +87,12 @@ class LegacyQueueRepositoryImpl extends LegacyQueueRepository {
   // ------------------------------------------------------------
   @override
   Future<Either<AppError, SuccessModel>> updateLegacyQueueDomain(
-      String date,
-      String key,
-      Map<String, dynamic> data, {
-        bool isPatient = false,
-        String? doctorUid,
-      }) async {
+    String date,
+    String key,
+    Map<String, dynamic> data, {
+    bool isPatient = false,
+    String? doctorUid,
+  }) async {
     try {
       final result = await _dataSource.updateLegacyQueue(
         date,
@@ -117,12 +114,12 @@ class LegacyQueueRepositoryImpl extends LegacyQueueRepository {
   // ------------------------------------------------------------
   @override
   Future<Either<AppError, SuccessModel>> deleteLegacyQueueDomain(
-      String date,
-      String key, {
-        bool isPatient = false,
-        String? doctorUid,
-        bool isOpenCloseFeature = false,
-      }) async {
+    String date,
+    String key, {
+    bool isPatient = false,
+    String? doctorUid,
+    bool isOpenCloseFeature = false,
+  }) async {
     try {
       final result = await _dataSource.deleteLegacyQueue(
         date,

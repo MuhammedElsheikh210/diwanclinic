@@ -51,17 +51,7 @@ class ParentSyncService extends GetxController {
 
 
 
-        // 🔥 STEP 3) Clinics
-        await clinicService.getClinicsData(
-          data: {},
-          query: SQLiteQueryParams(is_filtered: true),
-          fromOnline: true,
-          isFiltered: true,
-          voidCallBack: (_) async {
-            progress.value += incrementValue;
-          },
-          filrebaseFilter: FirebaseFilter(),
-        );
+
 
         // 🔥 STEP 4) Clients
         await clientService.getClientsData(
@@ -89,21 +79,6 @@ class ParentSyncService extends GetxController {
 
 
 
-        // 🔥 STEP 3) CLINIC
-        await clinicService.getClinicsData(
-          data: {},
-          query: SQLiteQueryParams(
-            is_filtered: false,
-            where: "key = ?",
-            whereArgs: [clinicKey],
-          ),
-          fromOnline: true,
-          isFiltered: false,
-          voidCallBack: (_) async {
-            progress.value += incrementValue;
-          },
-          filrebaseFilter: FirebaseFilter(orderBy: "key", equalTo: clinicKey),
-        );
 
         // 🔥 STEP 4) CLIENTS
         await clientService.getClientsData(

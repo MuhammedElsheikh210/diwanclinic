@@ -16,6 +16,10 @@ class ReservationUseCases {
     return _repository.startListening(doctorKey: doctorKey);
   }
 
+  Future<void> stopListening() {
+    return _repository.stopListening();
+  }
+
   // ============================================================
   // 🔥 REALTIME STREAMS (Expose to Service / ViewModel)
   // ============================================================

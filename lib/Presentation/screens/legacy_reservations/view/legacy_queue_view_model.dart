@@ -14,64 +14,12 @@ class LegacyQueueViewModel extends GetxController {
   /// 📅 Date
   DateTime selectedDate = DateTime.now();
 
-  String get formattedDate => DateFormat('dd / MM / yyyy').format(selectedDate);
+  String get formattedDate => DateFormat('dd-MM-yyyy').format(selectedDate);
 
   @override
   void onInit() {
     super.onInit();
-    getShiftList();
-  }
-
-  /// 🕒 Get Shifts
-  Future<void> getShiftList() async {
-    final clinicKey = LocalUser().getUserData().clinicKey;
-    if (clinicKey == null) return;
-
-    ShiftService().getShiftsData(
-      data: FirebaseFilter(orderBy: "clinicKey", equalTo: clinicKey),
-      query: SQLiteQueryParams(
-        is_filtered: true,
-        where: "clinicKey = ?",
-        whereArgs: [clinicKey],
-      ),
-      voidCallBack: (data) {
-        if (data != null && data.isNotEmpty) {
-          shiftDropdownItems = ShiftModelAdapterUtil.convertShiftListToGeneric(
-            data,
-          );
-
-          if (shiftDropdownItems!.length == 1) {
-            selectedShift = shiftDropdownItems!.first;
-            _shiftInitialized = true;
-            getData();
-          } else {
-            showMandatoryShiftDialog();
-          }
-        } else {
-          shiftDropdownItems = [];
-        }
-
-        update();
-      },
-    );
-  }
-
-  void showMandatoryShiftDialog() {
-    if (shiftDropdownItems == null || shiftDropdownItems!.isEmpty) return;
-
-    Get.dialog(
-      ShiftSelectionDialog(
-        shifts: shiftDropdownItems!,
-        initialSelected: selectedShift,
-        onSelect: (shift) {
-          selectedShift = shift;
-          _shiftInitialized = true;
-          getData();
-          update();
-        },
-      ),
-      barrierDismissible: false,
-    );
+    getData();
   }
 
   /// 📅 Change Date
@@ -83,15 +31,10 @@ class LegacyQueueViewModel extends GetxController {
 
   /// 📥 Get Data with Shift
   void getData() {
-    if (!_shiftInitialized || selectedShift == null) return;
-
-    final formatted = DateFormat('dd/MM/yyyy').format(selectedDate);
-
     service.getLegacyQueueByDateData(
-      date: formatted,
       firebaseFilter: FirebaseFilter(
-        orderBy: "clinicShiftKey",
-        equalTo: "${LocalUser().getUserData().clinicKey}_${selectedShift?.key}",
+        orderBy: "clinic_key",
+        equalTo: LocalUser().getUserData().clinicKey,
       ),
       voidCallBack: (data) {
         list = data;

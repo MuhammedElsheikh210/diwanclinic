@@ -36,7 +36,7 @@ class MainPageViewModel extends GetxController {
 
     // 🔥 Start realtime listeners
     await _startClientsRealtime();
-    await _startReservationsRealtime();
+    await startReservationsRealtime();
     await _startNotificationsRealtime(); // 🔔 NEW
   }
 
@@ -88,15 +88,19 @@ class MainPageViewModel extends GetxController {
   // 📅 RESERVATIONS REALTIME
   // ============================================================
 
-  Future<void> _startReservationsRealtime() async {
-    final doctorKey = LocalUser().getUserData().doctorKey ?? "";
-    if (doctorKey.isEmpty) return;
+  Future<void> startReservationsRealtime({String? doctorKey}) async {
+    final key = doctorKey ?? LocalUser().getUserData().doctorKey ?? "";
 
-    print("🚀 GLOBAL Reservations Realtime START");
+    if (key.isEmpty) {
+      print("⚠️ No doctorKey → skip realtime reservations");
+      return;
+    }
 
-    await _reservationService.startListening(doctorKey: doctorKey);
+    print("🚀 GLOBAL Reservations Realtime START → $key");
 
-    print("✅ GLOBAL Reservations Realtime RUNNING");
+    await _reservationService.startListening(doctorKey: key);
+
+    print("✅ GLOBAL Reservations Realtime RUNNING → $key");
   }
 
   // ============================================================

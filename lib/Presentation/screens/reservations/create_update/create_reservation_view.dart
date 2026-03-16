@@ -519,6 +519,47 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                   // controller.selectedType == "متابعة"
                                   //     ? const SizedBox()
                                   //     :
+                                  if (controller.isCenterAssistant) ...[
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                                      child: Text(
+                                        "اختر الطبيب",
+                                        style: context.typography.mdMedium,
+                                      ),
+                                    ),
+
+                                    if (controller.isLoadingDoctors)
+                                      const Center(child: CircularProgressIndicator())
+                                    else
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 15),
+                                        child: DropdownButtonFormField<LocalUser>(
+                                          value: controller.selectedDoctor,
+                                          items: controller.centerDoctors
+                                              ?.where((e) => e != null)
+                                              .map(
+                                                (doc) => DropdownMenuItem(
+                                              value: doc,
+                                              child: Text(doc!.name ?? "بدون اسم"),
+                                            ),
+                                          )
+                                              .toList(),
+                                          onChanged: (val) {
+                                            controller.selectedDoctor = val;
+                                            controller.update();
+                                          },
+                                          decoration: InputDecoration(
+                                            labelText: "اختر الطبيب",
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                          ),
+                                          validator: (val) => val == null ? "يجب اختيار طبيب" : null,
+                                        ),
+                                      ),
+
+                                    SizedBox(height: 20.h),
+                                  ],
                                   Padding(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 15.0,

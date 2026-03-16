@@ -9,13 +9,10 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
   // 🔥 PATH RESOLVER
   // ------------------------------------------------------------
   String _resolveQueuePath({
-    required String date,
     required bool isPatient,
     required String? doctorUid,
     required bool isOpenCloseFeature,
   }) {
-    final safeDate = date.replaceAll("/", "-").trim();
-
     final String uid;
 
     if (isPatient) {
@@ -32,7 +29,7 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
 
     final featureNode = isOpenCloseFeature ? "open_close_days" : "legacy_queue";
 
-    return "doctors/$uid/$featureNode/$safeDate";
+    return "doctors/$uid/$featureNode";
   }
 
   bool _isOpenCloseFeature(Map<String, dynamic> data) {
@@ -44,14 +41,12 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
   // ------------------------------------------------------------
   @override
   Future<List<LegacyQueueModel?>> getLegacyQueueByDate(
-    String date,
     Map<String, dynamic> data, {
     bool isPatient = false,
     String? doctorUid,
   }) async {
     try {
       final path = _resolveQueuePath(
-        date: date,
         isPatient: isPatient,
         doctorUid: doctorUid,
         isOpenCloseFeature: false,
@@ -85,7 +80,6 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
   }) async {
     try {
       final path = _resolveQueuePath(
-        date: date,
         isPatient: isPatient,
         doctorUid: doctorUid,
         isOpenCloseFeature: true,
@@ -121,7 +115,6 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
     final isOpenClose = _isOpenCloseFeature(data);
 
     final path = _resolveQueuePath(
-      date: date,
       isPatient: isPatient,
       doctorUid: doctorUid,
       isOpenCloseFeature: isOpenClose,
@@ -150,7 +143,6 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
     final isOpenClose = _isOpenCloseFeature(data);
 
     final path = _resolveQueuePath(
-      date: date,
       isPatient: isPatient,
       doctorUid: doctorUid,
       isOpenCloseFeature: isOpenClose,
@@ -177,7 +169,6 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
     bool isOpenCloseFeature = false,
   }) async {
     final path = _resolveQueuePath(
-      date: date,
       isPatient: isPatient,
       doctorUid: doctorUid,
       isOpenCloseFeature: isOpenCloseFeature,

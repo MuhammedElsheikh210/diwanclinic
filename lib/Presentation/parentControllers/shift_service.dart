@@ -10,7 +10,11 @@ class ShiftService {
     required Function(ResponseStatus) voidCallBack,
   }) async {
     Loader.show();
+
     final result = await useCase.addShift(shift);
+
+    Loader.dismiss();
+
     result.fold(
       (l) => voidCallBack(ResponseStatus.error),
       (r) => voidCallBack(ResponseStatus.success),
@@ -22,7 +26,11 @@ class ShiftService {
     required Function(ResponseStatus) voidCallBack,
   }) async {
     Loader.show();
+
     final result = await useCase.updateShift(shift);
+
+    Loader.dismiss();
+
     result.fold(
       (l) => voidCallBack(ResponseStatus.error),
       (r) => voidCallBack(ResponseStatus.success),
@@ -31,10 +39,18 @@ class ShiftService {
 
   Future<void> deleteShiftData({
     required String shiftKey,
+    required String doctorKey,
     required Function(ResponseStatus) voidCallBack,
   }) async {
     Loader.show();
-    final result = await useCase.deleteShift(shiftKey);
+
+    final result = await useCase.deleteShift(
+      shiftKey,
+      doctorKey, // doctorKey automatically
+    );
+
+    Loader.dismiss();
+
     result.fold(
       (l) => voidCallBack(ResponseStatus.error),
       (r) => voidCallBack(ResponseStatus.success),
@@ -44,17 +60,22 @@ class ShiftService {
   Future<void> getShiftsData({
     required FirebaseFilter data,
     required SQLiteQueryParams query,
-    bool? isFiltered,
+    required String doctorKey,
+    bool? isFiltered, // not used
     required Function(List<ShiftModel?>) voidCallBack,
   }) async {
-    final result = await useCase.getShifts(data, query, isFiltered);
+    final result = await useCase.getShifts(
+      data.toJson(),
+      doctorKey, // doctorKey automatically
+    );
+
     result.fold(
       (l) => Loader.showError("Something went wrong"),
       (r) => voidCallBack(r),
     );
   }
 
-  /// 👩‍⚕️ Get shifts for a specific doctor (used by patient side)
+  /// 👩‍⚕️ Get shifts for patient side
   Future<void> getShiftssFromPatientData({
     required Map<String, dynamic> data,
     required String doctorKey,
@@ -62,7 +83,9 @@ class ShiftService {
   }) async {
     try {
       Loader.show();
-      final result = await useCase.getShiftssFromPatient(data, doctorKey);
+
+      final result = await useCase.getShiftsFromPatient(data, doctorKey);
+
       Loader.dismiss();
 
       result.fold(
@@ -79,7 +102,6 @@ class ShiftService {
       );
     } catch (e) {
       Loader.dismiss();
-      //Loader.showError("حدث خطأ غير متوقع أثناء تحميل بيانات الفترات");
       print("❌ [ShiftService] Exception: $e");
     }
   }

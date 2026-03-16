@@ -29,7 +29,13 @@ class CreateReservationViewModel extends GetxController {
   List<ReservationModel> ordinaryReservations = [];
   List<ReservationModel> urgentReservations = [];
   bool isLoadingReservations = false;
-  StreamSubscription<DatabaseEvent>? _firebaseSubscription;
+
+  List<LocalUser?>? centerDoctors;
+  LocalUser? selectedDoctor;
+  bool isLoadingDoctors = false;
+
+  bool get isCenterAssistant =>
+      LocalUser().getUserData().medicalCenterKey != null;
 
   // 🔹 Reservation date
   int? create_at = DateTime.now().millisecondsSinceEpoch;
@@ -44,6 +50,7 @@ class CreateReservationViewModel extends GetxController {
   bool is_update = false;
   String? clinic_key;
   String? shift_key;
+  String? doctor_key;
   String? selectedType;
   String? patient_name;
   int total_reservations = 0;
@@ -103,13 +110,35 @@ class CreateReservationViewModel extends GetxController {
   @override
   Future<void> onInit() async {
     super.onInit();
-
+    if (isCenterAssistant) {
+      loadDoctorsOfCenter();
+    }
     patientNameController.addListener(_triggerUpdate);
     resOrderController.addListener(_triggerUpdate);
     patientPhoneController.addListener(_convertPhoneToEnglish);
     patientCodeController.addListener(_triggerUpdate);
     paidAmountController.addListener(_triggerUpdate);
     paidAmountController.addListener(_updateRestAmount);
+  }
+
+  Future<void> loadDoctorsOfCenter() async {
+    final centerKey = LocalUser().getUserData().medicalCenterKey;
+    if (centerKey == null) return;
+
+    isLoadingDoctors = true;
+    update();
+
+    AuthenticationService().getClientsData(
+      query: SQLiteQueryParams(
+        where: "medicalCenterKey = ? AND userType = ?",
+        whereArgs: [centerKey, "doctor"],
+      ),
+      voidCallBack: (data) {
+        centerDoctors = data;
+        isLoadingDoctors = false;
+        update();
+      },
+    );
   }
 
   Future<void> loadOpenCloseStatusForDate(String date) async {
@@ -158,6 +187,7 @@ class CreateReservationViewModel extends GetxController {
     try {
       await ShiftService().getShiftsData(
         data: FirebaseFilter(orderBy: "clinicKey", equalTo: clinic_key),
+        doctorKey: LocalUser().getUserData().doctorKey ?? "",
         query: SQLiteQueryParams(
           is_filtered: true,
           where: "clinicKey = ?",
@@ -238,7 +268,6 @@ class CreateReservationViewModel extends GetxController {
     final myClinicKey = LocalUser().getUserData().clinicKey;
 
     LegacyQueueService().getLegacyQueueByDateData(
-      date: date,
       firebaseFilter: FirebaseFilter(
         orderBy: "clinicShiftKey",
         equalTo: "${LocalUser().getUserData().clinicKey}_${shift_key}",
@@ -513,6 +542,8 @@ class CreateReservationViewModel extends GetxController {
         restAmount: restAmountController.text,
         clinicKey: clinic_key,
         shiftKey: shift_key,
+        doctorKey: doctor_key,
+        medicalCenterKey: LocalUser().getUserData().medicalCenterKey,
 
         // 🔥 IMPORTANT
         updatedAt: now,
@@ -532,8 +563,15 @@ class CreateReservationViewModel extends GetxController {
     final newReservation = ReservationModel(
       key: const Uuid().v4(),
 
-      doctorKey: LocalUser().getUserData().doctorKey,
-      doctorName: LocalUser().getUserData().doctorName,
+      doctorKey:
+          isCenterAssistant
+              ? selectedDoctor?.uid
+              : LocalUser().getUserData().doctorKey,
+      medicalCenterKey: LocalUser().getUserData().medicalCenterKey,
+      doctorName:
+          isCenterAssistant
+              ? selectedDoctor?.name
+              : LocalUser().getUserData().doctorName,
 
       fcmToken_patient: clientUser?.fcmToken,
       patientKey: clientUser?.key,
@@ -571,9 +609,8 @@ class CreateReservationViewModel extends GetxController {
       syncStatus: SyncStatus.pendingCreate,
       status: ReservationStatus.approved.value,
     );
-    print("clinic key is ${clinic_key}");
-    print("newReservation  is ${newReservation.toJson()}");
-    createReservation(newReservation);
+    print("model inr eservation is ${newReservation.toJson()}");
+      createReservation(newReservation);
   }
 
   Future<void> getLastReservationDateHuman(LocalUser client) async {

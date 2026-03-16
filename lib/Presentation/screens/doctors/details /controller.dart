@@ -115,7 +115,6 @@ class DoctorDetailsViewModel extends GetxController {
     legacyQueueForDay = null;
 
     await LegacyQueueService().getLegacyQueueByDateData(
-      date: date,
       isPatient: true,
       firebaseFilter: FirebaseFilter(
         orderBy: "clinicShiftKey",

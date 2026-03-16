@@ -1,3 +1,4 @@
+
 import '../../../index/index_main.dart';
 import 'package:flutter/cupertino.dart';
 
@@ -119,10 +120,20 @@ class _MainPageState extends State<MainPage> {
     }
 
     // others → original behavior
-    return _buildNavContainer(_bottomItems());
+    return _buildNavContainer(_bottomItems(userType: controller.userType));
   }
 
   Widget _buildNavContainer(List<BottomNavigationBarItem> items) {
+    // 🛑 CupertinoTabBar مينفعش أقل من 2
+    if (items.length < 2) {
+      items = [...items, _item(IconsConstants.home, "الرئيسية")];
+    }
+
+    // 🛑 حماية إضافية للـ currentIndex
+    if (currentIndex >= items.length) {
+      currentIndex = 0;
+    }
+
     return CupertinoTheme(
       data: CupertinoThemeData(
         textTheme: CupertinoTextThemeData(
@@ -187,6 +198,7 @@ class _MainPageState extends State<MainPage> {
       case UserType.admin:
         return [
           _item(IconsConstants.category, "التخصصات"),
+          _item(IconsConstants.category, "المراكز الطبية"),
           _item(IconsConstants.sales, "المبيعات"),
           _item(IconsConstants.money, "الصيدلية"),
           _item(IconsConstants.account, "الحساب"),
@@ -285,6 +297,7 @@ class _MainPageState extends State<MainPage> {
       case UserType.admin:
         return [
           const SpecializationView(),
+          const  MedicalCentersView(),
           const SalesView(),
           const PharmacyView(),
           const AccountView(),

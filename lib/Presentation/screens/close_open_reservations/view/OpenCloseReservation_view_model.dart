@@ -4,14 +4,16 @@ import '../../../../index/index_main.dart';
 class OpenclosereservationViewModel extends GetxController {
   List<LegacyQueueModel?>? list;
   final LegacyQueueService service = LegacyQueueService();
+
   List<GenericListModel>? shiftDropdownItems;
   GenericListModel? selectedShift;
+
   bool _shiftInitialized = false;
 
   /// 📅 selected date (default = today)
   DateTime selectedDate = DateTime.now();
 
-  String get formattedDate => DateFormat('dd / MM / yyyy').format(selectedDate);
+  String get formattedDate => DateFormat('dd-MM-yyyy').format(selectedDate);
 
   /// 🔒 هل اليوم الحالي مقفول؟
   bool get isSelectedDayClosed {
@@ -22,16 +24,21 @@ class OpenclosereservationViewModel extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    getData();
     getShiftList();
+    getData();
   }
 
+  // ============================================================
+  // 🏥 SHIFT LIST
+  // ============================================================
   Future<void> getShiftList() async {
     final clinicKey = LocalUser().getUserData().clinicKey;
     if (clinicKey == null) return;
 
     ShiftService().getShiftsData(
       data: FirebaseFilter(orderBy: "clinicKey", equalTo: clinicKey),
+      doctorKey: LocalUser().getUserData().doctorKey ?? "",
+
       query: SQLiteQueryParams(
         is_filtered: true,
         where: "clinicKey = ?",
@@ -44,13 +51,8 @@ class OpenclosereservationViewModel extends GetxController {
           );
 
           if (shiftDropdownItems!.length == 1) {
-            /// ✅ حالة شيفت واحد
             selectedShift = shiftDropdownItems!.first;
             _shiftInitialized = true;
-            getData();
-          } else {
-            /// 🔥 أكتر من شيفت → افتح الديالوج
-            showMandatoryShiftDialog();
           }
         } else {
           shiftDropdownItems = [];
@@ -61,24 +63,34 @@ class OpenclosereservationViewModel extends GetxController {
     );
   }
 
-  void showMandatoryShiftDialog() {
-    if (shiftDropdownItems == null || shiftDropdownItems!.isEmpty) return;
+  // ============================================================
+  // 📥 GET DATA (🏥 FILTER BY CLINIC ONLY)
+  // ============================================================
+  void getData() {
+    final clinicKey = LocalUser().getUserData().clinicKey;
+    if (clinicKey == null) return;
 
-    Get.dialog(
-      ShiftSelectionDialog(
-        shifts: shiftDropdownItems!,
-        initialSelected: selectedShift,
-        onSelect: (shift) {
-          selectedShift = shift;
-          _shiftInitialized = true;
-          getData();
-          update();
-        },
-      ),
-      barrierDismissible: false,
+    service.getOpenCloseDaysByDateData(
+      date: "", // مبقاش ليه استخدام
+      firebaseFilter: FirebaseFilter(orderBy: "clinic_key", equalTo: clinicKey),
+      voidCallBack: (data) {
+        list = data;
+        update();
+      },
     );
   }
 
+  // ============================================================
+  // 🔄 CHANGE DATE (للاستخدام المستقبلي)
+  // ============================================================
+  void onDateChanged(DateTime date) {
+    selectedDate = date;
+    update();
+  }
+
+  // ============================================================
+  // 🔒 TOGGLE DAY STATUS
+  // ============================================================
   void toggleDayStatus(LegacyQueueModel model, {required bool isClosed}) {
     final updated = model.copyWith(isClosed: isClosed);
 
@@ -93,30 +105,12 @@ class OpenclosereservationViewModel extends GetxController {
     );
   }
 
-  void onDateChanged(DateTime date) {
-    selectedDate = date;
-    getData();
-    update();
-  }
-
-  void getData() {
-    if (!_shiftInitialized || selectedShift == null) return;
-
-    final formatted = DateFormat('dd/MM/yyyy').format(selectedDate);
-
-    service.getOpenCloseDaysByDateData(
-      date: formatted,
-      firebaseFilter: FirebaseFilter(),
-      voidCallBack: (data) {
-        list = data;
-        update();
-      },
-    );
-  }
-
+  // ============================================================
+  // 🗑 DELETE
+  // ============================================================
   void deleteItem(LegacyQueueModel model) {
     service.deleteLegacyQueueData(
-      date: model.date ?? "",
+      date: "",
       key: model.key ?? "",
       voidCallBack: (status) {
         if (status == ResponseStatus.success) {
