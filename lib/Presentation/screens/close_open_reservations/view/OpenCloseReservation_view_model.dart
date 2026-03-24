@@ -8,6 +8,12 @@ class OpenclosereservationViewModel extends GetxController {
   List<GenericListModel>? shiftDropdownItems;
   GenericListModel? selectedShift;
 
+  List<LocalUser?>? centerDoctors;
+  LocalUser? selectedDoctor;
+  bool isLoadingDoctors = false;
+
+  bool get isCenterMode => LocalUser().getUserData().medicalCenterKey != null;
+
   bool _shiftInitialized = false;
 
   /// 📅 selected date (default = today)
@@ -24,21 +30,55 @@ class OpenclosereservationViewModel extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    getShiftList();
-    getData();
+    if (isCenterMode) {
+      loadDoctorsOfCenter();
+    } else {
+      //getShiftList();
+      getData();
+    }
+  }
+
+  Future<void> loadDoctorsOfCenter() async {
+    final centerKey = LocalUser().getUserData().medicalCenterKey;
+    if (centerKey == null) return;
+
+    isLoadingDoctors = true;
+    update();
+
+    AuthenticationService().getClientsData(
+      query: SQLiteQueryParams(
+        where: "medicalCenterKey = ? AND userType = ?",
+        whereArgs: [centerKey, "doctor"],
+      ),
+      voidCallBack: (data) async {
+        centerDoctors = data;
+
+        if (data.isNotEmpty) {
+          selectedDoctor = data.first;
+
+          // await getShiftList(clinic_key: selectedDoctor?.clinicKey); // 👈 مهم
+          getData(); // 👈 reload
+        }
+
+        isLoadingDoctors = false;
+        update();
+      },
+    );
   }
 
   // ============================================================
   // 🏥 SHIFT LIST
   // ============================================================
-  Future<void> getShiftList() async {
-    final clinicKey = LocalUser().getUserData().clinicKey;
+  Future<void> getShiftList({String? clinic_key}) async {
+    final clinicKey = clinic_key ?? LocalUser().getUserData().clinicKey;
     if (clinicKey == null) return;
 
     ShiftService().getShiftsData(
       data: FirebaseFilter(orderBy: "clinicKey", equalTo: clinicKey),
-      doctorKey: LocalUser().getUserData().doctorKey ?? "",
-
+      doctorKey:
+          isCenterMode
+              ? selectedDoctor?.uid ?? ""
+              : LocalUser().getUserData().doctorKey ?? "",
       query: SQLiteQueryParams(
         is_filtered: true,
         where: "clinicKey = ?",
@@ -57,7 +97,7 @@ class OpenclosereservationViewModel extends GetxController {
         } else {
           shiftDropdownItems = [];
         }
-
+        print("selectedShift is ${selectedShift?.toJson()}");
         update();
       },
     );
@@ -67,12 +107,17 @@ class OpenclosereservationViewModel extends GetxController {
   // 📥 GET DATA (🏥 FILTER BY CLINIC ONLY)
   // ============================================================
   void getData() {
-    final clinicKey = LocalUser().getUserData().clinicKey;
-    if (clinicKey == null) return;
-
     service.getOpenCloseDaysByDateData(
       date: "", // مبقاش ليه استخدام
-      firebaseFilter: FirebaseFilter(orderBy: "clinic_key", equalTo: clinicKey),
+      firebaseFilter:
+          isCenterMode
+              ? FirebaseFilter()
+              : FirebaseFilter(
+                orderBy: "clinic_key",
+                equalTo: LocalUser().getUserData().clinicKey,
+              ),
+      doctorUid: selectedDoctor?.uid,
+
       voidCallBack: (data) {
         list = data;
         update();
@@ -96,6 +141,8 @@ class OpenclosereservationViewModel extends GetxController {
 
     service.updateLegacyQueueData(
       model: updated,
+      doctorUid: selectedDoctor?.uid,
+
       voidCallBack: (status) {
         if (status == ResponseStatus.success) {
           Loader.dismiss();
@@ -110,9 +157,13 @@ class OpenclosereservationViewModel extends GetxController {
   // ============================================================
   void deleteItem(LegacyQueueModel model) {
     service.deleteLegacyQueueData(
+      doctorUid: isCenterMode ? selectedDoctor?.uid : null,
+      // ✅ مهم
       date: "",
       key: model.key ?? "",
+      isOpenClosed: true,
       voidCallBack: (status) {
+        Loader.dismiss();
         if (status == ResponseStatus.success) {
           getData();
         }

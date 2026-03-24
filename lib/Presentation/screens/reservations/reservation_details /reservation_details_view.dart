@@ -39,9 +39,10 @@ class ReservationAssistantDetailsView extends StatelessWidget {
           return Container(
             margin: const EdgeInsets.only(left: 10, right: 10, bottom: 30),
             decoration: BoxDecoration(
-              color: reservation.reservationType == "كشف مستعجل"
-                  ? AppColors.errorForeground.withValues(alpha: 0.3)
-                  : AppColors.white,
+              color:
+                  reservation.reservationType == "كشف مستعجل"
+                      ? AppColors.errorForeground.withValues(alpha: 0.3)
+                      : AppColors.white,
               borderRadius: BorderRadius.circular(15),
               border: Border.all(
                 color: ColorMappingImpl().borderNeutralPrimary,
@@ -67,22 +68,22 @@ class ReservationAssistantDetailsView extends StatelessWidget {
                               reservation.reservationType == "كشف مستعجل"
                           ? const SizedBox()
                           : Column(
-                              children: [
-                                /// 🔹 Header: رقم الحجز + حالة + Edit
-                                ///
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 8.0),
-                                  child:
-                                      ahead >= 0 &&
-                                          (reservation.status !=
-                                                  ReservationStatus
-                                                      .completed
-                                                      .value &&
-                                              reservation.status !=
-                                                  ReservationStatus
-                                                      .inProgress
-                                                      .value)
-                                      ? Container(
+                            children: [
+                              /// 🔹 Header: رقم الحجز + حالة + Edit
+                              ///
+                              Padding(
+                                padding: const EdgeInsets.only(left: 8.0),
+                                child:
+                                    ahead >= 0 &&
+                                            (reservation.status !=
+                                                    ReservationStatus
+                                                        .completed
+                                                        .value &&
+                                                reservation.status !=
+                                                    ReservationStatus
+                                                        .inProgress
+                                                        .value)
+                                        ? Container(
                                           padding: const EdgeInsets.symmetric(
                                             horizontal: 8,
                                             vertical: 6,
@@ -92,73 +93,77 @@ class ReservationAssistantDetailsView extends StatelessWidget {
                                               20,
                                             ),
                                           ),
-                                          child: ahead == 0
-                                              ? Text(
-                                                  "دورك دلوقتي",
-                                                  style: context
-                                                      .typography
-                                                      .mdMedium
-                                                      .copyWith(
-                                                        color: AppColors
-                                                            .background_black,
+                                          child:
+                                              ahead == 0
+                                                  ? Text(
+                                                    "دورك دلوقتي",
+                                                    style: context
+                                                        .typography
+                                                        .mdMedium
+                                                        .copyWith(
+                                                          color:
+                                                              AppColors
+                                                                  .background_black,
+                                                        ),
+                                                  )
+                                                  : Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.start,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      AppText(
+                                                        text: " : قدامك",
+                                                        textStyle: context
+                                                            .typography
+                                                            .mdMedium
+                                                            .copyWith(
+                                                              color:
+                                                                  ColorMappingImpl()
+                                                                      .textSecondaryParagraph,
+                                                            ),
                                                       ),
-                                                )
-                                              : Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.start,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    AppText(
-                                                      text: " : قدامك",
-                                                      textStyle: context
-                                                          .typography
-                                                          .mdMedium
-                                                          .copyWith(
-                                                            color: ColorMappingImpl()
-                                                                .textSecondaryParagraph,
-                                                          ),
-                                                    ),
-                                                    const SizedBox(width: 5),
-                                                    AppText(
-                                                      text: "$ahead",
-                                                      textStyle: context
-                                                          .typography
-                                                          .lgBold
-                                                          .copyWith(
-                                                            color:
-                                                                ColorMappingImpl()
-                                                                    .textDisplay,
-                                                          ),
-                                                    ),
-                                                  ],
-                                                ),
+                                                      const SizedBox(width: 5),
+                                                      AppText(
+                                                        text: "$ahead",
+                                                        textStyle: context
+                                                            .typography
+                                                            .lgBold
+                                                            .copyWith(
+                                                              color:
+                                                                  ColorMappingImpl()
+                                                                      .textDisplay,
+                                                            ),
+                                                      ),
+                                                    ],
+                                                  ),
                                         )
-                                      : const SizedBox(),
-                                ),
-                                Row(
-                                  children: [
-                                    AppText(
-                                      text: " :رقم الحجز",
-                                      textStyle: context.typography.mdMedium
-                                          .copyWith(
-                                            color: ColorMappingImpl()
-                                                .textSecondaryParagraph,
-                                          ),
-                                    ),
-                                    const SizedBox(width: 5),
-                                    AppText(
-                                      text: "${reservation.order_num ?? '-'}",
-                                      textStyle: context.typography.lgBold
-                                          .copyWith(
-                                            color:
-                                                ColorMappingImpl().textDisplay,
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
+                                        : const SizedBox(),
+                              ),
+                              Row(
+                                children: [
+                                  AppText(
+                                    text: " :رقم الحجز",
+                                    textStyle: context.typography.mdMedium
+                                        .copyWith(
+                                          color:
+                                              ColorMappingImpl()
+                                                  .textSecondaryParagraph,
+                                        ),
+                                  ),
+                                  const SizedBox(width: 5),
+                                  AppText(
+                                    text: "${reservation.order_num ?? '-'}",
+                                    textStyle: context.typography.lgBold
+                                        .copyWith(
+                                          color: ColorMappingImpl().textDisplay,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
 
                       /// الحالة + زر تعديل
                       Row(
@@ -173,42 +178,38 @@ class ReservationAssistantDetailsView extends StatelessWidget {
                           reservation.status == "completed"
                               ? const SizedBox()
                               : InkWell(
-                                  onTap: () async {
-                                    final trueTotal = await controller
-                                        .getTotalTodayReservations();
+                                onTap: () async {
+                                  // 🟢 فتح شاشة تعديل الحجز
+                                  Get.delete<CreateReservationViewModel>();
+                                  int total =
+                                      controller.listReservations?.length ?? 0;
+                                  Get.to(
+                                    () => CreateReservationView(
+                                      list_reservations:
+                                          controller.listReservations ?? [],
 
-                                    // 🟢 فتح شاشة تعديل الحجز
-                                    Get.delete<CreateReservationViewModel>();
-                                    int total =
-                                        controller.listReservations?.length ??
-                                        0;
-                                    Get.to(
-                                      () => CreateReservationView(
-                                        list_reservations:
-                                            controller.listReservations ?? [],
+                                      dailly_date:
+                                          controller.appointmentDate ?? "",
 
-                                        dailly_date:
-                                            controller.appointmentDate ?? "",
-
-                                        clinic_key:
-                                            controller.selectedClinic?.key,
-                                        shift_key:
-                                            controller.selectedShift?.key,
-                                        selected_clinic:
-                                            controller.selectedClinic ??
-                                            ClinicModel(),
-                                        reservation: reservation,
-                                        total_reservations: trueTotal,
-                                      ),
-                                    );
-                                  },
-                                  child: Svgicon(
-                                    icon: IconsConstants.edit_btn,
-                                    height: 30.h,
-                                    width: 30.w,
-                                    color: AppColors.primary,
-                                  ),
+                                      clinic_key:
+                                          controller.selectedClinic?.key,
+                                      shift_key: controller.selectedShift?.key,
+                                      selected_clinic:
+                                          controller.selectedClinic ??
+                                          ClinicModel(),
+                                      reservation: reservation,
+                                      doctor_key:
+                                          controller.selectedDoctor?.uid,
+                                    ),
+                                  );
+                                },
+                                child: Svgicon(
+                                  icon: IconsConstants.edit_btn,
+                                  height: 30.h,
+                                  width: 30.w,
+                                  color: AppColors.primary,
                                 ),
+                              ),
                         ],
                       ),
                     ],
@@ -261,29 +262,31 @@ class ReservationAssistantDetailsView extends StatelessWidget {
                               fit: BoxFit.cover,
                               height: 55.w,
                               width: 85.w,
-                              placeholder: (context, url) => Container(
-                                height: 55.w,
-                                width: 85.w,
-                                color: AppColors.background_neutral_100,
-                                child: const Center(
-                                  child: SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 1.5,
+                              placeholder:
+                                  (context, url) => Container(
+                                    height: 55.w,
+                                    width: 85.w,
+                                    color: AppColors.background_neutral_100,
+                                    child: const Center(
+                                      child: SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 1.5,
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
-                              errorWidget: (context, url, error) => Container(
-                                height: 55.w,
-                                width: 85.w,
-                                color: AppColors.background_neutral_100,
-                                child: const Icon(
-                                  Icons.broken_image,
-                                  color: Colors.grey,
-                                ),
-                              ),
+                              errorWidget:
+                                  (context, url, error) => Container(
+                                    height: 55.w,
+                                    width: 85.w,
+                                    color: AppColors.background_neutral_100,
+                                    child: const Icon(
+                                      Icons.broken_image,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
                             ),
                           ),
                         ),
@@ -377,8 +380,9 @@ class ReservationAssistantDetailsView extends StatelessWidget {
                                           height: 45.h,
                                           width: double.infinity,
                                           decoration: BoxDecoration(
-                                            color: AppColors
-                                                .background_neutral_100,
+                                            color:
+                                                AppColors
+                                                    .background_neutral_100,
                                             borderRadius: BorderRadius.circular(
                                               8,
                                             ),
@@ -434,8 +438,9 @@ class ReservationAssistantDetailsView extends StatelessWidget {
                                           children: [
                                             const Icon(
                                               Icons.lock_clock,
-                                              color: AppColors
-                                                  .textSecondaryParagraph,
+                                              color:
+                                                  AppColors
+                                                      .textSecondaryParagraph,
                                             ),
                                             SizedBox(width: 6.w),
                                             Expanded(
@@ -445,8 +450,9 @@ class ReservationAssistantDetailsView extends StatelessWidget {
                                                     .typography
                                                     .smRegular
                                                     .copyWith(
-                                                      color: AppColors
-                                                          .textSecondaryParagraph,
+                                                      color:
+                                                          AppColors
+                                                              .textSecondaryParagraph,
                                                     ),
                                               ),
                                             ),
@@ -462,38 +468,39 @@ class ReservationAssistantDetailsView extends StatelessWidget {
                                     child: ListView.separated(
                                       scrollDirection: Axis.horizontal,
                                       itemCount: images.length,
-                                      separatorBuilder: (_, __) =>
-                                          SizedBox(width: 8.w),
-                                      itemBuilder: (_, i) => GestureDetector(
-                                        onTap: () {
-                                          controller.prescriptionService
-                                              .openBottomSheet(
-                                                context: context,
-                                                reservation: reservation,
-                                                onUpdated: () {
-                                                  controller.getReservations();
-                                                  controller.update();
-                                                },
-                                              );
+                                      separatorBuilder:
+                                          (_, __) => SizedBox(width: 8.w),
+                                      itemBuilder:
+                                          (_, i) => GestureDetector(
+                                            onTap: () {
+                                              controller.prescriptionService
+                                                  .openBottomSheet(
+                                                    context: context,
+                                                    reservation: reservation,
+                                                    onUpdated: () {
+                                                      controller
+                                                          .getReservations();
+                                                      controller.update();
+                                                    },
+                                                  );
 
-                                          // Get.to(
-                                          //   () => FullScreenImageView(
-                                          //     imageUrl: images[i],
-                                          //   ),
-                                          // );
-                                        },
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            8,
+                                              // Get.to(
+                                              //   () => FullScreenImageView(
+                                              //     imageUrl: images[i],
+                                              //   ),
+                                              // );
+                                            },
+                                            child: ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              child: CachedNetworkImage(
+                                                imageUrl: images[i],
+                                                fit: BoxFit.cover,
+                                                height: 70.h,
+                                                width: 100.w,
+                                              ),
+                                            ),
                                           ),
-                                          child: CachedNetworkImage(
-                                            imageUrl: images[i],
-                                            fit: BoxFit.cover,
-                                            height: 70.h,
-                                            width: 100.w,
-                                          ),
-                                        ),
-                                      ),
                                     ),
                                   );
                                 },
@@ -622,8 +629,8 @@ class ReservationAssistantDetailsView extends StatelessWidget {
           SizedBox(width: 5.w),
           Expanded(
             child: PrimaryTextButton(
-              onTap: () =>
-                  _updateStatus(ReservationStatus.cancelledByAssistant),
+              onTap:
+                  () => _updateStatus(ReservationStatus.cancelledByAssistant),
               appButtonSize: AppButtonSize.large,
               customBackgroundColor: AppColors.errorForeground, // red
               label: AppText(
@@ -657,8 +664,8 @@ class ReservationAssistantDetailsView extends StatelessWidget {
 
           Expanded(
             child: PrimaryTextButton(
-              onTap: () =>
-                  _updateStatus(ReservationStatus.cancelledByAssistant),
+              onTap:
+                  () => _updateStatus(ReservationStatus.cancelledByAssistant),
               appButtonSize: AppButtonSize.large,
               customBackgroundColor: AppColors.errorForeground, // red
               label: AppText(
@@ -823,9 +830,7 @@ class ReservationAssistantDetailsView extends StatelessWidget {
     reservation.status = newStatus.value;
     controller.fromUpdate = true;
 
-    await controller.actionManager.updateReservation(
-      reservation,
-    );
+    await controller.actionManager.updateReservation(reservation);
     await controller.getReservations();
     controller.update();
 

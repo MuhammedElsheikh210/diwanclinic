@@ -119,6 +119,6 @@ class LegacyQueueCard extends StatelessWidget {
 
   void _deleteItem() {
     controller.deleteItem(model);
-    Loader.showSuccess("تم حذف اليوم بنجاح");
+  //  Loader.showSuccess("تم حذف اليوم بنجاح");
   }
 }

@@ -21,7 +21,8 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
       }
       uid = doctorUid;
     } else {
-      uid = LocalUser().getUserData().doctorKey ?? "";
+      print("doctorUid is ${doctorUid}");
+      uid =doctorUid ?? LocalUser().getUserData().doctorKey ?? "";
       if (uid.isEmpty) {
         throw Exception("Doctor key is missing");
       }
@@ -113,7 +114,7 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
     String? doctorUid,
   }) async {
     final isOpenClose = _isOpenCloseFeature(data);
-
+     print("doctorUid in path is ${doctorUid}");
     final path = _resolveQueuePath(
       isPatient: isPatient,
       doctorUid: doctorUid,
@@ -178,6 +179,7 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
       HttpMethod.DELETE,
       "/$path/$key.json",
     );
+    print("delete path is ${ "/$path/$key.json"}");
 
     return SuccessModel.fromJson(response ?? {"message": "تم الحذف بنجاح"});
   }

@@ -27,6 +27,7 @@ class LegacyQueueUseCases {
     LegacyQueueModel model, {
     bool isPatient = false,
     String? doctorUid,
+    bool? isOpenClosed,
   }) {
     return _repository.updateLegacyQueueDomain(
       model.date ?? "",
@@ -42,13 +43,14 @@ class LegacyQueueUseCases {
     String key, {
     bool isPatient = false,
     String? doctorUid,
+    bool? isOpenClosed,
   }) {
     return _repository.deleteLegacyQueueDomain(
       date,
       key,
       isPatient: isPatient,
       doctorUid: doctorUid,
-      isOpenCloseFeature: false,
+      isOpenCloseFeature: isOpenClosed ?? false,
     );
   }
 

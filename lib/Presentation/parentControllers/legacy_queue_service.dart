@@ -8,6 +8,15 @@ class LegacyQueueService {
   );
 
   // ------------------------------------------------------------
+  // 🔥 DOCTOR RESOLVER (مهم جدًا)
+  // ------------------------------------------------------------
+  String? _resolveDoctorUid(String? doctorUid) {
+    if (doctorUid != null && doctorUid.isNotEmpty) return doctorUid;
+
+    return LocalUser().getUserData().doctorKey;
+  }
+
+  // ------------------------------------------------------------
   // 🧾 Legacy Queue
   // ------------------------------------------------------------
 
@@ -18,10 +27,11 @@ class LegacyQueueService {
     String? doctorUid,
   }) async {
     Loader.show();
+
     final result = await useCase.addLegacyQueue(
       model,
       isPatient: isPatient,
-      doctorUid: doctorUid,
+      doctorUid: _resolveDoctorUid(doctorUid),
     );
 
     result.fold(
@@ -37,10 +47,11 @@ class LegacyQueueService {
     String? doctorUid,
   }) async {
     Loader.show();
+
     final result = await useCase.updateLegacyQueue(
       model,
       isPatient: isPatient,
-      doctorUid: doctorUid,
+      doctorUid: _resolveDoctorUid(doctorUid),
     );
 
     result.fold(
@@ -55,13 +66,16 @@ class LegacyQueueService {
     required Function(ResponseStatus) voidCallBack,
     bool isPatient = false,
     String? doctorUid,
+    bool? isOpenClosed,
   }) async {
     Loader.show();
+
     final result = await useCase.deleteLegacyQueue(
       date,
       key,
       isPatient: isPatient,
-      doctorUid: doctorUid,
+      doctorUid: _resolveDoctorUid(doctorUid),
+      isOpenClosed: isOpenClosed,
     );
 
     result.fold(
@@ -71,15 +85,15 @@ class LegacyQueueService {
   }
 
   Future<void> getLegacyQueueByDateData({
-    required FirebaseFilter firebaseFilter, // ✅ استخدام FirebaseFilter
+    required FirebaseFilter firebaseFilter,
     required Function(List<LegacyQueueModel?>) voidCallBack,
     bool isPatient = false,
     String? doctorUid,
   }) async {
     final result = await useCase.getLegacyQueueByDate(
-      firebaseFilter.toJson() ?? {}, // 🔥 يتحول Map هنا
+      firebaseFilter.toJson() ?? {},
       isPatient: isPatient,
-      doctorUid: doctorUid,
+      doctorUid: _resolveDoctorUid(doctorUid),
     );
 
     result.fold(
@@ -94,16 +108,16 @@ class LegacyQueueService {
 
   Future<void> getOpenCloseDaysByDateData({
     required String date,
-    required FirebaseFilter firebaseFilter, // ✅ دعم الفلتر
+    required FirebaseFilter firebaseFilter,
     required Function(List<LegacyQueueModel?>) voidCallBack,
     bool isPatient = false,
     String? doctorUid,
   }) async {
     final result = await useCase.getOpenCloseDaysByDate(
       date,
-      firebaseFilter.toJson() ?? {}, // 🔥 تحويل هنا
+      firebaseFilter.toJson() ?? {},
       isPatient: isPatient,
-      doctorUid: doctorUid,
+      doctorUid: _resolveDoctorUid(doctorUid),
     );
 
     result.fold(
@@ -122,7 +136,7 @@ class LegacyQueueService {
     final result = await useCase.addOpenCloseDay(
       model,
       isPatient: isPatient,
-      doctorUid: doctorUid,
+      doctorUid: _resolveDoctorUid(doctorUid),
     );
 
     result.fold(
@@ -138,10 +152,11 @@ class LegacyQueueService {
     String? doctorUid,
   }) async {
     Loader.show();
+
     final result = await useCase.updateOpenCloseDay(
       model,
       isPatient: isPatient,
-      doctorUid: doctorUid,
+      doctorUid: _resolveDoctorUid(doctorUid),
     );
 
     result.fold(
@@ -158,11 +173,12 @@ class LegacyQueueService {
     String? doctorUid,
   }) async {
     Loader.show();
+
     final result = await useCase.deleteOpenCloseDay(
       date,
       key,
       isPatient: isPatient,
-      doctorUid: doctorUid,
+      doctorUid: _resolveDoctorUid(doctorUid),
     );
 
     result.fold(

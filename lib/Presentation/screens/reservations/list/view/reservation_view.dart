@@ -101,7 +101,7 @@ class _ReservationViewState extends State<ReservationView> {
                     clinic_key: controller.selectedClinic?.key,
                     shift_key: controller.selectedShift?.key,
                     selected_clinic: controller.selectedClinic ?? ClinicModel(),
-                    total_reservations: trueTotal,
+                    doctor_key: controller.selectedDoctor?.uid,
                   ),
                 );
               }

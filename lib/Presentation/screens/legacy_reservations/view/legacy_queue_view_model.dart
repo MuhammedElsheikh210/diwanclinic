@@ -6,33 +6,83 @@ class LegacyQueueViewModel extends GetxController {
 
   List<LegacyQueueModel?>? list;
 
+  /// 👨‍⚕️ Doctors (Center Mode)
+  List<LocalUser?>? centerDoctors;
+  LocalUser? selectedDoctor;
+  bool isLoadingDoctors = false;
+
+  bool get isCenterMode =>
+      LocalUser().getUserData().medicalCenterKey != null;
+
   /// 🕒 Shift
   List<GenericListModel>? shiftDropdownItems;
   GenericListModel? selectedShift;
-  bool _shiftInitialized = false;
 
   /// 📅 Date
   DateTime selectedDate = DateTime.now();
-
   String get formattedDate => DateFormat('dd-MM-yyyy').format(selectedDate);
 
+  // ------------------------------------------------------------
   @override
   void onInit() {
     super.onInit();
-    getData();
+
+    if (isCenterMode) {
+      loadDoctorsOfCenter();
+    } else {
+      getData();
+    }
   }
 
-  /// 📅 Change Date
+  // ------------------------------------------------------------
+  // 👨‍⚕️ LOAD DOCTORS
+  // ------------------------------------------------------------
+  Future<void> loadDoctorsOfCenter() async {
+    final centerKey = LocalUser().getUserData().medicalCenterKey;
+    if (centerKey == null) return;
+
+    isLoadingDoctors = true;
+    update();
+
+    AuthenticationService().getClientsData(
+      query: SQLiteQueryParams(
+        where: "medicalCenterKey = ? AND userType = ?",
+        whereArgs: [centerKey, "doctor"],
+      ),
+      voidCallBack: (data) async {
+        centerDoctors = data;
+
+        if (data.isNotEmpty) {
+          selectedDoctor = data.first;
+
+          /// 🔥 load data based on doctor
+          getData();
+        }
+
+        isLoadingDoctors = false;
+        update();
+      },
+    );
+  }
+
+  // ------------------------------------------------------------
+  // 📅 Change Date
+  // ------------------------------------------------------------
   void onDateChanged(DateTime date) {
     selectedDate = date;
     getData();
     update();
   }
 
-  /// 📥 Get Data with Shift
+  // ------------------------------------------------------------
+  // 📥 GET DATA (🔥 IMPORTANT FIX)
+  // ------------------------------------------------------------
   void getData() {
     service.getLegacyQueueByDateData(
-      firebaseFilter: FirebaseFilter(
+      doctorUid: isCenterMode ? selectedDoctor?.uid : null, // ✅ الحل هنا
+      firebaseFilter: isCenterMode
+          ? FirebaseFilter()
+          : FirebaseFilter(
         orderBy: "clinic_key",
         equalTo: LocalUser().getUserData().clinicKey,
       ),
@@ -43,15 +93,30 @@ class LegacyQueueViewModel extends GetxController {
     );
   }
 
+  // ------------------------------------------------------------
   void deleteItem(LegacyQueueModel model) {
     service.deleteLegacyQueueData(
       date: model.date ?? "",
       key: model.key ?? "",
+      isPatient: false,
+      doctorUid: isCenterMode ? selectedDoctor?.uid : null, // ✅ مهم
       voidCallBack: (status) {
+        Loader.dismiss();
         if (status == ResponseStatus.success) {
           getData();
         }
       },
     );
+  }
+
+  // ------------------------------------------------------------
+  // 🔄 CHANGE DOCTOR
+  // ------------------------------------------------------------
+  Future<void> changeDoctor(LocalUser doctor) async {
+    selectedDoctor = doctor;
+
+    update();
+
+    getData();
   }
 }
