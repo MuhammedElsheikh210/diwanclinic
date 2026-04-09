@@ -12,7 +12,7 @@ class ShiftViewModel extends GetxController {
 
   void getData() {
     ShiftService().getShiftsData(
-      data: FirebaseFilter(orderBy: "clinicKey", equalTo: clinic_key),
+      data: FirebaseFilter(),
       doctorKey: doctor_key ?? "",
       query: SQLiteQueryParams(),
       voidCallBack: (data) {

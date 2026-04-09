@@ -17,7 +17,6 @@ class _ReservationViewState extends State<ReservationView> {
     super.initState();
     controller = initController(() => ReservationViewModel());
     controller.appointmentDate = DatesUtilis.todayAsString();
-    controller.getClinicList();
   }
 
   @override
@@ -117,7 +116,7 @@ class _ReservationViewState extends State<ReservationView> {
   // ---------------------------------------------------------------
   Widget _buildTabs(ReservationViewModel controller) {
     return Container(
-      height: 42,
+      height: 55,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: AppColors.background_neutral_100,
@@ -165,40 +164,21 @@ class _ReservationViewState extends State<ReservationView> {
       children: List.generate(reservations!.length, (index) {
         final reservation = reservations[index]!;
 
-        // 🔹 نفس اللوجيك المستخدم في ReservationCard
         final status = ReservationStatusNewExt.fromValue(
           reservation.status ?? "",
         );
+
         final ahead = controller.queueManager.aheadInQueue(
           reservations: controller.listReservations,
           target: reservation,
         );
 
-        final bool isCompletedOrCancelled =
-            reservation.status == ReservationNewStatus.completed.value ||
-            reservation.status ==
-                ReservationNewStatus.cancelledByAssistant.value;
+        final bool isFinished =
+            status == ReservationNewStatus.completed ||
+            status == ReservationNewStatus.cancelledByAssistant;
 
-        // 🔹 نص الحالة
-        String statusText;
-        Color statusColor;
-
-        if (status == ReservationNewStatus.completed) {
-          statusText = "تم الكشف";
-          statusColor = AppColors.primary;
-        } else if (isCompletedOrCancelled) {
-          statusText = "ملغي";
-          statusColor = AppColors.errorForeground;
-        } else if (status == ReservationNewStatus.inProgress) {
-          statusText = "في الكشف";
-          statusColor = AppColors.primary;
-        } else if (status == ReservationNewStatus.pending) {
-          statusText = "في انتظار التأكيد";
-          statusColor = AppColors.tag_icon_warning;
-        } else {
-          statusText = ahead <= 0 ? "دورك الآن" : "قدّامك $ahead";
-          statusColor = AppColors.textSecondaryParagraph;
-        }
+        final bool isActive =
+            status == ReservationNewStatus.inProgress || ahead <= 0;
 
         return InkWell(
           onTap: () {
@@ -211,157 +191,173 @@ class _ReservationViewState extends State<ReservationView> {
               binding: Binding(),
             );
           },
-
           child: Container(
-            margin: const EdgeInsets.only(bottom: 6),
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color:
-                  status == ReservationNewStatus.inProgress
-                      ? AppColors.primary.withValues(alpha: 0.06)
-                      : status == ReservationNewStatus.completed
-                      ? AppColors.tag_icon_warning.withValues(alpha: 0.06)
-                      : (status == ReservationNewStatus.approved && ahead <= 0)
-                      ? AppColors.successBackground.withValues(alpha: 0.15)
-                      : AppColors.white,
-              borderRadius: BorderRadius.circular(10),
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color:
-                    status == ReservationNewStatus.inProgress
-                        ? AppColors.primary.withValues(alpha: 0.4)
-                        : AppColors.borderNeutralPrimary.withValues(alpha: 0.3),
+                    isActive
+                        ? AppColors.successForeground.withValues(alpha: 0.5)
+                        : AppColors.borderNeutralPrimary.withValues(alpha: 0.2),
+                width: isActive ? 1.5 : 1,
               ),
+              boxShadow:
+                  isFinished
+                      ? []
+                      : [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.03),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // 🔢 الرقم
-                SizedBox(
-                  width: 28.w,
-                  child: Text(
-                    "${reservation.order_num ?? '-'}",
-                    style: context.typography.mdBold.copyWith(
-                      color: AppColors.textSecondaryParagraph,
+
+            child: Opacity(
+              opacity: isFinished ? 0.35 : 1,
+              child: Row(
+                children: [
+                  /// 🔢 Order Number
+                  Container(
+                    width: 42,
+                    height: 42,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(
+                        alpha: isFinished ? 0.04 : 0.12,
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      "${reservation.order_num ?? '-'}",
+                      style: context.typography.mdBold.copyWith(
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
-                ),
 
-                // 👤 الاسم + نوع الكشف
-                // 👤 الاسم + نوع الكشف + الحالة
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // الاسم
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              reservation.patientName ?? "",
-                              style: context.typography.mdMedium.copyWith(
-                                color: AppColors.background_black,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                  const SizedBox(width: 14),
+
+                  /// 🧾 Main Info
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        /// 👤 Name
+                        Text(
+                          reservation.patientName ?? "",
+                          style: context.typography.mdRegular.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color:
+                                isFinished
+                                    ? AppColors.textSecondaryParagraph
+                                    : AppColors.background_black,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
 
-                          Expanded(
-                            child: Text(
-                              "  ( ${reservation.reservationType ?? ""} )",
-                              style: context.typography.smMedium.copyWith(
+                        const SizedBox(height: 6),
+
+                        /// 💰 Type + Paid
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(
+                                  alpha: 0.08,
+                                ),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                reservation.reservationType ?? "",
+                                style: context.typography.xsMedium.copyWith(
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(width: 6),
+
+                            Text(
+                              "•",
+                              style: context.typography.smRegular.copyWith(
                                 color: AppColors.textSecondaryParagraph,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
 
-                      // نوع الكشف • الحالة
-                      Text(
-                        "المدفوع  ${reservation.paidAmount ?? ""} ج.م ",
-                        style: context.typography.smMedium.copyWith(
-                          color: AppColors.textSecondaryParagraph,
+                            const SizedBox(width: 6),
+
+                            /// 💰 amount (أهم بصريًا)
+                            Text(
+                              "${reservation.paidAmount ?? 0} ج.م",
+                              style: context.typography.smMedium.copyWith(
+                                color: AppColors.background_black,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // 🔹 الحالة + الأزرار
-                Column(
-                  children: [
-                    // الحالة
-                    reservation.reservationType == "كشف مستعجل"
-                        ? const SizedBox()
-                        : Text(
-                          statusText,
-                          style: context.typography.smMedium.copyWith(
-                            color: statusColor,
-                          ),
-                        ),
-                    const SizedBox(height: 5),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // 🟡 pending → تأكيد / إلغاء
-                        if (status == ReservationNewStatus.pending) ...[
-                          GestureDetector(
-                            onTap: () async {
-                              await controller.changeReservationStatus(
-                                reservation: reservation,
-                                newStatus: ReservationStatus.approved,
-                              );
-                            },
-                            child: _smallActionButton(
-                              context,
-                              text: "تأكيد",
-                              color: AppColors.successForeground,
-                            ),
-                          ),
-                        ],
-
-                        // 🟢 approved → ابدأ الكشف
-                        if (status == ReservationNewStatus.approved) ...[
-                          const SizedBox(width: 6),
-                          GestureDetector(
-                            onTap: () async {
-                              await controller.changeReservationStatus(
-                                reservation: reservation,
-                                newStatus: ReservationStatus.inProgress,
-                              );
-                            },
-                            child: _smallActionButton(
-                              context,
-                              text: "ابدأ الكشف",
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ],
-
-                        // 🔵 inProgress → إنهاء
-                        if (status == ReservationNewStatus.inProgress) ...[
-                          const SizedBox(width: 6),
-                          GestureDetector(
-                            onTap: () async {
-                              await controller.changeReservationStatus(
-                                reservation: reservation,
-                                newStatus: ReservationStatus.completed,
-                              );
-                            },
-                            child: _smallActionButton(
-                              context,
-                              text: "إنهاء الكشف",
-                              color: AppColors.background_black,
-                            ),
-                          ),
-                        ],
                       ],
                     ),
-                  ],
-                ),
-              ],
+                  ),
+
+                  const SizedBox(width: 10),
+
+                  /// 🚀 Right Side
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      /// 🔢 Queue Badge
+                      status == ReservationNewStatus.inProgress
+                          ? const SizedBox()
+                          : Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.successBackground.withValues(
+                                alpha: 0.6,
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              isFinished
+                                  ? "تم"
+                                  : ahead <= 0
+                                  ? "دورك الآن"
+                                  : "قدامك $ahead",
+                              style: context.typography.mdBold.copyWith(
+                                color:
+                                    ahead <= 0
+                                        ? AppColors.successForeground
+                                        : AppColors.textSecondaryParagraph,
+                              ),
+                            ),
+                          ),
+
+                      const SizedBox(height: 8),
+
+                      /// 🎯 Action Button
+                      if (!isFinished)
+                        _primaryActionButton(
+                          context,
+                          status: status,
+                          reservation: reservation,
+                          controller: controller,
+                        ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -369,21 +365,74 @@ class _ReservationViewState extends State<ReservationView> {
     );
   }
 
-  Widget _smallActionButton(
+  Widget _primaryActionButton(
     BuildContext context, {
+    required ReservationNewStatus status,
+    required ReservationModel reservation,
+    required ReservationViewModel controller,
+  }) {
+    if (status == ReservationNewStatus.pending) {
+      return _mainBtn(
+        text: "تأكيد",
+        color: AppColors.successForeground,
+        onTap: () async {
+          await controller.changeReservationStatus(
+            reservation: reservation,
+            newStatus: ReservationStatus.approved,
+          );
+        },
+      );
+    }
+
+    if (status == ReservationNewStatus.approved) {
+      return _mainBtn(
+        text: "ابدأ الكشف",
+        color: AppColors.primary,
+        onTap: () async {
+          await controller.changeReservationStatus(
+            reservation: reservation,
+            newStatus: ReservationStatus.inProgress,
+          );
+        },
+      );
+    }
+
+    if (status == ReservationNewStatus.inProgress) {
+      return _mainBtn(
+        text: "إنهاء",
+        color: AppColors.background_black,
+        onTap: () async {
+          await controller.changeReservationStatus(
+            reservation: reservation,
+            newStatus: ReservationStatus.completed,
+          );
+        },
+      );
+    }
+
+    return const SizedBox();
+  }
+
+  Widget _mainBtn({
     required String text,
     required Color color,
+    required VoidCallback onTap,
   }) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 4.h),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color, width: 0.7),
-      ),
-      child: Text(
-        text,
-        style: context.typography.mdMedium.copyWith(color: color),
+    return SizedBox(
+      height: 32,
+      width: 100.w,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        onPressed: onTap,
+        child: Text(
+          text,
+          style: context.typography.xsMedium.copyWith(color: AppColors.white),
+        ),
       ),
     );
   }

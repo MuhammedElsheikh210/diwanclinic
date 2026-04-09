@@ -160,6 +160,9 @@ class ReservationRemoteDataSourceImpl implements ReservationRemoteDataSource {
     final normalizedDate = AppDateFormatter.toDash(
       reservation.appointmentDateTime,
     );
+    print("path in reservation is ${"doctors/${reservation.doctorKey}"
+        "/reservations/$normalizedDate"
+        "/${reservation.key}"}");
 
     return "doctors/${reservation.doctorKey}"
         "/reservations/$normalizedDate"

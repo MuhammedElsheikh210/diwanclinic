@@ -119,13 +119,12 @@ class _CreateReservationViewState extends State<CreateReservationView> {
     }
 
     /// 2️⃣ load legacy queue
-    await vm.loadLegacyQueueForDate(formattedDate);
 
     /// 3️⃣ load open/close
     await vm.loadOpenCloseStatusForDate(formattedDate);
 
-    final nextOrder = await vm.getNextOrderNumber(formattedDate);
-    vm.recalculateOrderNum(nextOrder);
+
+    vm.calculateOrderNumber();
     vm.isLoadingReservations = false;
     vm.update();
   }
@@ -561,17 +560,6 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                 //     ? const SizedBox()
                                 //     :
                                 if (controller.isCenterAssistant) ...[
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 15,
-                                      vertical: 10,
-                                    ),
-                                    child: Text(
-                                      "اختر الطبيب",
-                                      style: context.typography.mdMedium,
-                                    ),
-                                  ),
-
                                   if (controller.isLoadingDoctors)
                                     const Center(
                                       child: CircularProgressIndicator(),
@@ -615,110 +603,14 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                                     : null,
                                       ),
                                     ),
-
-                                  SizedBox(height: 20.h),
                                 ],
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 15.0,
-                                  ),
-                                  child: Text(
-                                    "رقم الدور ",
-                                    style: context.typography.lgBold.copyWith(
-                                      color: AppColors.background_black,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 7),
 
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 15.0,
-                                  ),
-                                  child: AppTextField(
-                                    hintText: "رقم الكشف",
-                                    enabled: controller.isFromLegacyQueue,
-                                    controller: controller.resOrderController,
-                                    keyboardType: TextInputType.number,
-                                    focusNode: keyboardService.getFocusNode(
-                                      keys[6],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 25),
-
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 15.0,
-                                  ),
-                                  child: Text(
-                                    "تاريخ الكشف ",
-                                    style: context.typography.lgBold.copyWith(
-                                      color: AppColors.background_black,
-                                    ),
-                                  ),
-                                ),
-                                // رقم الكشف
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                    left: 15.0,
-                                    right: 15,
-
-                                    top: 8,
-                                  ),
-                                  child: CalenderWidget(
-                                    hintText: "تاريخ الحجز",
-                                    initialTimestamp:
-                                        controller.create_at ??
-                                        DateTime.now().millisecondsSinceEpoch,
-                                    onDateSelected: (timeStamp, date) async {
-                                      final pickedDate =
-                                          DateTime.fromMillisecondsSinceEpoch(
-                                            timeStamp.millisecondsSinceEpoch,
-                                          );
-
-                                      controller.create_at =
-                                          timeStamp.millisecondsSinceEpoch;
-
-                                      final formatted = DateFormat(
-                                        'dd-MM-yyyy',
-                                      ).format(pickedDate);
-
-                                      controller.companyNameController.text =
-                                          formatted;
-                                      final formattedLegacyDate = DateFormat(
-                                        'dd-MM-yyyy',
-                                      ).format(pickedDate);
-                                      // 1️⃣ حمّل الكشكول
-                                      await controller.loadLegacyQueueForDate(
-                                        DateFormat(
-                                          'dd-MM-yyyy',
-                                        ).format(pickedDate),
-                                      );
-
-                                      // 🔥 حالة اليوم (open / close)
-                                      await controller
-                                          .loadOpenCloseStatusForDate(
-                                            formattedLegacyDate,
-                                          );
-
-                                      final nextOrder = await vm
-                                          .getNextOrderNumber(
-                                            formattedLegacyDate,
-                                          );
-
-                                      vm.recalculateOrderNum(nextOrder);
-
-                                      controller.update();
-                                    },
-                                  ),
-                                ),
+                                const SizedBox(height: 15),
 
                                 if (controller.shiftItems.length > 1)
                                   Padding(
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 15,
-                                      vertical: 20,
+                                      horizontal: 20,
                                     ),
                                     child: Column(
                                       crossAxisAlignment:
@@ -808,6 +700,36 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                       ],
                                     ),
                                   ),
+                                const SizedBox(height: 15),
+                                // title رقم الدور
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    left: 15.0,
+                                    right: 15,
+                                    bottom: 7
+                                  ),
+                                  child: Text(
+                                    "رقم الدور ",
+                                    style: context.typography.lgBold.copyWith(
+                                      color: AppColors.background_black,
+                                    ),
+                                  ),
+                                ),
+
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 15.0,
+                                  ),
+                                  child: AppTextField(
+                                    hintText: "رقم الكشف",
+                                    enabled: controller.isFromLegacyQueue,
+                                    controller: controller.resOrderController,
+                                    keyboardType: TextInputType.number,
+                                    focusNode: keyboardService.getFocusNode(
+                                      keys[6],
+                                    ),
+                                  ),
+                                ),
 
                                 /// 🗂️ Legacy Queue Checkbox (Assistant only)
                                 if (LocalUser().getUserData().userType?.name ==
@@ -856,7 +778,65 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                     ),
                                   ),
 
-                                SizedBox(height: 16.h),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 15.0,
+                                    vertical: 10,
+                                  ),
+                                  child: Text(
+                                    "تاريخ الكشف ",
+                                    style: context.typography.lgBold.copyWith(
+                                      color: AppColors.background_black,
+                                    ),
+                                  ),
+                                ),
+                                // رقم الكشف
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    left: 15.0,
+                                    right: 15,
+
+                                    top: 8,
+                                  ),
+                                  child: CalenderWidget(
+                                    hintText: "تاريخ الحجز",
+                                    initialTimestamp:
+                                        controller.create_at ??
+                                        DateTime.now().millisecondsSinceEpoch,
+                                    onDateSelected: (timeStamp, date) async {
+                                      final pickedDate =
+                                          DateTime.fromMillisecondsSinceEpoch(
+                                            timeStamp.millisecondsSinceEpoch,
+                                          );
+
+                                      controller.create_at =
+                                          timeStamp.millisecondsSinceEpoch;
+
+                                      final formatted = DateFormat(
+                                        'dd-MM-yyyy',
+                                      ).format(pickedDate);
+
+                                      controller.companyNameController.text =
+                                          formatted;
+                                      final formattedLegacyDate = DateFormat(
+                                        'dd-MM-yyyy',
+                                      ).format(pickedDate);
+                                      // 1️⃣ حمّل الكشكول
+
+
+                                      // 🔥 حالة اليوم (open / close)
+                                      await controller
+                                          .loadOpenCloseStatusForDate(
+                                            formattedLegacyDate,
+                                          );
+
+                                      vm.calculateOrderNumber();
+
+
+                                      controller.update();
+                                    },
+                                  ),
+                                ),
                               ],
                             ),
                       ],

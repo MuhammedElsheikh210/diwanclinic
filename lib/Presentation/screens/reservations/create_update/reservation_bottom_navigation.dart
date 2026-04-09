@@ -13,7 +13,10 @@ class ReservationBottomNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isLastStep = controller.currentStep == 3;
-    final bool isValid = controller.validateCurrentStep();
+
+    /// 🔥 مهم: ضيف شرط اليوم مغلق
+    final bool isValid =
+        controller.validateCurrentStep() && !controller.isDayClosed;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -22,9 +25,10 @@ class ReservationBottomNavigation extends StatelessWidget {
           /// Previous Button
           Expanded(
             child: OutlinedButton(
-              onPressed: controller.currentStep > 1
-                  ? controller.previousStep
-                  : () => Get.back(),
+              onPressed:
+                  controller.currentStep > 1
+                      ? controller.previousStep
+                      : () => Get.back(),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 side: BorderSide(color: AppColors.primary.withOpacity(.4)),
@@ -47,27 +51,36 @@ class ReservationBottomNavigation extends StatelessWidget {
           Expanded(
             flex: 2,
             child: ElevatedButton(
-              onPressed: isValid
-                  ? () {
-                if (isLastStep) {
-                  onSave();
-                } else {
-                  controller.nextStep();
-                }
-              }
-                  : null,
+              onPressed:
+                  isValid
+                      ? () {
+                        if (isLastStep) {
+                          onSave();
+                        } else {
+                          controller.nextStep();
+                        }
+                      }
+                      : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                disabledBackgroundColor:
-                AppColors.primary.withOpacity(.3),
+
+                /// 🔥 شكل أوضح للـ disabled
+                disabledBackgroundColor: AppColors.primary.withOpacity(.2),
+
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 elevation: 3,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
+
+              /// 🔥 تغيير النص حسب الحالة
               child: Text(
-                isLastStep ? "حفظ الحجز" : "التالي",
+                controller.isDayClosed
+                    ? "اليوم مغلق"
+                    : isLastStep
+                    ? "حفظ الحجز"
+                    : "التالي",
                 style: context.typography.mdMedium.copyWith(
                   color: Colors.white,
                 ),
@@ -78,5 +91,4 @@ class ReservationBottomNavigation extends StatelessWidget {
       ),
     );
   }
-
 }

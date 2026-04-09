@@ -4,6 +4,7 @@ import 'package:dartz/dartz.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 import '../../../../Domain/UseCases/Firebase_UseCases/FirebaseSignIn_USeCase.dart';
 import '../../../../index/index_main.dart';
@@ -26,10 +27,37 @@ class LoginViewModel extends GetxController {
 
   @override
   Future<void> onInit() async {
-    String? apns = await FirebaseMessaging.instance.getAPNSToken();
-    print("APNS NOW => $apns");
-    LocalUser().removeLocalUser();
     super.onInit();
+
+    LocalUser().removeLocalUser();
+
+    /// 🔥 check current token
+    final currentToken = NotificationService().token;
+    debugPrint("🧪 INITIAL TOKEN => $currentToken");
+
+    /// 🔥 Listen لأي تغيير في FCM token
+    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+      debugPrint("🔥 NEW TOKEN FROM LISTENER => $newToken");
+
+      final user = LocalUser().getUserData();
+
+      debugPrint("👤 CURRENT USER UID => ${user.uid}");
+
+      if (user.uid != null) {
+        final updatedUser = user.copyWith(fcmToken: newToken);
+
+        debugPrint("📤 UPDATING USER WITH TOKEN => $newToken");
+
+        await AuthenticationService().updateClientsData(
+          userclient: updatedUser,
+          voidCallBack: (_) {
+            debugPrint("✅ USER UPDATED WITH NEW TOKEN");
+          },
+        );
+
+        updatedUser.saveLocal();
+      }
+    });
   }
 
   @override
@@ -98,26 +126,32 @@ class LoginViewModel extends GetxController {
   // ─────────────────────────────
 
   Future<void> saveUserToFirebaseRealtime(String uid) async {
-    //  final newToken = NotificationService().token;
-    final newToken = await ConstantsData.firebaseToken();
+    final token = NotificationService().token;
+
+    debugPrint("🧪 TOKEN BEFORE CREATE USER => $token");
 
     final LocalUser userClient = LocalUser(
       uid: uid,
-      key: const Uuid().v4(),
+      key: uid,
       phone: phone.value,
       identifier: "${phone.value}@link.com",
       isCompleteProfile: 0,
-      fcmToken: newToken,
-      // ممكن يكون null عادي
+      fcmToken: token,
       userType: UserType.admin,
       password: password.value,
     );
 
+    debugPrint("📦 USER TO SAVE => ${userClient.toJson()}");
+
     AuthenticationService().addClientsData(
       userclient: userClient,
       voidCallBack: (_) async {
+        debugPrint("✅ USER SAVED TO FIREBASE");
+
         Loader.dismiss();
         await _finalizeLogin(userClient);
+
+        await _syncFcmTokenWithUser(userClient);
       },
     );
   }
@@ -133,31 +167,52 @@ class LoginViewModel extends GetxController {
         Loader.dismiss();
 
         if (users.isEmpty || users.first == null) {
-          // 🆕 أول مرة المستخدم يدخل
           await saveUserToFirebaseRealtime(uid);
           return;
         }
 
         var user = users.first!;
-        final newToken = NotificationService().token;
-        //  final newToken = await ConstantsData.firebaseToken();
-
-        // 🔄 Update FCM token if changed
-        if (newToken != null &&
-            (user.fcmToken == null || user.fcmToken != newToken)) {
-          final updatedUser = user.copyWith(fcmToken: newToken);
-
-          await AuthenticationService().updateClientsData(
-            userclient: updatedUser,
-            voidCallBack: (_) {},
-          );
-
-          user = updatedUser;
-        }
 
         await _finalizeLogin(user);
+
+        // 🔥 sync token بعد login
+        await _syncFcmTokenWithUser(user);
       },
     );
+  }
+
+  // ─────────────────────────────
+  // SYNC TOKEN
+  // ─────────────────────────────
+
+  Future<void> _syncFcmTokenWithUser(LocalUser user) async {
+    final token = NotificationService().token;
+
+    debugPrint("🧪 SYNC TOKEN => $token");
+    debugPrint("🧪 USER OLD TOKEN => ${user.fcmToken}");
+
+    if (token == null) {
+      debugPrint("❌ TOKEN STILL NULL - SKIP UPDATE");
+      return;
+    }
+
+    if (user.fcmToken == token) {
+      debugPrint("✅ TOKEN ALREADY SAME - NO UPDATE");
+      return;
+    }
+
+    final updatedUser = user.copyWith(fcmToken: token);
+
+    debugPrint("📤 UPDATING USER TOKEN TO => $token");
+
+    await AuthenticationService().updateClientsData(
+      userclient: updatedUser,
+      voidCallBack: (_) {
+        debugPrint("✅ TOKEN UPDATED IN FIREBASE");
+      },
+    );
+
+    updatedUser.saveLocal();
   }
 
   // ─────────────────────────────
@@ -167,7 +222,6 @@ class LoginViewModel extends GetxController {
   Future<void> _finalizeLogin(LocalUser user) async {
     user.saveLocal();
 
-    // subscribe آمن (NotificationService فيه حماية pending)
     await NotificationService().subscribeAfterLogin();
 
     await _navigateByRole(user.userType);
@@ -192,10 +246,6 @@ class LoginViewModel extends GetxController {
         Get.offAllNamed(mainpage);
     }
   }
-
-  // ─────────────────────────────
-  // SYNC UPDATE
-  // ─────────────────────────────
 
   // ─────────────────────────────
   // ASSISTANT DB CHECK

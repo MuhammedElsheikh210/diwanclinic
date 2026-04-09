@@ -17,6 +17,9 @@ class CreateReservationViewModel extends GetxController {
   GenericListModel? selectedShiftModel;
   bool isLoadingShifts = false;
 
+  int _calcRequestId = 0;
+  bool isCalculatingOrder = false;
+
   // Delegate fields
   final TextEditingController delegateNameController = TextEditingController();
   final TextEditingController companyNameController = TextEditingController();
@@ -109,9 +112,9 @@ class CreateReservationViewModel extends GetxController {
   @override
   Future<void> onInit() async {
     super.onInit();
-    if (isCenterAssistant) {
-      loadDoctorsOfCenter();
-    }
+    // if (isCenterAssistant) {
+    //   loadDoctorsOfCenter();
+    // }
     patientNameController.addListener(_triggerUpdate);
     resOrderController.addListener(_triggerUpdate);
     patientPhoneController.addListener(_convertPhoneToEnglish);
@@ -123,9 +126,10 @@ class CreateReservationViewModel extends GetxController {
   Future<void> onDoctorChanged(LocalUser doctor) async {
     selectedDoctor = doctor;
 
-    /// 🔥 reset
-    shift_key = null;
-    selectedShiftModel = null;
+    /// 🔥 متعملش reset لو فيه shift جاي من برا
+    if (shift_key == null) {
+      selectedShiftModel = null;
+    }
 
     /// 1️⃣ reload shifts
     await loadShiftsForClinic();
@@ -142,12 +146,79 @@ class CreateReservationViewModel extends GetxController {
     /// 2️⃣ open/close
     await loadOpenCloseStatusForDate(formattedDate);
 
-    /// 3️⃣ legacy queue
-    await loadLegacyQueueForDate(formattedDate);
+    await calculateOrderNumber();
 
-    final nextOrder = await getNextOrderNumber(formattedDate);
-    recalculateOrderNum(nextOrder);
+    update();
+  }
 
+  Future<void> calculateOrderNumber() async {
+    if (clinic_key == null || shift_key == null) return;
+
+    final doctorUid =
+        isCenterAssistant
+            ? selectedDoctor?.uid
+            : LocalUser().getUserData().doctorKey;
+
+    if (doctorUid == null || doctorUid.isEmpty) return;
+
+    final date = companyNameController.text;
+    if (date.isEmpty) return;
+
+    final formatted = date.contains('/') ? normalizeToDashDate(date) : date;
+
+    final requestId = ++_calcRequestId;
+
+    isCalculatingOrder = true;
+
+    /// 🔥🔥🔥 أهم سطر (الحل)
+    legacyQueueCount = 0;
+
+    update();
+
+    try {
+      /// 1️⃣ load legacy
+      await loadLegacyQueueForDate(formatted);
+
+      if (requestId != _calcRequestId) return;
+
+      /// 2️⃣ last order
+      int lastOrder = 0;
+
+      await ReservationService().getReservationsData(
+        query: SQLiteQueryParams(
+          where: """
+        appointment_date_time = ?
+        AND clinic_key = ?
+        AND shift_key = ?
+        AND doctor_key = ?
+      """,
+          whereArgs: [formatted, clinic_key, shift_key, doctorUid],
+          orderBy: "order_num DESC",
+          limit: 1,
+        ),
+        voidCallBack: (list) {
+          if (list.isNotEmpty) {
+            lastOrder = list.first?.order_num ?? 0;
+          }
+        },
+      );
+
+      if (requestId != _calcRequestId) return;
+
+      /// 3️⃣ calculate
+      if (!isFromLegacyQueue) {
+        final base =
+            lastOrder > legacyQueueCount ? lastOrder : legacyQueueCount;
+
+        resOrderController.text = (base + 1).toString();
+      } else {
+        resOrderController.clear();
+      }
+    } catch (e) {
+      print("❌ error: $e");
+    }
+
+    isCalculatingOrder = false;
     update();
   }
 
@@ -171,20 +242,23 @@ class CreateReservationViewModel extends GetxController {
           try {
             /// ✅ حاول تختار الدكتور اللي جاي من الشاشة
             selectedDoctor = data.firstWhere((doc) => doc?.uid == doctor_key);
-
-            print("✅ default doctor selected: ${selectedDoctor?.uid}");
           } catch (_) {
             /// 🔁 fallback لأول دكتور
             selectedDoctor = data.first;
-            print("⚠️ fallback doctor selected: ${selectedDoctor?.uid}");
           }
 
           /// 🔥 بعد ما الدكتور يتحدد → حمل كل حاجة زيه زي onDoctorChanged
-          await onDoctorChanged(selectedDoctor!);
         }
 
         isLoadingDoctors = false;
         update();
+
+        /// 🔥 وبعدها حمّل البيانات في background
+        Future.microtask(() async {
+          if (selectedDoctor != null) {
+            await onDoctorChanged(selectedDoctor!);
+          }
+        });
       },
     );
   }
@@ -192,12 +266,8 @@ class CreateReservationViewModel extends GetxController {
   Future<void> loadOpenCloseStatusForDate(String date) async {
     isDayClosed = false;
 
-    print("isCenterAssistant is $isCenterAssistant");
-    print("selectedDoctor uid is ${selectedDoctor?.uid}");
-
     /// 🔥 مهم
     if (shift_key == null || shift_key!.isEmpty) {
-      print("❌ shift_key is null → skip");
       return;
     }
 
@@ -220,8 +290,6 @@ class CreateReservationViewModel extends GetxController {
             isDayClosed = true;
           }
         }
-
-        print("🔥 isDayClosed = $isDayClosed");
 
         update();
       },
@@ -265,10 +333,10 @@ class CreateReservationViewModel extends GetxController {
 
     print("👨‍⚕️ doctorUid: $doctorUid");
     print("🏥 clinic_key: $clinic_key");
+    print("📌 passed shift_key: $shift_key");
 
     try {
       await ShiftService().getShiftsData(
-        /// 🔥 مهم جدًا → دايمًا فلتر بالكلينيك
         data: FirebaseFilter(orderBy: "clinicKey", equalTo: clinic_key),
 
         doctorKey: doctorUid ?? "",
@@ -298,6 +366,7 @@ class CreateReservationViewModel extends GetxController {
           /// ❌ مفيش شيفتات
           if (shiftItems.isEmpty) {
             print("❌ no shifts found");
+
             selectedShiftModel = null;
             shift_key = null;
 
@@ -306,35 +375,41 @@ class CreateReservationViewModel extends GetxController {
             return;
           }
 
-          /// ✅ لو مفيش اختيار → اختار أول واحد
-          if (selectedShiftModel == null || shift_key == null) {
-            selectedShiftModel = shiftItems.first;
-            shift_key = selectedShiftModel!.key;
-
-            print("✅ auto selected shift: $shift_key");
-          } else {
-            /// ✅ حاول ترجع نفس الشيفت القديم
+          /// 🔥🔥🔥 أهم جزء (fix)
+          if (shift_key != null && shift_key!.isNotEmpty) {
             try {
+              /// ✅ استخدم الشيفت اللي جاي من الشاشة
               selectedShiftModel = shiftItems.firstWhere(
                 (e) => e.key == shift_key,
               );
+
+              print("✅ selected passed shift: $shift_key");
             } catch (_) {
+              /// 🔁 fallback لو مش موجود
               selectedShiftModel = shiftItems.first;
               shift_key = selectedShiftModel!.key;
+
+              print("⚠️ passed shift not found → fallback: $shift_key");
             }
+          } else {
+            /// 🟡 لو مفيش shift جاي
+            selectedShiftModel = shiftItems.first;
+            shift_key = selectedShiftModel!.key;
+
+            print("🟡 auto selected shift: $shift_key");
           }
 
           isLoadingShifts = false;
           update();
 
-          /// 🔥🔥🔥 أهم جزء → بعد ما الشيفت يتحدد
+          /// 🔥 بعد تحديد الشيفت
           final date = companyNameController.text;
 
           if (date.isNotEmpty && shift_key != null) {
             final formatted =
                 date.contains('/') ? normalizeToDashDate(date) : date;
 
-            print("🚀 loading data for shift_date: ${shift_key}_$formatted");
+            print("🚀 ready with shift_date: ${shift_key}_$formatted");
           }
         },
       );
@@ -347,61 +422,57 @@ class CreateReservationViewModel extends GetxController {
     }
   }
 
-  Future<int> getNextOrderNumber(String date) async {
-    int nextOrder = 1;
-
-    final doctorUid =
-        isCenterAssistant
-            ? selectedDoctor?.uid
-            : LocalUser().getUserData().doctorKey;
-
-    /// ❌ safety
-    if (doctorUid == null ||
-        doctorUid.isEmpty ||
-        clinic_key == null ||
-        shift_key == null) {
-      print("❌ missing data → fallback order = 1");
-      return 1;
-    }
-
-    await ReservationService().getReservationsData(
-      query: SQLiteQueryParams(
-        is_filtered: false,
-
-        /// 🔥 أهم حاجة هنا
-        where: """
-        appointment_date_time = ?
-        AND clinic_key = ?
-        AND shift_key = ?
-        AND doctor_key = ?
-      """,
-
-        whereArgs: [date, clinic_key, shift_key, doctorUid],
-
-        /// 🔥 هنجيب آخر رقم
-        orderBy: "order_num DESC",
-
-        /// 🔥 واحد بس
-        limit: 1,
-      ),
-      voidCallBack: (list) {
-        if (list.isNotEmpty) {
-          final last = list.first;
-
-          final lastOrder = last?.order_num ?? 0;
-
-          nextOrder = lastOrder + 1;
-
-          print("🔥 lastOrder = $lastOrder → next = $nextOrder");
-        } else {
-          nextOrder = 1;
-          print("🔥 no reservations → start from 1");
-        }
-      },
-    );
-
-    return nextOrder;
-  }
+  // Future<int> getNextOrderNumber(String date) async {
+  //   int nextOrder = 1;
+  //
+  //   final doctorUid =
+  //       isCenterAssistant
+  //           ? selectedDoctor?.uid
+  //           : LocalUser().getUserData().doctorKey;
+  //
+  //   /// ❌ safety
+  //   if (doctorUid == null ||
+  //       doctorUid.isEmpty ||
+  //       clinic_key == null ||
+  //       shift_key == null) {
+  //     return 1;
+  //   }
+  //
+  //   await ReservationService().getReservationsData(
+  //     query: SQLiteQueryParams(
+  //       is_filtered: false,
+  //
+  //       /// 🔥 أهم حاجة هنا
+  //       where: """
+  //       appointment_date_time = ?
+  //       AND clinic_key = ?
+  //       AND shift_key = ?
+  //       AND doctor_key = ?
+  //     """,
+  //
+  //       whereArgs: [date, clinic_key, shift_key, doctorUid],
+  //
+  //       /// 🔥 هنجيب آخر رقم
+  //       orderBy: "order_num DESC",
+  //
+  //       /// 🔥 واحد بس
+  //       limit: 1,
+  //     ),
+  //     voidCallBack: (list) {
+  //       if (list.isNotEmpty) {
+  //         final last = list.first;
+  //
+  //         final lastOrder = last?.order_num ?? 0;
+  //
+  //         nextOrder = lastOrder + 1;
+  //       } else {
+  //         nextOrder = 1;
+  //       }
+  //     },
+  //   );
+  //
+  //   return nextOrder;
+  // }
 
   Future<void> selectShift(GenericListModel shift) async {
     selectedShiftModel = shift;
@@ -416,14 +487,10 @@ class CreateReservationViewModel extends GetxController {
     final legacyDate =
         formatted.contains('/') ? normalizeToDashDate(formatted) : formatted;
 
-    // 1️⃣ حمّل الكشكول للشيفت الجديد
-    await loadLegacyQueueForDate(legacyDate);
-
     // 2️⃣ حمّل حالة اليوم (مفتوح / مغلق)
     await loadOpenCloseStatusForDate(legacyDate);
 
-    final nextOrder = await getNextOrderNumber(formatted);
-    recalculateOrderNum(nextOrder);
+    await calculateOrderNumber();
 
     update();
   }
@@ -431,12 +498,11 @@ class CreateReservationViewModel extends GetxController {
   Future<void> loadLegacyQueueForDate(String date) async {
     final myClinicKey = LocalUser().getUserData().clinicKey;
 
-    if (shift_key == null || shift_key!.isEmpty) {
-      print("❌ shift_key is null → skip");
-      return;
-    }
+    if (shift_key == null || shift_key!.isEmpty) return;
 
     final shiftDate = "${shift_key}_$date";
+
+    final completer = Completer<void>();
 
     LegacyQueueService().getLegacyQueueByDateData(
       doctorUid: isCenterAssistant ? selectedDoctor?.uid : null,
@@ -454,15 +520,14 @@ class CreateReservationViewModel extends GetxController {
           }
         }
 
-        /// 🔥🔥🔥 أهم إضافة
-        if (!isFromLegacyQueue) {
-          final nextOrder = await getNextOrderNumber(date);
-          recalculateOrderNum(nextOrder);
-        }
-
         update();
+
+        /// 🔥 أهم سطر
+        completer.complete();
       },
     );
+
+    return completer.future;
   }
 
   Future<void> _decreaseLegacyQueue() async {
@@ -494,21 +559,19 @@ class CreateReservationViewModel extends GetxController {
     companyNameController.text = formatted;
 
     // 2️⃣ حمّل الكشكول للتاريخ الجديد
-    await loadLegacyQueueForDate(DateFormat('dd-MM-yyyy').format(date));
-
-    final nextOrder = await getNextOrderNumber(formatted);
-    recalculateOrderNum(nextOrder);
+    await calculateOrderNumber();
 
     update();
   }
 
-  void recalculateOrderNum(int nextOrder) {
-    if (isFromLegacyQueue) {
-      resOrderController.text = "";
-    } else {
-      resOrderController.text = nextOrder.toString();
-    }
-  }
+  // void recalculateOrderNum(int nextOrder) {
+  //   if (isFromLegacyQueue) {
+  //     resOrderController.text = "";
+  //   } else {
+  //     final finalOrder = legacyQueueCount + nextOrder;
+  //     resOrderController.text = finalOrder.toString();
+  //   }
+  // }
 
   Future<void> toggleLegacyQueue(bool value) async {
     isFromLegacyQueue = value;
@@ -522,16 +585,13 @@ class CreateReservationViewModel extends GetxController {
       final date = companyNameController.text;
 
       if (date.isEmpty || shift_key == null) {
-        print("❌ missing date or shift → skip order calc");
         update();
         return;
       }
 
       final formatted = date.contains('/') ? normalizeToDashDate(date) : date;
 
-      final nextOrder = await getNextOrderNumber(formatted);
-
-      resOrderController.text = nextOrder.toString();
+      await calculateOrderNumber();
     }
 
     update();
@@ -761,7 +821,6 @@ class CreateReservationViewModel extends GetxController {
       syncStatus: SyncStatus.pendingCreate,
       status: ReservationStatus.approved.value,
     );
-    print("model inr eservation is ${newReservation.toJson()}");
     createReservation(newReservation);
   }
 
@@ -955,8 +1014,8 @@ class CreateReservationViewModel extends GetxController {
           from_assist: true,
           newStatus: ReservationStatus.approved,
         );
-        //  refreshListView();
-        Get.back();
+        refreshListView();
+        //  Get.back();
         Loader.showSuccess("تم إضافة الحجز بنجاح");
       },
     );
@@ -992,13 +1051,11 @@ class CreateReservationViewModel extends GetxController {
   }
 
   void refreshListView() {
-    // final reservationVM = initController(() => ReservationViewModel());
-    // reservationVM.fromUpdate = null;
-    // reservationVM.getReservations();
-    // reservationVM.update();
-    // Get.back();
-
-    Get.offAllNamed(mainpage);
+    final reservationVM = initController(() => ReservationViewModel());
+    reservationVM.fromUpdate = null;
+    reservationVM.getReservations();
+    reservationVM.update();
+    Get.back();
   }
 
   Future<void> getClinicList(

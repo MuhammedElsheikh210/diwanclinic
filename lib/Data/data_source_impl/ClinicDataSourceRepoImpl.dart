@@ -13,16 +13,55 @@ class ClinicDataSourceRepoImpl extends ClinicDataSourceRepo {
         getId: (model) => model.key,
       );
 
-  /// 🔹 Helpers to avoid wrong URL paths
-  String _clinicsPath(String? doctorKey) =>
-      "/${ApiConstatns.clinics}/$doctorKey/clinics.json";
+  /// ============================================================
+  /// 🔑 Resolve Doctor Key (THE FIX 🔥)
+  /// ============================================================
+  String _resolveDoctorKey(String? doctorKey) {
+    if (doctorKey != null && doctorKey.isNotEmpty) {
+      return doctorKey;
+    }
 
-  String _clinicItemPath(String? doctorKey, String key) =>
-      "/${ApiConstatns.clinics}/$doctorKey/clinics/$key.json";
+    final user = LocalUser().getUserData();
 
-  String _patientClinicsPath(String? doctorKey) =>
-      "/${ApiConstatns.clinics_patient}/$doctorKey/clinics.json";
+    final resolvedKey =
+        user.userType?.name == "doctor"
+            ? user
+                .uid // ✅ doctor uses his own key
+            : user.doctorKey; // ✅ assistant uses doctorKey
 
+    print("👤 userType: ${user.userType?.name}");
+    print("🔑 user.key: ${user.key}");
+    print("🔑 user.doctorKey: ${user.doctorKey}");
+    print("🔑 FINAL doctorKey: $resolvedKey");
+
+    if (resolvedKey == null || resolvedKey.isEmpty) {
+      throw Exception("❌ doctorKey is NULL or EMPTY");
+    }
+
+    return resolvedKey;
+  }
+
+  /// ============================================================
+  /// 🌐 Paths
+  /// ============================================================
+  String _clinicsPath(String? doctorKey) {
+    final key = _resolveDoctorKey(doctorKey);
+    return "/${ApiConstatns.clinics}/$key/clinics.json";
+  }
+
+  String _clinicItemPath(String? doctorKey, String key) {
+    final resolvedKey = _resolveDoctorKey(doctorKey);
+    return "/${ApiConstatns.clinics}/$resolvedKey/clinics/$key.json";
+  }
+
+  String _patientClinicsPath(String? doctorKey) {
+    final resolvedKey = _resolveDoctorKey(doctorKey);
+    return "/${ApiConstatns.clinics_patient}/$resolvedKey/clinics.json";
+  }
+
+  /// ============================================================
+  /// 📥 GET CLINICS
+  /// ============================================================
   @override
   Future<List<ClinicModel?>> getClinics(
     Map<String, dynamic> data,
@@ -32,38 +71,28 @@ class ClinicDataSourceRepoImpl extends ClinicDataSourceRepo {
     bool? fromOnline,
   }) async {
     try {
-      /// --------------------------------------------------------
       /// 1️⃣ FORCE ONLINE
-      /// --------------------------------------------------------
       if (fromOnline == true) {
         print("🌐 [CLINICS] Force Online Fetch");
         return await _fetchOnlineClinics(data, doctorKey);
       }
 
-      /// --------------------------------------------------------
       /// 2️⃣ LOCAL FIRST
-      /// --------------------------------------------------------
       final localData = await _sqliteRepo.getAll(query: query);
 
-      /// --------------------------------------------------------
-      /// 3️⃣ FILTER MODE → ALWAYS RETURN LOCAL
-      /// --------------------------------------------------------
+      /// 3️⃣ FILTER MODE
       if (isFiltered == true) {
         print("📘 [CLINICS] Local Only (Filtered Mode) → ${localData.length}");
         return localData;
       }
 
-      /// --------------------------------------------------------
-      /// 4️⃣ IF LOCAL HAS DATA → USE IT
-      /// --------------------------------------------------------
+      /// 4️⃣ USE LOCAL IF EXISTS
       if (localData.isNotEmpty) {
         print("📘 [CLINICS] Local Loaded → ${localData.length}");
         return localData;
       }
 
-      /// --------------------------------------------------------
-      /// 5️⃣ LOCAL EMPTY → FETCH ONLINE & SAVE
-      /// --------------------------------------------------------
+      /// 5️⃣ FETCH ONLINE
       print("🌐 [CLINICS] Local empty → Fetch Online");
       return await _fetchOnlineClinics(data, doctorKey);
     } catch (e) {
@@ -72,23 +101,35 @@ class ClinicDataSourceRepoImpl extends ClinicDataSourceRepo {
     }
   }
 
-  /// 🔹 Fetch clinics from API
+  /// ============================================================
+  /// 🌐 FETCH ONLINE
+  /// ============================================================
   Future<List<ClinicModel?>> _fetchOnlineClinics(
     Map<String, dynamic> params,
     String? doctorKey,
   ) async {
+    final path = _clinicsPath(doctorKey);
+
+    print("🌍 API PATH: $path");
+
     final response = await _clientSourceRepo.request(
       HttpMethod.GET,
-      _clinicsPath(doctorKey),
+      path,
       params: params,
     );
+
+    /// 🔥 handle null (Firebase case)
+    if (response == null) {
+      print("⚠️ No clinics found (null response)");
+      return [];
+    }
 
     final list = handleResponse<ClinicModel>(
       response,
       (json) => ClinicModel.fromJson(json),
     );
 
-    /// 🔥 Save locally
+    /// 💾 cache locally
     for (var clinic in list) {
       if (clinic?.key?.isNotEmpty == true) {
         await _sqliteRepo.addItem(clinic!);
@@ -98,36 +139,38 @@ class ClinicDataSourceRepoImpl extends ClinicDataSourceRepo {
     return list;
   }
 
+  /// ============================================================
+  /// 👤 PATIENT CLINICS
+  /// ============================================================
   @override
   Future<List<ClinicModel?>> getClinicsFromPatient(
     Map<String, dynamic> data,
     String? doctorKey,
   ) async {
     try {
-      /// 🔥 Try Local First
+      final resolvedKey = _resolveDoctorKey(doctorKey);
+
       final sqliteData = await _sqliteRepo.getAll(
         query: SQLiteQueryParams(
           is_filtered: true,
           where: "doctor_key = ?",
-          whereArgs: [doctorKey],
+          whereArgs: [resolvedKey],
         ),
       );
 
       if (sqliteData.isNotEmpty) return sqliteData;
 
-      /// 🔥 Load from API
       final response = await _clientSourceRepo.request(
         HttpMethod.GET,
-        _patientClinicsPath(doctorKey),
+        _patientClinicsPath(resolvedKey),
         params: data,
       );
 
-      List<ClinicModel?> clinicList = handleResponse<ClinicModel>(
+      final clinicList = handleResponse<ClinicModel>(
         response,
         (json) => ClinicModel.fromJson(json),
       );
 
-      /// 🔥 Cache locally
       for (final clinic in clinicList) {
         if (clinic?.key?.isNotEmpty == true) {
           await _sqliteRepo.addItem(clinic!);
@@ -141,6 +184,9 @@ class ClinicDataSourceRepoImpl extends ClinicDataSourceRepo {
     }
   }
 
+  /// ============================================================
+  /// ➕ ADD
+  /// ============================================================
   @override
   Future<SuccessModel> addClinic(
     Map<String, dynamic> data,
@@ -148,15 +194,15 @@ class ClinicDataSourceRepoImpl extends ClinicDataSourceRepo {
     String key,
   ) async {
     try {
+      final resolvedKey = _resolveDoctorKey(doctorKey);
+
       final clinic = ClinicModel.fromJson(data);
 
-      /// 🔥 Save Local
       await _sqliteRepo.addItem(clinic);
 
-      /// 🔥 Sync API
       final response = await _clientSourceRepo.request(
         HttpMethod.PATCH,
-        _clinicItemPath(doctorKey, key),
+        _clinicItemPath(resolvedKey, key),
         params: data,
       );
 
@@ -167,6 +213,9 @@ class ClinicDataSourceRepoImpl extends ClinicDataSourceRepo {
     }
   }
 
+  /// ============================================================
+  /// ❌ DELETE
+  /// ============================================================
   @override
   Future<SuccessModel> deleteClinic(
     Map<String, dynamic> data,
@@ -174,13 +223,13 @@ class ClinicDataSourceRepoImpl extends ClinicDataSourceRepo {
     String key,
   ) async {
     try {
-      /// 🔥 Delete Local
+      final resolvedKey = _resolveDoctorKey(doctorKey);
+
       await _sqliteRepo.deleteItem(key);
 
-      /// 🔥 Delete API
       final response = await _clientSourceRepo.request(
         HttpMethod.DELETE,
-        _clinicItemPath(doctorKey, key),
+        _clinicItemPath(resolvedKey, key),
         params: data,
       );
 
@@ -191,6 +240,9 @@ class ClinicDataSourceRepoImpl extends ClinicDataSourceRepo {
     }
   }
 
+  /// ============================================================
+  /// ✏️ UPDATE
+  /// ============================================================
   @override
   Future<SuccessModel> updateClinic(
     Map<String, dynamic> data,
@@ -198,15 +250,15 @@ class ClinicDataSourceRepoImpl extends ClinicDataSourceRepo {
     String key,
   ) async {
     try {
+      final resolvedKey = _resolveDoctorKey(doctorKey);
+
       final clinic = ClinicModel.fromJson(data);
 
-      /// 🔥 Update Local
       await _sqliteRepo.updateItem(clinic);
 
-      /// 🔥 Update API
       final response = await _clientSourceRepo.request(
         HttpMethod.PATCH,
-        _clinicItemPath(doctorKey, key),
+        _clinicItemPath(resolvedKey, key),
         params: data,
       );
 

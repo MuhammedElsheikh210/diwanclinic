@@ -8,7 +8,7 @@ class WhatsAppReservationMessages {
   }) {
     final patient = reservation.patientName ?? "المريض";
     final phone = reservation.patientPhone ?? "";
-    final doctor = LocalUser().getUserData().doctorName ?? "العيادة";
+    final doctor = reservation.doctorName ?? "العيادة";
 
     switch (status) {
       case ReservationStatus.approved:
@@ -33,20 +33,17 @@ class WhatsAppReservationMessages {
   // ------------------------------------------------------------------
 
   static String _approved(
-      String patient,
-      String doctor,
-      ReservationModel r,
-      String phone,
-      ) {
-    final ahead = (r.order_reserved != null)
-        ? (r.order_reserved! - 1)
-        : null;
+    String patient,
+    String doctor,
+    ReservationModel r,
+    String phone,
+  ) {
+    final ahead = (r.order_reserved != null) ? (r.order_reserved! - 1) : null;
 
-    final queueText = ahead == null
-        ? "سيتم إعلامك بدورك قريبًا."
-        : (ahead == 0
-        ? "دورك الآن ✨"
-        : "قدامك $ahead حالات.");
+    final queueText =
+        ahead == null
+            ? "سيتم إعلامك بدورك قريبًا."
+            : (ahead == 0 ? "دورك الآن ✨" : "قدامك $ahead حالات.");
 
     return """
 👨‍⚕️ *عيادة د. $doctor*
@@ -69,11 +66,11 @@ iOS: ${Strings.url_ios}
   }
 
   static String _inProgress(
-      String patient,
-      String doctor,
-      ReservationModel r,
-      String phone,
-      ) {
+    String patient,
+    String doctor,
+    ReservationModel r,
+    String phone,
+  ) {
     return """
 ⏳ *جاري الكشف الآن*
 
@@ -91,11 +88,7 @@ iOS: ${Strings.url_ios}
 """;
   }
 
-  static String _completed(
-      String patient,
-      String doctor,
-      String phone,
-      ) {
+  static String _completed(String patient, String doctor, String phone) {
     return """
 ✅ *تم الانتهاء من الكشف*
 

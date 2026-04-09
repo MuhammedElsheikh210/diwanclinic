@@ -71,10 +71,13 @@ class _ClinicViewState extends State<ClinicView> {
                           ),
                           child: InkWell(
                             onTap: () {
+                              String key = widget.doctorKey ?? LocalUser().getUserData().uid ?? "";
+                              print("doctod uid is ${key}");
+
                               Get.to(
                                 () => ShiftView(
                                   clinic_key: clinic?.key ?? "",
-                                  doctor_key: widget.doctorKey ?? "",
+                                  doctor_key: key,
                                 ),
                                 binding: Binding(),
                               );

@@ -25,10 +25,9 @@ class WhatsAppStatusMessageService {
       if (rawPhone.isEmpty) return;
 
       final phone = _formatPhone(rawPhone);
-      print("phone is ${phone}");
 
       final patientName = reservation.patientName ?? "المريض";
-      final doctorName = LocalUser().getUserData().doctorName ?? "العيادة";
+      final doctorName = reservation.doctorName ?? "العيادة";
 
       const androidLink = Strings.url_android;
       const iosLink = Strings.url_ios;

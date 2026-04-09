@@ -10,19 +10,10 @@ class ReservationQueryManager {
   }) async {
     List<ReservationModel> result = [];
 
-    print("══════════════════════════════");
-    print("📥 Reservation Query Params:");
-    print("➡️ WHERE     : ${query.where}");
-    print("➡️ WHERE ARGS: ${query.whereArgs}");
-    print("➡️ ORDER BY  : ${query.orderBy}");
-    print("➡️ LIMIT     : ${query.limit}");
-    print("══════════════════════════════");
-
     await ReservationService().getReservationsData(
       query: query,
       voidCallBack: (list) {
         result = list.whereType<ReservationModel>().toList();
-        print("📦 Result Count: ${result.length}");
       },
     );
 
@@ -30,115 +21,100 @@ class ReservationQueryManager {
   }
 
   // ============================================================
-  // 🔹 Fetch Daily Reservations (Dynamic Filtering)
+  // 🔥 Unified Query
   // ============================================================
 
-  Future<List<ReservationModel>> fetchByDateAndClinic({
+  Future<List<ReservationModel>> getByFilters({
     required String? appointmentDate,
-    required ClinicModel? selectedClinic,
     required String? shiftKey,
+    ClinicModel? selectedClinic,
     String? medicalCenterKey,
   }) async {
-    if (appointmentDate == null || shiftKey == null) return [];
+    print("📅 appointmentDate: $appointmentDate");
+    print("⏰ shiftKey: $shiftKey");
+    print("🏥 clinicKey: ${selectedClinic?.key}");
+    print("🏢 medicalCenterKey: $medicalCenterKey");
 
+    if (appointmentDate == null || shiftKey == null) {
+      print("❌ Missing filters");
+      return [];
+    }
+
+    /// 🔥 1) شوف كل الداتا الأول (بدون فلترة)
+    final allData = await getReservations(
+      query: SQLiteQueryParams(
+        where: "1=1",
+      ),
+    );
+
+    print("📦 ALL DATA COUNT: ${allData.length}");
+
+    for (var r in allData.take(5)) {
+      print("👉 RAW ITEM:");
+      print("   date: ${r.appointmentDateTime}");
+      print("   shift: ${r.shiftKey}");
+      print("   clinic: ${r.clinicKey}");
+      print("----------------------");
+    }
+
+    /// 🔥 2) جرب فلترة بالـ shift بس
+    final shiftOnly = await getReservations(
+      query: SQLiteQueryParams(
+        where: "shift_key = ?",
+        whereArgs: [shiftKey],
+      ),
+    );
+
+    print("🧪 SHIFT ONLY COUNT: ${shiftOnly.length}");
+
+    /// 🔥 3) جرب فلترة بالـ date بس (LIKE)
+    final dateOnly = await getReservations(
+      query: SQLiteQueryParams(
+        where: "appointment_date_time LIKE ?",
+        whereArgs: ["%$appointmentDate%"],
+      ),
+    );
+
+    print("🧪 DATE ONLY COUNT: ${dateOnly.length}");
+
+    /// 🔥 4) الفلتر الحالي
     String where = "appointment_date_time = ? AND shift_key = ?";
     final whereArgs = <Object?>[appointmentDate, shiftKey];
 
-    // ✅ فلترة حسب العيادة لو موجودة
     if (selectedClinic?.key != null && selectedClinic!.key!.isNotEmpty) {
       where += " AND clinic_key = ?";
       whereArgs.add(selectedClinic.key);
     }
 
-    // ✅ فلترة حسب المركز الطبي لو موجود
     if (medicalCenterKey != null && medicalCenterKey.isNotEmpty) {
       where += " AND medical_center_key = ?";
       whereArgs.add(medicalCenterKey);
     }
 
-    return await getReservations(
+    print("🧠 FINAL QUERY:");
+    print("WHERE: $where");
+    print("ARGS: $whereArgs");
+
+    final result = await getReservations(
       query: SQLiteQueryParams(
         where: where,
         whereArgs: whereArgs,
         orderBy: "order_num ASC",
       ),
     );
+
+    print("✅ FINAL RESULT COUNT: ${result.length}");
+
+    return result;
   }
 
   // ============================================================
-  // 🔹 Total Reservations (Dynamic Filtering)
-  // ============================================================
-
-  Future<int> getTotalByDate({
-    required String? appointmentDate,
-    required String? shiftKey,
-    ClinicModel? selectedClinic,
-    String? medicalCenterKey,
-  }) async {
-    if (appointmentDate == null || shiftKey == null) return 0;
-    print("get total key");
-    String where = "appointment_date_time = ? AND shift_key = ?";
-    final whereArgs = <Object?>[appointmentDate, shiftKey];
-
-    if (selectedClinic?.key != null && selectedClinic!.key!.isNotEmpty) {
-      where += " AND clinic_key = ?";
-      whereArgs.add(selectedClinic.key);
-    }
-
-    if (medicalCenterKey != null && medicalCenterKey.isNotEmpty) {
-      where += " AND medical_center_key = ?";
-      whereArgs.add(medicalCenterKey);
-    }
-
-    final list = await getReservations(
-      query: SQLiteQueryParams(where: where, whereArgs: whereArgs),
-    );
-
-    return list.length;
-  }
-
-  // ============================================================
-  // 🔹 Completed Reservations For Report (Dynamic Filtering)
-  // ============================================================
-
-  Future<List<ReservationModel>> getCompletedReservationsForReport({
-    required String? appointmentDate,
-    required String? shiftKey,
-    ClinicModel? selectedClinic,
-    String? medicalCenterKey,
-  }) async {
-    if (appointmentDate == null || shiftKey == null) return [];
-
-    String where =
-        "appointment_date_time = ? AND shift_key = ? AND status = ?";
-    final whereArgs = <Object?>[
-      appointmentDate,
-      shiftKey,
-      ReservationStatus.completed.value,
-    ];
-
-    if (selectedClinic?.key != null && selectedClinic!.key!.isNotEmpty) {
-      where += " AND clinic_key = ?";
-      whereArgs.add(selectedClinic.key);
-    }
-
-    if (medicalCenterKey != null && medicalCenterKey.isNotEmpty) {
-      where += " AND medical_center_key = ?";
-      whereArgs.add(medicalCenterKey);
-    }
-
-    return await getReservations(
-      query: SQLiteQueryParams(where: where, whereArgs: whereArgs),
-    );
-  }
-
-  // ============================================================
-  // 🔹 Last Completed Reservation For Patient
+  // 🔹 Last Completed Reservation For Patient (نسيبها زي ما هي)
   // ============================================================
 
   Future<ReservationModel?> getLastCompletedForPatient(
-      String patientKey,
-      ) async {
+    String patientKey,
+  ) async {
     final list = await getReservations(
       query: SQLiteQueryParams(
         where: "patient_key = ? AND status = ?",
@@ -152,7 +128,7 @@ class ReservationQueryManager {
   }
 
   // ============================================================
-  // 🔹 Get Patient By Key
+  // 🔹 Get Patient By Key (دي مختلفة فسيبها)
   // ============================================================
 
   Future<LocalUser?> getPatientByKey(String patientKey) async {

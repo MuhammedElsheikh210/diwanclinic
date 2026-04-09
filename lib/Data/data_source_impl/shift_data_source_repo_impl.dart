@@ -5,34 +5,71 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
 
   ShiftDataSourceRepoImpl(this._clientSourceRepo);
 
-  /// 🔹 API Paths
-  String _shiftsPath(String? doctorKey) =>
-      "/${ApiConstatns.shifts}/$doctorKey/shifts.json";
+  /// ============================================================
+  /// 🔑 Resolve Doctor Key (FIX 🔥)
+  /// ============================================================
+  String _resolveDoctorKey(String? doctorKey) {
+    if (doctorKey != null && doctorKey.isNotEmpty) {
+      return doctorKey;
+    }
 
-  String _shiftItemPath(String? doctorKey, String key) =>
-      "/${ApiConstatns.shifts}/$doctorKey/shifts/$key.json";
+    final user = LocalUser().getUserData();
 
-  String _shiftsPatientPath(String? doctorKey) =>
-      "/${ApiConstatns.shiftsFromPatient}/$doctorKey/shifts.json";
+    final resolvedKey = user.userType?.name == "doctor"
+        ? user.uid
+        : user.doctorKey;
 
-  /// 🕒 Get shifts for doctor
+    print("👤 userType: ${user.userType?.name}");
+    print("🔑 user.key: ${user.key}");
+    print("🔑 user.doctorKey: ${user.doctorKey}");
+    print("🔑 FINAL doctorKey: $resolvedKey");
+
+    if (resolvedKey == null || resolvedKey.isEmpty) {
+      throw Exception("❌ doctorKey is NULL or EMPTY");
+    }
+
+    return resolvedKey;
+  }
+
+  /// ============================================================
+  /// 🌐 Paths
+  /// ============================================================
+  String _shiftsPath(String? doctorKey) {
+    final key = _resolveDoctorKey(doctorKey);
+    return "/${ApiConstatns.shifts}/$key/shifts.json";
+  }
+
+  String _shiftItemPath(String? doctorKey, String key) {
+    final resolvedKey = _resolveDoctorKey(doctorKey);
+    return "/${ApiConstatns.shifts}/$resolvedKey/shifts/$key.json";
+  }
+
+  String _shiftsPatientPath(String? doctorKey) {
+    final key = _resolveDoctorKey(doctorKey);
+    return "/${ApiConstatns.shiftsFromPatient}/$key/shifts.json";
+  }
+
+  /// ============================================================
+  /// 🕒 Get shifts (Doctor)
+  /// ============================================================
   @override
   Future<List<ShiftModel?>> getShifts(
       Map<String, dynamic> data,
       String? doctorKey,
       ) async {
     try {
-      if (doctorKey == null || doctorKey.isEmpty) {
-        return [];
-      }
+      final path = _shiftsPath(doctorKey);
+
+      print("🌍 SHIFTS API PATH: $path");
 
       final response = await _clientSourceRepo.request(
         HttpMethod.GET,
-        _shiftsPath(doctorKey),
+        path,
         params: data,
       );
 
       if (response == null || response.isEmpty) {
+        print("⚠️ No shifts found");
         return [];
       }
 
@@ -46,24 +83,27 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
     }
   }
 
-  /// 👨‍⚕️ Get shifts for patient
+  /// ============================================================
+  /// 👨‍⚕️ Get shifts (Patient)
+  /// ============================================================
   @override
   Future<List<ShiftModel?>> getShiftsFromPatient(
       Map<String, dynamic> data,
       String? doctorKey,
       ) async {
     try {
-      if (doctorKey == null || doctorKey.isEmpty) {
-        return [];
-      }
+      final path = _shiftsPatientPath(doctorKey);
+
+      print("🌍 SHIFTS PATIENT API PATH: $path");
 
       final response = await _clientSourceRepo.request(
         HttpMethod.GET,
-        _shiftsPatientPath(doctorKey),
+        path,
         params: data,
       );
 
       if (response == null || response.isEmpty) {
+        print("⚠️ No patient shifts found");
         return [];
       }
 
@@ -77,7 +117,9 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
     }
   }
 
-  /// ➕ Add shift
+  /// ============================================================
+  /// ➕ Add Shift
+  /// ============================================================
   @override
   Future<SuccessModel> addShift(
       Map<String, dynamic> data,
@@ -85,9 +127,13 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
       String? doctorKey,
       ) async {
     try {
+      final path = _shiftItemPath(doctorKey, key);
+
+      print("➕ ADD SHIFT PATH: $path");
+
       final response = await _clientSourceRepo.request(
         HttpMethod.PATCH,
-        _shiftItemPath(doctorKey, key),
+        path,
         params: data,
       );
 
@@ -98,7 +144,9 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
     }
   }
 
-  /// ❌ Delete shift
+  /// ============================================================
+  /// ❌ Delete Shift
+  /// ============================================================
   @override
   Future<SuccessModel> deleteShift(
       Map<String, dynamic> data,
@@ -106,20 +154,28 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
       String? doctorKey,
       ) async {
     try {
+      final path = _shiftItemPath(doctorKey, key);
+
+      print("❌ DELETE SHIFT PATH: $path");
+
       final response = await _clientSourceRepo.request(
         HttpMethod.DELETE,
-        _shiftItemPath(doctorKey, key),
+        path,
         params: data,
       );
 
-      return SuccessModel.fromJson(response ?? {"message": "تم الحذف بنجاح"});
+      return SuccessModel.fromJson(
+        response ?? {"message": "تم الحذف بنجاح"},
+      );
     } catch (e) {
       print("❌ deleteShift error: $e");
       return SuccessModel(message: "فشل حذف الفترة");
     }
   }
 
-  /// ✏️ Update shift
+  /// ============================================================
+  /// ✏️ Update Shift
+  /// ============================================================
   @override
   Future<SuccessModel> updateShift(
       Map<String, dynamic> data,
@@ -127,9 +183,13 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
       String? doctorKey,
       ) async {
     try {
+      final path = _shiftItemPath(doctorKey, key);
+
+      print("✏️ UPDATE SHIFT PATH: $path");
+
       final response = await _clientSourceRepo.request(
         HttpMethod.PATCH,
-        _shiftItemPath(doctorKey, key),
+        path,
         params: data,
       );
 

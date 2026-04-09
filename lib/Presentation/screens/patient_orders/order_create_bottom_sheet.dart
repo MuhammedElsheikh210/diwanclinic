@@ -1,4 +1,4 @@
-import 'package:diwanclinic/Global/Utils/whatsapp_status_message_service.dart';
+import 'package:diwanclinic/Presentation/parentControllers/whatsapp/whatsapp_status_message_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:diwanclinic/index/index_main.dart';

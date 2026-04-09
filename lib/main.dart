@@ -1,10 +1,5 @@
 import 'dart:developer';
 import 'package:package_info_plus/package_info_plus.dart';
-
-import 'index/index_main.dart';
-
-import 'dart:developer';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'index/index_main.dart';
 
 /// 🔔 MUST be top-level
@@ -22,8 +17,7 @@ void main() {
       // 🔥 Firebase
       await Firebase.initializeApp();
 
-      // 🔔 Background notifications
-      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
 
       // 🔹 Lock Orientation
       await SystemChrome.setPreferredOrientations([
@@ -41,6 +35,9 @@ void main() {
 
       // 🔔 Notification Core
       await NotificationService().initCore();
+
+      // 🔔 Background notifications
+      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
       final apns = await FirebaseMessaging.instance.getAPNSToken();
       log("APNS DIRECT CHECK: $apns");
@@ -103,6 +100,7 @@ class MyApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
+
       supportedLocales: const [Locale('en'), Locale('ar')],
 
       // 🌐 Language

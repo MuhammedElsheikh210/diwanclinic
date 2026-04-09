@@ -22,6 +22,7 @@ class _ShiftViewState extends State<ShiftView> {
     ShiftViewModel shiftViewModel = initController(() => ShiftViewModel());
     shiftViewModel.clinic_key = widget.clinic_key;
     shiftViewModel.doctor_key = widget.doctor_key;
+    print("doc key is ${widget.clinic_key}");
     shiftViewModel.getData();
     shiftViewModel.update();
     super.initState();
@@ -53,10 +54,12 @@ class _ShiftViewState extends State<ShiftView> {
                 Get.delete<CreateShiftViewModel>();
                 showCustomBottomSheet(
                   context: context,
-                  child: CreateShiftView(clinic_key: widget.clinic_key,doctor_key: widget.doctor_key,),
+                  child: CreateShiftView(
+                    clinic_key: widget.clinic_key,
+                    doctor_key: widget.doctor_key,
+                  ),
                 );
               },
-
 
               child: const Svgicon(icon: IconsConstants.fab_Button),
             ),

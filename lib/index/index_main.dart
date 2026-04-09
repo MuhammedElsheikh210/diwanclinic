@@ -15,7 +15,7 @@ export 'package:firebase_auth/firebase_auth.dart';
 export 'package:flutter_svg/svg.dart';
 export 'package:font_awesome_flutter/font_awesome_flutter.dart';
 export '../Presentation/design_systems/widgets/date_picker/date_filed.dart';
-export 'package:diwanclinic/Global/Utils/whatsapp_status_message_service.dart';
+export 'package:diwanclinic/Presentation/parentControllers/whatsapp/whatsapp_status_message_service.dart';
 
 // Entities
 export '../Domain/entity/transactions/transactions_entity.dart';

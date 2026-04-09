@@ -1,6 +1,3 @@
-import 'package:diwanclinic/Presentation/screens/doctors/create_update/doctor_create_update.dart';
-import 'package:diwanclinic/Presentation/screens/doctors/create_update/doctor_create_update_controller.dart';
-import 'package:diwanclinic/Presentation/screens/doctors/list/doctor_view_model.dart';
 import '../../../../../index/index_main.dart';
 
 class DoctorCard extends StatelessWidget {

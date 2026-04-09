@@ -11,6 +11,7 @@ class ReservationViewModel extends GetxController {
   bool hideShiftSelector = false;
   bool _isListening = false;
   bool _isProcessingStatus = false;
+  List<ReservationModel> _cachedReservations = [];
 
   final ReservationService _reservationService = ReservationService();
 
@@ -41,22 +42,9 @@ class ReservationViewModel extends GetxController {
 
   bool get isCenterMode => LocalUser().getUserData().medicalCenterKey != null;
 
-  // Computed Stats
-  int get completedCount =>
-      completeDayReservations
-          .where((r) => r?.status == ReservationStatus.completed.value)
-          .length;
-
-  int get waitingCount =>
-      completeDayReservations
-          .where(
-            (r) =>
-                r?.status == ReservationStatus.approved.value ||
-                r?.status == ReservationStatus.inProgress.value,
-          )
-          .length;
-
-  int get totalCount => completeDayReservations.length;
+  int totalCount = 0;
+  int completedCount = 0;
+  int waitingCount = 0;
 
   // Clinic + Shift
   List<ClinicModel?>? listClinic;
@@ -83,9 +71,31 @@ class ReservationViewModel extends GetxController {
     super.onInit();
     if (isCenterMode) {
       loadDoctorsOfCenter();
+    } else {
+      getClinicList();
     }
     _initManagers();
     _listenToGlobalReservationEvents();
+  }
+
+  void calculateStats() {
+    final list = completeDayReservations;
+
+    totalCount = list.length;
+
+    completedCount =
+        list
+            .where((r) => r?.status == ReservationStatus.completed.value)
+            .length;
+
+    waitingCount =
+        list
+            .where(
+              (r) =>
+                  r?.status == ReservationStatus.approved.value ||
+                  r?.status == ReservationStatus.inProgress.value,
+            )
+            .length;
   }
 
   Future<void> loadDoctorsOfCenter() async {
@@ -455,12 +465,16 @@ extension ReservationData on ReservationViewModel {
     final normalizedDate = AppDateFormatter.toDash(appointmentDate);
 
     try {
-      await Future.wait([
-        fetchDailyReservations(normalizedDate),
-        fetchFilteredReservations(normalizedDate),
-        loadDailyReport(normalizedDate),
-        getTotalTodayReservations(),
-      ]);
+      /// 🔥 الترتيب مهم جدًا
+      await fetchDailyReservations(normalizedDate);
+
+      calculateStats(); // 🔥 هنا الصح
+
+      await fetchFilteredReservations(normalizedDate);
+
+      await loadDailyReport(normalizedDate);
+
+      await getTotalTodayReservations();
 
       debugPrint("✅ All reservation queries finished");
 
@@ -469,17 +483,6 @@ extension ReservationData on ReservationViewModel {
       debugPrint("❌ getReservations ERROR: $e");
       debugPrintStack(stackTrace: stack);
     }
-  }
-
-  Future<void> fetchDailyReservations(String normalizedDate) async {
-    final daily = await queryManager.fetchByDateAndClinic(
-      appointmentDate: normalizedDate,
-      selectedClinic: selectedClinic,
-      shiftKey: selectedShift!.key,
-      medicalCenterKey: LocalUser().getUserData().medicalCenterKey,
-    );
-
-    completeDayReservations = daily;
   }
 
   Future<void> fetchFilteredReservations(String normalizedDate) async {
@@ -495,29 +498,40 @@ extension ReservationData on ReservationViewModel {
     listReservations = queueManager.buildFinalList(filtered);
   }
 
+  Future<void> fetchDailyReservations(String normalizedDate) async {
+    if (selectedShift == null) return;
+
+    final all = await queryManager.getByFilters(
+      appointmentDate: normalizedDate,
+      shiftKey: selectedShift!.key,
+      selectedClinic: selectedClinic,
+      medicalCenterKey: LocalUser().getUserData().medicalCenterKey,
+    );
+
+    _cachedReservations = all;
+
+    completeDayReservations = all;
+    print(
+      "completeDayReservations to get data is ${completeDayReservations.length}",
+    );
+    update();
+  }
+
   Future<void> loadDailyReport(String normalizedDate) async {
     if (selectedShift == null) return;
 
-    completedForReport = await queryManager.getCompletedReservationsForReport(
-      appointmentDate: normalizedDate,
-      shiftKey: selectedShift!.key,
-    );
+    completedForReport =
+        _cachedReservations
+            .where((e) => e.status == ReservationStatus.completed.value)
+            .toList();
   }
 
   Future<int> getTotalTodayReservations() async {
-    print("appointmentDate is ${appointmentDate}");
-    print("selectedShift is ${selectedShift}");
     if (appointmentDate == null || selectedShift == null) {
       return 0;
     }
 
-    final normalizedDate = AppDateFormatter.toDash(appointmentDate);
-    final total = await queryManager.getTotalByDate(
-      appointmentDate: normalizedDate,
-      shiftKey: selectedShift!.key,
-    );
-
-    return total;
+    return _cachedReservations.length;
   }
 
   Future<void> getLastReservationDateForPatient(LocalUser client) async {

@@ -81,8 +81,10 @@ class CreateAssistantViewModel extends GetxController {
         userType: UserType.assistant,
         isCompleteProfile: 1,
         name: nameController.text,
-      //  doctorKey:medicalCenterKey == null ? LocalUser().getUserData().uid : null,
-      //  doctorName: medicalCenterKey == null ? LocalUser().getUserData().name : null,
+        doctorKey:
+            medicalCenterKey == null ? LocalUser().getUserData().uid : null,
+        doctorName:
+            medicalCenterKey == null ? LocalUser().getUserData().name : null,
         clinicKey: selectedClinic?.key,
       );
 

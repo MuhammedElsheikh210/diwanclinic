@@ -16,7 +16,7 @@ class ConstantsData {
 
   static Future<String?> firebaseToken() async {
     String? token = await FirebaseMessaging.instance.getToken();
-    // print("token in fb is $token");
+    print("token in fb is $token");
     return token;
   }
 }
