@@ -17,7 +17,7 @@ abstract class DoctorReviewDataSourceRepo {
   Future<SuccessModel> addDoctorFromPatientReview(
     Map<String, dynamic> data,
     String key,
-      String doctor_key,
+    String doctor_key,
   );
 
   Future<SuccessModel> deleteDoctorReview(
