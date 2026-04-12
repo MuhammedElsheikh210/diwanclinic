@@ -1,7 +1,7 @@
 import '../../../../../index/index_main.dart';
 
 class AssistantCard extends StatelessWidget {
-  final LocalUser assistant;
+  final LocalUser? assistant;
   final AssistantViewModel controller;
 
   const AssistantCard({
@@ -26,7 +26,7 @@ class AssistantCard extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10.0),
               child: Text(
-                assistant.name ?? "",
+                assistant?.name ?? "",
                 style: context.typography.lgBold.copyWith(
                   color: AppColors.background_black,
                   fontSize: 16,

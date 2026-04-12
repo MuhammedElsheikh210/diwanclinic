@@ -59,7 +59,7 @@ class _AssistantViewState extends State<AssistantView> {
                           horizontal: 10.w,
                         ),
                         child: AssistantCard(
-                          assistant: assistant ?? LocalUser(),
+                          assistant: assistant,
                           controller: controller,
                         ),
                       );

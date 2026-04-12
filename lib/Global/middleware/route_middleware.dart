@@ -6,11 +6,11 @@ class RouteWelcomeMiddleWare extends GetMiddleware {
 
   @override
   RouteSettings? redirect(String? route) {
-    final user = LocalUser().getUserData();
+    final sessionUser = Get.find<UserSession>().user?.user;
     final forceUpdateModel = ForceUdpate().getForceUpdateData();
 
     print("Current route: $route");
-    print("User type: ${user.userType}");
+    print("User type: ${sessionUser?.userType}");
 
     // ---------------------------------------------------------
     // 1️⃣ FORCE UPDATE FIRST
@@ -37,7 +37,7 @@ class RouteWelcomeMiddleWare extends GetMiddleware {
     // ---------------------------------------------------------
     // 3️⃣ LOGIN CHECK
     // ---------------------------------------------------------
-    if (user.key == null || user.uid == null) {
+    if (sessionUser == null || sessionUser.uid == null) {
       if (route != loginView) {
         return const RouteSettings(name: loginView);
       }
@@ -47,17 +47,12 @@ class RouteWelcomeMiddleWare extends GetMiddleware {
     // ---------------------------------------------------------
     // 4️⃣ USER LOGGED IN → REDIRECT BASED ON TYPE
     // ---------------------------------------------------------
-    // final targetRoute =
-    //     (user.userType == UserType.patient ||
-    //         user.userType == UserType.pharmacy ||
-    //         user.userType == UserType.sales)
-    //     ? mainpage
-    //     : syncView;
+    final userType = sessionUser.userType;
 
     final targetRoute =
-        (user.userType == UserType.patient ||
-                user.userType == UserType.pharmacy ||
-                user.userType == UserType.sales)
+        (userType == UserType.patient ||
+                userType == UserType.pharmacy ||
+                userType == UserType.sales)
             ? mainpage
             : mainpage;
 

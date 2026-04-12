@@ -111,13 +111,13 @@ class AuthenticationService {
 
   Future<void> getClientsData({
     required SQLiteQueryParams query,
-    required Function(List<LocalUser?>) voidCallBack,
+    required Function(List<LocalUser>) voidCallBack,
   }) async {
     final result = await useCase.getClients(query);
 
     result.fold(
-      (l) => Loader.showError("حدث خطأ أثناء جلب العملاء"),
-      (r) => voidCallBack(r),
+          (l) => Loader.showError("حدث خطأ أثناء جلب العملاء"),
+          (r) => voidCallBack(r),
     );
   }
 

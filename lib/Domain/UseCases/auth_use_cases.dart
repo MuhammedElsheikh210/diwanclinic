@@ -40,9 +40,9 @@ class AuthenticationUseCases {
     return _repository.deleteClientDomain(key);
   }
 
-  Future<Either<AppError, List<LocalUser?>>> getClients(
-    SQLiteQueryParams query,
-  ) {
+  Future<Either<AppError, List<LocalUser>>> getClients(
+      SQLiteQueryParams query,
+      ) {
     return _repository.getClientsDomain(query);
   }
 
@@ -50,9 +50,9 @@ class AuthenticationUseCases {
   // 🌐 CLIENTS (ONLINE ONLY)
   // ============================================================
 
-  Future<Either<AppError, List<LocalUser?>>> getClientsOnline(
-    Map<String, dynamic> firebaseFilter,
-  ) {
+  Future<Either<AppError, List<LocalUser>>> getClientsOnline(
+      Map<String, dynamic> firebaseFilter,
+      ) {
     return _repository.getClientsOnlineDomain(firebaseFilter);
   }
 

@@ -1,52 +1,89 @@
-import 'package:diwanclinic/Data/Models/User_local/save_local_user.dart';
-import 'package:diwanclinic/Data/Models/User_local/user_types_enums.dart';
-
 import '../../../../../index/index_main.dart';
 
 class CreateAssistantViewModel extends GetxController {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
-  List<ClinicModel?>? list_clinics;
+
+  List<ClinicModel?>? listClinics;
   ClinicModel? selectedClinic;
-  bool is_update = false;
-  LocalUser? existingAssistant; // ✅ hold assistant being edited
+
+  bool isUpdate = false;
+  LocalUser? existingAssistant;
+
   final String? medicalCenterKey;
 
   CreateAssistantViewModel({this.medicalCenterKey});
 
+  // ============================================================
+  // 🧠 CURRENT USER
+  // ============================================================
+
+  BaseUser? get _user => Get.find<UserSession>().user?.user;
+
+  // ============================================================
+  // 🚀 INIT
+  // ============================================================
+
   @override
   void onInit() {
     super.onInit();
-    nameController.addListener(() => update());
-    phoneController.addListener(() => update());
+
+    nameController.addListener(update);
+    phoneController.addListener(update);
+
     getClinicsData();
   }
 
-  /// 🔹 Save assistant (either create or update)
+  // ============================================================
+  // 💾 SAVE
+  // ============================================================
+
   void saveAssistant() async {
     if (!validateStep()) {
       Loader.showError("يرجى إدخال جميع البيانات بشكل صحيح");
       return;
     }
 
-    if (is_update && existingAssistant != null) {
+    if (isUpdate && existingAssistant != null) {
       _updateAssistant(existingAssistant!);
     } else {
       await _createAssistantAccount();
     }
   }
 
-  /// 🔹 Update existing assistant in clients node only
+  // ============================================================
+  // ✏️ UPDATE
+  // ============================================================
+
   void _updateAssistant(LocalUser assistant) {
     Loader.show();
 
-    final updatedAssistant = assistant.copyWith(
+    final base = assistant.asAssistant;
+
+    if (base == null) return;
+
+    final updatedAssistantUser = AssistantUser(
+      uid: base.uid,
+      createdAt: base.createdAt,
+      userType: base.userType,
+      isProfileCompleted: base.isProfileCompleted,
+      fcmToken: base.fcmToken,
+      appVersion: base.appVersion,
+      email: base.email,
+      password: phoneController.text,
+
       name: nameController.text,
       phone: phoneController.text,
-      password: phoneController.text,
-      medicalCenterKey: medicalCenterKey,
+      address: base.address,
+      profileImage: base.profileImage,
+
       clinicKey: selectedClinic?.key,
+      doctorKey: base.doctorKey,
+      transferNumber: base.transferNumber,
+      isInstaPay: base.isInstaPay,
     );
+
+    final updatedAssistant = LocalUser(updatedAssistantUser);
 
     AuthenticationService().updateClientsData(
       userclient: updatedAssistant,
@@ -58,7 +95,10 @@ class CreateAssistantViewModel extends GetxController {
     );
   }
 
-  /// 🔹 Create Firebase Auth account for new assistant
+  // ============================================================
+  // ➕ CREATE ACCOUNT
+  // ============================================================
+
   Future<void> _createAssistantAccount() async {
     Loader.show();
 
@@ -69,32 +109,57 @@ class CreateAssistantViewModel extends GetxController {
       final userCred = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(email: email, password: password);
 
-      final uid = userCred.user?.uid ?? "";
+      final uid = userCred.user?.uid;
 
-      final userClient = LocalUser(
+      if (uid == null || uid.isEmpty) {
+        throw Exception("❌ UID creation failed");
+      }
+
+      final currentUser = _user;
+
+      String? doctorKey;
+      String? transferNumber;
+      bool isInstaPay = false;
+
+      if (currentUser is DoctorUser) {
+        doctorKey = currentUser.uid;
+      }
+
+      if (currentUser is AssistantUser) {
+        doctorKey = currentUser.doctorKey;
+      }
+
+      final assistantUser = AssistantUser(
         uid: uid,
-        key: const Uuid().v4(),
         phone: phoneController.text,
-        identifier: email,
-        password: password,
-        medicalCenterKey: medicalCenterKey,
-        userType: UserType.assistant,
-        isCompleteProfile: 1,
         name: nameController.text,
-        doctorKey:
-            medicalCenterKey == null ? LocalUser().getUserData().uid : null,
-        doctorName:
-            medicalCenterKey == null ? LocalUser().getUserData().name : null,
+        email: email,
+        password: password,
+        userType: UserType.assistant,
+        isProfileCompleted: true,
+
         clinicKey: selectedClinic?.key,
+        doctorKey: doctorKey,
+        transferNumber: transferNumber,
+        isInstaPay: isInstaPay,
       );
+
+      final userClient = LocalUser(assistantUser);
 
       _saveAssistantToClients(userClient);
     } on FirebaseAuthException catch (e) {
+      Loader.dismiss();
       Loader.showError("فشل إنشاء الحساب: ${e.message}");
+    } catch (e) {
+      Loader.dismiss();
+      Loader.showError("حدث خطأ: $e");
     }
   }
 
-  /// 🔹 Save new assistant in clients node
+  // ============================================================
+  // 💾 SAVE TO DB
+  // ============================================================
+
   void _saveAssistantToClients(LocalUser userClient) {
     AuthenticationService().addClientsData(
       userclient: userClient,
@@ -106,34 +171,55 @@ class CreateAssistantViewModel extends GetxController {
     );
   }
 
+  // ============================================================
+  // 🏥 GET CLINICS
+  // ============================================================
+
   void getClinicsData() {
-    String uid = LocalUser().getUserData().uid ?? "";
+    final user = _user;
+
+    String? doctorKey;
+
+    if (user is DoctorUser) {
+      doctorKey = user.uid;
+    } else if (user is AssistantUser) {
+      doctorKey = user.doctorKey;
+    }
+
+    if (doctorKey == null || doctorKey.isEmpty) {
+      debugPrint("❌ doctorKey missing → skip clinics");
+      return;
+    }
 
     ClinicService().getClinicsData(
       data: {},
-      doctorKey: LocalUser().getUserData().doctorKey ?? "",
-
+      doctorKey: doctorKey,
       filrebaseFilter: FirebaseFilter(),
       query: SQLiteQueryParams(
         is_filtered: true,
         where: "doctor_key = ?",
-        whereArgs: [uid],
+        whereArgs: [doctorKey],
       ),
       isFiltered: true,
       voidCallBack: (data) {
         Loader.dismiss();
-        list_clinics = data;
 
-        if (list_clinics != null &&
-            list_clinics!.isNotEmpty &&
+        listClinics = data;
+
+        if (listClinics != null &&
+            listClinics!.isNotEmpty &&
             selectedClinic == null) {
-          selectedClinic = list_clinics!.first;
+          selectedClinic = listClinics!.first;
         }
 
         update();
       },
     );
   }
+
+  // ============================================================
+  // 🔄 REFRESH
+  // ============================================================
 
   void refreshListView() {
     final assistantVM = initController(() => AssistantViewModel());
@@ -142,15 +228,22 @@ class CreateAssistantViewModel extends GetxController {
     Get.back();
   }
 
+  // ============================================================
+  // ✅ VALIDATION
+  // ============================================================
+
   bool validateStep() {
     return nameController.text.isNotEmpty && phoneController.text.isNotEmpty;
   }
+
+  // ============================================================
+  // 🛑 DISPOSE
+  // ============================================================
 
   @override
   void dispose() {
     nameController.dispose();
     phoneController.dispose();
-
     super.dispose();
   }
 }

@@ -5,9 +5,9 @@ abstract class AuthenticationRemoteDataSource {
   // 🔹 CRUD (SERVER)
   // ============================================================
 
-  Future<void> createClient(LocalUser model);
+  Future<void> createClient(Map<String, dynamic> model);
 
-  Future<void> updateClient(LocalUser model);
+  Future<void> updateClient(Map<String, dynamic> model);
 
   Future<void> deleteClient(String key);
 
@@ -17,7 +17,9 @@ abstract class AuthenticationRemoteDataSource {
 
   /// Fetch clients from Firebase using filters
   /// Used for: First load / cache rebuild / force refresh
-  Future<List<LocalUser>> fetchClients(Map<String, dynamic> filters);
+  Future<List<Map<String, dynamic>>> fetchClients(
+      Map<String, dynamic> filters,
+      );
 
   // ============================================================
   // 🎧 REALTIME CONTROL
@@ -31,9 +33,9 @@ abstract class AuthenticationRemoteDataSource {
   // 🔥 REALTIME STREAMS
   // ============================================================
 
-  Stream<LocalUser> get onAdded;
+  Stream<Map<String, dynamic>> get onAdded;
 
-  Stream<LocalUser> get onChanged;
+  Stream<Map<String, dynamic>> get onChanged;
 
   Stream<String> get onRemoved;
 }

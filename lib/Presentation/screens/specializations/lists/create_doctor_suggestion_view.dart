@@ -81,16 +81,19 @@ class _CreateDoctorSuggestionViewState
                     height: 55.h,
                     child: PrimaryTextButton(
                       onTap: () {
+                        final user = Get.find<UserSession>().user;
+
                         if (_formKey.currentState?.validate() ?? false) {
                           final model = DoctorSuggestionModel(
                             key: const Uuid().v4().toString(),
-                            patientkey: LocalUser().getUserData().uid,
+                            patientkey: user?.uid,
                             doctorName: doctorNameController.text.trim(),
-                            specializeName: specializationController.text
-                                .trim(),
-                            address: addressController.text.trim().isEmpty
-                                ? null
-                                : addressController.text.trim(),
+                            specializeName:
+                                specializationController.text.trim(),
+                            address:
+                                addressController.text.trim().isEmpty
+                                    ? null
+                                    : addressController.text.trim(),
                           );
 
                           _service.addDoctorSuggestionData(

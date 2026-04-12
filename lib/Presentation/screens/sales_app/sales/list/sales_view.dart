@@ -59,7 +59,7 @@ class _SalesViewState extends State<SalesView> {
                     horizontal: 10.w,
                   ),
                   child: SalesCard(
-                    sales: sales ?? LocalUser(),
+                    sales: sales,
                     controller: controller,
                   ),
                 );

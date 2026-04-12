@@ -13,17 +13,32 @@ class ApiConstatns {
   static const String Base_Url =
       "https://pos-app-c2ced-default-rtdb.firebaseio.com";
 
-  // ---------- Dynamic UID ----------
   static String? get uid {
-    final user = LocalUser().getUserData();
-    print("user.doctorKey_fromAdmin is ${user.toJson()}");
+    final sessionUser = Get.find<UserSession>().user?.user;
 
-    if (user.userType?.name == Strings.doctor) {
-      return user.uid;
-    } else {
-      print("doctor key is ${user.doctorKey}");
-      return user.doctorKey;
+    if (sessionUser == null) return null;
+
+    // ============================================================
+    // 👨‍⚕️ DOCTOR
+    // ============================================================
+
+    if (sessionUser is DoctorUser) {
+      return sessionUser.uid;
     }
+
+    // ============================================================
+    // 🧑‍⚕️ ASSISTANT
+    // ============================================================
+
+    if (sessionUser is AssistantUser) {
+      return sessionUser.doctorKey;
+    }
+
+    // ============================================================
+    // 👤 DEFAULT (patient / others)
+    // ============================================================
+
+    return sessionUser.uid;
   }
 
   // ---------- API Endpoints ----------

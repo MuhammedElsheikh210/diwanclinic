@@ -1,70 +1,74 @@
 // ignore_for_file: non_constant_identifier_names
 
+import 'dart:async';
 import 'package:dartz/dartz.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
-
-import '../../../../Domain/UseCases/Firebase_UseCases/FirebaseSignIn_USeCase.dart';
 import '../../../../index/index_main.dart';
-import '../../../screens/sync_assistant_medicines/sync_medicine_view.dart';
-import '../../../screens/sync_assistant_medicines/sync_medicine_view_model.dart';
 
 class LoginViewModel extends GetxController {
   final phone = ''.obs;
   final password = ''.obs;
-
   final isPhoneValid = false.obs;
   final isPasswordValid = false.obs;
   final showPassword = false.obs;
   final isLoading = false.obs;
 
   final phoneKeyLogin = GlobalKey<FormState>();
-
   final textEditingController = TextEditingController();
   final textEditingControllerPassword = TextEditingController();
+
+  final UserSession _session = Get.find();
+
+  StreamSubscription? _tokenSub;
 
   @override
   Future<void> onInit() async {
     super.onInit();
 
-    LocalUser().removeLocalUser();
-
-    /// 🔥 Debug current token
-    final currentToken = NotificationService().token;
-    debugPrint("🧪 INITIAL TOKEN => $currentToken");
-
-    /// 🔥 Listen for token refresh
-    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
-      debugPrint("🔥 NEW TOKEN => $newToken");
-
-      final user = LocalUser().getUserData();
-
-      if (user.uid != null) {
-        final updatedUser = user.copyWith(fcmToken: newToken);
-
-        await AuthenticationService().updateClientsData(
-          userclient: updatedUser,
-          voidCallBack: (_) {
-            debugPrint("✅ TOKEN UPDATED FROM LISTENER");
-          },
-        );
-
-        updatedUser.saveLocal();
-      }
-    });
+    _listenToTokenChanges();
   }
 
   @override
   void onClose() {
+    _tokenSub?.cancel();
     textEditingController.dispose();
     textEditingControllerPassword.dispose();
     super.onClose();
   }
 
-  // ─────────────────────────────
+  // ============================================================
+  // 🔔 TOKEN LISTENER (CLEAN)
+  // ============================================================
+
+  void _listenToTokenChanges() {
+    _tokenSub = FirebaseMessaging.instance.onTokenRefresh.listen((token) async {
+      await _updateFcmToken(token);
+    });
+  }
+
+  Future<void> _updateFcmToken(String? token) async {
+    if (token == null) return;
+
+    final user = _session.user;
+
+    if (user?.uid == null) return;
+
+    if (user!.user.fcmToken == token) return;
+
+    final updated = user.user.copyWith(fcmToken: token);
+
+    await AuthenticationService().updateClientsData(
+      userclient: LocalUser(updated),
+      voidCallBack: (_) {},
+    );
+
+    await _session.setUser(LocalUser(updated));
+  }
+
+  // ============================================================
   // VALIDATION
-  // ─────────────────────────────
+  // ============================================================
 
   void validatePhone(String value) {
     phone.value = value.trim();
@@ -80,9 +84,9 @@ class LoginViewModel extends GetxController {
     showPassword.toggle();
   }
 
-  // ─────────────────────────────
+  // ============================================================
   // LOGIN
-  // ─────────────────────────────
+  // ============================================================
 
   Future<void> loginData() async {
     if (isLoading.value) return;
@@ -108,137 +112,91 @@ class LoginViewModel extends GetxController {
         Loader.showError(error.messege);
       },
       (credential) async {
+        final uid = credential.user?.uid;
+
+        if (uid == null) {
+          Loader.showError("حدث خطأ أثناء تسجيل الدخول");
+          return;
+        }
+
         Loader.showSuccess("تم تسجيل الدخول بنجاح");
-        await getUserData(credential.user?.uid ?? "");
+        await getUserData(uid);
       },
     );
 
     isLoading.value = false;
   }
 
-  // ─────────────────────────────
-  // CREATE USER (FIXED)
-  // ─────────────────────────────
+  // ============================================================
+  // CREATE USER
+  // ============================================================
 
   Future<void> saveUserToFirebaseRealtime(String uid) async {
     final token = NotificationService().token;
 
-    debugPrint("🧪 TOKEN BEFORE CREATE => $token");
-
-    final userClient = LocalUser(
+    final baseUser = BaseUser(
       uid: uid,
-      key: uid,
       phone: phone.value,
-      identifier: "${phone.value}@link.com",
-      isCompleteProfile: 0,
+      email: "${phone.value}@link.com",
+      isProfileCompleted: false,
       fcmToken: token,
-
-      /// ✅ FIX هنا
       userType: UserType.admin,
-
       password: password.value,
     );
 
-    debugPrint("📦 USER CREATED => ${userClient.toJson()}");
+    final localUser = LocalUser(baseUser);
 
     await AuthenticationService().addClientsData(
-      userclient: userClient,
+      userclient: localUser,
       voidCallBack: (_) async {
-        debugPrint("✅ USER SAVED");
-
         Loader.dismiss();
 
-        await _finalizeLogin(userClient);
-        await _syncFcmTokenWithUser(userClient);
+        await _finalizeLogin(localUser);
+        await _updateFcmToken(token);
       },
     );
   }
 
-  // ─────────────────────────────
+  // ============================================================
   // GET USER
-  // ─────────────────────────────
+  // ============================================================
 
   Future<void> getUserData(String uid) async {
     await AuthenticationService().getClientsData(
-      query: SQLiteQueryParams(where: "token = ?", whereArgs: [uid], limit: 1),
+      query: SQLiteQueryParams(where: "uid = ?", whereArgs: [uid], limit: 1),
       voidCallBack: (users) async {
         Loader.dismiss();
 
-        if (users.isEmpty || users.first == null) {
-          debugPrint("❌ USER NOT FOUND → CREATE NEW");
+        if (users.isEmpty) {
           await saveUserToFirebaseRealtime(uid);
           return;
         }
 
-        final user = users.first!;
-
-        debugPrint("✅ USER FOUND => ${user.toJson()}");
+        final user = users.first;
 
         await _finalizeLogin(user);
-        await _syncFcmTokenWithUser(user);
+        await _updateFcmToken(NotificationService().token);
       },
     );
   }
 
-  // ─────────────────────────────
-  // SYNC TOKEN
-  // ─────────────────────────────
-
-  Future<void> _syncFcmTokenWithUser(LocalUser user) async {
-    final token = NotificationService().token;
-
-    debugPrint("🧪 SYNC TOKEN => $token");
-    debugPrint("🧪 USER TOKEN => ${user.fcmToken}");
-
-    if (token == null) {
-      debugPrint("❌ TOKEN NULL → SKIP");
-      return;
-    }
-
-    if (user.fcmToken == token) {
-      debugPrint("✅ TOKEN SAME → NO UPDATE");
-      return;
-    }
-
-    final updatedUser = user.copyWith(fcmToken: token);
-
-    debugPrint("📤 UPDATING TOKEN => $token");
-
-    await AuthenticationService().updateClientsData(
-      userclient: updatedUser,
-      voidCallBack: (_) {
-        debugPrint("✅ TOKEN UPDATED IN FIREBASE");
-      },
-    );
-
-    updatedUser.saveLocal();
-  }
-
-  // ─────────────────────────────
+  // ============================================================
   // FINALIZE LOGIN
-  // ─────────────────────────────
+  // ============================================================
 
   Future<void> _finalizeLogin(LocalUser user) async {
-    user.saveLocal();
-
-    await NotificationService().subscribeAfterLogin();
-
-    await _navigateByRole(user.userType);
+    await _session.setUser(user);
+    await _navigateByRole(user.user.userType);
   }
 
-  // ─────────────────────────────
+  // ============================================================
   // NAVIGATION
-  // ─────────────────────────────
+  // ============================================================
 
   Future<void> _navigateByRole(UserType? role) async {
     switch (role) {
-      case UserType.assistant:
-      case UserType.doctor:
-        Get.offAllNamed(mainpage);
-        break;
-
       case UserType.pharmacy:
-        await openAssistantApp();
+        await openPharmacyApp();
         break;
 
       default:
@@ -246,11 +204,11 @@ class LoginViewModel extends GetxController {
     }
   }
 
-  // ─────────────────────────────
+  // ============================================================
   // ASSISTANT FLOW
-  // ─────────────────────────────
+  // ============================================================
 
-  Future<void> openAssistantApp() async {
+  Future<void> openPharmacyApp() async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, 'medicines.db');
 

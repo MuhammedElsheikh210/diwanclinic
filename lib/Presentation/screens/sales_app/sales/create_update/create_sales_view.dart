@@ -22,7 +22,7 @@ class _CreateSalesViewState extends State<CreateSalesView> {
       // Populate fields if editing
       vm.nameController.text = widget.sales?.name ?? "";
       vm.phoneController.text = widget.sales?.phone ?? "";
-      vm.is_update = true;
+      vm.isUpdate = true;
       vm.existingSales = widget.sales;
       vm.update();
     }
@@ -45,7 +45,7 @@ class _CreateSalesViewState extends State<CreateSalesView> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    controller.is_update
+                    controller.isUpdate
                         ? "تحديث مندوب المبيعات"
                         : "إضافة مندوب مبيعات جديد",
                     style: context.typography.mdBold,
@@ -98,7 +98,7 @@ class _CreateSalesViewState extends State<CreateSalesView> {
               // ✅ Bottom Actions
               SafeArea(
                 child: BottomNavigationActions(
-                  rightTitle: controller.is_update
+                  rightTitle: controller.isUpdate
                       ? "تحديث المندوب"
                       : "إضافة المندوب",
                   rightAction: () {

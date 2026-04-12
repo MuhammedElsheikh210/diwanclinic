@@ -43,7 +43,6 @@ class ReservationDataSourceRepoImpl extends ReservationDataSourceRepo {
     final now = DateTime.now().millisecondsSinceEpoch;
 
     final newModel = model.copyWith(
-      syncStatus: SyncStatus.pendingCreate,
       updatedAt: now,
       serverUpdatedAt: 0,
       isDeleted: false,
@@ -57,10 +56,6 @@ class ReservationDataSourceRepoImpl extends ReservationDataSourceRepo {
     final now = DateTime.now().millisecondsSinceEpoch;
 
     final updated = model.copyWith(
-      syncStatus:
-          model.syncStatus == SyncStatus.pendingCreate
-              ? SyncStatus.pendingCreate
-              : SyncStatus.pendingUpdate,
       updatedAt: now,
     );
 
@@ -76,65 +71,14 @@ class ReservationDataSourceRepoImpl extends ReservationDataSourceRepo {
 
     final deleted = existing.copyWith(
       isDeleted: true,
-      syncStatus:
-          existing.syncStatus == SyncStatus.pendingCreate
-              ? SyncStatus.pendingCreate
-              : SyncStatus.pendingDelete,
       updatedAt: now,
     );
 
     await _sqliteRepo.updateItem(deleted);
   }
 
-  // ============================================================
-  // 🔹 SYNC ENGINE CONTROL
-  // ============================================================
 
-  @override
-  Future<void> upsertFromServer(ReservationModel serverModel) async {
-    if (serverModel.key == null) return;
 
-    final local = await _sqliteRepo.getItem(serverModel.key!);
-
-    final serverTime =
-        serverModel.serverUpdatedAt ?? DateTime.now().millisecondsSinceEpoch;
-
-    if (local == null) {
-      await _sqliteRepo.addItem(
-        serverModel.copyWith(
-          syncStatus: SyncStatus.synced,
-          serverUpdatedAt: serverTime,
-          updatedAt: serverTime,
-        ),
-      );
-      return;
-    }
-
-    if (serverTime >= (local.serverUpdatedAt ?? 0)) {
-      await _sqliteRepo.updateItem(
-        serverModel.copyWith(
-          syncStatus: SyncStatus.synced,
-          serverUpdatedAt: serverTime,
-          updatedAt: serverTime,
-        ),
-      );
-    }
-  }
-
-  @override
-  Future<void> markAsSynced(String key, {int? serverUpdatedAt}) async {
-    final local = await _sqliteRepo.getItem(key);
-    if (local == null) return;
-
-    final serverTime = serverUpdatedAt ?? DateTime.now().millisecondsSinceEpoch;
-
-    await _sqliteRepo.updateItem(
-      local.copyWith(
-        syncStatus: SyncStatus.synced,
-        serverUpdatedAt: serverTime,
-      ),
-    );
-  }
 
   @override
   Future<List<ReservationModel>> getPendingReservations() async {
@@ -148,9 +92,6 @@ class ReservationDataSourceRepoImpl extends ReservationDataSourceRepo {
     return list.whereType<ReservationModel>().toList();
   }
 
-  // ============================================================
-  // ⭐ PATIENT META (Remote Direct - Different Firebase Path)
-  // ============================================================
 
   @override
   Future<SuccessModel> addPatientReservationMeta(
@@ -189,10 +130,25 @@ class ReservationDataSourceRepoImpl extends ReservationDataSourceRepo {
 
   @override
   Future<List<ReservationModel>> getPatientReservationsMeta(
-    String patientKey,
-  ) async {
-    final uid = LocalUser().getUserData().uid ?? "";
+      String? patientKey,
+      ) async {
+    // ============================================================
+    // 🧠 RESOLVE UID
+    // ============================================================
+
+    final sessionUser = Get.find<UserSession>().user?.user;
+
+    final uid = patientKey ?? sessionUser?.uid;
+
+    if (uid == null || uid.isEmpty) {
+      throw Exception("❌ Patient UID is missing");
+    }
+
     final path = "patients/$uid/reservationsMeta";
+
+    // ============================================================
+    // 🌐 API CALL
+    // ============================================================
 
     final response = await _clientSourceRepo.request(
       HttpMethod.GET,
@@ -204,16 +160,66 @@ class ReservationDataSourceRepoImpl extends ReservationDataSourceRepo {
 
     final List<ReservationModel> result = [];
 
+    // ============================================================
+    // 🧩 PARSE RESPONSE
+    // ============================================================
+
     if (response is Map<String, dynamic>) {
       response.forEach((key, value) {
         if (value is Map<String, dynamic>) {
           final map = Map<String, dynamic>.from(value);
           map['key'] ??= key;
+
           result.add(ReservationModel.fromJson(map));
         }
       });
     }
 
     return result;
+  }
+
+
+
+  @override
+  Future<void> upsertFromServer(ReservationModel serverModel) async {
+    if (serverModel.key == null) return;
+
+    final local = await _sqliteRepo.getItem(serverModel.key!);
+
+    final serverTime =
+        serverModel.serverUpdatedAt ?? DateTime.now().millisecondsSinceEpoch;
+
+    if (local == null) {
+      await _sqliteRepo.addItem(
+        serverModel.copyWith(
+          serverUpdatedAt: serverTime,
+          updatedAt: serverTime,
+        ),
+      );
+      return;
+    }
+
+    if (serverTime >= (local.serverUpdatedAt ?? 0)) {
+      await _sqliteRepo.updateItem(
+        serverModel.copyWith(
+          serverUpdatedAt: serverTime,
+          updatedAt: serverTime,
+        ),
+      );
+    }
+  }
+
+  @override
+  Future<void> markAsSynced(String key, {int? serverUpdatedAt}) async {
+    final local = await _sqliteRepo.getItem(key);
+    if (local == null) return;
+
+    final serverTime = serverUpdatedAt ?? DateTime.now().millisecondsSinceEpoch;
+
+    await _sqliteRepo.updateItem(
+      local.copyWith(
+        serverUpdatedAt: serverTime,
+      ),
+    );
   }
 }

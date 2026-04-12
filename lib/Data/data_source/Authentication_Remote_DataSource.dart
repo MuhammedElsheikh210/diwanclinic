@@ -6,7 +6,7 @@ abstract class AuthenticationDataSourceRepo {
   // ============================================================
 
   /// Always read from SQLite (source of truth for UI)
-  Future<List<LocalUser?>> getClients(SQLiteQueryParams query);
+  Future<List<LocalUser>> getClients(SQLiteQueryParams query);
 
   /// Optimistic add (syncStatus = pendingCreate)
   Future<void> addClient(LocalUser model);

@@ -99,11 +99,10 @@ class ReservationPatientViewModel extends GetxController {
     legacyQueueCount = 0;
 
     await LegacyQueueService().getLegacyQueueByDateData(
-      // dd-MM-yyyy
       isPatient: true,
       firebaseFilter: FirebaseFilter(
         orderBy: "clinicShiftKey",
-        equalTo: "${LocalUser().getUserData().clinicKey}_${selectedShift?.key}",
+        equalTo: "${clinicKey}_${selectedShift?.key}",
       ),
       doctorUid: doctorUid,
       voidCallBack: (data) {
@@ -122,9 +121,10 @@ class ReservationPatientViewModel extends GetxController {
   }
 
   Future<void> syncMissingFcmTokenForMyReservations() async {
-    final user = LocalUser().getUserData();
-    final String? myUid = user.uid;
-    final String? myToken = user.fcmToken;
+    final user = Get.find<UserSession>().user;
+
+    final String? myUid = user?.uid;
+    final String? myToken = user?.fcmToken;
 
     if (myUid == null || myUid.isEmpty) {
       debugPrint("❌ [FCM SYNC] No user uid");
@@ -253,7 +253,8 @@ class ReservationPatientViewModel extends GetxController {
   }
 
   Future<List<ReservationModel?>> loadMyReservations() async {
-    final patientKey = LocalUser().getUserData().key ?? "";
+    final patientKey = Get.find<UserSession>().user?.uid ?? "";
+
     if (patientKey.isEmpty) return [];
 
     // Loader.show();
@@ -274,7 +275,7 @@ class ReservationPatientViewModel extends GetxController {
   }
 
   void getReservations() {
-    final patientKey = LocalUser().getUserData().key ?? "";
+    final patientKey = Get.find<UserSession>().user?.uid ?? "";
 
     ReservationService().getPatientReservationsMeta(
       patientKey: patientKey,

@@ -30,27 +30,55 @@ class OrderStatusService {
   // 🔔 PUSH + SAVE NOTIFICATION
   // ===========================================================================
   static Future<void> _sendPushAndSave(OrderModel order) async {
-    final token = order.pharmacyFcmToken ?? "";
-    final toKey = order.patientuid;
-    final userType = LocalUser().getUserData().userType?.name == "pharmacy";
+    // ============================================================
+    // 🧠 CURRENT USER
+    // ============================================================
 
-    if (token.isEmpty || toKey == null) return;
+    final user = Get.find<UserSession>().user?.user;
+
+    final isPharmacy = user?.userType == UserType.pharmacy;
+
+    // ============================================================
+    // 🎯 TARGET DATA
+    // ============================================================
+
+    final toKey = order.patientuid;
+    final pharmacyToken = order.pharmacyFcmToken;
+    final patientToken = order.fcmToken;
+
+    if (toKey == null) return;
+
+    final targetToken = isPharmacy ? patientToken : pharmacyToken;
+
+    if (targetToken == null || targetToken.isEmpty) return;
+
+    // ============================================================
+    // 🔔 SERVICES
+    // ============================================================
 
     final notificationService = NotificationManagerService();
     final parentService = NotificationPatentService();
 
+    // ============================================================
+    // 🚀 SEND PUSH
+    // ============================================================
+
     await notificationService.sendToToken(
-      token: userType ? order.fcmToken ?? "" : token,
+      token: targetToken,
       title: _notificationTitle(order.status),
       body: order.cancel_reason ?? _notificationBody(order),
       voidCallBack: (status) async {
         if (status != ResponseStatus.success) return;
 
+        // ============================================================
+        // 🧾 SAVE NOTIFICATION
+        // ============================================================
+
         final notification = NotificationModel.newNotification(
           title: _notificationTitle(order.status),
           body: _notificationBody(order),
           toKey: toKey,
-          userType: userType ? "pharmacy" : "patient",
+          userType: user?.userType,
           notificationType: order.status ?? "order_update",
           extraData: order.toJson(),
         );

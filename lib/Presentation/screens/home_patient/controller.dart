@@ -76,7 +76,7 @@ class HomePatientController extends GetxController {
   // 📥 FETCH ORDERS (REALTIME – same name)
   // ------------------------------------------------------------------
   Future<void> fetchOrders() async {
-    final patientKey = LocalUser().getUserData().key;
+    final patientKey = Get.find<UserSession>().user?.uid;
 
     if (patientKey == null || patientKey.isEmpty) return;
 

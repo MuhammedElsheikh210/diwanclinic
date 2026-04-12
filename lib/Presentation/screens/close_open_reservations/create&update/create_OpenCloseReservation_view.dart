@@ -3,50 +3,37 @@ import '../../../../index/index_main.dart';
 
 class CreateOpenclosereservationViewModel extends GetxController {
   final TextEditingController valueController = TextEditingController();
-
   bool isUpdate = false;
   LegacyQueueModel? existing;
-
   int? selectedTimestamp;
   String? formattedDate;
-
-  /// 👨‍⚕️ Doctors (Center Mode)
   List<LocalUser?>? centerDoctors;
   LocalUser? selectedDoctor;
   bool isLoadingDoctors = false;
-
-  bool get isCenterMode => LocalUser().getUserData().medicalCenterKey != null;
-
-  /// 🔒 اليوم مقفول؟
   bool isClosed = false;
-
-  /// ⏰ Shift
   List<GenericListModel>? shiftDropdownItems;
   GenericListModel? selectedShift;
   String? shiftKey;
-
   final LegacyQueueService service = LegacyQueueService();
 
-  // ------------------------------------------------------------
-  // 🔹 INIT
-  // ------------------------------------------------------------
+  BaseUser? get _user => Get.find<UserSession>().user?.user;
+
+  bool get isCenterMode =>
+      _user is AssistantUser && (_user as AssistantUser).clinicKey != null;
+
   void init(LegacyQueueModel? model, {String? incomingShiftKey}) {
     shiftKey = incomingShiftKey;
-
     if (model != null) {
       existing = model;
       isUpdate = true;
-
       valueController.text = model.value?.toString() ?? "0";
       isClosed = model.isClosed ?? false;
-
       try {
         final parsed = DateFormat("dd-MM-yyyy").parse(model.date ?? "");
         selectedTimestamp = parsed.millisecondsSinceEpoch;
         formattedDate = model.date;
       } catch (_) {}
     }
-
     if (isCenterMode) {
       loadDoctorsOfCenter();
     } else {
@@ -54,16 +41,12 @@ class CreateOpenclosereservationViewModel extends GetxController {
     }
   }
 
-  // ------------------------------------------------------------
-  // 👨‍⚕️ LOAD DOCTORS
-  // ------------------------------------------------------------
   Future<void> loadDoctorsOfCenter() async {
-    final centerKey = LocalUser().getUserData().medicalCenterKey;
+    final user = _user;
+    final centerKey = (user is AssistantUser) ? user.clinicKey : null;
     if (centerKey == null) return;
-
     isLoadingDoctors = true;
     update();
-
     AuthenticationService().getClientsData(
       query: SQLiteQueryParams(
         where: "medicalCenterKey = ? AND userType = ?",
@@ -71,34 +54,26 @@ class CreateOpenclosereservationViewModel extends GetxController {
       ),
       voidCallBack: (data) async {
         centerDoctors = data;
-
         if (data.isNotEmpty) {
           selectedDoctor = data.first;
-
           await loadShiftList();
         }
-
         isLoadingDoctors = false;
         update();
       },
     );
   }
 
-  // ------------------------------------------------------------
-  // 🔹 LOAD SHIFTS (FIXED)
-  // ------------------------------------------------------------
   Future<void> loadShiftList() async {
-    final clinicKey =
-        isCenterMode
-            ? selectedDoctor?.clinicKey ?? ""
-            : LocalUser().getUserData().clinicKey ?? "";
+    final user = Get.find<UserSession>().user?.user;
+    final clinicKey = user is AssistantUser ? user.clinicKey : null;
 
     final doctorKey =
         isCenterMode
-            ? selectedDoctor?.uid ?? ""
-            : LocalUser().getUserData().doctorKey ?? "";
+            ? selectedDoctor?.uid
+            : (user is AssistantUser ? user.doctorKey : user?.uid);
 
-    print("clinick key is ${clinicKey}");
+    if (clinicKey == null || doctorKey == null) return;
 
     ShiftService().getShiftsData(
       data:
@@ -119,13 +94,10 @@ class CreateOpenclosereservationViewModel extends GetxController {
           shiftDropdownItems = ShiftModelAdapterUtil.convertShiftListToGeneric(
             data,
           );
-
-          /// ✅ لو واحد بس
           if (shiftDropdownItems!.length == 1) {
             selectedShift = shiftDropdownItems!.first;
             shiftKey = selectedShift!.key;
           } else {
-            /// ✅ restore لو جاي من edit
             if (shiftKey != null) {
               try {
                 selectedShift = shiftDropdownItems!.firstWhere(
@@ -140,36 +112,26 @@ class CreateOpenclosereservationViewModel extends GetxController {
           shiftDropdownItems = [];
           selectedShift = null;
         }
-
         update();
       },
     );
   }
 
-  // ------------------------------------------------------------
-  // 🔹 CHANGE DOCTOR (FIXED)
-  // ------------------------------------------------------------
   Future<void> changeDoctor(LocalUser doctor) async {
     selectedDoctor = doctor;
-
-    /// reset
     selectedShift = null;
     shiftKey = null;
     shiftDropdownItems = [];
-
     update();
-
     await loadShiftList();
   }
 
-  // ------------------------------------------------------------
   void selectShift(GenericListModel shift) {
     selectedShift = shift;
     shiftKey = shift.key;
     update();
   }
 
-  // ------------------------------------------------------------
   void setDate(Timestamp timestamp) {
     final dateTime = timestamp.toDate();
     selectedTimestamp = dateTime.millisecondsSinceEpoch;
@@ -182,15 +144,26 @@ class CreateOpenclosereservationViewModel extends GetxController {
     update();
   }
 
-  // ------------------------------------------------------------
   void save() {
     if (formattedDate == null) {
       Loader.showError("يرجى اختيار التاريخ");
       return;
     }
-
     if (shiftKey == null || shiftKey!.isEmpty) {
       Loader.showError("يرجى اختيار الفترة");
+      return;
+    }
+
+    final user = Get.find<UserSession>().user?.user;
+    final clinicKey = user is AssistantUser ? user.clinicKey : null;
+
+    final doctorKey =
+        isCenterMode
+            ? selectedDoctor?.uid
+            : (user is AssistantUser ? user.doctorKey : user?.uid);
+
+    if (clinicKey == null || doctorKey == null) {
+      Loader.showError("❌ Missing data");
       return;
     }
 
@@ -199,16 +172,10 @@ class CreateOpenclosereservationViewModel extends GetxController {
       date: formattedDate,
       shiftName: selectedShift?.name,
       value: int.tryParse(valueController.text) ?? 0,
-      clinic_key:
-          isCenterMode
-              ? selectedDoctor?.clinicKey
-              : LocalUser().getUserData().clinicKey,
+      clinic_key: clinicKey,
       isClosed: isClosed,
       shiftKey: shiftKey,
-      doctorKey:
-          isCenterMode
-              ? selectedDoctor?.uid
-              : LocalUser().getUserData().doctorKey,
+      doctorKey: doctorKey,
     );
 
     Loader.show();
@@ -230,7 +197,6 @@ class CreateOpenclosereservationViewModel extends GetxController {
 
   void _handleResult(ResponseStatus status) {
     Loader.dismiss();
-
     if (status == ResponseStatus.success) {
       final vm = Get.find<OpenclosereservationViewModel>();
       vm.getData();

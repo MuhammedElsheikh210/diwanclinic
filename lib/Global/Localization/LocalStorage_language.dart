@@ -1,20 +1,35 @@
-
 import '../../index/index_main.dart';
 
-class LocalStorage_language {
-  void inset(String lan) {
-    StorageService().setData("lang", lan);
+class LocalStorageLanguage {
+  static const _key = "lang";
+
+  final StorageService _storage = StorageService();
+
+  // ============================================================
+  // 💾 SAVE
+  // ============================================================
+
+  Future<bool> save(String lang) {
+    return _storage.setData(_key, {"value": lang});
   }
 
-  void remove(String key) {
-    StorageService().remove(key);
-  }
+  // ============================================================
+  // 📖 READ
+  // ============================================================
 
   String read() {
-    if (StorageService().getData("lang") == null) {
-      return "en";
-    }
+    final data = _storage.getData(_key);
 
-    return StorageService().getData("lang");
+    if (data == null) return "en";
+
+    return data["value"] ?? "en";
+  }
+
+  // ============================================================
+  // ❌ CLEAR
+  // ============================================================
+
+  Future<void> clear() async {
+    await _storage.remove(_key);
   }
 }

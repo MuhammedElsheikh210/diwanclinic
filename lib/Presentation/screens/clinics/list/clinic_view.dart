@@ -71,8 +71,14 @@ class _ClinicViewState extends State<ClinicView> {
                           ),
                           child: InkWell(
                             onTap: () {
-                              String key = widget.doctorKey ?? LocalUser().getUserData().uid ?? "";
-                              print("doctod uid is ${key}");
+                              final user = Get.find<UserSession>().user?.user;
+                              final String key =
+                                  widget.doctorKey ??
+                                  (user is AssistantUser
+                                      ? user.doctorKey
+                                      : user?.uid) ??
+                                  (throw Exception("❌ doctorKey missing"));
+                              print("doctod uid is $key");
 
                               Get.to(
                                 () => ShiftView(

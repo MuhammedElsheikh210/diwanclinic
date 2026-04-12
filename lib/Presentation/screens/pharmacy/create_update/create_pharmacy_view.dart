@@ -21,7 +21,7 @@ class _CreatePharmacyViewState extends State<CreatePharmacyView> {
     if (widget.pharmacy != null) {
       vm.nameController.text = widget.pharmacy?.name ?? "";
       vm.phoneController.text = widget.pharmacy?.phone ?? "";
-      vm.is_update = true;
+      vm.isUpdate = true;
       vm.existingPharmacy = widget.pharmacy;
       vm.update();
     }
@@ -44,7 +44,7 @@ class _CreatePharmacyViewState extends State<CreatePharmacyView> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    controller.is_update
+                    controller.isUpdate
                         ? "تحديث الصيدلي"
                         : "إضافة صيدلي جديد",
                     style: context.typography.mdBold,
@@ -96,7 +96,7 @@ class _CreatePharmacyViewState extends State<CreatePharmacyView> {
               // ✅ Bottom Actions
               SafeArea(
                 child: BottomNavigationActions(
-                  rightTitle: controller.is_update
+                  rightTitle: controller.isUpdate
                       ? "تحديث الصيدلي"
                       : "إضافة الصيدلي",
                   rightAction: () {

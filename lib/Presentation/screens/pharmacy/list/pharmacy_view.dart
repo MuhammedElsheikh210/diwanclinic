@@ -59,7 +59,7 @@ class _PharmacyViewState extends State<PharmacyView> {
                           horizontal: 10.w,
                         ),
                         child: PharmacyCard(
-                          pharmacy: pharmacy ?? LocalUser(),
+                          pharmacy: pharmacy,
                           controller: controller,
                         ),
                       );

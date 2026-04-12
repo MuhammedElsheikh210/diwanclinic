@@ -22,13 +22,13 @@ class OrderController extends GetxController {
   void onInit() {
     super.onInit();
 
-    final user = LocalUser().getUserData();
-    final isDoctor = user.userType?.name == "doctor";
+    final user = Get.find<UserSession>().user;
+
+    final isDoctor = user?.name == "doctor";
 
     commissionRate = 0.05;
 
-    commissionLabel =
-    isDoctor ? "نسبة الدكتور (5٪)" : "نسبة المساعد (5٪)";
+    commissionLabel = isDoctor ? "نسبة الدكتور (5٪)" : "نسبة المساعد (5٪)";
   }
 
   // ------------------------------------------------------------------
@@ -39,16 +39,35 @@ class OrderController extends GetxController {
       isLoading = true;
       update();
 
-      final user = LocalUser().getUserData();
-      final userKey = user.doctorKey ?? "";
+      final currentUser = Get.find<UserSession>().user;
+
+      if (currentUser == null) {
+        debugPrint("❌ User not found in session");
+        return;
+      }
+
+      final baseUser = currentUser.user;
+
+      String? doctorKey;
+
+      // ✅ Doctor
+      if (baseUser is DoctorUser) {
+        doctorKey = baseUser.uid;
+      }
+      // ✅ Assistant
+      else if (baseUser is AssistantUser) {
+        doctorKey = baseUser.doctorKey;
+      }
+
+      doctorKey ??= "";
 
       const filterField = "doctor_key";
 
       await OrderService().getOrdersData(
-        data: {"orderBy": "\"$filterField\"", "equalTo": "\"$userKey\""},
+        data: {"orderBy": "\"$filterField\"", "equalTo": "\"$doctorKey\""},
         filrebaseFilter: FirebaseFilter(
           orderBy: filterField,
-          equalTo: userKey,
+          equalTo: doctorKey,
         ),
         voidCallBack: (data) {
           allOrders = data;
@@ -96,13 +115,14 @@ class OrderController extends GetxController {
 
     final now = DateTime.now();
 
-    final todayOrders = finishedOrders.where((o) {
-      if (o == null) return false;
-      final date = DateTime.fromMillisecondsSinceEpoch(o.createdAt ?? 0);
-      return date.day == now.day &&
-          date.month == now.month &&
-          date.year == now.year;
-    }).toList();
+    final todayOrders =
+        finishedOrders.where((o) {
+          if (o == null) return false;
+          final date = DateTime.fromMillisecondsSinceEpoch(o.createdAt ?? 0);
+          return date.day == now.day &&
+              date.month == now.month &&
+              date.year == now.year;
+        }).toList();
 
     if (todayOrders.length >= 3) {
       double total = 0;
@@ -157,18 +177,18 @@ class OrderController extends GetxController {
   // 💵 Profit per order (based on daily activation)
   // ------------------------------------------------------------------
   double getOrderProfit(OrderModel order) {
-    final date =
-    DateTime.fromMillisecondsSinceEpoch(order.createdAt ?? 0);
+    final date = DateTime.fromMillisecondsSinceEpoch(order.createdAt ?? 0);
 
-    final sameDayOrders = finishedOrders.where((o) {
-      if (o == null) return false;
+    final sameDayOrders =
+        finishedOrders.where((o) {
+          if (o == null) return false;
 
-      final d = DateTime.fromMillisecondsSinceEpoch(o.createdAt ?? 0);
+          final d = DateTime.fromMillisecondsSinceEpoch(o.createdAt ?? 0);
 
-      return d.day == date.day &&
-          d.month == date.month &&
-          d.year == date.year;
-    }).toList();
+          return d.day == date.day &&
+              d.month == date.month &&
+              d.year == date.year;
+        }).toList();
 
     // لو أقل من 3 في اليوم → صفر
     if (sameDayOrders.length < 3) return 0;

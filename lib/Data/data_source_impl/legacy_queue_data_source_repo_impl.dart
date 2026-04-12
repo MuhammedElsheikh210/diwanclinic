@@ -13,22 +13,45 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
     required String? doctorUid,
     required bool isOpenCloseFeature,
   }) {
-    final String uid;
+    String? uid;
+    final sessionUser = Get.find<UserSession>().user?.user;
 
     if (isPatient) {
       if (doctorUid == null || doctorUid.isEmpty) {
         throw Exception("doctorUid is required when isPatient = true");
       }
+
       uid = doctorUid;
-    } else {
-      print("doctorUid is ${doctorUid}");
-      uid =doctorUid ?? LocalUser().getUserData().doctorKey ?? "";
-      if (uid.isEmpty) {
-        throw Exception("Doctor key is missing");
+    }
+
+    // ============================================================
+    // 🧑‍⚕️ STAFF FLOW (Assistant / Doctor)
+    // ============================================================
+
+    else {
+      if (doctorUid != null && doctorUid.isNotEmpty) {
+        uid = doctorUid;
+      } else if (sessionUser is AssistantUser) {
+        uid = sessionUser.doctorKey;
+      } else if (sessionUser is DoctorUser) {
+        uid = sessionUser.uid;
       }
     }
 
-    final featureNode = isOpenCloseFeature ? "open_close_days" : "legacy_queue";
+    // ============================================================
+    // 🚨 SAFETY CHECK
+    // ============================================================
+
+    if (uid == null || uid.isEmpty) {
+      throw Exception("Doctor UID is missing");
+    }
+
+    // ============================================================
+    // 📁 PATH BUILD
+    // ============================================================
+
+    final featureNode =
+    isOpenCloseFeature ? "open_close_days" : "legacy_queue";
 
     return "doctors/$uid/$featureNode";
   }

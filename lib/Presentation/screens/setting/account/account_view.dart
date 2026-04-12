@@ -11,7 +11,7 @@ class AccountView extends StatelessWidget {
     return GetBuilder<AccountViewModel>(
       init: AccountViewModel(),
       builder: (controller) {
-        final userType = LocalUser().getUserData().userType?.name;
+        final userType = Get.find<UserSession>().user?.user.userType?.name;
 
         return Scaffold(
           backgroundColor: AppColors.background_neutral_100,
@@ -61,15 +61,17 @@ class AccountView extends StatelessWidget {
                           child: CircleAvatar(
                             radius: 36,
                             backgroundColor: Colors.white,
-                            backgroundImage: controller.doctorImage != null
-                                ? NetworkImage(controller.doctorImage!)
-                                : null,
-                            child: controller.doctorImage == null
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(20.r),
-                                    child: Image.asset(Images.splash),
-                                  )
-                                : null,
+                            backgroundImage:
+                                controller.doctorImage != null
+                                    ? NetworkImage(controller.doctorImage!)
+                                    : null,
+                            child:
+                                controller.doctorImage == null
+                                    ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(20.r),
+                                      child: Image.asset(Images.splash),
+                                    )
+                                    : null,
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -265,9 +267,8 @@ class AccountView extends StatelessWidget {
     required bool isEnabled,
     required VoidCallback onTap,
   }) {
-    final Color statusColor = isEnabled
-        ? Colors.green
-        : AppColors.errorForeground;
+    final Color statusColor =
+        isEnabled ? Colors.green : AppColors.errorForeground;
 
     final String statusText = isEnabled ? "مفعل" : "غير مفعل";
 

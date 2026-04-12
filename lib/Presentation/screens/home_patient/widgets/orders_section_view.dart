@@ -16,13 +16,15 @@ class OrdersSectionView extends StatelessWidget {
         lottiePath: Animations.empty,
         actionText: "إضافة طلب جديد",
         onAction: () {
-          // Build reservation with urls
+          final currentUser = Get.find<UserSession>().user;
+
           final reservation = ReservationModel(
-            patientKey: LocalUser().getUserData().key,
-            patientUid: LocalUser().getUserData().uid,
-            fcmToken_patient: LocalUser().getUserData().fcmToken,
-            patientPhone: LocalUser().getUserData().phone,
-            patientName: LocalUser().getUserData().name,
+            patientKey: currentUser?.user.uid,
+            // أو key حسب system عندك
+            patientUid: currentUser?.user.uid,
+            fcmToken_patient: currentUser?.user.fcmToken,
+            patientPhone: currentUser?.user.phone,
+            patientName: currentUser?.user.name,
           );
 
           Get.to(
@@ -65,21 +67,23 @@ class OrdersSectionView extends StatelessWidget {
                     order: order,
                     from_home: true,
 
-                    onConfirmOrder: () =>
-                        _showConfirmDialog(context, order, controller),
+                    onConfirmOrder:
+                        () => _showConfirmDialog(context, order, controller),
 
-                    onCancelOrder: () =>
-                        _showCancelDialog(context, order, controller),
+                    onCancelOrder:
+                        () => _showCancelDialog(context, order, controller),
 
-                    onOrderDetails: () =>
-                        Get.to(() => OrderDetailsScreen(order: order)),
+                    onOrderDetails:
+                        () => Get.to(() => OrderDetailsScreen(order: order)),
 
-                    onFollowTreatment: () =>
-                        Get.to(() => const TreatmentTrackingListScreen()),
+                    onFollowTreatment:
+                        () => Get.to(() => const TreatmentTrackingListScreen()),
 
-                    onPriceDetails: () => Get.to(
-                      () => PriceDetailsScreen(order: order, fromHome: true),
-                    ),
+                    onPriceDetails:
+                        () => Get.to(
+                          () =>
+                              PriceDetailsScreen(order: order, fromHome: true),
+                        ),
                   ),
                 ),
               );

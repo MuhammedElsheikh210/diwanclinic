@@ -48,9 +48,9 @@ class ReservationDoctorCard extends StatelessWidget {
   Widget _header(BuildContext context, ReservationStatus status) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.background_neutral_100,
-        borderRadius: const BorderRadius.only(
+        borderRadius: BorderRadius.only(
           topLeft: Radius.circular(16),
           topRight: Radius.circular(16),
         ),
@@ -354,7 +354,7 @@ class ReservationDoctorCard extends StatelessWidget {
         //  const formatted = "01551061194";
 
           final patient = reservation.patientName ?? "المريض";
-          final doctor = LocalUser().getUserData().name ?? "العيادة";
+          final doctor = reservation.doctorName ?? "العيادة";
           const android = Strings.url_android;
           const ios = Strings.url_ios;
 

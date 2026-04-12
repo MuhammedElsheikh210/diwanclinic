@@ -139,7 +139,7 @@ class NotificationService {
   // 🔔 SUBSCRIBE SAFE
   // ─────────────────────────────────────────────
   Future<void> subscribeAfterLogin() async {
-    final role = LocalUser().getUserData().userType?.name;
+    final role = Get.find<UserSession>().user?.user.userType;
     if (role == null) return;
 
     final topic = "role_$role";

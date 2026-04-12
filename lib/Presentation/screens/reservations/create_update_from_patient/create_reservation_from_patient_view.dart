@@ -1,5 +1,4 @@
 import 'package:diwanclinic/Presentation/screens/patients/search/patient_search_view.dart';
-import 'package:diwanclinic/Presentation/screens/reservations/create_update_from_patient/create_reservation_from_patient_view_model.dart';
 import '../../../../index/index_main.dart';
 
 class CreateReservationFromPatientView extends StatefulWidget {
@@ -196,8 +195,7 @@ class _CreateReservationFromPatientViewState
                                   if (patientModel != null) {
                                     controller.patientPhoneController.text =
                                         patientModel.phone ?? "";
-                                    controller.patientCodeController.text =
-                                        patientModel.code ?? "";
+
 
                                   }
                                   controller.update();
@@ -223,8 +221,6 @@ class _CreateReservationFromPatientViewState
                                   if (patientModel != null) {
                                     controller.patientNameController.text =
                                         patientModel.name ?? "";
-                                    controller.patientCodeController.text =
-                                        patientModel.code ?? "";
 
                                   }
                                   controller.update();

@@ -1,36 +1,41 @@
-// ignore_for_file: unnecessary_null_comparison, unrelated_type_equality_checks
-
-
-
 import '../../index/index_main.dart';
 
 class AppLanguage extends GetxController {
-  var appLocale = 'ar';
+  final LocalStorageLanguage _storage = LocalStorageLanguage();
+
+  // ============================================================
+  // 🌍 STATE
+  // ============================================================
+
+  final appLocale = 'ar'.obs;
+
+  // ============================================================
+  // 🚀 INIT
+  // ============================================================
 
   @override
-  void onInit() async {
-    // TODO: implement onInit
+  void onInit() {
     super.onInit();
-    LocalStorage_language localStorage = LocalStorage_language();
-    appLocale = localStorage.read();
-    Get.updateLocale(Locale(appLocale));
-    update();
+
+    final savedLang = _storage.read();
+
+    appLocale.value = savedLang;
+    Get.updateLocale(Locale(savedLang));
   }
 
-  void changeLanguage(String type) async {
-    LocalStorage_language localStorage = LocalStorage_language();
+  // ============================================================
+  // 🔄 CHANGE LANGUAGE
+  // ============================================================
 
-    if (localStorage.read() == type) {
-      return;
-    }
-    if (type == "ar") {
-      localStorage.inset("ar");
-      appLocale = "ar";
-    } else {
-      localStorage.inset("en");
-      appLocale = "en";
-    }
-    print(" app local is $appLocale");
-    Get.updateLocale(Locale(appLocale));
+  Future<void> changeLanguage(String lang) async {
+    if (appLocale.value == lang) return;
+
+    await _storage.save(lang);
+
+    appLocale.value = lang;
+
+    Get.updateLocale(Locale(lang));
+
+    debugPrint("🌍 App language changed to: $lang");
   }
 }

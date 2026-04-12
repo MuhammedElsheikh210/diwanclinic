@@ -1,5 +1,3 @@
-import 'package:diwanclinic/Presentation/screens/order_medicine_view/order_medicine_view.dart';
-
 import '../../../../index/index_main.dart';
 
 class PatientHomeView extends StatefulWidget {
@@ -30,102 +28,98 @@ class _PatientHomeViewState extends State<PatientHomeView> {
               onRefresh: controller.refreshAll,
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                child: controller.isLoading
-                    ? SizedBox(
-                        height: ScreenUtil().screenHeight * 0.5.h,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          padding: EdgeInsets.only(left: 10, right: 10.h),
-                          itemBuilder: (_, __) => SizedBox(
-                            width: ScreenUtil().screenWidth - 50.w,
-                            child: const ReservationCardSkeletonShimmer(),
+                child:
+                    controller.isLoading
+                        ? SizedBox(
+                          height: ScreenUtil().screenHeight * 0.5.h,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            padding: EdgeInsets.only(left: 10, right: 10.h),
+                            itemBuilder:
+                                (_, __) => SizedBox(
+                                  width: ScreenUtil().screenWidth - 50.w,
+                                  child: const ReservationCardSkeletonShimmer(),
+                                ),
+                            separatorBuilder: (_, __) => SizedBox(width: 14.w),
+                            itemCount: 3, // number of shimmer cards
                           ),
-                          separatorBuilder: (_, __) => SizedBox(width: 14.w),
-                          itemCount: 3, // number of shimmer cards
+                        )
+                        : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.only(
+                                left: 16.w,
+                                right: 16.w,
+                                bottom: 12.h,
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: HomeFeatureTile(
+                                      title: "احجز كشف",
+                                      subtitle:
+                                          "تابع دورك لحظة بلحظة واستقبل التحديثات فورًا",
+                                      icon: Icons.calendar_month,
+                                      color: AppColors.primary,
+                                      onTap: () {
+                                        Get.to(
+                                          () => const SpecializationView(),
+                                        );
+                                      },
+                                    ),
+                                  ),
+
+                                  SizedBox(height: 12.h),
+
+                                  Expanded(
+                                    child: HomeFeatureTile(
+                                      title: "اطلب علاج بخصم",
+                                      subtitle:
+                                          "خصم يصل إلى 10٪ وتوصيل العلاج لحد باب البيت",
+                                      icon: Icons.medical_services,
+                                      color: AppColors.successForeground,
+                                      onTap: () {
+                                        final user =
+                                            Get.find<UserSession>().user;
+
+                                        final reservation = ReservationModel(
+                                          patientKey: user?.uid,
+                                          patientUid: user?.uid,
+                                          fcmToken_patient: user?.fcmToken,
+                                          patientPhone: user?.phone,
+                                          patientName: user?.name,
+                                        );
+
+                                        Get.to(
+                                          () => OrderMedicineScreen(
+                                            reservation: reservation,
+                                            onConfirmed: (ReservationModel p1) {
+                                              Get.off(
+                                                () => const OrderSuccessView(),
+                                              );
+                                            },
+                                          ),
+                                          binding: Binding(),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: 10.h),
+
+                            ReservationSectionView(controller: controller),
+                            SizedBox(height: 24.h),
+
+                            OrdersSectionView(controller: controller),
+                            SizedBox(height: 24.h),
+
+                            SpecializationSectionView(controller: controller),
+                            SizedBox(height: 40.h),
+                          ],
                         ),
-                      )
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.only(
-                              left: 16.w,
-                              right: 16.w,
-                              bottom: 12.h,
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: HomeFeatureTile(
-                                    title: "احجز كشف",
-                                    subtitle:
-                                        "تابع دورك لحظة بلحظة واستقبل التحديثات فورًا",
-                                    icon: Icons.calendar_month,
-                                    color: AppColors.primary,
-                                    onTap: () {
-                                      Get.to(() => const SpecializationView());
-                                    },
-                                  ),
-                                ),
-
-                                SizedBox(height: 12.h),
-
-                                Expanded(
-                                  child: HomeFeatureTile(
-                                    title: "اطلب علاج بخصم",
-                                    subtitle:
-                                        "خصم يصل إلى 10٪ وتوصيل العلاج لحد باب البيت",
-                                    icon: Icons.medical_services,
-                                    color: AppColors.successForeground,
-                                    onTap: () {
-                                      // Build reservation with urls
-                                      final reservation = ReservationModel(
-                                        patientKey: LocalUser()
-                                            .getUserData()
-                                            .key,
-                                        patientUid: LocalUser()
-                                            .getUserData()
-                                            .uid,
-                                        fcmToken_patient: LocalUser()
-                                            .getUserData()
-                                            .fcmToken,
-                                        patientPhone: LocalUser()
-                                            .getUserData()
-                                            .phone,
-                                        patientName: LocalUser()
-                                            .getUserData()
-                                            .name,
-                                      );
-
-                                      Get.to(
-                                        () => OrderMedicineScreen(
-                                          reservation: reservation,
-                                          onConfirmed: (ReservationModel p1) {
-                                            Get.off(
-                                              () => const OrderSuccessView(),
-                                            );
-                                          },
-                                        ),
-                                        binding: Binding(),
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: 10.h),
-
-                          ReservationSectionView(controller: controller),
-                          SizedBox(height: 24.h),
-
-                          OrdersSectionView(controller: controller),
-                          SizedBox(height: 24.h),
-
-                          SpecializationSectionView(controller: controller),
-                          SizedBox(height: 40.h),
-                        ],
-                      ),
               ),
             ),
           ),

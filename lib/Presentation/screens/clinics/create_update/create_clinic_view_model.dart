@@ -11,6 +11,7 @@ class CreateClinicViewModel extends GetxController {
   final TextEditingController appointmentsController = TextEditingController();
   final TextEditingController urgentPolicyController = TextEditingController();
   String? doctorKey;
+
   // 🔹 Consultation Prices
   final TextEditingController consultationPriceController =
       TextEditingController();
@@ -65,14 +66,15 @@ class CreateClinicViewModel extends GetxController {
           whatsappNum: whatsappController.text,
           urgentPolicy: int.tryParse(urgentPolicyController.text),
           appointments: appointmentsController.text,
-          doctorKey: doctorKey ?? LocalUser().getUserData().uid,
+          doctorKey: doctorKey ?? Get.find<UserSession>().user?.user.uid,
           consultationPrice: consultationPriceController.text,
           followUpPrice: followUpPriceController.text,
           urgentConsultationPrice: urgentConsultationPriceController.text,
           reserveWithDeposit: reserveWithDeposit,
-          minimumDepositPercent: reserveWithDeposit == 1
-              ? double.tryParse(depositPercentController.text) ?? 0
-              : null,
+          minimumDepositPercent:
+              reserveWithDeposit == 1
+                  ? double.tryParse(depositPercentController.text) ?? 0
+                  : null,
           daillyWork: dailyWorksController.text, // ✅ new field
         ) ??
         ClinicModel(
@@ -86,14 +88,15 @@ class CreateClinicViewModel extends GetxController {
           whatsappNum: whatsappController.text,
           appointments: appointmentsController.text,
           urgentPolicy: int.tryParse(urgentPolicyController.text),
-          doctorKey: doctorKey ?? LocalUser().getUserData().uid,
+          doctorKey: doctorKey ?? Get.find<UserSession>().user?.user.uid,
           consultationPrice: consultationPriceController.text,
           followUpPrice: followUpPriceController.text,
           urgentConsultationPrice: urgentConsultationPriceController.text,
           reserveWithDeposit: reserveWithDeposit,
-          minimumDepositPercent: reserveWithDeposit == 1
-              ? double.tryParse(depositPercentController.text) ?? 0
-              : null,
+          minimumDepositPercent:
+              reserveWithDeposit == 1
+                  ? double.tryParse(depositPercentController.text) ?? 0
+                  : null,
           dailyWorks: dailyWorksController.text, // ✅ new field
         );
 
@@ -135,9 +138,10 @@ class CreateClinicViewModel extends GetxController {
         addressController.text.isNotEmpty &&
         consultationPriceController.text.isNotEmpty &&
         followUpPriceController.text.isNotEmpty;
-    final depositValid = reserveWithDeposit == 1
-        ? depositPercentController.text.isNotEmpty
-        : true;
+    final depositValid =
+        reserveWithDeposit == 1
+            ? depositPercentController.text.isNotEmpty
+            : true;
 
     return requiredFilled && depositValid;
   }

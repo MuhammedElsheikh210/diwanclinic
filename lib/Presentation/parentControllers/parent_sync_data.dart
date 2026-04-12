@@ -1,4 +1,3 @@
-import 'package:diwanclinic/Data/Models/User_local/save_local_user.dart';
 import 'package:intl/intl.dart';
 import '../../index/index_main.dart';
 
@@ -7,7 +6,7 @@ class ParentSyncService extends GetxController {
   final CategoryService categoryService = CategoryService();
   final SyncService syncService = SyncService();
 
-  // 🆕 New Services
+  // 🆕 Services
   final ClinicService clinicService = ClinicService();
   final DoctorService doctorService = DoctorService();
   final AssistantService assistantService = AssistantService();
@@ -17,77 +16,101 @@ class ParentSyncService extends GetxController {
   final TransferService transferService = TransferService();
   final ShiftService shiftService = ShiftService();
 
-  String get uid => LocalUser().getUserData().uid ?? "";
+  // ============================================================
+  // 🧠 CURRENT USER
+  // ============================================================
 
-  String? get userType => LocalUser().getUserData().userType?.name;
+  BaseUser? get _user => Get.find<UserSession>().user?.user;
+
+  UserType? get _userType => _user?.userType;
+
+  String? get _uid => _user?.uid;
+
+  // ============================================================
+  // 📊 PROGRESS
+  // ============================================================
 
   RxDouble progress = 0.0.obs;
+
+  // ============================================================
+  // 🚀 MAIN SYNC
+  // ============================================================
 
   Future<void> syncAllData({
     required Function(ResponseStatus) voidCallBack,
   }) async {
     try {
-      final int totalSteps = (userType == Strings.assistant)
-          ? 4 // 🆕 +1 step (reservations_order)
-          : (userType == Strings.doctor)
-          ? 4 // clients + clinics + reservations + orders
+      final user = _user;
+
+      if (user == null) {
+        throw Exception("❌ No logged in user");
+      }
+
+      final isDoctor = user.userType == UserType.doctor;
+      final isAssistant = user.userType == UserType.assistant;
+
+      final int totalSteps = isDoctor
+          ? 4
+          : isAssistant
+          ? 4
           : 2;
 
-      double incrementValue = 1 / totalSteps;
+      final double incrementValue = 1 / totalSteps;
 
-      // ===========================================
-      // DOCTOR SYNC
-      // ===========================================
-      if (userType == Strings.doctor) {
-        final user = LocalUser().getUserData();
-        final String? doctorKey = user.uid;
+      final today = DateFormat('dd/MM/yyyy').format(DateTime.now());
 
-        if (doctorKey == null) {
-          print("Doctor UID is null");
-          return;
+      // ============================================================
+      // 👨‍⚕️ DOCTOR SYNC
+      // ============================================================
+
+      if (isDoctor) {
+        final doctorKey = user.uid;
+
+        if (doctorKey == null || doctorKey.isEmpty) {
+          throw Exception("❌ Doctor UID is missing");
         }
 
-        final today = DateFormat('dd/MM/yyyy').format(DateTime.now());
-
-
-
-
-
-        // 🔥 STEP 4) Clients
+        // 🔥 STEP: CLIENTS
         await clientService.getClientsData(
           query: SQLiteQueryParams(
             is_filtered: true,
             where: "doctor_key = ?",
             whereArgs: [doctorKey],
           ),
-          voidCallBack: (_) async {
+          voidCallBack: (_) {
             progress.value += incrementValue;
           },
         );
       }
-      // ===========================================
-      // ASSISTANT SYNC
-      // ===========================================
-      else if (userType == Strings.assistant) {
-        final user = LocalUser().getUserData();
-        final String? clinicKey = user.clinicKey;
-        final String? doctorKey = user.doctorKey;
 
-        if (clinicKey == null || doctorKey == null) return;
+      // ============================================================
+      // 🧑‍⚕️ ASSISTANT SYNC
+      // ============================================================
 
-        final today = DateFormat('dd/MM/yyyy').format(DateTime.now());
+      else if (isAssistant) {
+        if (user is! AssistantUser) {
+          throw Exception("❌ Invalid assistant model");
+        }
 
+        final clinicKey = user.clinicKey;
+        final doctorKey = user.doctorKey;
 
+        if (clinicKey == null || doctorKey == null) {
+          throw Exception("❌ Missing clinicKey or doctorKey");
+        }
 
-
-        // 🔥 STEP 4) CLIENTS
+        // 🔥 STEP: CLIENTS
         await clientService.getClientsData(
           query: SQLiteQueryParams(is_filtered: false),
-          voidCallBack: (_) async {
+          voidCallBack: (_) {
             progress.value += incrementValue;
           },
         );
       }
+
+      // ============================================================
+      // ✅ DONE
+      // ============================================================
 
       voidCallBack(ResponseStatus.success);
     } catch (e) {

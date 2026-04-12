@@ -1,13 +1,10 @@
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../../index/index_main.dart';
 
 class StorageService {
   static final StorageService _instance = StorageService._internal();
   late SharedPreferences _preferences;
 
-  factory StorageService() {
-    return _instance;
-  }
+  factory StorageService() => _instance;
 
   StorageService._internal();
 
@@ -15,9 +12,13 @@ class StorageService {
     _preferences = await SharedPreferences.getInstance();
   }
 
-  Future<bool> setData<T>(String key, T data) async {
+  // ============================================================
+  // SAVE
+  // ============================================================
+
+  Future<bool> setData(String key, Map<String, dynamic> data) async {
     try {
-      String jsonData = json.encode(data);
+      final jsonData = json.encode(data);
       return await _preferences.setString(key, jsonData);
     } catch (e) {
       print('Error setting data: $e');
@@ -25,17 +26,25 @@ class StorageService {
     }
   }
 
-  T? getData<T>(String key) {
+  // ============================================================
+  // GET
+  // ============================================================
+
+  Map<String, dynamic>? getData(String key) {
     try {
-      String? jsonData = _preferences.getString(key);
+      final jsonData = _preferences.getString(key);
       if (jsonData != null) {
-        return json.decode(jsonData) as T;
+        return json.decode(jsonData) as Map<String, dynamic>;
       }
     } catch (e) {
       print('Error getting data: $e');
     }
     return null;
   }
+
+  // ============================================================
+  // REMOVE
+  // ============================================================
 
   Future<bool> remove(String key) async {
     return await _preferences.remove(key);

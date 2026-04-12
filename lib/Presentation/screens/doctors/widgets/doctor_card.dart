@@ -12,10 +12,8 @@ class DoctorCard extends StatelessWidget {
     this.fromAdmin,
   });
 
-  bool get isAdmin {
-    final currentUser = LocalUser().getUserData();
-    return currentUser.userType?.name == 'admin';
-  }
+  bool get isAdmin =>
+      Get.find<UserSession>().user?.user.userType == UserType.admin;
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +47,6 @@ class DoctorCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // 👨‍⚕️ Doctor Avatar
             CircleAvatar(
               radius: 70.r,
               backgroundColor: AppColors.primary.withValues(alpha: 0.15),
@@ -66,16 +63,12 @@ class DoctorCard extends StatelessWidget {
                       )
                       : null,
             ),
-
             SizedBox(width: 12.w),
-
-            // 🩺 Doctor Info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  // 👨‍⚕️ Doctor Name
                   Text(
                     doctor.name ?? "بدون اسم",
                     style: typography.mdBold.copyWith(
@@ -84,8 +77,6 @@ class DoctorCard extends StatelessWidget {
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
-
-                  // 👨‍⚕️ Doctor Name
                   Text(
                     doctor.address ?? "بدون اسم",
                     style: typography.smRegular.copyWith(
@@ -93,8 +84,6 @@ class DoctorCard extends StatelessWidget {
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
-
-                  // ⭐ Rating
                   doctor.totalRate == 0.0
                       ? const SizedBox()
                       : Padding(
@@ -108,8 +97,7 @@ class DoctorCard extends StatelessWidget {
                             ),
                             SizedBox(width: 4.w),
                             Text(
-                              "${doctor.totalRate?.toStringAsFixed(1) ?? '0.0'} "
-                              "(${doctor.numberOfRates ?? 0})",
+                              "${doctor.totalRate?.toStringAsFixed(1) ?? '0.0'} (${doctor.numberOfRates ?? 0})",
                               style: typography.smRegular.copyWith(
                                 color: AppColors.textSecondaryParagraph,
                               ),
@@ -117,8 +105,6 @@ class DoctorCard extends StatelessWidget {
                           ],
                         ),
                       ),
-
-                  // 📱 Phone Number
                   if (doctor.phone != null && doctor.phone!.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 5.0),
@@ -142,8 +128,6 @@ class DoctorCard extends StatelessWidget {
                 ],
               ),
             ),
-
-            // 🛠️ Admin actions (Edit/Delete)
             if (isAdmin)
               PopupMenuButton<String>(
                 shape: RoundedRectangleBorder(
@@ -156,7 +140,7 @@ class DoctorCard extends StatelessWidget {
                     showCustomBottomSheet(
                       context: context,
                       child: CreateDoctorView(
-                        specializeKey: doctor.clinicKey ?? "",
+                        specializeKey: doctor.asAssistant?.clinicKey ?? "",
                         doctor: doctor,
                       ),
                     );

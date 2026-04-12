@@ -1,7 +1,5 @@
 import 'dart:io';
 import 'package:diwanclinic/index/index_main.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 
 class ProfileViewModel extends GetxController {
   final formKey = GlobalKey<FormState>();
@@ -19,20 +17,30 @@ class ProfileViewModel extends GetxController {
 
   /// Determine user type
   bool get isPatient =>
-      LocalUser().getUserData().userType == UserType.patient;
+      Get.find<UserSession>().user?.user.userType == UserType.patient;
 
   @override
   void onInit() {
     super.onInit();
-    final user = LocalUser().getUserData();
 
-    nameController.text = user.name ?? "";
-    phoneController.text = user.phone ?? "";
-    addressController.text = user.address ?? ""; // ⭐ NEW
-    transferNumberController.text = user.transferNumber ?? "";
+    final currentUser = Get.find<UserSession>().user;
 
-    isInstaPay = user.isInstaPay ?? 0;
-    isElectronicWallet = user.isElectronicWallet ?? 0;
+    if (currentUser == null) {
+      debugPrint("❌ User not found in session");
+      return;
+    }
+
+    final base = currentUser.user;
+
+    nameController.text = base.name ?? "";
+    phoneController.text = base.phone ?? "";
+    addressController.text = base.address ?? "";
+
+    // ✅ Assistant only
+    if (base is AssistantUser) {
+      transferNumberController.text = base.transferNumber ?? "";
+      isInstaPay = base.isInstaPay ? 1 : 0;
+    }
   }
 
   @override
@@ -64,8 +72,7 @@ class ProfileViewModel extends GetxController {
     if (isPatient) return;
 
     this.isInstaPay = isInstaPay ?? this.isInstaPay;
-    this.isElectronicWallet =
-        isElectronicWallet ?? this.isElectronicWallet;
+    this.isElectronicWallet = isElectronicWallet ?? this.isElectronicWallet;
     update();
   }
 
@@ -88,53 +95,86 @@ class ProfileViewModel extends GetxController {
     if (!formKey.currentState!.validate()) return;
 
     Loader.show();
-    final user = LocalUser().getUserData();
-    final uid = user.uid;
+
+    final currentUser = Get.find<UserSession>().user;
+
+    if (currentUser == null) {
+      Loader.showError("❌ User not found in session");
+      return;
+    }
+
+    final base = currentUser.user;
+    final uid = base.uid;
 
     if (uid == null) {
       Loader.showError("User not logged in");
       return;
     }
 
-    // Upload image ONLY if NOT patient
-    String? imageUrl = user.image;
+    // ============================================================
+    // 📸 IMAGE
+    // ============================================================
+
+    String? imageUrl = base.profileImage;
+
     if (!isPatient && pickedImage != null) {
       final url = await _uploadImage(pickedImage!, uid);
       if (url != null) imageUrl = url;
     }
 
-    // ----------- BUILD UPDATED USER MODEL --------------
-    final updatedUser = user.copyWith(
-      name: nameController.text.trim(),
-      phone: phoneController.text.trim(),
-      address: addressController.text.trim(), // ⭐ SAVE ADDRESS
+    // ============================================================
+    // 🧠 BUILD UPDATED USER
+    // ============================================================
 
-      // Patient cannot modify these
-      image: isPatient ? user.image : imageUrl,
-      transferNumber: isPatient
-          ? user.transferNumber
-          : transferNumberController.text.trim(),
-      isInstaPay: isPatient ? user.isInstaPay : isInstaPay,
-      isElectronicWallet:
-      isPatient ? user.isElectronicWallet : isElectronicWallet,
-    );
+    BaseUser updatedBase;
 
-    // Save to Firebase
+    if (base is AssistantUser) {
+      updatedBase = AssistantUser(
+        uid: base.uid,
+        name: nameController.text.trim(),
+        phone: phoneController.text.trim(),
+        address: addressController.text.trim(),
+        profileImage: imageUrl,
+
+        transferNumber:
+            isPatient
+                ? base.transferNumber
+                : transferNumberController.text.trim(),
+
+        isInstaPay: isPatient ? base.isInstaPay : (isInstaPay == 1),
+        doctorKey: base.doctorKey,
+        clinicKey: base.clinicKey,
+        userType: base.userType,
+        isProfileCompleted: base.isProfileCompleted,
+      );
+    } else {
+      updatedBase = base.copyWith(
+        name: nameController.text.trim(),
+        phone: phoneController.text.trim(),
+        address: addressController.text.trim(),
+        profileImage: imageUrl,
+      );
+    }
+
+    final updatedUser = LocalUser(updatedBase);
+
+    // ============================================================
+    // 💾 SAVE
+    // ============================================================
+
     AuthenticationService().updateClientsData(
       userclient: updatedUser,
-      voidCallBack: (_) {
+      voidCallBack: (_) async {
         Loader.dismiss();
 
-        // Save locally
-        updatedUser.saveLocal(
-          saveCallback: () {
-            Loader.showSuccess("تم تحديث الملف الشخصي بنجاح");
-            Get.back();
-          },
-        );
+        // ✅ update session بدل saveLocal
+        await Get.find<UserSession>().updateUser(updatedBase);
 
-        update();
+        Loader.showSuccess("تم تحديث الملف الشخصي بنجاح");
+        Get.back();
       },
     );
+
+    update();
   }
 }

@@ -9,7 +9,10 @@ class ProfileView extends StatelessWidget {
       init: ProfileViewModel(),
       builder: (controller) {
         final isPatient =
-            LocalUser().getUserData().userType == UserType.patient;
+            Get.find<UserSession>().user?.user.userType == UserType.patient;
+
+        final currentUser = Get.find<UserSession>().user;
+        final profileImage = currentUser?.user.profileImage;
 
         return Scaffold(
           backgroundColor: AppColors.white,
@@ -29,9 +32,10 @@ class ProfileView extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: ElevatedButton(
-                onPressed: controller.isLoading
-                    ? null
-                    : () => controller.updateProfile(),
+                onPressed:
+                    controller.isLoading
+                        ? null
+                        : () => controller.updateProfile(),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -40,21 +44,22 @@ class ProfileView extends StatelessWidget {
                   ),
                   elevation: 3,
                 ),
-                child: controller.isLoading
-                    ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    color: AppColors.white,
-                    strokeWidth: 2,
-                  ),
-                )
-                    : Text(
-                  "حفظ التغييرات",
-                  style: context.typography.mdBold.copyWith(
-                    color: AppColors.white,
-                  ),
-                ),
+                child:
+                    controller.isLoading
+                        ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: AppColors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                        : Text(
+                          "حفظ التغييرات",
+                          style: context.typography.mdBold.copyWith(
+                            color: AppColors.white,
+                          ),
+                        ),
               ),
             ),
           ),
@@ -75,32 +80,36 @@ class ProfileView extends StatelessWidget {
                         CircleAvatar(
                           radius: 55,
                           backgroundColor: AppColors.primary_light,
-                          backgroundImage: controller.pickedImage != null
-                              ? FileImage(controller.pickedImage!)
-                              : (LocalUser().getUserData().image != null
-                              ? NetworkImage(
-                            LocalUser().getUserData().image!,
-                          )
-                              : null)
-                          as ImageProvider?,
-                          child: controller.pickedImage == null &&
-                              LocalUser().getUserData().image == null
-                              ? const Icon(
-                            Icons.person,
-                            size: 60,
-                            color: AppColors.primary,
-                          )
-                              : null,
+
+                          backgroundImage:
+                              controller.pickedImage != null
+                                  ? FileImage(controller.pickedImage!)
+                                  : (profileImage != null &&
+                                          profileImage.isNotEmpty
+                                      ? NetworkImage(profileImage)
+                                      : null),
+
+                          child:
+                              controller.pickedImage == null &&
+                                      (profileImage == null ||
+                                          profileImage.isEmpty)
+                                  ? const Icon(
+                                    Icons.person,
+                                    size: 60,
+                                    color: AppColors.primary,
+                                  )
+                                  : null,
                         ),
+
                         Positioned(
                           bottom: 0,
                           right: 6,
                           child: InkWell(
                             onTap: controller.pickImage,
-                            child: CircleAvatar(
+                            child: const CircleAvatar(
                               radius: 18,
                               backgroundColor: AppColors.primary,
-                              child: const Icon(
+                              child: Icon(
                                 Icons.edit,
                                 color: AppColors.white,
                                 size: 18,
@@ -122,8 +131,9 @@ class ProfileView extends StatelessWidget {
                     label: "الإسم",
                     hint: "أدخل الإسم",
                     icon: Icons.person,
-                    validator: (val) =>
-                    val == null || val.isEmpty ? "أدخل الإسم" : null,
+                    validator:
+                        (val) =>
+                            val == null || val.isEmpty ? "أدخل الإسم" : null,
                   ),
                   const SizedBox(height: 20),
 
@@ -137,8 +147,11 @@ class ProfileView extends StatelessWidget {
                     hint: "أدخل رقم الهاتف",
                     icon: Icons.phone,
                     keyboardType: TextInputType.phone,
-                    validator: (val) =>
-                    val == null || val.isEmpty ? "أدخل رقم الهاتف" : null,
+                    validator:
+                        (val) =>
+                            val == null || val.isEmpty
+                                ? "أدخل رقم الهاتف"
+                                : null,
                   ),
                   const SizedBox(height: 20),
 
@@ -152,8 +165,11 @@ class ProfileView extends StatelessWidget {
                       label: "العنوان",
                       hint: "أدخل العنوان",
                       icon: Icons.location_on,
-                      validator: (val) =>
-                      val == null || val.isEmpty ? "العنوان مطلوب" : null,
+                      validator:
+                          (val) =>
+                              val == null || val.isEmpty
+                                  ? "العنوان مطلوب"
+                                  : null,
                     ),
                     const SizedBox(height: 20),
                   ],
@@ -228,14 +244,14 @@ class ProfileView extends StatelessWidget {
 
   /// 🔹 Modern Editable Input Field
   Widget _buildEditableInput(
-      BuildContext context, {
-        required TextEditingController controller,
-        required String label,
-        required String hint,
-        required IconData icon,
-        TextInputType? keyboardType,
-        String? Function(String?)? validator,
-      }) {
+    BuildContext context, {
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+  }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,

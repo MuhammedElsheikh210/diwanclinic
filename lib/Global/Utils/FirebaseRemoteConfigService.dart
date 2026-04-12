@@ -33,13 +33,15 @@ class FirebaseRemoteConfigService {
   String get _buildKey =>
       Platform.isAndroid ? 'android_build_number' : 'ios_build_number';
 
-  String get _forceEnabledKey => Platform.isAndroid
-      ? 'android_force_update_enabled'
-      : 'ios_force_update_enabled';
+  String get _forceEnabledKey =>
+      Platform.isAndroid
+          ? 'android_force_update_enabled'
+          : 'ios_force_update_enabled';
 
-  String get _forceRolesKey => Platform.isAndroid
-      ? 'android_force_update_roles'
-      : 'ios_force_update_roles';
+  String get _forceRolesKey =>
+      Platform.isAndroid
+          ? 'android_force_update_roles'
+          : 'ios_force_update_roles';
 
   // ─────────────────────────────────────────────
   // Public API
@@ -81,11 +83,12 @@ class FirebaseRemoteConfigService {
     _forceEnabled = _remoteConfig.getBool(_forceEnabledKey);
 
     final rolesString = _remoteConfig.getString(_forceRolesKey);
-    _forceRoles = rolesString
-        .split(',')
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .toList();
+    _forceRoles =
+        rolesString
+            .split(',')
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty)
+            .toList();
 
     _log(
       "☁️ REMOTE build=$_remoteBuild | force=$_forceEnabled | roles=$_forceRoles",
@@ -96,17 +99,37 @@ class FirebaseRemoteConfigService {
   // Decision Logic (THE IMPORTANT PART)
   // ─────────────────────────────────────────────
   bool _shouldForceUpdate() {
-    // Flag off → no force update
+    // ---------------------------------------------------------
+    // 🚫 Feature disabled
+    // ---------------------------------------------------------
     if (!_forceEnabled) return false;
 
-    // Already on latest build
+    // ---------------------------------------------------------
+    // ✅ Already up to date
+    // ---------------------------------------------------------
     if (_localBuild >= _remoteBuild) return false;
 
-    // User role
-    final userType = LocalUser().getUserData().userType?.name;
-    if (userType == null) return false;
+    // ---------------------------------------------------------
+    // 🧠 Get current user
+    // ---------------------------------------------------------
+    final user = Get.find<UserSession>().user?.user;
 
-    // Force update only for selected roles
+    if (user == null || user.userType == null) return false;
+
+    final userType = user.userType!;
+
+    // ---------------------------------------------------------
+    // 🎯 Role-based logic (optional custom rules)
+    // ---------------------------------------------------------
+
+    if (user is DoctorUser) {
+      // لو عايز تعامل خاص بالدكتور
+      // return true; // مثال
+    }
+
+    // ---------------------------------------------------------
+    // 🔥 Force update for allowed roles
+    // ---------------------------------------------------------
     return _forceRoles.contains(userType);
   }
 

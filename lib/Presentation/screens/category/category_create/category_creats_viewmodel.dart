@@ -1,4 +1,3 @@
-
 import '../../../../../index/index_main.dart';
 
 class CreateCategoryViewModel extends GetxController {
@@ -20,16 +19,20 @@ class CreateCategoryViewModel extends GetxController {
     update();
   }
 
-  /// ✅ Save or update the category
   void saveCategory() {
+    final user = Get.find<UserSession>().user?.user;
+    final uid = user?.uid;
+    if (uid == null || uid.isEmpty) {
+      Loader.showError("❌ User UID is missing");
+      return;
+    }
     final category =
         existingCategory?.copyWith(name: nameController.text) ??
         CategoryEntity(
           key: const Uuid().v4(),
-          uid: LocalUser().getUserData().uid ?? "",
+          uid: uid,
           name: nameController.text,
         );
-
     is_update ? updateCategory(category) : createCategory(category);
   }
 

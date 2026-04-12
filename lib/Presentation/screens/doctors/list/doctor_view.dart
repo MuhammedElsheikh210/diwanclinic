@@ -16,13 +16,35 @@ class DoctorView extends StatefulWidget {
 }
 
 class _DoctorViewState extends State<DoctorView> {
-  late final user = LocalUser().getUserData();
+  late final LocalUser user;
 
-  bool get isAdmin => user.userType?.name == 'admin';
+  @override
+  void initState() {
+    super.initState();
 
-  bool get isSales => user.userType?.name == 'sales';
+    final sessionUser = Get.find<UserSession>().user;
+
+    if (sessionUser == null) {
+      throw Exception("User not initialized in session");
+    }
+
+    user = sessionUser;
+  }
+
+  // ============================================================
+  // ROLES
+  // ============================================================
+
+  bool get isAdmin => user.user.userType == UserType.admin;
+
+  bool get isSales => user.user.userType == UserType.sales;
 
   bool get canManageSpecialization => isAdmin || isSales;
+
+  // ============================================================
+  // UI
+  // ============================================================
+
   @override
   Widget build(BuildContext context) {
     final typography = context.typography;
@@ -38,6 +60,11 @@ class _DoctorViewState extends State<DoctorView> {
         builder: (controller) {
           return Scaffold(
             backgroundColor: AppColors.background_neutral_25,
+
+            // ============================================================
+            // APP BAR
+            // ============================================================
+
             appBar: AppBar(
               backgroundColor: AppColors.white,
               elevation: 0.8,
@@ -52,12 +79,15 @@ class _DoctorViewState extends State<DoctorView> {
               iconTheme: const IconThemeData(color: AppColors.textDisplay),
             ),
 
-            // ✅ Show FAB only if user is admin
+            // ============================================================
+            // FAB
+            // ============================================================
+
             floatingActionButton: InkWell(
               onTap: () {
                 if (canManageSpecialization) {
                   Get.to(
-                    () => CreateDoctorView(
+                        () => CreateDoctorView(
                       specializeKey: widget.specializeKey,
                       specializName: widget.specializeName,
                     ),
@@ -95,7 +125,10 @@ class _DoctorViewState extends State<DoctorView> {
               ),
             ),
 
-            // ✅ Main content
+            // ============================================================
+            // BODY
+            // ============================================================
+
             body: SafeArea(
               child: RefreshIndicator(
                 color: AppColors.primary,
@@ -104,36 +137,40 @@ class _DoctorViewState extends State<DoctorView> {
                     ? const ShimmerLoader()
                     : controller.listDoctors!.isEmpty
                     ? NoDataAnimated(
-                        title: "جاري إضافة الأطباء",
-                        subtitle:
-                            "نقوم حالياً بتجهيز التخصصات لخدمتك بشكل أفضل",
-                        lottiePath: Animations.no_prescription,
-                        height: 300.h,
-                      )
+                  title: "جاري إضافة الأطباء",
+                  subtitle:
+                  "نقوم حالياً بتجهيز التخصصات لخدمتك بشكل أفضل",
+                  lottiePath: Animations.no_prescription,
+                  height: 300.h,
+                )
                     : ListView.separated(
-                        padding: EdgeInsets.symmetric(
-                          vertical: 16.h,
-                          horizontal: 12.w,
-                        ),
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: controller.listDoctors!.length,
-                        separatorBuilder: (_, __) => SizedBox(height: 12.h),
-                        itemBuilder: (context, index) {
-                          final doctor = controller.listDoctors![index];
-                          if (doctor == null) return const SizedBox.shrink();
+                  padding: EdgeInsets.symmetric(
+                    vertical: 16.h,
+                    horizontal: 12.w,
+                  ),
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: controller.listDoctors!.length,
+                  separatorBuilder: (_, __) =>
+                      SizedBox(height: 12.h),
+                  itemBuilder: (context, index) {
+                    final doctor = controller.listDoctors![index];
 
-                          return InkWell(
-                            onTap: () {
-                              Get.to(() => DoctorDetailsView(doctor: doctor));
-                            },
+                    if (doctor == null) {
+                      return const SizedBox.shrink();
+                    }
 
-                            child: DoctorCard(
-                              doctor: doctor,
-                              controller: controller,
-                            ),
-                          );
-                        },
+                    return InkWell(
+                      onTap: () {
+                        Get.to(() =>
+                            DoctorDetailsView(doctor: doctor));
+                      },
+                      child: DoctorCard(
+                        doctor: doctor,
+                        controller: controller,
                       ),
+                    );
+                  },
+                ),
               ),
             ),
           );

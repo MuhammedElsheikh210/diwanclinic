@@ -1,4 +1,3 @@
-import 'package:diwanclinic/Presentation/screens/doctors/create_update/doctor_create_update_controller.dart';
 import '../../../../../index/index_main.dart';
 
 class CreateDoctorView extends StatefulWidget {
@@ -29,28 +28,39 @@ class _CreateDoctorViewState extends State<CreateDoctorView> {
     super.initState();
 
     vm = initController(
-      () => CreateDoctorViewModel(
+          () => CreateDoctorViewModel(
         specializeKey: widget.specializeKey,
         specializeName: widget.specializName ?? "",
         medicalCenterKey: widget.medicalCenterKey,
       ),
     );
 
-    if (widget.doctor != null) {
-      vm.nameController.text = widget.doctor?.name ?? "";
-      vm.phoneController.text = widget.doctor?.phone ?? "";
-      vm.qualificationsController.text =
-          widget.doctor?.doctorQualifications ?? "";
-      vm.whatsappController.text = widget.doctor?.whatsAppPhone ?? "";
-      vm.facebookController.text = widget.doctor?.facebookLink ?? "";
-      vm.instagramController.text = widget.doctor?.instagramLink ?? "";
-      vm.tiktokController.text = widget.doctor?.tiktokLink ?? "";
+    final doctor = widget.doctor;
+
+    if (doctor != null && doctor.isDoctor) {
+      final d = doctor.asDoctor;
+
+      if (d == null) return;
+
+      vm.nameController.text = d.name ?? "";
+      vm.phoneController.text = d.phone ?? "";
+      vm.qualificationsController.text = d.doctorQualifications ?? "";
+
+      vm.whatsappController.text = d.phone ?? ""; // لو مفيش field منفصل
+
+      vm.facebookController.text = d.facebookLink ?? "";
+      vm.instagramController.text = d.instagramLink ?? "";
+      vm.tiktokController.text = d.tiktokLink ?? "";
+
+      // ✅ NEW
+      vm.remoteReservationAbility = d.remoteReservationAbility;
+
       vm.isUpdate = true;
-      vm.existingDoctor = widget.doctor;
+      vm.existingDoctor = doctor;
+
       vm.update();
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

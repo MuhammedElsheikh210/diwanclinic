@@ -18,8 +18,9 @@ class ReservationSyncService {
   }) {
     _subscription?.cancel();
 
-    final user = LocalUser().getUserData();
-    final doctorKey = user.doctorKey ?? user.uid ?? "";
+    final user = Get.find<UserSession>().user;
+
+    final doctorKey = user?.doctorKey ?? user?.uid ?? "";
 
     final String today = DateFormat('dd/MM/yyyy').format(DateTime.now());
     final String basePath = 'doctors/$doctorKey/reservations/$today';

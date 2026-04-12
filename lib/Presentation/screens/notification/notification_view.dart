@@ -50,9 +50,10 @@ class _NotificationsViewState extends State<NotificationsView> {
                 );
               }
 
-              final currentUser = LocalUser().getUserData();
+              final currentUser = Get.find<UserSession>().user;
+
               final bool isAssistant =
-                  currentUser.userType?.name == "assistant";
+                  currentUser?.user.userType == UserType.assistant;
 
               return ListView.builder(
                 physics: const BouncingScrollPhysics(),
@@ -93,7 +94,7 @@ class _NotificationsViewState extends State<NotificationsView> {
                       title: notif.title ?? "إشعار جديد",
                       description: notif.body,
                       date: formattedDate,
-                      isPatient: currentUser.userType?.name == "patient",
+                      isPatient: currentUser?.user.userType == UserType.patient,
                       imageUrl: reservation?.transfer_image,
                       isUnread: isPending,
                       showActions: showActions,

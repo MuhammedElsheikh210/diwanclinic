@@ -1,4 +1,3 @@
-import 'package:diwanclinic/Data/Core/whatsapp_manager.dart';
 import 'package:diwanclinic/index/index_main.dart';
 
 class WhatsAppStatusMessageService {
@@ -131,11 +130,10 @@ class WhatsAppOrderMessageService {
   /// 💬 Send WhatsApp message based on order status
   static Future<void> sendNewOrderMessage({required OrderModel order}) async {
     try {
-      final isPharmacy = LocalUser().getUserData().userType?.name == "pharmacy";
-
-      final rawPhone = isPharmacy
-          ? order.phone ?? ""
-          : order.pharmacyPhone ?? "";
+      final isPharmacy =
+          Get.find<UserSession>().user?.user.userType == UserType.pharmacy;
+      final rawPhone =
+          isPharmacy ? order.phone ?? "" : order.pharmacyPhone ?? "";
 
       if (rawPhone.isEmpty) return;
 

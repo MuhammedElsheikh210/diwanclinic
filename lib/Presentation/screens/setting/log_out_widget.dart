@@ -75,7 +75,7 @@ class _LogoutDialogState extends State<LogoutDialog> {
                     appButtonSize: AppButtonSize.large,
                     onTap: () async {
                       // Logout logic
-                      await LocalUser().getUserData().removeLocalUser();
+                      await Get.find<UserSession>().clear();
                       Get.offAllNamed(loginView);
                     },
                     label: AppText(

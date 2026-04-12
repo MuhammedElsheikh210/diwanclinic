@@ -4,7 +4,17 @@ import 'dart:async';
 import '../../../index/index_main.dart';
 
 class MainPageViewModel extends GetxController {
-  UserType? userType;
+  // ============================================================
+  // 🧠 CURRENT USER
+  // ============================================================
+
+  BaseUser? get _user => Get.find<UserSession>().user?.user;
+
+  UserType? get userType => _user?.userType;
+
+  // ============================================================
+  // 🎭 ROLES
+  // ============================================================
 
   bool get isDoctor => userType == UserType.doctor;
 
@@ -18,10 +28,14 @@ class MainPageViewModel extends GetxController {
 
   bool get isAdmin => userType == UserType.admin;
 
+  // ============================================================
+  // 🧩 SERVICES
+  // ============================================================
+
   final ReservationService _reservationService = ReservationService();
   final AuthenticationService _authService = AuthenticationService();
   final NotificationPatentService _notificationService =
-      NotificationPatentService();
+  NotificationPatentService();
 
   // ============================================================
   // 🚀 INIT
@@ -32,12 +46,13 @@ class MainPageViewModel extends GetxController {
     super.onInit();
 
     await _loadCurrentUserFromOnline();
-    print("user type is $userType");
+
+    debugPrint("👤 user type is $userType");
 
     // 🔥 Start realtime listeners
     await _startClientsRealtime();
     await startReservationsRealtime();
-    await _startNotificationsRealtime(); // 🔔 NEW
+    await _startNotificationsRealtime();
   }
 
   // ============================================================
@@ -46,29 +61,38 @@ class MainPageViewModel extends GetxController {
 
   Future<void> _loadCurrentUserFromOnline() async {
     try {
-      final uid = LocalUser().getUserData().uid ?? "";
-      if (uid.isEmpty) return;
+      final uid = _user?.uid;
 
-      print("🌐 Loading current user from ONLINE...");
+      if (uid == null || uid.isEmpty) {
+        debugPrint("❌ UID missing → skip online user load");
+        return;
+      }
+
+      debugPrint("🌐 Loading current user from ONLINE...");
 
       await _authService.getClientsOnlineData(
-        firebaseFilter: FirebaseFilter(orderBy: "token", equalTo: uid),
+        firebaseFilter: FirebaseFilter(
+          orderBy: "token",
+          equalTo: uid,
+        ),
         voidCallBack: (users) {
           if (users.isEmpty) {
-            print("❌ User not found online");
+            debugPrint("❌ User not found online");
             return;
           }
 
-          final user = users.first!;
-          userType = user.userType;
+          final user = users.first;
 
-          print("✅ User loaded ONLINE → ${user.userType}");
-          print("✅ User clinicKey → ${user.clinicKey}");
-          update();
+          if (user == null) return;
+
+          // 🔥 update session (important)
+          Get.find<UserSession>().setUser(user);
+
+          debugPrint("✅ User loaded ONLINE → ${user.user.userType}");
         },
       );
     } catch (e) {
-      print("❌ Error loading online user: $e");
+      debugPrint("❌ Error loading online user: $e");
     }
   }
 
@@ -77,11 +101,11 @@ class MainPageViewModel extends GetxController {
   // ============================================================
 
   Future<void> _startClientsRealtime() async {
-    print("🚀 GLOBAL Clients Realtime START");
+    debugPrint("🚀 GLOBAL Clients Realtime START");
 
     await _authService.startListening();
 
-    print("✅ GLOBAL Clients Realtime RUNNING");
+    debugPrint("✅ GLOBAL Clients Realtime RUNNING");
   }
 
   // ============================================================
@@ -89,33 +113,56 @@ class MainPageViewModel extends GetxController {
   // ============================================================
 
   Future<void> startReservationsRealtime({String? doctorKey}) async {
-    final key = doctorKey ?? LocalUser().getUserData().doctorKey ?? "";
+    final user = _user;
 
-    if (key.isEmpty) {
-      print("⚠️ No doctorKey → skip realtime reservations");
+    String? resolvedDoctorKey = doctorKey;
+
+    // resolve if null
+    if (resolvedDoctorKey == null || resolvedDoctorKey.isEmpty) {
+      if (user is DoctorUser) {
+        resolvedDoctorKey = user.uid;
+      } else if (user is AssistantUser) {
+        resolvedDoctorKey = user.doctorKey;
+      }
+    }
+
+    if (resolvedDoctorKey == null || resolvedDoctorKey.isEmpty) {
+      debugPrint("⚠️ No doctorKey → skip realtime reservations");
       return;
     }
 
-    print("🚀 GLOBAL Reservations Realtime START → $key");
+    debugPrint("🚀 GLOBAL Reservations Realtime START → $resolvedDoctorKey");
 
-    await _reservationService.startListening(doctorKey: key);
+    await _reservationService.startListening(
+      doctorKey: resolvedDoctorKey,
+    );
 
-    print("✅ GLOBAL Reservations Realtime RUNNING → $key");
+    debugPrint("✅ GLOBAL Reservations Realtime RUNNING → $resolvedDoctorKey");
   }
 
   // ============================================================
-  // 🔔 NOTIFICATIONS REALTIME (NEW)
+  // 🔔 NOTIFICATIONS REALTIME
   // ============================================================
 
   Future<void> _startNotificationsRealtime() async {
-    final clinicKey = LocalUser().getUserData().clinicKey ?? "";
-    if (clinicKey.isEmpty) return;
+    final user = _user;
 
-    print("🔔 GLOBAL Notifications Realtime START");
+    String? clinicKey;
+
+    if (user is AssistantUser) {
+      clinicKey = user.clinicKey;
+    }
+
+    if (clinicKey == null || clinicKey.isEmpty) {
+      debugPrint("⚠️ No clinicKey → skip notifications realtime");
+      return;
+    }
+
+    debugPrint("🔔 GLOBAL Notifications Realtime START");
 
     await _notificationService.startListening();
 
-    print("✅ GLOBAL Notifications Realtime RUNNING");
+    debugPrint("✅ GLOBAL Notifications Realtime RUNNING");
   }
 
   // ============================================================
@@ -126,7 +173,7 @@ class MainPageViewModel extends GetxController {
   void onClose() {
     _reservationService.dispose();
     _authService.dispose();
-    _notificationService.dispose(); // 🔔 NEW
+    _notificationService.dispose();
     super.onClose();
   }
 }

@@ -40,7 +40,7 @@ class ReservationViewModel extends GetxController {
   LocalUser? selectedDoctor;
   bool isLoadingDoctors = false;
 
-  bool get isCenterMode => LocalUser().getUserData().medicalCenterKey != null;
+  bool get isCenterMode => false;
 
   int totalCount = 0;
   int completedCount = 0;
@@ -99,41 +99,41 @@ class ReservationViewModel extends GetxController {
   }
 
   Future<void> loadDoctorsOfCenter() async {
-    final centerKey = LocalUser().getUserData().medicalCenterKey;
-    if (centerKey == null) return;
-
-    isLoadingDoctors = true;
-    update();
-
-    AuthenticationService().getClientsData(
-      query: SQLiteQueryParams(
-        where: "medicalCenterKey = ? AND userType = ?",
-        whereArgs: [centerKey, "doctor"],
-      ),
-      voidCallBack: (data) async {
-        centerDoctors = data;
-
-        // ✅ اختار أول دكتور تلقائيًا
-        if (data.isNotEmpty) {
-          selectedDoctor = data.first;
-
-          final doctorKey = selectedDoctor?.uid ?? "";
-          MainPageViewModel mainPageViewModel = initController(
-            () => MainPageViewModel(),
-          );
-          // 🔥 start realtime reservations
-          await mainPageViewModel.startReservationsRealtime(
-            doctorKey: doctorKey,
-          );
-
-          // 📍 تحميل العيادات
-          await getClinicList();
-        }
-
-        isLoadingDoctors = false;
-        update();
-      },
-    );
+    // final centerKey = LocalUser().getUserData().medicalCenterKey;
+    // if (centerKey == null) return;
+    //
+    // isLoadingDoctors = true;
+    // update();
+    //
+    // AuthenticationService().getClientsData(
+    //   query: SQLiteQueryParams(
+    //     where: "medicalCenterKey = ? AND userType = ?",
+    //     whereArgs: [centerKey, "doctor"],
+    //   ),
+    //   voidCallBack: (data) async {
+    //     centerDoctors = data;
+    //
+    //     // ✅ اختار أول دكتور تلقائيًا
+    //     if (data.isNotEmpty) {
+    //       selectedDoctor = data.first;
+    //
+    //       final doctorKey = selectedDoctor?.uid ?? "";
+    //       MainPageViewModel mainPageViewModel = initController(
+    //         () => MainPageViewModel(),
+    //       );
+    //       // 🔥 start realtime reservations
+    //       await mainPageViewModel.startReservationsRealtime(
+    //         doctorKey: doctorKey,
+    //       );
+    //
+    //       // 📍 تحميل العيادات
+    //       await getClinicList();
+    //     }
+    //
+    //     isLoadingDoctors = false;
+    //     update();
+    //   },
+    // );
   }
 
   void _initManagers() {
@@ -145,18 +145,29 @@ class ReservationViewModel extends GetxController {
 
   // Fetch clinics
   Future<void> getClinicList() async {
-    final clinicKey = LocalUser().getUserData().clinicKey ?? "";
-    final medicalCenterKey = LocalUser().getUserData().medicalCenterKey ?? "";
+    final currentUser = Get.find<UserSession>().user;
 
-    final FirebaseFilter? filter =
-        medicalCenterKey.isNotEmpty
-            ? null
-            : FirebaseFilter(orderBy: "key", equalTo: clinicKey);
+    if (currentUser == null || !currentUser.isAssistant) {
+      debugPrint("❌ Current user is not assistant");
+      return;
+    }
+
+    final assistant = currentUser.asAssistant;
+
+    if (assistant == null) {
+      debugPrint("❌ Failed to cast to AssistantUser");
+      return;
+    }
+    final clinicKey = assistant.clinicKey ?? "";
+
+    final FirebaseFilter? filter = FirebaseFilter(
+      orderBy: "key",
+      equalTo: clinicKey,
+    );
 
     ClinicService().getClinicsData(
       data: {},
-      doctorKey:
-          selectedDoctor?.uid ?? LocalUser().getUserData().doctorKey ?? "",
+      doctorKey: selectedDoctor?.uid ?? assistant.doctorKey ?? "",
       filrebaseFilter: filter ?? FirebaseFilter(),
       query: SQLiteQueryParams(),
       voidCallBack: (data) async {
@@ -208,20 +219,33 @@ class ReservationViewModel extends GetxController {
   Future<void> getShiftList() async {
     if (selectedClinic == null) return;
 
-    final doctorKey =
-        isCenterMode
-            ? selectedDoctor?.uid
-            : LocalUser().getUserData().doctorKey;
+    final currentUser = Get.find<UserSession>().user;
 
-    final medicalCenterKey = LocalUser().getUserData().medicalCenterKey ?? "";
+    if (currentUser == null) {
+      debugPrint("❌ User not found in session");
+      return;
+    }
 
-    final FirebaseFilter? filter =
-        medicalCenterKey.isNotEmpty
-            ? null
-            : FirebaseFilter(
-              orderBy: "clinicKey",
-              equalTo: LocalUser().getUserData().clinicKey,
-            );
+    final baseUser = currentUser.user;
+
+    String? doctorKey;
+
+    // ✅ Doctor
+    if (baseUser is DoctorUser) {
+      doctorKey = baseUser.uid;
+    }
+    // ✅ Assistant
+    else if (baseUser is AssistantUser) {
+      doctorKey = baseUser.doctorKey;
+    }
+
+    // ✅ center mode override
+    doctorKey = isCenterMode ? selectedDoctor?.uid : doctorKey;
+
+    final FirebaseFilter? filter = FirebaseFilter(
+      orderBy: "clinicKey",
+      equalTo: currentUser.clinicKey,
+    );
 
     ShiftService().getShiftsData(
       data: filter ?? FirebaseFilter(),
@@ -239,9 +263,7 @@ class ReservationViewModel extends GetxController {
             appointmentDate ??= DateFormat("dd-MM-yyyy").format(DateTime.now());
 
             await getReservations();
-          }
-          // أكثر من شيفت
-          else {
+          } else {
             hideShiftSelector = false;
 
             Future.microtask(() {
@@ -450,10 +472,21 @@ extension ReservationData on ReservationViewModel {
   }
 
   Future<void> getReservations() async {
-    final doctorKey =
-        isCenterMode
-            ? selectedDoctor?.uid
-            : LocalUser().getUserData().doctorKey;
+    final currentUser = Get.find<UserSession>().user;
+
+    if (currentUser == null || !currentUser.isAssistant) {
+      debugPrint("❌ Current user is not assistant");
+      return;
+    }
+
+    final assistant = currentUser.asAssistant;
+
+    if (assistant == null) {
+      debugPrint("❌ Failed to cast to AssistantUser");
+      return;
+    }
+
+    final doctorKey = assistant.doctorKey;
 
     if (doctorKey == null ||
         doctorKey.isEmpty ||
@@ -505,7 +538,6 @@ extension ReservationData on ReservationViewModel {
       appointmentDate: normalizedDate,
       shiftKey: selectedShift!.key,
       selectedClinic: selectedClinic,
-      medicalCenterKey: LocalUser().getUserData().medicalCenterKey,
     );
 
     _cachedReservations = all;
@@ -540,7 +572,7 @@ extension ReservationData on ReservationViewModel {
     update();
 
     final reservation = await queryManager.getLastCompletedForPatient(
-      client.key!,
+      client.uid!,
     );
 
     selectedPatientLastVisit =

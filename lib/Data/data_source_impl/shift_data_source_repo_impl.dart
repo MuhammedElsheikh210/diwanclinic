@@ -5,24 +5,40 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
 
   ShiftDataSourceRepoImpl(this._clientSourceRepo);
 
-  /// ============================================================
-  /// 🔑 Resolve Doctor Key (FIX 🔥)
-  /// ============================================================
   String _resolveDoctorKey(String? doctorKey) {
+    // ============================================================
+    // ✅ PRIORITY: PARAM
+    // ============================================================
+
     if (doctorKey != null && doctorKey.isNotEmpty) {
       return doctorKey;
     }
 
-    final user = LocalUser().getUserData();
+    // ============================================================
+    // 🧠 SESSION USER
+    // ============================================================
 
-    final resolvedKey = user.userType?.name == "doctor"
-        ? user.uid
-        : user.doctorKey;
+    final sessionUser = Get.find<UserSession>().user?.user;
 
-    print("👤 userType: ${user.userType?.name}");
-    print("🔑 user.key: ${user.key}");
-    print("🔑 user.doctorKey: ${user.doctorKey}");
-    print("🔑 FINAL doctorKey: $resolvedKey");
+    String? resolvedKey;
+
+    // ============================================================
+    // 👨‍⚕️ DOCTOR
+    // ============================================================
+
+    if (sessionUser is DoctorUser) {
+      resolvedKey = sessionUser.uid;
+    }
+    // ============================================================
+    // 🧑‍⚕️ ASSISTANT
+    // ============================================================
+    else if (sessionUser is AssistantUser) {
+      resolvedKey = sessionUser.doctorKey;
+    }
+
+    // ============================================================
+    // 🚨 SAFETY
+    // ============================================================
 
     if (resolvedKey == null || resolvedKey.isEmpty) {
       throw Exception("❌ doctorKey is NULL or EMPTY");
@@ -54,9 +70,9 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
   /// ============================================================
   @override
   Future<List<ShiftModel?>> getShifts(
-      Map<String, dynamic> data,
-      String? doctorKey,
-      ) async {
+    Map<String, dynamic> data,
+    String? doctorKey,
+  ) async {
     try {
       final path = _shiftsPath(doctorKey);
 
@@ -75,7 +91,7 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
 
       return handleResponse<ShiftModel>(
         response,
-            (json) => ShiftModel.fromJson(json),
+        (json) => ShiftModel.fromJson(json),
       );
     } catch (e) {
       print("❌ getShifts error: $e");
@@ -88,9 +104,9 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
   /// ============================================================
   @override
   Future<List<ShiftModel?>> getShiftsFromPatient(
-      Map<String, dynamic> data,
-      String? doctorKey,
-      ) async {
+    Map<String, dynamic> data,
+    String? doctorKey,
+  ) async {
     try {
       final path = _shiftsPatientPath(doctorKey);
 
@@ -109,7 +125,7 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
 
       return handleResponse<ShiftModel>(
         response,
-            (json) => ShiftModel.fromJson(json),
+        (json) => ShiftModel.fromJson(json),
       );
     } catch (e) {
       print("❌ getShiftsFromPatient error: $e");
@@ -122,10 +138,10 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
   /// ============================================================
   @override
   Future<SuccessModel> addShift(
-      Map<String, dynamic> data,
-      String key,
-      String? doctorKey,
-      ) async {
+    Map<String, dynamic> data,
+    String key,
+    String? doctorKey,
+  ) async {
     try {
       final path = _shiftItemPath(doctorKey, key);
 
@@ -149,10 +165,10 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
   /// ============================================================
   @override
   Future<SuccessModel> deleteShift(
-      Map<String, dynamic> data,
-      String key,
-      String? doctorKey,
-      ) async {
+    Map<String, dynamic> data,
+    String key,
+    String? doctorKey,
+  ) async {
     try {
       final path = _shiftItemPath(doctorKey, key);
 
@@ -164,9 +180,7 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
         params: data,
       );
 
-      return SuccessModel.fromJson(
-        response ?? {"message": "تم الحذف بنجاح"},
-      );
+      return SuccessModel.fromJson(response ?? {"message": "تم الحذف بنجاح"});
     } catch (e) {
       print("❌ deleteShift error: $e");
       return SuccessModel(message: "فشل حذف الفترة");
@@ -178,10 +192,10 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
   /// ============================================================
   @override
   Future<SuccessModel> updateShift(
-      Map<String, dynamic> data,
-      String key,
-      String? doctorKey,
-      ) async {
+    Map<String, dynamic> data,
+    String key,
+    String? doctorKey,
+  ) async {
     try {
       final path = _shiftItemPath(doctorKey, key);
 

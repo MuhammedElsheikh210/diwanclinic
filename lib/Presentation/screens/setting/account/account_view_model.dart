@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../index/index_main.dart';
 
 class AccountViewModel extends GetxController {
@@ -19,17 +18,19 @@ class AccountViewModel extends GetxController {
 
   /// Load data from local UserClient
   void loadUserData() {
-    final user = LocalUser().getUserData();
-    doctorName = user.name ?? "الإسم";
-    doctorPhone = user.phone ?? "";
-    doctorImage = user.image;
+    final user = Get.find<UserSession>().user;
+
+    doctorName = user?.name ?? "الإسم";
+    doctorPhone = user?.phone ?? "";
+    doctorImage = user?.profileImage;
     update();
   }
 
   Future<void> changePassword() async {
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
+      final firebaseUser = FirebaseAuth.instance.currentUser;
+
+      if (firebaseUser == null) {
         Loader.showError("لم يتم العثور على المستخدم");
         return;
       }
@@ -48,33 +49,81 @@ class AccountViewModel extends GetxController {
         return;
       }
 
-      final localUser = LocalUser().getUserData();
-      final email = "${localUser.phone}@link.com";
+      final localUser = Get.find<UserSession>().user;
+
+      if (localUser == null) {
+        Loader.showError("❌ المستخدم غير موجود");
+        return;
+      }
+
+      final base = localUser.user;
+
+      final email = "${base.phone}@link.com";
 
       Loader.show();
 
+      // ============================================================
       // 🔐 Re-auth
+      // ============================================================
+
       final credential = EmailAuthProvider.credential(
         email: email,
         password: oldPass,
       );
 
-      await user.reauthenticateWithCredential(credential);
+      await firebaseUser.reauthenticateWithCredential(credential);
 
-      // 🔁 Update password in Firebase Auth
-      await user.updatePassword(newPass);
+      // ============================================================
+      // 🔁 Update Firebase Auth
+      // ============================================================
 
-      // 🔄 Update password in Firebase Realtime DB
-      final updatedUser = localUser.copyWith(password: newPass);
+      await firebaseUser.updatePassword(newPass);
+
+      // ============================================================
+      // 🧠 Build Updated User
+      // ============================================================
+
+      BaseUser updatedBase;
+
+      if (base is AssistantUser) {
+        updatedBase = AssistantUser(
+          uid: base.uid,
+          name: base.name,
+          phone: base.phone,
+          email: base.email,
+          password: newPass,
+
+          clinicKey: base.clinicKey,
+          doctorKey: base.doctorKey,
+          transferNumber: base.transferNumber,
+          isInstaPay: base.isInstaPay,
+
+          userType: base.userType,
+          isProfileCompleted: base.isProfileCompleted,
+        );
+      } else {
+        updatedBase = base.copyWith(password: newPass);
+      }
+
+      final updatedUser = LocalUser(updatedBase);
+
+      // ============================================================
+      // 💾 Update DB
+      // ============================================================
 
       await AuthenticationService().updateClientsData(
         userclient: updatedUser,
         voidCallBack: (status) async {
           if (status == ResponseStatus.success) {
-             updatedUser.saveLocal();
+            // ✅ update session بدل saveLocal
+            await Get.find<UserSession>().updateUser(updatedBase);
           }
         },
       );
+
+      // ============================================================
+      // 🧹 Clear fields
+      // ============================================================
 
       oldPasswordController.clear();
       newPasswordController.clear();

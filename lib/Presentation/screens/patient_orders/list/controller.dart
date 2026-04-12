@@ -10,18 +10,18 @@ class OrdersListViewModel extends GetxController {
   StreamSubscription<DatabaseEvent>? _addSub;
   StreamSubscription<DatabaseEvent>? _changeSub;
   StreamSubscription<DatabaseEvent>? _removeSub;
+
   List<OrderModel> get activeOrders {
-    return orders.where((o) =>
-    o.status != "delivered" &&
-        o.status != "cancelled").toList();
+    return orders
+        .where((o) => o.status != "delivered" && o.status != "cancelled")
+        .toList();
   }
 
   List<OrderModel> get finishedOrders {
-    return orders.where((o) =>
-    o.status == "delivered" ||
-        o.status == "cancelled").toList();
+    return orders
+        .where((o) => o.status == "delivered" || o.status == "cancelled")
+        .toList();
   }
-
 
   bool isLoading = false;
 
@@ -38,7 +38,7 @@ class OrdersListViewModel extends GetxController {
   // 📥 FETCH ORDERS (REALTIME LISTENER – Firebase only)
   // ---------------------------------------------------------------------------
   Future<void> fetchOrders() async {
-    final patientKey = LocalUser().getUserData().key;
+    final patientKey = Get.find<UserSession>().user?.uid;
 
     if (patientKey == null || patientKey.isEmpty) {
       isLoading = false;

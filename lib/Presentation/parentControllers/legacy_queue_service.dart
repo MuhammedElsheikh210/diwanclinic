@@ -11,9 +11,43 @@ class LegacyQueueService {
   // 🔥 DOCTOR RESOLVER (مهم جدًا)
   // ------------------------------------------------------------
   String? _resolveDoctorUid(String? doctorUid) {
-    if (doctorUid != null && doctorUid.isNotEmpty) return doctorUid;
+    // ============================================================
+    // ✅ PRIORITY: PARAM
+    // ============================================================
 
-    return LocalUser().getUserData().doctorKey;
+    if (doctorUid != null && doctorUid.isNotEmpty) {
+      return doctorUid;
+    }
+
+    // ============================================================
+    // 🧠 SESSION USER
+    // ============================================================
+
+    final user = Get.find<UserSession>().user?.user;
+
+    if (user == null) return null;
+
+    // ============================================================
+    // 👨‍⚕️ DOCTOR
+    // ============================================================
+
+    if (user is DoctorUser) {
+      return user.uid;
+    }
+
+    // ============================================================
+    // 🧑‍⚕️ ASSISTANT
+    // ============================================================
+
+    if (user is AssistantUser) {
+      return user.doctorKey;
+    }
+
+    // ============================================================
+    // 👤 DEFAULT
+    // ============================================================
+
+    return user.uid;
   }
 
   // ------------------------------------------------------------

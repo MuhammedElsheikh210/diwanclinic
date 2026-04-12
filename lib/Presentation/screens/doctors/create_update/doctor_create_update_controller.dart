@@ -13,9 +13,9 @@ class CreateDoctorViewModel extends GetxController {
   final TextEditingController instagramController = TextEditingController();
   final TextEditingController tiktokController = TextEditingController();
   final TextEditingController specializationNameController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController qualificationsController =
-      TextEditingController();
+  TextEditingController();
 
   File? profileImageFile;
   File? coverImageFile;
@@ -25,7 +25,6 @@ class CreateDoctorViewModel extends GetxController {
   bool isUpdate = false;
   LocalUser? existingDoctor;
 
-  /// 🧠 NEW → Specializations
   List<CategoryEntity?>? specializations;
   CategoryEntity? selectedSpecialization;
 
@@ -46,7 +45,6 @@ class CreateDoctorViewModel extends GetxController {
     nameController.addListener(() => update());
     phoneController.addListener(() => update());
 
-    /// If opened from specialization screen → preselect
     if (specializeKey.isNotEmpty) {
       selectedSpecialization = CategoryEntity(
         key: specializeKey,
@@ -54,14 +52,13 @@ class CreateDoctorViewModel extends GetxController {
       );
     }
 
-    /// Load specializations if opened from medical center
     if (medicalCenterKey != null) {
       getSpecializations();
     }
 
-    if (existingDoctor != null) {
+    if (existingDoctor != null && existingDoctor!.isDoctor) {
       remoteReservationAbility =
-          existingDoctor?.remote_reservation_ability ?? 0;
+          existingDoctor!.asDoctor?.remoteReservationAbility ?? 0;
     }
   }
 
@@ -103,9 +100,10 @@ class CreateDoctorViewModel extends GetxController {
   Future<String?> _uploadImage(File file, String folder) async {
     try {
       final fileName = "${DateTime.now().millisecondsSinceEpoch}.jpg";
-      final ref = FirebaseStorage.instance.ref().child(
-        "doctors/$folder/$fileName",
-      );
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child("doctors/$folder/$fileName");
+
       await ref.putFile(file);
       return await ref.getDownloadURL();
     } catch (e) {
@@ -137,6 +135,7 @@ class CreateDoctorViewModel extends GetxController {
     if (profileImageFile != null) {
       profileUrl = await _uploadImage(profileImageFile!, "profile");
     }
+
     if (coverImageFile != null) {
       coverUrl = await _uploadImage(coverImageFile!, "cover");
     }
@@ -148,22 +147,41 @@ class CreateDoctorViewModel extends GetxController {
     }
   }
 
+  // ================== UPDATE ==================
+
   void _updateDoctor(LocalUser doctor, String? profileUrl, String? coverUrl) {
-    final updatedDoctor = doctor.copyWith(
+    final base = doctor.asDoctor;
+
+    if (base == null) return;
+
+    final updatedDoctorUser = DoctorUser(
+      uid: base.uid,
+      createdAt: base.createdAt,
+      userType: base.userType,
+      isProfileCompleted: base.isProfileCompleted,
+      fcmToken: base.fcmToken,
+      appVersion: base.appVersion,
+      email: base.email,
+      password: base.password,
+
       name: nameController.text,
-      doctorQualifications: qualificationsController.text,
       phone: phoneController.text,
-      whatsAppPhone: whatsappController.text,
+      profileImage: profileUrl ?? base.profileImage,
+      address: base.address,
+
+      doctorQualifications: qualificationsController.text,
+      specializationName: selectedSpecialization?.name,
+      specializeKey: selectedSpecialization?.key,
+
       facebookLink: facebookController.text,
       instagramLink: instagramController.text,
       tiktokLink: tiktokController.text,
-      specializationName: selectedSpecialization?.name,
-      specialize_key: selectedSpecialization?.key,
-      profileImage: profileUrl ?? doctor.profileImage,
-      coverImage: coverUrl ?? doctor.coverImage,
-      remote_reservation_ability: remoteReservationAbility,
-      medicalCenterKey: medicalCenterKey ?? doctor.medicalCenterKey,
+
+      totalRate: base.totalRate,
+      numberOfRates: base.numberOfRates,
     );
+
+    final updatedDoctor = LocalUser(updatedDoctorUser);
 
     AuthenticationService().updateClientsData(
       userclient: updatedDoctor,
@@ -175,41 +193,44 @@ class CreateDoctorViewModel extends GetxController {
     );
   }
 
+  // ================== CREATE ==================
+
   Future<void> _createDoctorAccount(
-    String? profileUrl,
-    String? coverUrl,
-  ) async {
+      String? profileUrl,
+      String? coverUrl,
+      ) async {
     final email = "${phoneController.text}@link.com";
     final password = phoneController.text;
 
     try {
       final userCred = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(email: email, password: password);
+          .createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
       final uid = userCred.user?.uid ?? "";
 
-      final doctor = LocalUser(
+      final doctorUser = DoctorUser(
         uid: uid,
-        key: const Uuid().v4(),
         phone: phoneController.text,
+        name: nameController.text,
+        email: email,
+        password: password,
+        userType: UserType.doctor,
+
         doctorQualifications: qualificationsController.text,
-        whatsAppPhone: whatsappController.text,
+        specializationName: selectedSpecialization?.name,
+        specializeKey: selectedSpecialization?.key,
+
         facebookLink: facebookController.text,
         instagramLink: instagramController.text,
         tiktokLink: tiktokController.text,
 
-        specializationName: selectedSpecialization?.name,
-        specialize_key: selectedSpecialization?.key,
-        identifier: email,
-        password: password,
-        userType: UserType.doctor,
-        medicalCenterKey: medicalCenterKey,
         profileImage: profileUrl,
-        coverImage: coverUrl,
-        isCompleteProfile: 0,
-        name: nameController.text,
-        remote_reservation_ability: remoteReservationAbility,
       );
+
+      final doctor = LocalUser(doctorUser);
 
       AuthenticationService().addClientsData(
         userclient: doctor,
@@ -229,13 +250,13 @@ class CreateDoctorViewModel extends GetxController {
   void refreshListView() {
     if (medicalCenterKey != null && medicalCenterKey!.isNotEmpty) {
       final doctorVM = initController(
-        () => DoctorViewModel.byCenter(medicalCenterKey!),
+            () => DoctorViewModel.byCenter(medicalCenterKey!),
       );
       doctorVM.getDoctorsByCenter(medicalCenterKey!);
       doctorVM.update();
     } else {
       final doctorVM = initController(
-        () => DoctorViewModel(specializeKey: specializeKey),
+            () => DoctorViewModel(specializeKey: specializeKey),
       );
       doctorVM.getData();
       doctorVM.update();

@@ -1,4 +1,3 @@
-
 import '../../../../../index/index_main.dart';
 
 class CreateExpenseCategoryViewModel extends GetxController {
@@ -41,9 +40,9 @@ class CreateExpenseCategoryViewModel extends GetxController {
         ) ??
         CategoryEntity(
           key: const Uuid().v4(),
-          uid: LocalUser().getUserData().uid ?? "",
+          uid: Get.find<UserSession>().user?.uid ?? "",
           name: nameController.text,
-          categoryType: selectedCategoryType?.key, // Add this line
+          categoryType: selectedCategoryType?.key,
         );
 
     is_update ? updateCategory(category) : createCategory(category);

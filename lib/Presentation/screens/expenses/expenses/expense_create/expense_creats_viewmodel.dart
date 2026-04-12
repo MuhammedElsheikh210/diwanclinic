@@ -68,8 +68,8 @@ class CreateExpenseViewModel extends GetxController {
     needToPayController.text = (expense.pending_amount ?? 0).toString();
 
     // ✅ set the max allowed for validation
-    totalInvoiceAmount = (expense.pending_amount ?? expense.totalAmount ?? 0)
-        .toDouble();
+    totalInvoiceAmount =
+        (expense.pending_amount ?? expense.totalAmount ?? 0).toDouble();
 
     selectedDateTimestamp = expense.createAt;
 
@@ -110,7 +110,7 @@ class CreateExpenseViewModel extends GetxController {
         ) ??
         TransactionsEntity(
           key: const Uuid().v4(),
-          uid: LocalUser().getUserData().uid,
+          uid: Get.find<UserSession>().user?.uid,
           createAt: createAt ?? DateTime.now().millisecondsSinceEpoch,
           // ✅ use picked date
           isRepeatExpense: 0,
@@ -120,15 +120,17 @@ class CreateExpenseViewModel extends GetxController {
           transactionType: TransactionEnum.expense.name,
           totalAmount:
               selectedPaymentMethod?.id == 0 || selectedPaymentMethod == null
-              ? billAmount
-              : null,
+                  ? billAmount
+                  : null,
           pending_amount: selectedPaymentMethod?.id == 1 ? billAmount : null,
-          statusKey: selectedPaymentMethod?.id == 1
-              ? BilesStatus.comming.name
-              : BilesStatus.finished.name,
-          status: selectedPaymentMethod?.id == 1
-              ? BilesStatus.comming.value
-              : BilesStatus.finished.value,
+          statusKey:
+              selectedPaymentMethod?.id == 1
+                  ? BilesStatus.comming.name
+                  : BilesStatus.finished.name,
+          status:
+              selectedPaymentMethod?.id == 1
+                  ? BilesStatus.comming.value
+                  : BilesStatus.finished.value,
         );
 
     isUpdate == true ? _updateExpense(expense) : _createExpense(expense);
@@ -164,9 +166,10 @@ class CreateExpenseViewModel extends GetxController {
     Get.back();
 
     // Use the existing controller if already in memory
-    final expenseVM = Get.isRegistered<ExpenseViewModel>()
-        ? Get.find<ExpenseViewModel>()
-        : initController(() => ExpenseViewModel());
+    final expenseVM =
+        Get.isRegistered<ExpenseViewModel>()
+            ? Get.find<ExpenseViewModel>()
+            : initController(() => ExpenseViewModel());
 
     final now = DateTime.now();
     final startOfMonth = DateTime(now.year, now.month, 1);

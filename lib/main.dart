@@ -1,5 +1,4 @@
 import 'dart:developer';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'index/index_main.dart';
 
 /// 🔔 MUST be top-level
@@ -14,66 +13,55 @@ void main() {
     () async {
       WidgetsFlutterBinding.ensureInitialized();
 
-      // 🔥 Firebase
       await Firebase.initializeApp();
 
-
-
-      // 🔹 Lock Orientation
-      await SystemChrome.setPreferredOrientations([
-        DeviceOrientation.portraitUp,
-      ]);
-
-      // 🔹 Local DB
-      //   DatabaseService().deleteDatabaseFile();
+      // DB
       final dbService = DatabaseService();
       await dbService.database;
-      await dbService.checkTables();
 
-      // 🔹 Storage
-      await StorageService().init();
+      // Storage
+      final storage = StorageService();
+      await storage.init();
+      Get.put(storage, permanent: true);
 
-      // 🔔 Notification Core
+      // 🔥 Local User Module
+      Get.lazyPut<LocalUserDataSource>(
+        () => LocalUserDataSource(Get.find()),
+        fenix: true,
+      );
+
+      Get.lazyPut<LocalUserRepository>(
+        () => LocalUserRepository(Get.find()),
+        fenix: true,
+      );
+
+      await Get.putAsync<UserSession>(
+        () async => await UserSession(Get.find()).init(),
+      );
+
+      // Notifications
       await NotificationService().initCore();
 
-      // 🔔 Background notifications
-      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-
-      final apns = await FirebaseMessaging.instance.getAPNSToken();
-      log("APNS DIRECT CHECK: $apns");
-      log("BUNDLE INFO: ${await PackageInfo.fromPlatform()}");
-
-      // 🔥 Remote Config
-      await FirebaseRemoteConfigService().checkForceUpdate();
-
-      // 🔹 Register Dependencies
+      // Bindings
       Binding().dependencies();
 
-      // // ============================================================
-      // // 🔥 START SYNC ENGINE (AFTER DEPENDENCIES)
-      // // ============================================================
-      //
-      // final syncController = Get.find<ReservationSyncController>();
-      // syncController.init();
-
-      // ============================================================
-
-      // 🎨 ThemeScope
-      final app = await ThemeScopeWidget.initialize(const MyApp());
-
+      // ✅ IMPORTANT: ScreenUtil FIRST
       runApp(
         ScreenUtilInit(
-          designSize: const Size(430, 932),
+          designSize: const Size(375, 812),
           minTextAdapt: true,
           splitScreenMode: true,
-          useInheritedMediaQuery: true,
-          builder: (_, __) => app,
+          builder: (_, __) {
+            return ThemeScopeWidget(
+              preferences: ThemePreferences(), // 👈 مش null
+              child: const MyApp(),
+            );
+          },
         ),
       );
     },
     (e, s) {
       debugPrint("❌ ZONE ERROR: $e");
-      debugPrintStack(stackTrace: s);
     },
   );
 }
@@ -82,7 +70,6 @@ class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
   String getLocalLan() {
-    final localStorage = LocalStorage_language();
     return "ar";
   }
 
@@ -103,7 +90,6 @@ class MyApp extends StatelessWidget {
 
       supportedLocales: const [Locale('en'), Locale('ar')],
 
-      // 🌐 Language
       locale: Locale(getLocalLan()),
       fallbackLocale: const Locale('ar'),
 

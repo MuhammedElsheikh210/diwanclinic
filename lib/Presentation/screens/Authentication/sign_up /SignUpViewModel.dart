@@ -1,18 +1,22 @@
 import 'package:firebase_database/firebase_database.dart';
-
 import '../../../../index/index_main.dart';
 
 class SignUpViewModel extends GetxController {
   final nameController = TextEditingController();
   final phoneController = TextEditingController();
   final addressController = TextEditingController();
-
-  RxBool isNameValid = false.obs;
-  RxBool isPhoneValid = false.obs;
-  RxBool isAddressValid = false.obs;
   final passwordController = TextEditingController();
 
-  RxBool isPasswordValid = false.obs;
+  final isNameValid = false.obs;
+  final isPhoneValid = false.obs;
+  final isAddressValid = false.obs;
+  final isPasswordValid = false.obs;
+
+  final UserSession _session = Get.find();
+
+  // ============================================================
+  // VALIDATION
+  // ============================================================
 
   void validatePassword(String value) {
     isPasswordValid.value = value.length >= 6;
@@ -30,12 +34,11 @@ class SignUpViewModel extends GetxController {
     isAddressValid.value = value.trim().length >= 5;
   }
 
-  /// ⭐ MAIN SIGN-UP LOGIC ⭐
+  // ============================================================
+  // SIGN UP
+  // ============================================================
+
   Future<void> signUp() async {
-
-    print(" tokeeen is ${NotificationService().token}");
-    print(" tokeeen is ${await ConstantsData.firebaseToken()}");
-
     final name = nameController.text.trim();
     final phone = phoneController.text.trim();
     final address = addressController.text.trim();
@@ -59,36 +62,41 @@ class SignUpViewModel extends GetxController {
       final userCred = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(email: email, password: password);
 
-      final uid = userCred.user?.uid ?? "";
-      final generatedKey = const Uuid().v4();
+      final uid = userCred.user?.uid;
 
+      if (uid == null) {
+        Loader.showError("حدث خطأ أثناء إنشاء الحساب");
+        return;
+      }
 
-      final newUser = LocalUser(
+      final token = NotificationService().token;
+
+      final baseUser = BaseUser(
         uid: uid,
-        key: generatedKey,
         name: name,
         phone: phone,
         address: address,
-        fcmToken: await ConstantsData.firebaseToken(),
-        userType: UserType.patient,
-        identifier: email,
+        email: email,
         password: password,
+        fcmToken: token,
+        userType: UserType.patient,
+        isProfileCompleted: true,
       );
 
-      await AuthenticationService().addClientsData(
-        userclient: newUser,
-        voidCallBack: (_) async {
-          newUser.saveLocal();
+      final localUser = LocalUser(baseUser);
 
-          // 2️⃣ 🔥 notify others that clients changed
+      await AuthenticationService().addClientsData(
+        userclient: localUser,
+        voidCallBack: (_) async {
+          Loader.dismiss();
+
+          await _finalizeSignUp(localUser);
+          await _updateFcmToken(token);
           await _updateClientsSyncStatus();
         },
       );
 
-      Loader.dismiss();
       Loader.showSuccess("تم إنشاء الحساب بنجاح 🎉");
-
-      Get.offAll(() => const MainPage(initialIndex: 0), binding: Binding());
     } on FirebaseAuthException catch (e) {
       Loader.dismiss();
       Loader.showError(e.message ?? "فشل إنشاء الحساب");
@@ -97,6 +105,44 @@ class SignUpViewModel extends GetxController {
       Loader.showError("حدث خطأ غير متوقع");
     }
   }
+
+  // ============================================================
+  // FINALIZE (مثل login)
+  // ============================================================
+
+  Future<void> _finalizeSignUp(LocalUser user) async {
+    await _session.setUser(user);
+    await NotificationService().subscribeAfterLogin();
+
+    Get.offAllNamed(mainpage);
+  }
+
+  // ============================================================
+  // TOKEN SYNC (shared logic)
+  // ============================================================
+
+  Future<void> _updateFcmToken(String? token) async {
+    if (token == null) return;
+
+    final user = _session.user;
+
+    if (user?.uid == null) return;
+
+    if (user!.user.fcmToken == token) return;
+
+    final updated = user.user.copyWith(fcmToken: token);
+
+    await AuthenticationService().updateClientsData(
+      userclient: LocalUser(updated),
+      voidCallBack: (_) {},
+    );
+
+    await _session.setUser(LocalUser(updated));
+  }
+
+  // ============================================================
+  // SYNC META
+  // ============================================================
 
   Future<void> _updateClientsSyncStatus() async {
     final ref = FirebaseDatabase.instance.ref("sync_meta/clients");

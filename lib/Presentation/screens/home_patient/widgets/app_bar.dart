@@ -8,6 +8,8 @@ class HomePatientAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final currentUser = Get.find<UserSession>().user;
+
     return AppBar(
       backgroundColor: AppColors.white,
       elevation: 0,
@@ -32,8 +34,10 @@ class HomePatientAppBar extends StatelessWidget implements PreferredSizeWidget {
                   color: AppColors.textSecondaryParagraph,
                 ),
               ),
+
               Text(
-                LocalUser().getUserData().name ?? "",
+                currentUser?.user.name ?? "",
+
                 style: context.typography.mdBold.copyWith(
                   color: AppColors.background_black,
                   fontSize: 16.sp,
@@ -115,9 +119,7 @@ class HomePatientAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           ],
         ),
-        child: Center(
-          child: SvgPicture.asset(icon, width: 20.w, height: 20.h),
-        ),
+        child: Center(child: SvgPicture.asset(icon, width: 20.w, height: 20.h)),
       ),
     );
   }

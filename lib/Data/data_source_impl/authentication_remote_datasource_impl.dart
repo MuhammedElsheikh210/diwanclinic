@@ -16,15 +16,19 @@ class AuthenticationRemoteDataSourceImpl
   // 🌊 STREAM CONTROLLERS
   // ============================================================
 
-  final _addedController = StreamController<LocalUser>.broadcast();
-  final _changedController = StreamController<LocalUser>.broadcast();
+  final _addedController =
+  StreamController<Map<String, dynamic>>.broadcast();
+
+  final _changedController =
+  StreamController<Map<String, dynamic>>.broadcast();
+
   final _removedController = StreamController<String>.broadcast();
 
   @override
-  Stream<LocalUser> get onAdded => _addedController.stream;
+  Stream<Map<String, dynamic>> get onAdded => _addedController.stream;
 
   @override
-  Stream<LocalUser> get onChanged => _changedController.stream;
+  Stream<Map<String, dynamic>> get onChanged => _changedController.stream;
 
   @override
   Stream<String> get onRemoved => _removedController.stream;
@@ -43,18 +47,18 @@ class AuthenticationRemoteDataSourceImpl
     print("🎧 Listening on → $path");
 
     final addedSub = _rootRef!.onChildAdded.listen((event) {
-      final model = _parseUser(event.snapshot);
-      if (model != null) {
-        print("➕ Client Added → ${model.key}");
-        _addedController.add(model);
+      final json = _parse(event.snapshot);
+      if (json != null) {
+        print("➕ Client Added → ${json['uid']}");
+        _addedController.add(json);
       }
     });
 
     final changedSub = _rootRef!.onChildChanged.listen((event) {
-      final model = _parseUser(event.snapshot);
-      if (model != null) {
-        print("🔄 Client Updated → ${model.key}");
-        _changedController.add(model);
+      final json = _parse(event.snapshot);
+      if (json != null) {
+        print("🔄 Client Updated → ${json['uid']}");
+        _changedController.add(json);
       }
     });
 
@@ -69,13 +73,13 @@ class AuthenticationRemoteDataSourceImpl
     _subscriptions.addAll([addedSub, changedSub, removedSub]);
   }
 
-
   // ============================================================
-// 🌐 FETCH CLIENTS (ONLINE READ)
-// ============================================================
+  // 🌐 FETCH CLIENTS
+  // ============================================================
 
   @override
-  Future<List<LocalUser>> fetchClients(Map<String, dynamic> filters) async {
+  Future<List<Map<String, dynamic>>> fetchClients(
+      Map<String, dynamic> filters) async {
     try {
       final response = await _clientSourceRepo.request(
         HttpMethod.GET,
@@ -88,15 +92,16 @@ class AuthenticationRemoteDataSourceImpl
         return [];
       }
 
-      final List<LocalUser> users = [];
+      final List<Map<String, dynamic>> users = [];
 
       response.forEach((key, value) {
         if (value is Map) {
           final json = Map<String, dynamic>.from(
             value.map((k, v) => MapEntry(k.toString(), v)),
           );
-          json['key'] = key;
-          users.add(LocalUser.fromJson(json));
+
+          json['uid'] = key; // 🔥 مهم جدًا
+          users.add(json);
         }
       });
 
@@ -109,10 +114,10 @@ class AuthenticationRemoteDataSourceImpl
   }
 
   // ============================================================
-  // 🧠 PARSE USER
+  // 🧠 PARSE SNAPSHOT
   // ============================================================
 
-  LocalUser? _parseUser(DataSnapshot snapshot) {
+  Map<String, dynamic>? _parse(DataSnapshot snapshot) {
     final data = snapshot.value;
 
     if (data == null || data is! Map) return null;
@@ -122,9 +127,9 @@ class AuthenticationRemoteDataSourceImpl
         data.map((k, v) => MapEntry(k.toString(), v)),
       );
 
-      json['key'] = snapshot.key;
+      json['uid'] = snapshot.key;
 
-      return LocalUser.fromJson(json);
+      return json;
     } catch (e) {
       print("🔥 Client parse error → $e");
       return null;
@@ -132,39 +137,43 @@ class AuthenticationRemoteDataSourceImpl
   }
 
   // ============================================================
-  // ☁️ CREATE CLIENT
+  // ☁️ CREATE
   // ============================================================
 
   @override
-  Future<void> createClient(LocalUser user) async {
-    final key = user.key;
+  Future<void> createClient(Map<String, dynamic> user) async {
+    final key = user['uid'];
+    if (key == null) return;
+
     print("☁️ Create Client → $key");
 
     await _clientSourceRepo.request(
       HttpMethod.PATCH,
       "/${ApiConstatns.clients}/$key.json",
-      params: user.toJson(),
+      params: user,
     );
   }
 
   // ============================================================
-  // 🔄 UPDATE CLIENT
+  // 🔄 UPDATE
   // ============================================================
 
   @override
-  Future<void> updateClient(LocalUser user) async {
-    final key = user.key;
+  Future<void> updateClient(Map<String, dynamic> user) async {
+    final key = user['uid'];
+    if (key == null) return;
+
     print("☁️ Update Client → $key");
 
     await _clientSourceRepo.request(
       HttpMethod.PATCH,
       "/${ApiConstatns.clients}/$key.json",
-      params: user.toJson(),
+      params: user,
     );
   }
 
   // ============================================================
-  // ❌ DELETE CLIENT
+  // ❌ DELETE
   // ============================================================
 
   @override

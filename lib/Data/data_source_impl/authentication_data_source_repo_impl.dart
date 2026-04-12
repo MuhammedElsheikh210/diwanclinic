@@ -2,27 +2,26 @@
 import '../../index/index_main.dart';
 
 class AuthenticationDataSourceRepoImpl extends AuthenticationDataSourceRepo {
-  final BaseSQLiteDataSourceRepo<LocalUser> _sqliteRepo;
+  final BaseSQLiteDataSourceRepo<Map<String, dynamic>> _sqliteRepo;
 
   AuthenticationDataSourceRepoImpl()
-    : _sqliteRepo = BaseSQLiteDataSourceRepo<LocalUser>(
-        tableName: "clients",
-        fromJson: (json) => LocalUser.fromJson(json),
-        toJson: (model) => model.toJson(),
-        getId: (model) => model.key,
-      );
+      : _sqliteRepo = BaseSQLiteDataSourceRepo<Map<String, dynamic>>(
+    tableName: "clients",
+    fromJson: (json) => json,
+    toJson: (model) => model,
+    getId: (model) => model['uid'], // 🔥 مهم جدًا
+  );
 
   // ============================================================
   // 🔹 LOCAL CLIENTS (Offline First)
   // ============================================================
 
   @override
-  Future<List<LocalUser?>> getClients(SQLiteQueryParams query) async {
+  Future<List<LocalUser>> getClients(SQLiteQueryParams query) async {
     final finalQuery = SQLiteQueryParams(
-      where:
-          query.where != null
-              ? "(${query.where}) AND is_deleted = 0"
-              : "is_deleted = 0",
+      where: query.where != null
+          ? "(${query.where}) AND is_deleted = 0"
+          : "is_deleted = 0",
       whereArgs: query.whereArgs,
       orderBy: query.orderBy,
       limit: query.limit,
@@ -32,29 +31,35 @@ class AuthenticationDataSourceRepoImpl extends AuthenticationDataSourceRepo {
       distinct: query.distinct,
     );
 
-    return await _sqliteRepo.getAll(query: finalQuery);
+    final result = await _sqliteRepo.getAll(query: finalQuery);
+
+    return result
+        .map((e) => LocalUser.fromMap(e))
+        .toList();
   }
 
   @override
   Future<void> addClient(LocalUser model) async {
     final now = DateTime.now().millisecondsSinceEpoch;
 
-    final newModel = model.copyWith(
-      updatedAt: now,
-      serverUpdatedAt: 0,
-      isDeleted: false,
-    );
+    final json = model.toJson();
 
-    await _sqliteRepo.addItem(newModel);
+    json['updatedAt'] = now;
+    json['serverUpdatedAt'] = 0;
+    json['is_deleted'] = 0;
+
+    await _sqliteRepo.addItem(json);
   }
 
   @override
   Future<void> updateClient(LocalUser model) async {
     final now = DateTime.now().millisecondsSinceEpoch;
 
-    final updated = model.copyWith(updatedAt: now);
+    final json = model.toJson();
 
-    await _sqliteRepo.updateItem(updated);
+    json['updatedAt'] = now;
+
+    await _sqliteRepo.updateItem(json);
   }
 
   @override
@@ -64,9 +69,10 @@ class AuthenticationDataSourceRepoImpl extends AuthenticationDataSourceRepo {
 
     final now = DateTime.now().millisecondsSinceEpoch;
 
-    final deleted = existing.copyWith(isDeleted: true, updatedAt: now);
+    existing['is_deleted'] = 1;
+    existing['updatedAt'] = now;
 
-    await _sqliteRepo.updateItem(deleted);
+    await _sqliteRepo.updateItem(existing);
   }
 
   // ============================================================
@@ -75,30 +81,29 @@ class AuthenticationDataSourceRepoImpl extends AuthenticationDataSourceRepo {
 
   @override
   Future<void> upsertFromServer(LocalUser serverModel) async {
-    if (serverModel.key == null) return;
+    final json = serverModel.toJson();
 
-    final local = await _sqliteRepo.getItem(serverModel.key!);
+    final key = json['uid'];
+    if (key == null) return;
+
+    final local = await _sqliteRepo.getItem(key);
 
     final serverTime =
-        serverModel.serverUpdatedAt ?? DateTime.now().millisecondsSinceEpoch;
+        json['serverUpdatedAt'] ??
+            DateTime.now().millisecondsSinceEpoch;
+
+    json['serverUpdatedAt'] = serverTime;
+    json['updatedAt'] = serverTime;
 
     if (local == null) {
-      await _sqliteRepo.addItem(
-        serverModel.copyWith(
-          serverUpdatedAt: serverTime,
-          updatedAt: serverTime,
-        ),
-      );
+      await _sqliteRepo.addItem(json);
       return;
     }
 
-    if (serverTime >= (local.serverUpdatedAt ?? 0)) {
-      await _sqliteRepo.updateItem(
-        serverModel.copyWith(
-          serverUpdatedAt: serverTime,
-          updatedAt: serverTime,
-        ),
-      );
+    final localServerTime = local['serverUpdatedAt'] ?? 0;
+
+    if (serverTime >= localServerTime) {
+      await _sqliteRepo.updateItem(json);
     }
   }
 
@@ -107,9 +112,12 @@ class AuthenticationDataSourceRepoImpl extends AuthenticationDataSourceRepo {
     final local = await _sqliteRepo.getItem(key);
     if (local == null) return;
 
-    final serverTime = serverUpdatedAt ?? DateTime.now().millisecondsSinceEpoch;
+    final serverTime =
+        serverUpdatedAt ?? DateTime.now().millisecondsSinceEpoch;
 
-    await _sqliteRepo.updateItem(local.copyWith(serverUpdatedAt: serverTime));
+    local['serverUpdatedAt'] = serverTime;
+
+    await _sqliteRepo.updateItem(local);
   }
 
   @override
@@ -121,6 +129,8 @@ class AuthenticationDataSourceRepoImpl extends AuthenticationDataSourceRepo {
       ),
     );
 
-    return list.whereType<LocalUser>().toList();
+    return list
+        .map((e) => LocalUser.fromMap(e))
+        .toList();
   }
 }

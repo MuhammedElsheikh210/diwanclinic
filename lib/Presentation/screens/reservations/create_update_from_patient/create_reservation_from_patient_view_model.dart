@@ -105,13 +105,13 @@ class CreateReservationFromPatientViewModel extends GetxController {
 
   /// Fill fields from LocalUser (for patient)
   void _fillFromLocalUser() {
-    final user = LocalUser().getUserData();
+     final user = Get.find<UserSession>().user;
+
     clientUser = user;
-    patientNameController.text = user.name ?? "";
-    patientPhoneController.text = user.phone ?? "";
-    patientCodeController.text = user.code ?? "";
-    patientAddressController.text = user.address ?? "";
-    patient_name = user.name;
+    patientNameController.text = user?.name ?? "";
+    patientPhoneController.text = user?.phone ?? "";
+    patientAddressController.text = user?.address ?? "";
+    patient_name = user?.name;
   }
 
   void _updateRestAmount() {
@@ -156,13 +156,14 @@ class CreateReservationFromPatientViewModel extends GetxController {
       ).format(DateTime.fromMillisecondsSinceEpoch(create_at!));
     }
 
-    clientUser ??= LocalUser().getUserData();
+    clientUser ??= Get.find<UserSession>().user;
+
 
     final reservation =
         existingReservation?.copyWith(
           key: existingReservation?.key,
-          doctorKey: LocalUser().getUserData().doctorKey,
-          patientKey: clientUser?.key,
+       //   doctorKey: LocalUser().getUserData().doctorKey,
+        //  patientKey: clientUser?.key,
           patientName: selectedType == "زيارة مندوب"
               ? delegateNameController.text
               : patient_name,
@@ -178,8 +179,8 @@ class CreateReservationFromPatientViewModel extends GetxController {
         ) ??
         ReservationModel(
           key: const Uuid().v4(),
-          doctorKey: LocalUser().getUserData().doctorKey,
-          patientKey: clientUser?.key,
+        //  doctorKey: LocalUser().getUserData().doctorKey,
+          patientKey: clientUser?.uid,
           createAt: DateTime.now().millisecondsSinceEpoch,
           patientName: selectedType == "زيارة مندوب"
               ? delegateNameController.text

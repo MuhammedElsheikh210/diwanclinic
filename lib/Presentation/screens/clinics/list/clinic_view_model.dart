@@ -15,9 +15,11 @@ class ClinicViewModel extends GetxController {
   }
 
   void getData() {
-    /// doctorKey لو جاي من الادمن
-    /// غير كده نستخدم المستخدم الحالي
-    final String uid = doctorKey ?? LocalUser().getUserData().uid ?? "";
+    final user = Get.find<UserSession>().user?.user;
+    final String uid =
+        doctorKey ??
+        (user is AssistantUser ? user.doctorKey : user?.uid) ??
+        (throw Exception("❌ UID missing"));
 
     ClinicService().getClinicsData(
       data: {},

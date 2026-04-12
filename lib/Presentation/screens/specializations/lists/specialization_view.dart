@@ -11,13 +11,14 @@ class SpecializationView extends StatefulWidget {
 }
 
 class _SpecializationViewState extends State<SpecializationView> {
-  late final user = LocalUser().getUserData();
+  final user = Get.find<UserSession>().user;
 
-  bool get isAdmin => user.userType?.name == 'admin';
+  bool get isAdmin => user?.user.userType == UserType.admin;
 
-  bool get isSales => user.userType?.name == 'sales';
+  bool get isSales => user?.user.userType == UserType.sales;
 
   bool get canManageSpecialization => isAdmin || isSales;
+
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -74,9 +75,10 @@ class _SpecializationViewState extends State<SpecializationView> {
                 ),
                 child: Center(
                   child: Svgicon(
-                    icon: canManageSpecialization
-                        ? IconsConstants.fab_Button
-                        : IconsConstants.add,
+                    icon:
+                        canManageSpecialization
+                            ? IconsConstants.fab_Button
+                            : IconsConstants.add,
                     color: AppColors.white,
                   ),
                 ),
@@ -84,45 +86,47 @@ class _SpecializationViewState extends State<SpecializationView> {
             ),
 
             /// ✅ Main Content
-            body: controller.listCategories == null
-                ? const ShimmerLoader()
-                : controller.listCategories!.isEmpty
-                ? const NoDataWidget()
-                : Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 10.w,
-                      vertical: 10.h,
-                    ),
-                    child: GridView.builder(
-                      physics: const BouncingScrollPhysics(),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3, // ✅ two per row
-                        mainAxisSpacing: 10.h,
-                        crossAxisSpacing: 10.w,
-                        childAspectRatio: 0.8, // good balance for cards
+            body:
+                controller.listCategories == null
+                    ? const ShimmerLoader()
+                    : controller.listCategories!.isEmpty
+                    ? const NoDataWidget()
+                    : Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10.w,
+                        vertical: 10.h,
                       ),
-                      itemCount: controller.listCategories!.length,
-                      itemBuilder: (context, index) {
-                        final category = controller.listCategories![index];
-                        if (category == null) return const SizedBox.shrink();
+                      child: GridView.builder(
+                        physics: const BouncingScrollPhysics(),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3, // ✅ two per row
+                          mainAxisSpacing: 10.h,
+                          crossAxisSpacing: 10.w,
+                          childAspectRatio: 0.8, // good balance for cards
+                        ),
+                        itemCount: controller.listCategories!.length,
+                        itemBuilder: (context, index) {
+                          final category = controller.listCategories![index];
+                          if (category == null) return const SizedBox.shrink();
 
-                        return InkWell(
-                          borderRadius: BorderRadius.circular(16.r),
-                          onTap: () => Get.to(
-                            () => DoctorView(
-                              specializeKey: category.key ?? "",
-                              specializeName: category.name ?? "",
+                          return InkWell(
+                            borderRadius: BorderRadius.circular(16.r),
+                            onTap:
+                                () => Get.to(
+                                  () => DoctorView(
+                                    specializeKey: category.key ?? "",
+                                    specializeName: category.name ?? "",
+                                  ),
+                                ),
+                            child: SpecializeCard(
+                              categoryEntity: category,
+                              //  controller: controller,
+                              showAdminActions: canManageSpecialization,
                             ),
-                          ),
-                          child: SpecializeCard(
-                            categoryEntity: category,
-                            //  controller: controller,
-                            showAdminActions: canManageSpecialization,
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
-                  ),
           );
         },
       ),

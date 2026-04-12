@@ -34,8 +34,9 @@ class WhatsAppGroupView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = LocalUser().getUserData();
-    final isAssistant = user.userType?.name == Strings.assistant;
+    final user = Get.find<UserSession>().user;
+
+    final isAssistant = user?.user.userType?.name == Strings.assistant;
 
     return Scaffold(
       backgroundColor: AppColors.white,

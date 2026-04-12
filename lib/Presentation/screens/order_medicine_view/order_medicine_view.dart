@@ -37,9 +37,10 @@ class OrderMedicineScreen extends StatelessWidget {
               const Divider(height: 1),
 
               Expanded(
-                child: vm.currentStep == 0
-                    ? _uploadStep(context, vm)
-                    : _confirmStep(context, vm),
+                child:
+                    vm.currentStep == 0
+                        ? _uploadStep(context, vm)
+                        : _confirmStep(context, vm),
               ),
             ],
           ),
@@ -176,25 +177,24 @@ class OrderMedicineScreen extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 16,
-          backgroundColor: isDone || isActive
-              ? AppColors.primary
-              : Colors.grey.shade300,
-          child: isDone
-              ? const Icon(Icons.check, size: 18, color: Colors.white)
-              : Text(
-                  "$index",
-                  style: context.typography.smSemiBold.copyWith(
-                    color: Colors.white,
+          backgroundColor:
+              isDone || isActive ? AppColors.primary : Colors.grey.shade300,
+          child:
+              isDone
+                  ? const Icon(Icons.check, size: 18, color: Colors.white)
+                  : Text(
+                    "$index",
+                    style: context.typography.smSemiBold.copyWith(
+                      color: Colors.white,
+                    ),
                   ),
-                ),
         ),
         SizedBox(height: 6.h),
         Text(
           title,
           style: context.typography.xsMedium.copyWith(
-            color: isActive
-                ? AppColors.primary
-                : AppColors.textSecondaryParagraph,
+            color:
+                isActive ? AppColors.primary : AppColors.textSecondaryParagraph,
           ),
         ),
       ],
@@ -261,9 +261,9 @@ class OrderMedicineScreen extends StatelessWidget {
                   type: TextInputType.phone,
                   errorText: vm.phoneError ? "رقم هاتف غير صحيح" : null,
                 ),
-                _whatsAppSame(vm, context),
-                if (!vm.isWhatsAppSame)
-                  _field("رقم الواتساب", vm.whatsappController, context),
+                // _whatsAppSame(vm, context),
+                // if (!vm.isWhatsAppSame)
+                //   _field("رقم الواتساب", vm.whatsappController, context),
               ],
             ),
           ),
@@ -506,13 +506,14 @@ class OrderMedicineScreen extends StatelessWidget {
             mainAxisSpacing: 10,
           ),
           itemCount: vm.selectedImages.length,
-          itemBuilder: (_, i) => ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.file(
-              File(vm.selectedImages[i].path),
-              fit: BoxFit.cover,
-            ),
-          ),
+          itemBuilder:
+              (_, i) => ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.file(
+                  File(vm.selectedImages[i].path),
+                  fit: BoxFit.cover,
+                ),
+              ),
         ),
       ],
     );

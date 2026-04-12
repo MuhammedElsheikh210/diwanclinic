@@ -36,12 +36,21 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
   Future<void> startListening() async {
     await stopListening();
 
-    final uid = LocalUser().getUserData().uid ?? "";
+    // ============================================================
+    // 🧠 GET CURRENT USER FROM SESSION
+    // ============================================================
 
-    if (uid.isEmpty) {
+    final sessionUser = Get.find<UserSession>().user?.user;
+    final uid = sessionUser?.uid;
+
+    if (uid == null || uid.isEmpty) {
       print("❌ No UID found, can't listen to notifications");
       return;
     }
+
+    // ============================================================
+    // 🎧 FIREBASE QUERY
+    // ============================================================
 
     final query = _database
         .ref("notifications")
@@ -50,7 +59,10 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
 
     print("🎧 Listening on notifications where to_key = $uid");
 
+    // ============================================================
     // 🟢 ADDED
+    // ============================================================
+
     final addedSub = query.onChildAdded.listen((event) {
       final model = _parseNotification(event.snapshot);
       if (model != null) {
@@ -59,7 +71,10 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
       }
     });
 
+    // ============================================================
     // 🔄 UPDATED
+    // ============================================================
+
     final changedSub = query.onChildChanged.listen((event) {
       final model = _parseNotification(event.snapshot);
       if (model != null) {
@@ -68,16 +83,19 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
       }
     });
 
-    // ❌ REMOVED (يفضل يفضل على الروت)
-    final removedSub = _database.ref("notifications").onChildRemoved.listen((
-      event,
-    ) {
-      final key = event.snapshot.key;
-      if (key != null) {
-        print("❌ Notification Removed → $key");
-        _removedController.add(key);
-      }
-    });
+    // ============================================================
+    // ❌ REMOVED (Global listener)
+    // ============================================================
+
+    final removedSub = _database.ref("notifications").onChildRemoved.listen(
+          (event) {
+        final key = event.snapshot.key;
+        if (key != null) {
+          print("❌ Notification Removed → $key");
+          _removedController.add(key);
+        }
+      },
+    );
 
     _subscriptions.addAll([addedSub, changedSub, removedSub]);
   }

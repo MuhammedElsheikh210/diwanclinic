@@ -1,14 +1,8 @@
-import 'package:diwanclinic/Presentation/parentControllers/whatsapp/whatsapp_status_message_service.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:diwanclinic/index/index_main.dart';
-import 'package:timezone/timezone.dart';
-import '../../../../Data/Models/order_model.dart';
-import '../../../../Data/Models/reservation_model.dart';
 
 class OrderConfirmationSheet extends StatefulWidget {
   final ReservationModel reservation;
-  final LocalUser user;
+  final LocalUser? user;
   final Function(ReservationModel) onConfirmed;
 
   const OrderConfirmationSheet({
@@ -34,11 +28,9 @@ class _OrderConfirmationSheetState extends State<OrderConfirmationSheet> {
   @override
   void initState() {
     super.initState();
-    phoneController = TextEditingController(text: widget.user.phone ?? "");
-    whatsappController = TextEditingController(
-      text: widget.user.whatsAppPhone ?? "",
-    );
-    addressController = TextEditingController(text: widget.user.address ?? "");
+    phoneController = TextEditingController(text: widget.user?.phone ?? "");
+    whatsappController = TextEditingController(text: widget.user?.phone ?? "");
+    addressController = TextEditingController(text: widget.user?.address ?? "");
     doseController = TextEditingController();
     notesController = TextEditingController();
 
@@ -223,20 +215,21 @@ class _OrderConfirmationSheetState extends State<OrderConfirmationSheet> {
                   onTap: () async {
                     Loader.show();
                     final pharmacy = await getPharmacyData();
+                    final user = Get.find<UserSession>().user;
 
                     final order = OrderModel(
                       key: const Uuid().v4(),
                       reservationKey: widget.reservation.key,
                       patientuid: widget.reservation.patientUid,
-                      pharmacyPhone: pharmacy.phone,
-                      pharmacyFcmToken: pharmacy.fcmToken,
+                      pharmacyPhone: pharmacy?.phone,
+                      pharmacyFcmToken: pharmacy?.fcmToken,
                       patientKey: widget.reservation.patientKey,
                       doctorKey: widget.reservation.doctorKey,
                       fcmToken: widget.reservation.fcmToken_patient,
                       doctorName: widget.reservation.doctorName,
                       patientName: widget.reservation.patientName,
                       clinicKey: widget.reservation.clinicKey,
-                      createdBy: LocalUser().getUserData().uid,
+                      createdBy: user?.uid,
                       phone: phoneController.text.trim(),
                       whatsApp: whatsappController.text.trim(),
                       address: addressController.text.trim(),
@@ -285,8 +278,8 @@ class _OrderConfirmationSheetState extends State<OrderConfirmationSheet> {
     );
   }
 
-  Future<LocalUser> getPharmacyData() async {
-    final completer = Completer<LocalUser>();
+  Future<LocalUser?> getPharmacyData() async {
+    final completer = Completer<LocalUser?>();
 
     await AuthenticationService().getClientsData(
       query: SQLiteQueryParams(
@@ -298,9 +291,9 @@ class _OrderConfirmationSheetState extends State<OrderConfirmationSheet> {
         Loader.dismiss();
 
         if (users.isNotEmpty && users.first != null) {
-          completer.complete(users.first!);
+          completer.complete(users.first);
         } else {
-          completer.complete(LocalUser());
+          completer.complete(null); // ✅ بدل LocalUser()
         }
       },
     );

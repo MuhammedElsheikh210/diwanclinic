@@ -3,9 +3,7 @@ import '../../../../../../../index/index_main.dart';
 class NotificationHandler {
   final ReservationModel reservation;
 
-  NotificationHandler({
-    required this.reservation,
-  });
+  NotificationHandler({required this.reservation});
 
   // ---------------------------------------------------------------------------
   // 🟠 send FCM + save notification
@@ -25,13 +23,13 @@ class NotificationHandler {
       case ReservationStatus.approved:
         title = "تم تأكيد الحجز";
         body =
-        "تم تأكيد حجزك رقم ${reservation.order_num} بنجاح. ننتظرك في العيادة.";
+            "تم تأكيد حجزك رقم ${reservation.order_num} بنجاح. ننتظرك في العيادة.";
         break;
 
       case ReservationStatus.inProgress:
         title = "بدأ الكشف";
         body =
-        "بدأ الكشف لحجزك رقم ${reservation.order_num}. يرجى التوجه للطبيب.";
+            "بدأ الكشف لحجزك رقم ${reservation.order_num}. يرجى التوجه للطبيب.";
         break;
 
       case ReservationStatus.completed:
@@ -68,7 +66,7 @@ class NotificationHandler {
             title: title,
             body: body,
             toKey: reservation.patientKey,
-            userType: "assistant",
+            userType: UserType.assistant,
             notificationType: newStatus.value,
             extraData: {
               "reservation_key": reservation.key ?? "",

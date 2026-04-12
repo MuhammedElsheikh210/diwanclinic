@@ -1,5 +1,5 @@
 // 🔹 Enum for User Types
-enum UserType { admin, sales, doctor, assistant, pharmacy, patient }
+enum UserType { admin, sales, doctor, assistant, pharmacy, patient,clinic }
 
 extension UserTypeExtension on UserType {
   String get name {
@@ -16,6 +16,8 @@ extension UserTypeExtension on UserType {
         return "assistant";
       case UserType.pharmacy:
         return "pharmacy";
+      case UserType.clinic:
+        return "clinic";
     }
   }
 

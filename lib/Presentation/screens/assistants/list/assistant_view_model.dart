@@ -18,7 +18,14 @@ class AssistantViewModel extends GetxController {
   // =========================================================
 
   void getData() {
-    final doctorUid = LocalUser().getUserData().uid ?? "";
+    final currentUser = Get.find<UserSession>().user;
+
+    if (currentUser == null) {
+      debugPrint("❌ User not found in session");
+      return;
+    }
+
+    final doctorUid = currentUser.uid ?? "";
 
     AuthenticationService().getClientsData(
       query: SQLiteQueryParams(
@@ -51,9 +58,9 @@ class AssistantViewModel extends GetxController {
 
   // =========================================================
 
-  void deleteAssistant(LocalUser assistant) {
+  void deleteAssistant(LocalUser? assistant) {
     AuthenticationService().deleteClientsData(
-      uid: assistant.uid ?? "",
+      uid: assistant?.uid ?? "",
       voidCallBack: (_) {
         getData();
       },

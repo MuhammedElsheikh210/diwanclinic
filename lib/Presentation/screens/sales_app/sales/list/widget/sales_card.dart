@@ -3,7 +3,7 @@
 import '../../../../../../index/index_main.dart';
 
 class SalesCard extends StatelessWidget {
-  final LocalUser sales;
+  final LocalUser? sales;
   final SalesViewModel controller;
 
   const SalesCard({Key? key, required this.sales, required this.controller})
@@ -25,7 +25,7 @@ class SalesCard extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10.0),
               child: Text(
-                sales.name ?? "",
+                sales?.name ?? "",
                 style: context.typography.lgBold.copyWith(
                   color: AppColors.background_black,
                   fontSize: 16,

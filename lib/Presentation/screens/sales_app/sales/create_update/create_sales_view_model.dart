@@ -4,39 +4,49 @@ class CreateSalesViewModel extends GetxController {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
 
-  bool is_update = false;
-  LocalUser? existingSales; // ✅ hold sales being edited
+  bool isUpdate = false;
+  LocalUser? existingSales;
 
   @override
   void onInit() {
     super.onInit();
-    nameController.addListener(() => update());
-    phoneController.addListener(() => update());
+    nameController.addListener(update);
+    phoneController.addListener(update);
   }
 
-  /// 🔹 Save sales (either create or update)
+  // ============================================================
+  // 💾 SAVE
+  // ============================================================
+
   void saveSales() async {
     if (!validateStep()) {
       Loader.showError("يرجى إدخال جميع البيانات بشكل صحيح");
       return;
     }
 
-    if (is_update && existingSales != null) {
+    if (isUpdate && existingSales != null) {
       _updateSales(existingSales!);
     } else {
       await _createSalesAccount();
     }
   }
 
-  /// 🔹 Update existing sales
+  // ============================================================
+  // ✏️ UPDATE
+  // ============================================================
+
   void _updateSales(LocalUser sales) {
     Loader.show();
 
-    final updatedSales = sales.copyWith(
+    final base = sales.user;
+
+    final updatedBase = base.copyWith(
       name: nameController.text,
       phone: phoneController.text,
-      password: phoneController.text, // ✅ password = phone
+      password: phoneController.text,
     );
+
+    final updatedSales = LocalUser(updatedBase);
 
     AuthenticationService().updateClientsData(
       userclient: updatedSales,
@@ -48,38 +58,57 @@ class CreateSalesViewModel extends GetxController {
     );
   }
 
-  /// 🔹 Create Firebase Auth account for new sales
+  // ============================================================
+  // ➕ CREATE
+  // ============================================================
+
   Future<void> _createSalesAccount() async {
     Loader.show();
 
     final email = "${phoneController.text}@link.com";
-    final password = phoneController.text; // ✅ password = phone
+    final password = phoneController.text;
 
     try {
       final userCred = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(email: email, password: password);
+          .createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
       final uid = userCred.user?.uid ?? "";
 
-      final userClient = LocalUser(
+      // ✅ current user من session
+      final currentUser = Get.find<UserSession>().user;
+
+      if (currentUser == null) {
+        Loader.dismiss();
+        Loader.showError("❌ المستخدم غير موجود");
+        return;
+      }
+
+      final baseUser = BaseUser(
         uid: uid,
-        key: const Uuid().v4(),
+        name: nameController.text,
         phone: phoneController.text,
-        identifier: email,
+        email: email,
         password: password,
         userType: UserType.sales,
-        isCompleteProfile: 1,
-        name: nameController.text,
-        doctorKey: LocalUser().getUserData().uid,
+        isProfileCompleted: true,
       );
+
+      final userClient = LocalUser(baseUser);
 
       _saveSalesToClients(userClient);
     } on FirebaseAuthException catch (e) {
+      Loader.dismiss();
       Loader.showError("فشل إنشاء الحساب: ${e.message}");
     }
   }
 
-  /// 🔹 Save new sales in clients node
+  // ============================================================
+  // 💾 SAVE TO DB
+  // ============================================================
+
   void _saveSalesToClients(LocalUser userClient) {
     AuthenticationService().addClientsData(
       userclient: userClient,
@@ -91,6 +120,10 @@ class CreateSalesViewModel extends GetxController {
     );
   }
 
+  // ============================================================
+  // 🔄 REFRESH
+  // ============================================================
+
   void refreshListView() {
     final salesVM = initController(() => SalesViewModel());
     salesVM.getData();
@@ -98,9 +131,18 @@ class CreateSalesViewModel extends GetxController {
     Get.back();
   }
 
+  // ============================================================
+  // ✅ VALIDATION
+  // ============================================================
+
   bool validateStep() {
-    return nameController.text.isNotEmpty && phoneController.text.isNotEmpty;
+    return nameController.text.isNotEmpty &&
+        phoneController.text.isNotEmpty;
   }
+
+  // ============================================================
+  // 🛑 DISPOSE
+  // ============================================================
 
   @override
   void dispose() {

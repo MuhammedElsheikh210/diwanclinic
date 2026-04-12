@@ -7,20 +7,20 @@ class SyncService {
     required SyncModel sync,
     required Function(ResponseStatus) voidCallBack,
   }) async {
-    Loader.show();
-
-    final AddSyncUseCase addSyncUseCase = initController(
-      () => AddSyncUseCase(Get.find()),
-    );
-
-    final Either<AppError, SuccessModel> result = await addSyncUseCase.call(
-      sync,
-    );
-
-    result.fold(
-      (l) => Loader.showError(l.messege),
-      (r) => voidCallBack(ResponseStatus.success),
-    );
+    // Loader.show();
+    //
+    // final AddSyncUseCase addSyncUseCase = initController(
+    //   () => AddSyncUseCase(Get.find()),
+    // );
+    //
+    // final Either<AppError, SuccessModel> result = await addSyncUseCase.call(
+    //   sync,
+    // );
+    //
+    // result.fold(
+    //   (l) => Loader.showError(l.messege),
+    //   (r) => voidCallBack(ResponseStatus.success),
+    // );
 
     Loader.dismiss();
   }
@@ -32,18 +32,18 @@ class SyncService {
   }) async {
     Loader.show();
 
-    final UpdateSyncUseCase updateSyncUseCase = initController(
-      () => UpdateSyncUseCase(Get.find()),
-    );
-
-    final Either<AppError, SuccessModel> result = await updateSyncUseCase.call(
-      sync,
-    );
-
-    result.fold(
-      (l) => Loader.showError(l.messege),
-      (r) => voidCallBack(ResponseStatus.success),
-    );
+    // final UpdateSyncUseCase updateSyncUseCase = initController(
+    //   () => UpdateSyncUseCase(Get.find()),
+    // );
+    //
+    // final Either<AppError, SuccessModel> result = await updateSyncUseCase.call(
+    //   sync,
+    // );
+    //
+    // result.fold(
+    //   (l) => Loader.showError(l.messege),
+    //   (r) => voidCallBack(ResponseStatus.success),
+    // );
 
     Loader.dismiss();
   }
@@ -55,18 +55,18 @@ class SyncService {
   }) async {
     Loader.show();
 
-    final DeleteSyncUseCase deleteSyncUseCase = initController(
-      () => DeleteSyncUseCase(Get.find()),
-    );
-
-    final Either<AppError, SuccessModel> result = await deleteSyncUseCase.call(
-      key,
-    );
-
-    result.fold(
-      (l) => Loader.showError(l.messege),
-      (r) => voidCallBack(ResponseStatus.success),
-    );
+    // final DeleteSyncUseCase deleteSyncUseCase = initController(
+    //   () => DeleteSyncUseCase(Get.find()),
+    // );
+    //
+    // final Either<AppError, SuccessModel> result = await deleteSyncUseCase.call(
+    //   key,
+    // );
+    //
+    // result.fold(
+    //   (l) => Loader.showError(l.messege),
+    //   (r) => voidCallBack(ResponseStatus.success),
+    // );
 
     Loader.dismiss();
   }
@@ -78,17 +78,17 @@ class SyncService {
   }) async {
     // Loader.show(); // Optional depending on use case
 
-    final ReadSyncItemUseCase readSyncItemUseCase = initController(
-      () => ReadSyncItemUseCase(Get.find()),
-    );
-
-    final Either<AppError, SyncModel> result = await readSyncItemUseCase.call(
-      is_online,
-    );
-
-    result.fold((l) => Loader.showError(l.messege), (r) {
-      voidCallBack(r);
-      Loader.dismiss();
-    });
+    // final ReadSyncItemUseCase readSyncItemUseCase = initController(
+    //   () => ReadSyncItemUseCase(Get.find()),
+    // );
+    //
+    // final Either<AppError, SyncModel> result = await readSyncItemUseCase.call(
+    //   is_online,
+    // );
+    //
+    // result.fold((l) => Loader.showError(l.messege), (r) {
+    //   voidCallBack(r);
+    //   Loader.dismiss();
+    // });
   }
 }

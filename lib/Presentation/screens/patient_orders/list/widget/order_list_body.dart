@@ -11,9 +11,8 @@ class OrdersListBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final list = type == OrderTabType.active
-          ? vm.activeOrders
-          : vm.finishedOrders;
+      final list =
+          type == OrderTabType.active ? vm.activeOrders : vm.finishedOrders;
 
       if (list.isEmpty) {
         return NoDataAnimated(
@@ -22,13 +21,14 @@ class OrdersListBody extends StatelessWidget {
           lottiePath: Animations.empty,
           actionText: "إضافة طلب جديد",
           onAction: () {
+            final user = Get.find<UserSession>().user;
+
             // Build reservation with urls
             final reservation = ReservationModel(
-              patientKey: LocalUser().getUserData().key,
-              patientUid: LocalUser().getUserData().uid,
-              fcmToken_patient: LocalUser().getUserData().fcmToken,
-              patientPhone: LocalUser().getUserData().phone,
-              patientName: LocalUser().getUserData().name,
+              patientUid: user?.uid,
+              fcmToken_patient: user?.fcmToken,
+              patientPhone: user?.phone,
+              patientName: user?.name,
             );
 
             Get.to(
@@ -55,12 +55,14 @@ class OrdersListBody extends StatelessWidget {
             order: order,
             onConfirmOrder: () => _showConfirmDialog(context, order),
             onCancelOrder: () => _showCancelDialog(context, order),
-            onOrderDetails: () =>
-                Get.to(() => OrderDetailsScreen(order: order)),
-            onFollowTreatment: () =>
-                Get.to(() => const TreatmentTrackingListScreen()),
-            onPriceDetails: () =>
-                Get.to(() => PriceDetailsScreen(order: order, fromHome: false)),
+            onOrderDetails:
+                () => Get.to(() => OrderDetailsScreen(order: order)),
+            onFollowTreatment:
+                () => Get.to(() => const TreatmentTrackingListScreen()),
+            onPriceDetails:
+                () => Get.to(
+                  () => PriceDetailsScreen(order: order, fromHome: false),
+                ),
           );
         },
       );

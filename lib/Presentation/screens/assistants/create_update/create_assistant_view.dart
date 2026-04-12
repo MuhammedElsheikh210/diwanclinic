@@ -1,7 +1,7 @@
 import '../../../../../index/index_main.dart';
 
 class CreateAssistantView extends StatefulWidget {
-  final LocalUser? assistant; // ✅ assistant is stored in clients now
+  final LocalUser? assistant;
 
   const CreateAssistantView({Key? key, this.assistant}) : super(key: key);
 
@@ -13,18 +13,27 @@ class _CreateAssistantViewState extends State<CreateAssistantView> {
   final HandleKeyboardService keyboardService = HandleKeyboardService();
   final GlobalKey<FormState> globalKeyAssistant = GlobalKey<FormState>();
 
+  late final CreateAssistantViewModel vm;
+
   @override
   void initState() {
     super.initState();
-    final vm = initController(() => CreateAssistantViewModel());
 
-    if (widget.assistant != null) {
-      // Populate fields if editing
+    vm = initController(() => CreateAssistantViewModel());
 
-      vm.nameController.text = widget.assistant?.name ?? "";
-      vm.phoneController.text = widget.assistant?.phone ?? "";
-      vm.is_update = true;
-      vm.existingAssistant = widget.assistant;
+    final assistant = widget.assistant;
+
+    if (assistant != null && assistant.isAssistant) {
+      final a = assistant.asAssistant;
+
+      if (a == null) return;
+
+      vm.nameController.text = a.name ?? "";
+      vm.phoneController.text = a.phone ?? "";
+
+      vm.isUpdate = true;
+      vm.existingAssistant = assistant;
+
       vm.update();
     }
   }
@@ -34,7 +43,6 @@ class _CreateAssistantViewState extends State<CreateAssistantView> {
     final keys = keyboardService.generateKeys('CreateAssistantView', 3);
 
     return GetBuilder<CreateAssistantViewModel>(
-      init: CreateAssistantViewModel(),
       builder: (controller) {
         return Padding(
           padding: EdgeInsets.only(
@@ -71,7 +79,7 @@ class _CreateAssistantViewState extends State<CreateAssistantView> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  controller.is_update
+                                  controller.isUpdate
                                       ? "تحديث مساعد"
                                       : "إضافة مساعد جديد",
                                   style: context.typography.mdBold,
@@ -84,7 +92,7 @@ class _CreateAssistantViewState extends State<CreateAssistantView> {
                             ),
                             SizedBox(height: 10.h),
 
-                            // 🔹 Assistant Name
+                            // 🔹 Name
                             CustomInputField(
                               label: "اسم المساعد",
                               controller: controller.nameController,
@@ -95,11 +103,12 @@ class _CreateAssistantViewState extends State<CreateAssistantView> {
                               focusNode: keyboardService.getFocusNode(keys[0]),
                               keyboardType: TextInputType.name,
                             ),
+
                             controller.medicalCenterKey != null
                                 ? const SizedBox()
                                 : SizedBox(height: 20.h),
 
-                            // 🔹 Clinics Dropdown
+                            // 🔹 Clinics
                             controller.medicalCenterKey != null
                                 ? const SizedBox()
                                 : Padding(
@@ -109,7 +118,7 @@ class _CreateAssistantViewState extends State<CreateAssistantView> {
                                   child: DropdownButtonFormField<ClinicModel>(
                                     value: controller.selectedClinic,
                                     items:
-                                        controller.list_clinics?.map((clinic) {
+                                        controller.listClinics?.map((clinic) {
                                           return DropdownMenuItem<ClinicModel>(
                                             value: clinic,
                                             child: Text(
@@ -134,6 +143,7 @@ class _CreateAssistantViewState extends State<CreateAssistantView> {
                                                 : null,
                                   ),
                                 ),
+
                             SizedBox(height: 20.h),
 
                             // 🔹 Phone
@@ -147,13 +157,14 @@ class _CreateAssistantViewState extends State<CreateAssistantView> {
                               focusNode: keyboardService.getFocusNode(keys[1]),
                               keyboardType: TextInputType.phone,
                             ),
+
                             SizedBox(height: 30.h),
 
-                            // 🔹 Bottom Button
+                            // 🔹 Button
                             SafeArea(
                               child: BottomNavigationActions(
                                 rightTitle:
-                                    controller.is_update
+                                    controller.isUpdate
                                         ? "تحديث المساعد"
                                         : "إضافة المساعد",
                                 rightAction: () {

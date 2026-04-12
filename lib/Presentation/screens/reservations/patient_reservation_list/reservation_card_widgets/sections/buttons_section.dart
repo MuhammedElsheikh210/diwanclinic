@@ -27,13 +27,14 @@ class ButtonsSection extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.only(left: 5.0),
             child: PrimaryTextButton(
-              onTap: () => Get.to(
-                () => ReservationPatientDetailsScreen(
-                  reservation: reservation,
-                  controller: controller,
-                  index: index,
-                ),
-              ),
+              onTap:
+                  () => Get.to(
+                    () => ReservationPatientDetailsScreen(
+                      reservation: reservation,
+                      controller: controller,
+                      index: index,
+                    ),
+                  ),
               appButtonSize: AppButtonSize.large,
               customBackgroundColor: ColorMappingImpl().white,
               customBorder: BorderSide(
@@ -121,8 +122,9 @@ class ButtonsSection extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
       ),
-      builder: (_) =>
-          FeedbackSheet(reservation: reservation, controller: controller),
+      builder:
+          (_) =>
+              FeedbackSheet(reservation: reservation, controller: controller),
     );
   }
 
@@ -135,12 +137,12 @@ class ButtonsSection extends StatelessWidget {
           //  const formatted = "01551061194";
 
           final patient = reservation.patientName ?? "المريض";
-          final doctor = LocalUser().getUserData().name ?? "العيادة";
+          final doctor = reservation.doctorName ?? "العيادة";
+
           const android = Strings.url_android;
           const ios = Strings.url_ios;
 
-          final message =
-              """
+          final message = """
 من عيادة د. $doctor 👨‍⚕️
 
 الكشف خلص يا $patient 🌿  

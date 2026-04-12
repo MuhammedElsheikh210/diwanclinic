@@ -5,7 +5,6 @@ import '../index/index_main.dart';
 class Binding implements Bindings {
   @override
   void dependencies() {
-    // ───────────── Core ─────────────
     Get.lazyPut<ClientSourceRepo>(() => ClientSourceRepo(), fenix: true);
     Get.lazyPut<FirebaseClient>(() => FirebaseClient(), fenix: true);
     Get.lazyPut<ConnectivityService>(() => ConnectivityService(), fenix: true);
@@ -44,7 +43,7 @@ class Binding implements Bindings {
     );
 
     Get.lazyPut<MedicalCenterDataSourceRepo>(
-          () => MedicalCenterDataSourceRepoImpl(Get.find()),
+      () => MedicalCenterDataSourceRepoImpl(Get.find()),
       fenix: true,
     );
 
@@ -58,10 +57,10 @@ class Binding implements Bindings {
       fenix: true,
     );
 
-    Get.lazyPut<SyncDataSourceRepo>(
-      () => SyncRemoteDataSourceImpl(Get.find()),
-      fenix: true,
-    );
+    // Get.lazyPut<SyncDataSourceRepo>(
+    //   () => SyncRemoteDataSourceImpl(Get.find()),
+    //   fenix: true,
+    // );
 
     Get.lazyPut<TransactionsDataSourceRepo>(
       () => TransactionsDataSourceRepoImpl(Get.find()),
@@ -134,7 +133,7 @@ class Binding implements Bindings {
     );
 
     Get.lazyPut<MedicalCenterRepository>(
-          () => MedicalCenterRepositoryImpl(Get.find()),
+      () => MedicalCenterRepositoryImpl(Get.find()),
       fenix: true,
     );
 

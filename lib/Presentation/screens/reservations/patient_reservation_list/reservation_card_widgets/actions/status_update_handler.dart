@@ -8,7 +8,7 @@ class NotificationHandler {
     required Future<void> Function(Function(ResponseStatus) callback)
     sendAction,
     required String toKey,
-    required String userType,
+    required UserType userType,
     required String title,
     required String body,
     String? reservationKey,
@@ -80,7 +80,7 @@ class NotificationHandler {
 
       await _sendAndSave(
         toKey: uid,
-        userType: "patient",
+        userType: UserType.patient,
         title: title,
         reservationKey: reservation.key,
         body: body,
@@ -118,7 +118,7 @@ class NotificationHandler {
 
     await _sendAndSave(
       toKey: userKey,
-      userType: "patient",
+      userType: UserType.patient,
       title: titleBody.$1,
       body: titleBody.$2,
       notificationType: newStatus.value,
@@ -151,7 +151,7 @@ class NotificationHandler {
 
     await _sendAndSave(
       toKey: topic,
-      userType: "clinic",
+      userType: UserType.clinic,
       title: title,
       body: body,
       notificationType: notificationType,
@@ -180,7 +180,7 @@ class NotificationHandler {
 
     await _sendAndSave(
       toKey: toKey,
-      userType: "patient",
+      userType: UserType.patient,
       title: title,
       body: body,
       reservationKey: reservation.key,

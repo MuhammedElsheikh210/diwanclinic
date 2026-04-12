@@ -162,8 +162,22 @@ class _PrescriptionBottomSheetWidgetState
       }
 
       // ✅ Update directly in Firebase Realtime Database
-      final user = LocalUser().getUserData();
-      final doctorKey = user.doctorKey ?? "";
+
+      final currentUser = Get.find<UserSession>().user;
+
+      if (currentUser == null || !currentUser.isAssistant) {
+        debugPrint("❌ Current user is not assistant");
+        return;
+      }
+
+      final assistant = currentUser.asAssistant;
+
+      if (assistant == null) {
+        debugPrint("❌ Failed to cast to AssistantUser");
+        return;
+      }
+
+      final doctorKey = assistant.doctorKey ?? "";
 
       final DatabaseReference ref = FirebaseDatabase.instance.ref(
         "doctors/$doctorKey/reservations/$reservationKey",

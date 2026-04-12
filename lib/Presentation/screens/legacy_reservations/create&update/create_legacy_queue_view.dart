@@ -24,7 +24,7 @@ class CreateLegacyQueueViewModel extends GetxController {
   LocalUser? selectedDoctor;
   bool isLoadingDoctors = false;
 
-  bool get isCenterMode => LocalUser().getUserData().medicalCenterKey != null;
+  bool get isCenterMode => false;
 
   final LegacyQueueService service = LegacyQueueService();
 
@@ -46,7 +46,6 @@ class CreateLegacyQueueViewModel extends GetxController {
     }
 
     if (isCenterMode) {
-      _loadDoctors();
     } else {
       _loadShiftsForClinic();
     }
@@ -55,72 +54,68 @@ class CreateLegacyQueueViewModel extends GetxController {
   // ------------------------------------------------------------
   // 👨‍⚕️ LOAD DOCTORS
   // ------------------------------------------------------------
-  Future<void> _loadDoctors() async {
-    final centerKey = LocalUser().getUserData().medicalCenterKey;
-    if (centerKey == null) return;
-
-    isLoadingDoctors = true;
-    update();
-
-    AuthenticationService().getClientsData(
-      query: SQLiteQueryParams(
-        where: "medicalCenterKey = ? AND userType = ?",
-        whereArgs: [centerKey, "doctor"],
-      ),
-      voidCallBack: (data) async {
-        centerDoctors = data;
-
-        if (data.isNotEmpty) {
-          selectedDoctor = data.first;
-
-          await _loadShiftsForClinic();
-        }
-
-        isLoadingDoctors = false;
-        update();
-      },
-    );
-  }
 
   // ------------------------------------------------------------
   // 🔹 LOAD SHIFTS
   // ------------------------------------------------------------
   Future<void> _loadShiftsForClinic() async {
-    final clinicKey = LocalUser().getUserData().clinicKey ?? "";
+    final currentUser = Get.find<UserSession>().user;
 
-    final doctorKey =
-        selectedDoctor?.uid ?? LocalUser().getUserData().doctorKey ?? "";
+    if (currentUser == null) {
+      debugPrint("❌ User not found in session");
+      return;
+    }
+
+    final baseUser = currentUser.user;
+
+    final clinicKey = currentUser.clinicKey ?? "";
+
+    String? doctorKey;
+
+    // ✅ لو Doctor
+    if (baseUser is DoctorUser) {
+      doctorKey = baseUser.uid;
+    }
+
+    // ✅ لو Assistant
+    else if (baseUser is AssistantUser) {
+      doctorKey = baseUser.doctorKey;
+    }
+
+    // ✅ fallback (center mode)
+    doctorKey = selectedDoctor?.uid ?? doctorKey ?? "";
 
     isLoadingShifts = true;
     update();
 
     try {
       await ShiftService().getShiftsData(
-        data:
-            isCenterMode
-                ? FirebaseFilter()
-                : FirebaseFilter(orderBy: "clinicKey", equalTo: clinicKey),
+        data: isCenterMode
+            ? FirebaseFilter()
+            : FirebaseFilter(orderBy: "clinicKey", equalTo: clinicKey),
+
         doctorKey: doctorKey,
-        query:
-            isCenterMode
-                ? SQLiteQueryParams()
-                : SQLiteQueryParams(
-                  is_filtered: true,
-                  where: "clinicKey = ?",
-                  whereArgs: [clinicKey],
-                ),
+
+        query: isCenterMode
+            ? SQLiteQueryParams()
+            : SQLiteQueryParams(
+          is_filtered: true,
+          where: "clinicKey = ?",
+          whereArgs: [clinicKey],
+        ),
+
         voidCallBack: (data) {
           listShifts = data;
-          shiftItems =
-              (data ?? [])
-                  .whereType<ShiftModel>()
-                  .map(
-                    (s) => GenericListModel(
-                      key: s.key ?? "",
-                      name: "${s.name ?? "فترة"} ",
-                    ),
-                  )
-                  .toList();
+
+          shiftItems = (data ?? [])
+              .whereType<ShiftModel>()
+              .map(
+                (s) => GenericListModel(
+              key: s.key ?? "",
+              name: "${s.name ?? "فترة"} ",
+            ),
+          )
+              .toList();
 
           if (shiftItems.isNotEmpty) {
             selectedShift = shiftItems.first;
@@ -135,9 +130,7 @@ class CreateLegacyQueueViewModel extends GetxController {
       isLoadingShifts = false;
       update();
     }
-  }
-
-  // ------------------------------------------------------------
+  }  // ------------------------------------------------------------
   // 🔹 CHANGE DOCTOR
   // ------------------------------------------------------------
   Future<void> changeDoctor(LocalUser doctor) async {
@@ -195,15 +188,9 @@ class CreateLegacyQueueViewModel extends GetxController {
       return;
     }
 
-    final clinicKey =
-        isCenterMode
-            ? selectedDoctor?.clinicKey
-            : LocalUser().getUserData().clinicKey;
+    final clinicKey = selectedDoctor?.clinicKey;
 
-    final doctorKey =
-        isCenterMode
-            ? selectedDoctor?.uid
-            : LocalUser().getUserData().doctorKey;
+    final doctorKey = selectedDoctor?.uid;
 
     final model = LegacyQueueModel(
       key: existing?.key ?? const Uuid().v4(),

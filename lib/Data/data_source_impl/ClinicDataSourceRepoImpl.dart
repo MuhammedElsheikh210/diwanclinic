@@ -15,24 +15,42 @@ class ClinicDataSourceRepoImpl extends ClinicDataSourceRepo {
 
   /// ============================================================
   /// 🔑 Resolve Doctor Key (THE FIX 🔥)
-  /// ============================================================
   String _resolveDoctorKey(String? doctorKey) {
+    // ============================================================
+    // ✅ PRIORITY: PARAM
+    // ============================================================
+
     if (doctorKey != null && doctorKey.isNotEmpty) {
       return doctorKey;
     }
 
-    final user = LocalUser().getUserData();
+    // ============================================================
+    // 🧠 GET SESSION USER
+    // ============================================================
 
-    final resolvedKey =
-        user.userType?.name == "doctor"
-            ? user
-                .uid // ✅ doctor uses his own key
-            : user.doctorKey; // ✅ assistant uses doctorKey
+    final sessionUser = Get.find<UserSession>().user?.user;
 
-    print("👤 userType: ${user.userType?.name}");
-    print("🔑 user.key: ${user.key}");
-    print("🔑 user.doctorKey: ${user.doctorKey}");
-    print("🔑 FINAL doctorKey: $resolvedKey");
+    String? resolvedKey;
+
+    // ============================================================
+    // 👨‍⚕️ DOCTOR
+    // ============================================================
+
+    if (sessionUser is DoctorUser) {
+      resolvedKey = sessionUser.uid;
+    }
+
+    // ============================================================
+    // 🧑‍⚕️ ASSISTANT
+    // ============================================================
+
+    else if (sessionUser is AssistantUser) {
+      resolvedKey = sessionUser.doctorKey;
+    }
+
+    // ============================================================
+    // 🚨 SAFETY CHECK
+    // ============================================================
 
     if (resolvedKey == null || resolvedKey.isEmpty) {
       throw Exception("❌ doctorKey is NULL or EMPTY");

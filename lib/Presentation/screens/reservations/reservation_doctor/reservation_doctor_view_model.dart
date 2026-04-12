@@ -62,8 +62,8 @@ class ReservationDoctorViewModel extends GetxController {
   // 🔹 Helpers
   // ─────────────────────────────────────────────
   String? get _doctorKey {
-    final user = LocalUser().getUserData();
-    return user.uid ?? user.doctorKey;
+    final user = Get.find<UserSession>().user;
+    return user?.uid ?? user?.doctorKey;
   }
 
   final List<String> reservationTypeFilters = [
@@ -420,7 +420,7 @@ class ReservationDoctorViewModel extends GetxController {
 
     ClinicService().getClinicsData(
       data: {},
-      doctorKey: LocalUser().getUserData().uid ?? "",
+      doctorKey: doctorKey,
 
       filrebaseFilter: FirebaseFilter(
         orderBy: "doctor_key",

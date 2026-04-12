@@ -20,9 +20,9 @@ class SalesViewModel extends GetxController {
     );
   }
 
-  void deleteSales(LocalUser sales) {
+  void deleteSales(LocalUser? sales) {
     AuthenticationService().deleteClientsData(
-      uid: sales.uid ?? "",
+      uid: sales?.uid ?? "",
       voidCallBack: (_) {
         getData();
       },

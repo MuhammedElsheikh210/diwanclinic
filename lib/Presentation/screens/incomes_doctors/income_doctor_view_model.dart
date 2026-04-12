@@ -34,8 +34,9 @@ class IncomeViewModel extends GetxController {
     selectedDay = dayTimestamp;
     selectedDayFormatted = formattedDay;
 
-    final date = DateFormat('dd/MM/yyyy')
-        .format(DateTime.fromMillisecondsSinceEpoch(dayTimestamp));
+    final date = DateFormat(
+      'dd/MM/yyyy',
+    ).format(DateTime.fromMillisecondsSinceEpoch(dayTimestamp));
 
     _loadByDate(date);
   }
@@ -53,8 +54,7 @@ class IncomeViewModel extends GetxController {
   // 🔥 SINGLE loader (only completed)
   // =====================================================
   void _loadByDate(String date) {
-    final doctorKey = LocalUser().getUserData().uid ?? "";
-
+    final doctorKey = Get.find<UserSession>().user?.uid ?? "";
     final query = SQLiteQueryParams(
       is_filtered: true,
       where: """
@@ -84,13 +84,13 @@ class IncomeViewModel extends GetxController {
   // =====================================================
   void _calculateTotals() {
     final newList =
-    todayReservations.where((r) => _isNew(r.reservationType)).toList();
+        todayReservations.where((r) => _isNew(r.reservationType)).toList();
 
     final reList =
-    todayReservations.where((r) => _isRevisit(r.reservationType)).toList();
+        todayReservations.where((r) => _isRevisit(r.reservationType)).toList();
 
     final urgentList =
-    todayReservations.where((r) => _isUrgent(r.reservationType)).toList();
+        todayReservations.where((r) => _isUrgent(r.reservationType)).toList();
 
     newCount = newList.length;
     reCount = reList.length;
@@ -106,21 +106,19 @@ class IncomeViewModel extends GetxController {
   // =====================================================
   // 🧠 Helpers
   // =====================================================
-  bool _isNew(String? type) =>
-      (type ?? "").contains("جديد");
+  bool _isNew(String? type) => (type ?? "").contains("جديد");
 
   bool _isRevisit(String? type) {
     final t = (type ?? "").trim();
     return t.contains("إعادة") || t.contains("اعادة") || t.contains("إعاده");
   }
 
-  bool _isUrgent(String? type) =>
-      (type ?? "").contains("مستعجل");
+  bool _isUrgent(String? type) => (type ?? "").contains("مستعجل");
 
   double _sum(List<ReservationModel> list) {
     return list.fold(
       0.0,
-          (sum, r) => sum + (double.tryParse(r.paidAmount ?? "0") ?? 0),
+      (sum, r) => sum + (double.tryParse(r.paidAmount ?? "0") ?? 0),
     );
   }
 }

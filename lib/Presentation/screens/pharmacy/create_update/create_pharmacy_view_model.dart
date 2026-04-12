@@ -4,39 +4,49 @@ class CreatePharmacyViewModel extends GetxController {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
 
-  bool is_update = false;
-  LocalUser? existingPharmacy; // ✅ hold pharmacy being edited
+  bool isUpdate = false;
+  LocalUser? existingPharmacy;
 
   @override
   void onInit() {
     super.onInit();
-    nameController.addListener(() => update());
-    phoneController.addListener(() => update());
+    nameController.addListener(update);
+    phoneController.addListener(update);
   }
 
-  /// 🔹 Save pharmacy (either create or update)
+  // ============================================================
+  // 💾 SAVE
+  // ============================================================
+
   void savePharmacy() async {
     if (!validateStep()) {
       Loader.showError("يرجى إدخال جميع البيانات بشكل صحيح");
       return;
     }
 
-    if (is_update && existingPharmacy != null) {
+    if (isUpdate && existingPharmacy != null) {
       _updatePharmacy(existingPharmacy!);
     } else {
       await _createPharmacyAccount();
     }
   }
 
-  /// 🔹 Update existing pharmacy
+  // ============================================================
+  // ✏️ UPDATE
+  // ============================================================
+
   void _updatePharmacy(LocalUser pharmacy) {
     Loader.show();
 
-    final updatedPharmacy = pharmacy.copyWith(
+    final base = pharmacy.user;
+
+    final updatedBaseUser = base.copyWith(
       name: nameController.text,
       phone: phoneController.text,
-      password: phoneController.text, // ✅ password = phone
+      password: phoneController.text,
     );
+
+    final updatedPharmacy = LocalUser(updatedBaseUser);
 
     AuthenticationService().updateClientsData(
       userclient: updatedPharmacy,
@@ -48,37 +58,48 @@ class CreatePharmacyViewModel extends GetxController {
     );
   }
 
-  /// 🔹 Create Firebase Auth account for new pharmacy
+  // ============================================================
+  // ➕ CREATE
+  // ============================================================
+
   Future<void> _createPharmacyAccount() async {
     Loader.show();
 
     final email = "${phoneController.text}@link.com";
-    final password = phoneController.text; // ✅ password = phone
+    final password = phoneController.text;
 
     try {
       final userCred = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(email: email, password: password);
+          .createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
       final uid = userCred.user?.uid ?? "";
 
-      final userClient = LocalUser(
+      final baseUser = BaseUser(
         uid: uid,
-        key: const Uuid().v4(),
         phone: phoneController.text,
-        identifier: email,
-        password: password,
-        userType: UserType.pharmacy, // ✅ pharmacy type
-        isCompleteProfile: 1,
         name: nameController.text,
+        email: email,
+        password: password,
+        userType: UserType.pharmacy,
+        isProfileCompleted: true,
       );
+
+      final userClient = LocalUser(baseUser);
 
       _savePharmacyToClients(userClient);
     } on FirebaseAuthException catch (e) {
+      Loader.dismiss();
       Loader.showError("فشل إنشاء الحساب: ${e.message}");
     }
   }
 
-  /// 🔹 Save new pharmacy in clients node
+  // ============================================================
+  // 💾 SAVE TO DB
+  // ============================================================
+
   void _savePharmacyToClients(LocalUser userClient) {
     AuthenticationService().addClientsData(
       userclient: userClient,
@@ -90,6 +111,10 @@ class CreatePharmacyViewModel extends GetxController {
     );
   }
 
+  // ============================================================
+  // 🔄 REFRESH
+  // ============================================================
+
   void refreshListView() {
     final pharmacyVM = initController(() => PharmacyViewModel());
     pharmacyVM.getData();
@@ -97,10 +122,18 @@ class CreatePharmacyViewModel extends GetxController {
     Get.back();
   }
 
+  // ============================================================
+  // ✅ VALIDATION
+  // ============================================================
+
   bool validateStep() {
     return nameController.text.isNotEmpty &&
         phoneController.text.isNotEmpty;
   }
+
+  // ============================================================
+  // 🛑 DISPOSE
+  // ============================================================
 
   @override
   void dispose() {

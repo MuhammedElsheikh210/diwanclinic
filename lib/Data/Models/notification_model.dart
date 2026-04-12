@@ -1,13 +1,13 @@
 import '../../index/index_main.dart';
 
 class NotificationModel {
-   String? key;                 // Unique notification ID
-  final String? fromKey;             // Sender (doctor / assistant / admin)
-  final String? toKey;               // Receiver (user / patient / assistant)
-  final String? reservationKey;      // ✅ NEW: reservation reference
+  String? key; // Unique notification ID
+  final String? fromKey; // Sender (doctor / assistant / admin)
+  final String? toKey; // Receiver (user / patient / assistant)
+  final String? reservationKey; // ✅ NEW: reservation reference
   final String? title;
   final String? body;
-  final String? userType;            // doctor / assistant / patient / admin
+  final String? userType; // doctor / assistant / patient / admin
   final int? createAt;
   final bool? isRead;
   final String? notificationType;
@@ -63,9 +63,10 @@ class NotificationModel {
       createAt: json['create_at'],
       isRead: json['is_read'] ?? false,
       notificationType: json['notification_type'],
-      extraData: json['extra_data'] != null
-          ? Map<String, dynamic>.from(json['extra_data'])
-          : null,
+      extraData:
+          json['extra_data'] != null
+              ? Map<String, dynamic>.from(json['extra_data'])
+              : null,
     );
   }
 
@@ -100,33 +101,63 @@ class NotificationModel {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // 🔹 FACTORY: CREATE NEW NOTIFICATION
-  // ---------------------------------------------------------------------------
   factory NotificationModel.newNotification({
     required String title,
     required String body,
     String? toKey,
     String? reservationKey,
     String? key,
-    String? userType,
+    UserType? userType,
     String? notificationType,
     Map<String, dynamic>? extraData,
   }) {
-    final localUser = LocalUser().getUserData();
+    final sessionUser = Get.find<UserSession>().user?.user;
+
+    if (sessionUser == null || sessionUser.uid == null) {
+      throw Exception("❌ No logged in user");
+    }
+
+    // ============================================================
+    // 👨‍⚕️ RESOLVE DOCTOR KEY (لو محتاجه)
+    // ============================================================
+
+    String? doctorKey;
+
+    if (sessionUser is AssistantUser) {
+      doctorKey = sessionUser.doctorKey;
+    } else if (sessionUser is DoctorUser) {
+      doctorKey = sessionUser.uid;
+    }
+
+    // ============================================================
+    // 🧾 CREATE MODEL
+    // ============================================================
 
     return NotificationModel(
-      key: key ?? const Uuid().v4(), // ✅ FIXED
-      fromKey: localUser.key,
+      key: key ?? const Uuid().v4(),
+
+      // ✅ sender
+      fromKey: sessionUser.uid,
+
+      // ✅ receiver
       toKey: toKey,
+
       reservationKey: reservationKey,
       title: title,
       body: body,
-      userType: userType ?? localUser.userType?.name,
+
+      // ✅ enum → string
+      userType: userType?.name ?? sessionUser.userType?.name,
+
       createAt: DateTime.now().millisecondsSinceEpoch,
       isRead: false,
+
       notificationType: notificationType ?? 'general',
-      extraData: extraData,
+
+      extraData: {
+        ...?extraData,
+        "doctor_key": doctorKey, // optional لو محتاجه
+      },
     );
   }
 }

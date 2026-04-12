@@ -34,7 +34,7 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
   Stream<String> get onRemoved => _removedController.stream;
 
   // ============================================================
-  // 🎧 REALTIME SYNC (Firebase → SQLite → Streams)
+  // 🎧 REALTIME SYNC
   // ============================================================
 
   @override
@@ -48,24 +48,28 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
     _changedSub?.cancel();
     _removedSub?.cancel();
 
-    _addedSub = _remote.onAdded.listen((model) async {
-      final key = model.key;
-      if (key == null) return;
+    _addedSub = _remote.onAdded.listen((json) async {
+      final uid = json['uid'];
+      if (uid == null) return;
 
-      if (_processedKeys.contains(key)) return;
-      _processedKeys.add(key);
+      if (_processedKeys.contains(uid)) return;
+      _processedKeys.add(uid);
 
-      log("🔥 Client Added → $key");
+      final model = LocalUser.fromMap(json);
+
+      log("🔥 Client Added → $uid");
 
       await _local.upsertFromServer(model);
       _addedController.add(model);
     });
 
-    _changedSub = _remote.onChanged.listen((model) async {
-      final key = model.key;
-      if (key == null) return;
+    _changedSub = _remote.onChanged.listen((json) async {
+      final uid = json['uid'];
+      if (uid == null) return;
 
-      log("🔄 Client Updated → $key");
+      final model = LocalUser.fromMap(json);
+
+      log("🔄 Client Updated → $uid");
 
       await _local.upsertFromServer(model);
       _changedController.add(model);
@@ -80,7 +84,7 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
   }
 
   // ============================================================
-  // 🛑 STOP REALTIME
+  // 🛑 STOP
   // ============================================================
 
   @override
@@ -99,11 +103,11 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
   }
 
   // ============================================================
-  // 📦 GET CLIENTS (LOCAL ONLY)
+  // 📦 LOCAL
   // ============================================================
 
   @override
-  Future<Either<AppError, List<LocalUser?>>> getClientsDomain(
+  Future<Either<AppError, List<LocalUser>>> getClientsDomain(
     SQLiteQueryParams query,
   ) async {
     try {
@@ -115,11 +119,11 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
   }
 
   // ============================================================
-  // 🌐 GET CLIENTS (ONLINE → SAVE LOCAL → RETURN)
+  // 🌐 ONLINE
   // ============================================================
 
   @override
-  Future<Either<AppError, List<LocalUser?>>> getClientsOnlineDomain(
+  Future<Either<AppError, List<LocalUser>>> getClientsOnlineDomain(
     Map<String, dynamic> firebaseFilter,
   ) async {
     try {
@@ -129,18 +133,20 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
 
       final remoteList = await _remote.fetchClients(firebaseFilter);
 
-      for (final user in remoteList) {
+      final users = remoteList.map((e) => LocalUser.fromMap(e)).toList();
+
+      for (final user in users) {
         await _local.upsertFromServer(user);
       }
 
-      return Right(remoteList);
+      return Right(users);
     } catch (e) {
       return Left(AppError(e.toString()));
     }
   }
 
   // ============================================================
-  // ➕ ADD CLIENT (Offline First)
+  // ➕ ADD
   // ============================================================
 
   @override
@@ -149,12 +155,7 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
       await _local.addClient(model);
 
       if (await _connectivity.isOnline()) {
-        await _remote.createClient(model);
-
-        await _local.markAsSynced(
-          model.key!,
-          serverUpdatedAt: DateTime.now().millisecondsSinceEpoch,
-        );
+        await _remote.createClient(model.toJson());
       }
 
       return const Right(unit);
@@ -164,7 +165,7 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
   }
 
   // ============================================================
-  // 🔄 UPDATE CLIENT
+  // 🔄 UPDATE
   // ============================================================
 
   @override
@@ -173,12 +174,7 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
       await _local.updateClient(model);
 
       if (await _connectivity.isOnline()) {
-        await _remote.updateClient(model);
-
-        await _local.markAsSynced(
-          model.key!,
-          serverUpdatedAt: DateTime.now().millisecondsSinceEpoch,
-        );
+        await _remote.updateClient(model.toJson());
       }
 
       return const Right(unit);
@@ -188,7 +184,7 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
   }
 
   // ============================================================
-  // ❌ DELETE CLIENT
+  // ❌ DELETE
   // ============================================================
 
   @override
@@ -198,11 +194,6 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
 
       if (await _connectivity.isOnline()) {
         await _remote.deleteClient(key);
-
-        await _local.markAsSynced(
-          key,
-          serverUpdatedAt: DateTime.now().millisecondsSinceEpoch,
-        );
       }
 
       return const Right(unit);

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart'; // 👈 for compute
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
@@ -34,7 +33,6 @@ class OrderMedicineViewModel extends GetxController {
   // STEP 2 – FORM
   // ===============================
   late TextEditingController phoneController;
-  late TextEditingController whatsappController;
   late TextEditingController addressController;
   late TextEditingController doseController;
   late TextEditingController notesController;
@@ -47,10 +45,9 @@ class OrderMedicineViewModel extends GetxController {
   void onInit() {
     super.onInit();
 
-    final user = LocalUser().getUserData();
-    phoneController = TextEditingController(text: user.phone ?? "");
-    whatsappController = TextEditingController(text: user.whatsAppPhone ?? "");
-    addressController = TextEditingController(text: user.address ?? "");
+    final user = Get.find<UserSession>().user;
+    phoneController = TextEditingController(text: user?.phone ?? "");
+    addressController = TextEditingController(text: user?.address ?? "");
     doseController = TextEditingController();
     notesController = TextEditingController();
 
@@ -62,20 +59,11 @@ class OrderMedicineViewModel extends GetxController {
     phoneController.addListener(() {
       update();
     });
-
-    if (whatsappController.text.isEmpty ||
-        whatsappController.text == phoneController.text) {
-      isWhatsAppSame = true;
-      whatsappController.text = phoneController.text;
-    } else {
-      isWhatsAppSame = false;
-    }
   }
 
   @override
   void onClose() {
     phoneController.dispose();
-    whatsappController.dispose();
     addressController.dispose();
     doseController.dispose();
     notesController.dispose();
@@ -123,12 +111,6 @@ class OrderMedicineViewModel extends GetxController {
 
   void toggleWhatsAppSame(bool? value) {
     isWhatsAppSame = value ?? true;
-
-    if (isWhatsAppSame) {
-      whatsappController.text = phoneController.text;
-    } else {
-      whatsappController.clear();
-    }
 
     update();
   }
@@ -306,8 +288,8 @@ class OrderMedicineViewModel extends GetxController {
   // ===========================================================================
   // 🏥 GET PHARMACY
   // ===========================================================================
-  Future<LocalUser> getPharmacyData() async {
-    final completer = Completer<LocalUser>();
+  Future<LocalUser?> getPharmacyData() async {
+    final completer = Completer<LocalUser?>();
 
     await AuthenticationService().getClientsData(
       query: SQLiteQueryParams(
@@ -317,9 +299,9 @@ class OrderMedicineViewModel extends GetxController {
       ),
       voidCallBack: (users) {
         if (users.isNotEmpty && users.first != null) {
-          completer.complete(users.first!);
+          completer.complete(users.first);
         } else {
-          completer.complete(LocalUser());
+          completer.complete(null); // ✅ بدل LocalUser()
         }
       },
     );
@@ -340,17 +322,16 @@ class OrderMedicineViewModel extends GetxController {
       key: const Uuid().v4(),
       reservationKey: reservation.key,
       patientuid: reservation.patientUid,
-      pharmacyPhone: pharmacy.phone,
-      pharmacyFcmToken: pharmacy.fcmToken,
+      pharmacyPhone: pharmacy?.phone,
+      pharmacyFcmToken: pharmacy?.fcmToken,
       patientKey: reservation.patientKey,
       doctorKey: reservation.doctorKey,
       fcmToken: reservation.fcmToken_patient,
       doctorName: reservation.doctorName,
       patientName: reservation.patientName,
       clinicKey: reservation.clinicKey,
-      createdBy: LocalUser().getUserData().uid,
+      createdBy: Get.find<UserSession>().user?.uid,
       phone: phoneController.text.trim(),
-      whatsApp: whatsappController.text.trim(),
       address: addressController.text.trim(),
       doseDays: int.tryParse(doseController.text.trim()),
       notes: notesController.text.trim(),

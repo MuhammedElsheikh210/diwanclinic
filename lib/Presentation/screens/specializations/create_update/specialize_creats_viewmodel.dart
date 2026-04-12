@@ -22,11 +22,13 @@ class CreateSpecializeViewModel extends GetxController {
 
   /// ✅ Save or update the category
   void saveCategory() {
+    final user = Get.find<UserSession>().user;
+
     final category =
         existingCategory?.copyWith(name: nameController.text) ??
         CategoryEntity(
           key: const Uuid().v4(),
-          uid: LocalUser().getUserData().uid ?? "",
+          uid: user?.uid ?? "",
           icon_name: "heartPulse",
           name: nameController.text,
         );

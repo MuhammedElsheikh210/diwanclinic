@@ -11,8 +11,7 @@ class LegacyQueueViewModel extends GetxController {
   LocalUser? selectedDoctor;
   bool isLoadingDoctors = false;
 
-  bool get isCenterMode =>
-      LocalUser().getUserData().medicalCenterKey != null;
+  bool get isCenterMode => false;
 
   /// 🕒 Shift
   List<GenericListModel>? shiftDropdownItems;
@@ -20,6 +19,7 @@ class LegacyQueueViewModel extends GetxController {
 
   /// 📅 Date
   DateTime selectedDate = DateTime.now();
+
   String get formattedDate => DateFormat('dd-MM-yyyy').format(selectedDate);
 
   // ------------------------------------------------------------
@@ -38,31 +38,31 @@ class LegacyQueueViewModel extends GetxController {
   // 👨‍⚕️ LOAD DOCTORS
   // ------------------------------------------------------------
   Future<void> loadDoctorsOfCenter() async {
-    final centerKey = LocalUser().getUserData().medicalCenterKey;
-    if (centerKey == null) return;
-
-    isLoadingDoctors = true;
-    update();
-
-    AuthenticationService().getClientsData(
-      query: SQLiteQueryParams(
-        where: "medicalCenterKey = ? AND userType = ?",
-        whereArgs: [centerKey, "doctor"],
-      ),
-      voidCallBack: (data) async {
-        centerDoctors = data;
-
-        if (data.isNotEmpty) {
-          selectedDoctor = data.first;
-
-          /// 🔥 load data based on doctor
-          getData();
-        }
-
-        isLoadingDoctors = false;
-        update();
-      },
-    );
+    // final centerKey = LocalUser().getUserData().medicalCenterKey;
+    // if (centerKey == null) return;
+    //
+    // isLoadingDoctors = true;
+    // update();
+    //
+    // AuthenticationService().getClientsData(
+    //   query: SQLiteQueryParams(
+    //     where: "medicalCenterKey = ? AND userType = ?",
+    //     whereArgs: [centerKey, "doctor"],
+    //   ),
+    //   voidCallBack: (data) async {
+    //     centerDoctors = data;
+    //
+    //     if (data.isNotEmpty) {
+    //       selectedDoctor = data.first;
+    //
+    //       /// 🔥 load data based on doctor
+    //       getData();
+    //     }
+    //
+    //     isLoadingDoctors = false;
+    //     update();
+    //   },
+    // );
   }
 
   // ------------------------------------------------------------
@@ -78,14 +78,36 @@ class LegacyQueueViewModel extends GetxController {
   // 📥 GET DATA (🔥 IMPORTANT FIX)
   // ------------------------------------------------------------
   void getData() {
+    final currentUser = Get.find<UserSession>().user;
+
+    if (currentUser == null) {
+      debugPrint("❌ User not found in session");
+      return;
+    }
+
+    final baseUser = currentUser.user;
+
+    String? doctorKey;
+
+    // ✅ Doctor
+    if (baseUser is DoctorUser) {
+      doctorKey = baseUser.uid;
+    }
+    // ✅ Assistant
+    else if (baseUser is AssistantUser) {
+      doctorKey = baseUser.doctorKey;
+    }
+
+    final clinicKey = currentUser.clinicKey;
+
     service.getLegacyQueueByDateData(
-      doctorUid: isCenterMode ? selectedDoctor?.uid : null, // ✅ الحل هنا
-      firebaseFilter: isCenterMode
-          ? FirebaseFilter()
-          : FirebaseFilter(
-        orderBy: "clinic_key",
-        equalTo: LocalUser().getUserData().clinicKey,
-      ),
+      doctorUid: isCenterMode ? selectedDoctor?.uid : doctorKey,
+
+      firebaseFilter:
+          isCenterMode
+              ? FirebaseFilter()
+              : FirebaseFilter(orderBy: "clinic_key", equalTo: clinicKey),
+
       voidCallBack: (data) {
         list = data;
         update();
@@ -99,7 +121,8 @@ class LegacyQueueViewModel extends GetxController {
       date: model.date ?? "",
       key: model.key ?? "",
       isPatient: false,
-      doctorUid: isCenterMode ? selectedDoctor?.uid : null, // ✅ مهم
+      doctorUid: isCenterMode ? selectedDoctor?.uid : null,
+      // ✅ مهم
       voidCallBack: (status) {
         Loader.dismiss();
         if (status == ResponseStatus.success) {

@@ -1,7 +1,4 @@
-import 'package:diwanclinic/Presentation/screens/patient_orders/list/controller.dart';
-
 import '../../../../index/index_main.dart';
-import 'package:flutter/material.dart';
 
 class PriceDetailsScreen extends StatefulWidget {
   final OrderModel order;
@@ -49,7 +46,8 @@ class _PriceDetailsScreenState extends State<PriceDetailsScreen> {
   Widget build(BuildContext context) {
     final isPending = widget.order.status == "calculated";
     final completed = widget.order.status == "completed";
-    final userType = LocalUser().getUserData().userType;
+    final userType = Get.find<UserSession>().user?.user.userType;
+
     final isPharmacy = userType == UserType.pharmacy;
 
     // ✅ القيم المعتمدة فقط (من الداتا)
@@ -60,9 +58,8 @@ class _PriceDetailsScreenState extends State<PriceDetailsScreen> {
 
     final num totalBeforeDiscount = subtotal + delivery;
 
-    final double discountPercent = totalBeforeDiscount == 0
-        ? 0
-        : (discount / totalBeforeDiscount) * 100;
+    final double discountPercent =
+        totalBeforeDiscount == 0 ? 0 : (discount / totalBeforeDiscount) * 100;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -89,18 +86,19 @@ class _PriceDetailsScreenState extends State<PriceDetailsScreen> {
               context: context,
               title: "الأدوية",
               child: Column(
-                children: medicines.map((m) {
-                  return MedicineItem(
-                    medicine: m,
-                    isPending: isPending,
-                    onChanged: (updated) {
-                      setState(() {
-                        int index = medicines.indexOf(m);
-                        medicines[index] = updated;
-                      });
-                    },
-                  );
-                }).toList(),
+                children:
+                    medicines.map((m) {
+                      return MedicineItem(
+                        medicine: m,
+                        isPending: isPending,
+                        onChanged: (updated) {
+                          setState(() {
+                            int index = medicines.indexOf(m);
+                            medicines[index] = updated;
+                          });
+                        },
+                      );
+                    }).toList(),
               ),
             ),
 
@@ -187,16 +185,16 @@ class _PriceDetailsScreenState extends State<PriceDetailsScreen> {
             completed
                 ? const SizedBox()
                 : PrimaryTextButton(
-                    appButtonSize: AppButtonSize.xxLarge,
-                    customBackgroundColor: AppColors.errorForeground,
-                    onTap: () => _showCancelOrderDialog(context),
-                    label: AppText(
-                      text: "إلغاء الطلب",
-                      textStyle: context.typography.mdBold.copyWith(
-                        color: AppColors.white,
-                      ),
+                  appButtonSize: AppButtonSize.xxLarge,
+                  customBackgroundColor: AppColors.errorForeground,
+                  onTap: () => _showCancelOrderDialog(context),
+                  label: AppText(
+                    text: "إلغاء الطلب",
+                    textStyle: context.typography.mdBold.copyWith(
+                      color: AppColors.white,
                     ),
                   ),
+                ),
           ],
         ),
       ),
@@ -206,45 +204,48 @@ class _PriceDetailsScreenState extends State<PriceDetailsScreen> {
   void _showCancelOrderDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: AppText(
-          text: "إلغاء الطلب",
-          textStyle: context.typography.lgBold.copyWith(
-            color: AppColors.textDisplay,
-          ),
-        ),
-        content: AppText(
-          text:
-              "هل أنت متأكد من إلغاء هذا الطلب؟\nلا يمكن التراجع بعد الإلغاء.",
-          textStyle: context.typography.mdMedium.copyWith(
-            color: AppColors.textSecondaryParagraph,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: AppText(
-              text: "رجوع",
+      builder:
+          (_) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: AppText(
+              text: "إلغاء الطلب",
+              textStyle: context.typography.lgBold.copyWith(
+                color: AppColors.textDisplay,
+              ),
+            ),
+            content: AppText(
+              text:
+                  "هل أنت متأكد من إلغاء هذا الطلب؟\nلا يمكن التراجع بعد الإلغاء.",
               textStyle: context.typography.mdMedium.copyWith(
                 color: AppColors.textSecondaryParagraph,
               ),
             ),
-          ),
-          TextButton(
-            onPressed: () async {
-              Get.back();
-              await _cancelOrder();
-            },
-            child: AppText(
-              text: "إلغاء الطلب",
-              textStyle: context.typography.mdBold.copyWith(
-                color: AppColors.errorForeground,
+            actions: [
+              TextButton(
+                onPressed: () => Get.back(),
+                child: AppText(
+                  text: "رجوع",
+                  textStyle: context.typography.mdMedium.copyWith(
+                    color: AppColors.textSecondaryParagraph,
+                  ),
+                ),
               ),
-            ),
+              TextButton(
+                onPressed: () async {
+                  Get.back();
+                  await _cancelOrder();
+                },
+                child: AppText(
+                  text: "إلغاء الطلب",
+                  textStyle: context.typography.mdBold.copyWith(
+                    color: AppColors.errorForeground,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -285,85 +286,88 @@ class _PriceDetailsScreenState extends State<PriceDetailsScreen> {
   void _showConfirmPricingDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: AppText(
-          text: "تأكيد سعر الطلب",
-          textStyle: context.typography.lgBold.copyWith(
-            color: AppColors.textDisplay,
-          ),
-        ),
-        content: AppText(
-          text:
-              "هل تريد تأكيد التسعير النهائي لهذا الطلب؟\nبعد التأكيد سيتم إرسال السعر للمريض.",
-          textStyle: context.typography.mdMedium.copyWith(
-            color: AppColors.textSecondaryParagraph,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: AppText(
-              text: "إلغاء",
+      builder:
+          (_) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: AppText(
+              text: "تأكيد سعر الطلب",
+              textStyle: context.typography.lgBold.copyWith(
+                color: AppColors.textDisplay,
+              ),
+            ),
+            content: AppText(
+              text:
+                  "هل تريد تأكيد التسعير النهائي لهذا الطلب؟\nبعد التأكيد سيتم إرسال السعر للمريض.",
               textStyle: context.typography.mdMedium.copyWith(
                 color: AppColors.textSecondaryParagraph,
               ),
             ),
-          ),
-          TextButton(
-            onPressed: () async {
-              Loader.show();
-
-              // 🔥 تحديث الطلب من مكان واحد فقط
-              await OrderStatusService.updateOrderStatus(
-                order: widget.order.copyWith(
-                  medicines: medicines,
-                  totalOrder: subtotal,
-                  deliveryFees: delivery,
-                  discount: discount,
-                  finalAmount: finalTotal,
-                  updatedAt: DateTime.now().millisecondsSinceEpoch,
+            actions: [
+              TextButton(
+                onPressed: () => Get.back(),
+                child: AppText(
+                  text: "إلغاء",
+                  textStyle: context.typography.mdMedium.copyWith(
+                    color: AppColors.textSecondaryParagraph,
+                  ),
                 ),
-                newStatus: "confirmed",
-                onSave: (updatedOrder) async {
-                  await OrderService().updateOrderData(
-                    order: updatedOrder,
-                    sideEffects: const OrderSideEffects(
-                      sendWhatsApp: true,
-                      sendNotification: true,
-                    ),
-                    voidCallBack: (_) async {
-                      if (widget.fromHome == true) {
-                        Get.offAll(
-                          () => const MainPage(initialIndex: 0),
-                          binding: Binding(),
-                        );
-                      } else {
-                        OrdersListViewModel controller = initController(
-                          () => OrdersListViewModel(),
-                        );
-                        controller.fetchOrders();
-                        controller.update();
-                        Get.back();
-                        Get.back();
-                      }
+              ),
+              TextButton(
+                onPressed: () async {
+                  Loader.show();
 
-                      Loader.dismiss();
-                      // إغلاق شاشة التفاصيل
+                  // 🔥 تحديث الطلب من مكان واحد فقط
+                  await OrderStatusService.updateOrderStatus(
+                    order: widget.order.copyWith(
+                      medicines: medicines,
+                      totalOrder: subtotal,
+                      deliveryFees: delivery,
+                      discount: discount,
+                      finalAmount: finalTotal,
+                      updatedAt: DateTime.now().millisecondsSinceEpoch,
+                    ),
+                    newStatus: "confirmed",
+                    onSave: (updatedOrder) async {
+                      await OrderService().updateOrderData(
+                        order: updatedOrder,
+                        sideEffects: const OrderSideEffects(
+                          sendWhatsApp: true,
+                          sendNotification: true,
+                        ),
+                        voidCallBack: (_) async {
+                          if (widget.fromHome == true) {
+                            Get.offAll(
+                              () => const MainPage(initialIndex: 0),
+                              binding: Binding(),
+                            );
+                          } else {
+                            OrdersListViewModel controller = initController(
+                              () => OrdersListViewModel(),
+                            );
+                            controller.fetchOrders();
+                            controller.update();
+                            Get.back();
+                            Get.back();
+                          }
+
+                          Loader.dismiss();
+                          // إغلاق شاشة التفاصيل
+                        },
+                      );
                     },
                   );
                 },
-              );
-            },
-            child: AppText(
-              text: "تأكيد",
-              textStyle: context.typography.mdBold.copyWith(
-                color: AppColors.primary,
+                child: AppText(
+                  text: "تأكيد",
+                  textStyle: context.typography.mdBold.copyWith(
+                    color: AppColors.primary,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
     );
   }
 

@@ -33,6 +33,7 @@ class CreateReservationView extends StatefulWidget {
 class _CreateReservationViewState extends State<CreateReservationView> {
   final HandleKeyboardService keyboardService = HandleKeyboardService();
   final GlobalKey<FormState> globalKeyReservation = GlobalKey<FormState>();
+  final currentUser = Get.find<UserSession>().user;
 
   bool showNameList = false;
   bool showPhoneList = false;
@@ -123,7 +124,6 @@ class _CreateReservationViewState extends State<CreateReservationView> {
     /// 3️⃣ load open/close
     await vm.loadOpenCloseStatusForDate(formattedDate);
 
-
     vm.calculateOrderNumber();
     vm.isLoadingReservations = false;
     vm.update();
@@ -149,7 +149,6 @@ class _CreateReservationViewState extends State<CreateReservationView> {
     controller.clientUser = client;
     controller.patientNameController.text = client.name ?? "";
     controller.patientPhoneController.text = client.phone ?? "";
-    controller.patientCodeController.text = client.code ?? "";
     controller.update();
 
     setState(() {
@@ -706,7 +705,7 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                   padding: const EdgeInsets.only(
                                     left: 15.0,
                                     right: 15,
-                                    bottom: 7
+                                    bottom: 7,
                                   ),
                                   child: Text(
                                     "رقم الدور ",
@@ -730,10 +729,8 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                     ),
                                   ),
                                 ),
-
-                                /// 🗂️ Legacy Queue Checkbox (Assistant only)
-                                if (LocalUser().getUserData().userType?.name ==
-                                        Strings.assistant &&
+                                if ((currentUser?.user.userType ==
+                                        UserType.assistant) &&
                                     controller.legacyQueueCount > 0)
                                   Padding(
                                     padding: const EdgeInsets.symmetric(
@@ -823,7 +820,6 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                       ).format(pickedDate);
                                       // 1️⃣ حمّل الكشكول
 
-
                                       // 🔥 حالة اليوم (open / close)
                                       await controller
                                           .loadOpenCloseStatusForDate(
@@ -831,7 +827,6 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                           );
 
                                       vm.calculateOrderNumber();
-
 
                                       controller.update();
                                     },

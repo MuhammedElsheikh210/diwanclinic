@@ -1,6 +1,3 @@
-import 'package:firebase_database/firebase_database.dart';
-import '../../../../index/index_main.dart';
-
 import '../../../../index/index_main.dart';
 
 class NotificationController extends GetxController {
@@ -136,17 +133,17 @@ class NotificationController extends GetxController {
     String? notificationType,
     Map<String, dynamic>? extraData,
   }) async {
-    final user = LocalUser().getUserData();
+    final user = Get.find<UserSession>().user;
 
     final newNotif = NotificationModel(
       key: const Uuid().v4(),
-      fromKey: user.key,
+      fromKey: user?.uid,
       toKey: toKey,
       title: title,
       body: body,
       notificationType: notificationType,
       extraData: extraData,
-      userType: user.userType?.name,
+      userType: user?.name,
       createAt: DateTime.now().millisecondsSinceEpoch,
       isRead: false,
     );
@@ -217,7 +214,8 @@ extension NotificationFeature on NotificationController {
     final updated = reservation.copyWith(
       status: ReservationStatus.approved.value,
     );
-    updated.fcmToken_assist = LocalUser().getUserData().fcmToken;
+    updated.fcmToken_assist = Get.find<UserSession>().user?.fcmToken;
+
     await ReservationService().updateReservationData(
       reservation: updated,
       voidCallBack: (_) async {
@@ -306,7 +304,7 @@ extension NotificationFeature on NotificationController {
     final updated = reservation.copyWith(
       status: ReservationStatus.cancelledByAssistant.value,
     );
-    updated.fcmToken_assist = LocalUser().getUserData().fcmToken;
+    updated.fcmToken_assist = Get.find<UserSession>().user?.fcmToken;
     await ReservationService().updateReservationData(
       reservation: updated,
       voidCallBack: (_) async {

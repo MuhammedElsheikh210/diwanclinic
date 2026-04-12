@@ -37,15 +37,14 @@ class CreateReservationViewModel extends GetxController {
   LocalUser? selectedDoctor;
   bool isLoadingDoctors = false;
 
-  bool get isCenterAssistant =>
-      LocalUser().getUserData().medicalCenterKey != null;
+  bool get isCenterAssistant => false;
 
   // 🔹 Reservation date
   int? create_at = DateTime.now().millisecondsSinceEpoch;
 
   static String get uid {
-    final user = LocalUser().getUserData();
-    return user.uid ?? "";
+    final user = Get.find<UserSession>().user;
+    return user?.uid ?? "";
   }
 
   ReservationModel? existingReservation;
@@ -154,10 +153,25 @@ class CreateReservationViewModel extends GetxController {
   Future<void> calculateOrderNumber() async {
     if (clinic_key == null || shift_key == null) return;
 
-    final doctorUid =
-        isCenterAssistant
-            ? selectedDoctor?.uid
-            : LocalUser().getUserData().doctorKey;
+    final currentUser = Get.find<UserSession>().user;
+
+    if (currentUser == null) {
+      debugPrint("❌ User not found in session");
+      return;
+    }
+
+    final baseUser = currentUser.user;
+
+    String? doctorUid;
+
+    // ✅ Doctor
+    if (baseUser is DoctorUser) {
+      doctorUid = baseUser.uid;
+    }
+    // ✅ Assistant
+    else if (baseUser is AssistantUser) {
+      doctorUid = baseUser.doctorKey;
+    }
 
     if (doctorUid == null || doctorUid.isEmpty) return;
 
@@ -223,44 +237,44 @@ class CreateReservationViewModel extends GetxController {
   }
 
   Future<void> loadDoctorsOfCenter() async {
-    final centerKey = LocalUser().getUserData().medicalCenterKey;
-    if (centerKey == null) return;
-
-    isLoadingDoctors = true;
-    update();
-
-    AuthenticationService().getClientsData(
-      query: SQLiteQueryParams(
-        where: "medicalCenterKey = ? AND userType = ?",
-        whereArgs: [centerKey, "doctor"],
-      ),
-      voidCallBack: (data) async {
-        centerDoctors = data;
-
-        /// 🔥 IMPORTANT: set default doctor
-        if (data != null && data.isNotEmpty) {
-          try {
-            /// ✅ حاول تختار الدكتور اللي جاي من الشاشة
-            selectedDoctor = data.firstWhere((doc) => doc?.uid == doctor_key);
-          } catch (_) {
-            /// 🔁 fallback لأول دكتور
-            selectedDoctor = data.first;
-          }
-
-          /// 🔥 بعد ما الدكتور يتحدد → حمل كل حاجة زيه زي onDoctorChanged
-        }
-
-        isLoadingDoctors = false;
-        update();
-
-        /// 🔥 وبعدها حمّل البيانات في background
-        Future.microtask(() async {
-          if (selectedDoctor != null) {
-            await onDoctorChanged(selectedDoctor!);
-          }
-        });
-      },
-    );
+    // final centerKey = LocalUser().getUserData().medicalCenterKey;
+    // if (centerKey == null) return;
+    //
+    // isLoadingDoctors = true;
+    // update();
+    //
+    // AuthenticationService().getClientsData(
+    //   query: SQLiteQueryParams(
+    //     where: "medicalCenterKey = ? AND userType = ?",
+    //     whereArgs: [centerKey, "doctor"],
+    //   ),
+    //   voidCallBack: (data) async {
+    //     centerDoctors = data;
+    //
+    //     /// 🔥 IMPORTANT: set default doctor
+    //     if (data != null && data.isNotEmpty) {
+    //       try {
+    //         /// ✅ حاول تختار الدكتور اللي جاي من الشاشة
+    //         selectedDoctor = data.firstWhere((doc) => doc?.uid == doctor_key);
+    //       } catch (_) {
+    //         /// 🔁 fallback لأول دكتور
+    //         selectedDoctor = data.first;
+    //       }
+    //
+    //       /// 🔥 بعد ما الدكتور يتحدد → حمل كل حاجة زيه زي onDoctorChanged
+    //     }
+    //
+    //     isLoadingDoctors = false;
+    //     update();
+    //
+    //     /// 🔥 وبعدها حمّل البيانات في background
+    //     Future.microtask(() async {
+    //       if (selectedDoctor != null) {
+    //         await onDoctorChanged(selectedDoctor!);
+    //       }
+    //     });
+    //   },
+    // );
   }
 
   Future<void> loadOpenCloseStatusForDate(String date) async {
@@ -326,10 +340,25 @@ class CreateReservationViewModel extends GetxController {
     isLoadingShifts = true;
     update();
 
-    final doctorUid =
-        isCenterAssistant
-            ? selectedDoctor?.uid
-            : LocalUser().getUserData().doctorKey ?? "";
+    final currentUser = Get.find<UserSession>().user;
+
+    if (currentUser == null) {
+      debugPrint("❌ User not found in session");
+      return;
+    }
+
+    final baseUser = currentUser.user;
+
+    String? doctorUid;
+
+    // ✅ Doctor
+    if (baseUser is DoctorUser) {
+      doctorUid = baseUser.uid;
+    }
+    // ✅ Assistant
+    else if (baseUser is AssistantUser) {
+      doctorUid = baseUser.doctorKey;
+    }
 
     print("👨‍⚕️ doctorUid: $doctorUid");
     print("🏥 clinic_key: $clinic_key");
@@ -496,7 +525,21 @@ class CreateReservationViewModel extends GetxController {
   }
 
   Future<void> loadLegacyQueueForDate(String date) async {
-    final myClinicKey = LocalUser().getUserData().clinicKey;
+    final currentUser = Get.find<UserSession>().user;
+
+    if (currentUser == null) {
+      debugPrint("❌ User not found in session");
+      return;
+    }
+
+    final baseUser = currentUser.user;
+
+    String? myClinicKey;
+
+    // ✅ Assistant
+    if (baseUser is AssistantUser) {
+      myClinicKey = baseUser.clinicKey;
+    }
 
     if (shift_key == null || shift_key!.isEmpty) return;
 
@@ -555,7 +598,7 @@ class CreateReservationViewModel extends GetxController {
     // 1️⃣ خزّن التاريخ
     create_at = date.millisecondsSinceEpoch;
 
-    final formatted = _toDashFormat(date);
+    final formatted = toDashFormat(date);
     companyNameController.text = formatted;
 
     // 2️⃣ حمّل الكشكول للتاريخ الجديد
@@ -611,7 +654,6 @@ class CreateReservationViewModel extends GetxController {
     patientNameController.text = reservation.patientName ?? "";
     patientNameController.text = reservation.patientName ?? "";
     patientPhoneController.text = clientUser?.phone ?? "";
-    patientCodeController.text = clientUser?.code ?? "";
     resOrderController.text = reservation.order_num?.toString() ?? "";
 
     // Payment
@@ -726,12 +768,25 @@ class CreateReservationViewModel extends GetxController {
 
     final now = DateTime.now().millisecondsSinceEpoch;
 
+    final currentUser = Get.find<UserSession>().user;
+
+    if (currentUser == null || !currentUser.isAssistant) {
+      debugPrint("❌ Current user is not assistant");
+      return;
+    }
+
+    final assistant = currentUser.asAssistant;
+
+    if (assistant == null) {
+      debugPrint("❌ Failed to cast to AssistantUser");
+      return;
+    }
+
     // ============================================================
     // 🟦 UPDATE MODE
     // ============================================================
     if (is_update && existingReservation != null) {
       final updatedReservation = existingReservation!.copyWith(
-        patientKey: clientUser?.key,
         patientUid: clientUser?.uid,
         fcmTokenPatient: clientUser?.fcmToken,
 
@@ -752,73 +807,44 @@ class CreateReservationViewModel extends GetxController {
         restAmount: restAmountController.text,
         clinicKey: clinic_key,
         shiftKey: shift_key,
-        doctorKey:
-            isCenterAssistant
-                ? selectedDoctor?.uid
-                : LocalUser().getUserData().doctorKey,
-        medicalCenterKey: LocalUser().getUserData().medicalCenterKey,
+        doctorKey: assistant.doctorKey,
 
         // 🔥 IMPORTANT
         updatedAt: now,
-        syncStatus: SyncStatus.pendingUpdate,
       );
 
       updateReservation(updatedReservation, activeList, clinicModel);
       return;
     }
 
-    // ============================================================
-    // 🟩 CREATE MODE
-    // ============================================================
-
     final parsedOrderNum = int.tryParse(resOrderController.text) ?? 0;
-
     final newReservation = ReservationModel(
       key: const Uuid().v4(),
-
-      doctorKey:
-          isCenterAssistant
-              ? selectedDoctor?.uid
-              : LocalUser().getUserData().doctorKey,
-      medicalCenterKey: LocalUser().getUserData().medicalCenterKey,
-      doctorName:
-          isCenterAssistant
-              ? selectedDoctor?.name
-              : LocalUser().getUserData().doctorName,
-
+      doctorKey: assistant.doctorKey,
+      // doctorName:
+      //     isCenterAssistant
+      //         ? selectedDoctor?.name
+      //         : LocalUser().getUserData().doctorName,
       fcmToken_patient: clientUser?.fcmToken,
-      patientKey: clientUser?.key,
       patientUid: clientUser?.uid,
-
       patientName:
           selectedType == "زيارة مندوب"
               ? delegateNameController.text
               : patientNameController.text,
-
       patientPhone: patientPhoneController.text,
-
-      assistantKey:
-          LocalUser().getUserData().userType?.name == Strings.assistant
-              ? LocalUser().getUserData().key
-              : null,
-
+      assistantKey: assistant.uid,
       reservationType: selectedType,
-
       appointmentDateTime:
           companyNameController.text.contains('/')
               ? normalizeToDashDate(companyNameController.text)
               : companyNameController.text,
-
       paidAmount: paidAmountController.text,
       restAmount: restAmountController.text,
-
       clinicKey: clinic_key,
       shiftKey: shift_key,
       order_num: parsedOrderNum,
-
       createAt: now,
       updatedAt: now,
-      syncStatus: SyncStatus.pendingCreate,
       status: ReservationStatus.approved.value,
     );
     createReservation(newReservation);
@@ -832,7 +858,7 @@ class CreateReservationViewModel extends GetxController {
       final query = SQLiteQueryParams(
         is_filtered: false,
         where: "patient_key = ? AND status = ?",
-        whereArgs: [client.key, ReservationStatus.completed.value],
+        whereArgs: [client.uid, ReservationStatus.completed.value],
         orderBy: "create_at DESC",
       );
 
@@ -917,43 +943,69 @@ class CreateReservationViewModel extends GetxController {
     }
 
     Loader.show();
+
     final email = "$phone@link.com";
     final password = phone;
 
     try {
       final userCred = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(email: email, password: password);
+
       final uid = userCred.user?.uid ?? "";
 
-      final currentUser = LocalUser().getUserData();
+      // ✅ current user من session
+      final currentUser = Get.find<UserSession>().user;
 
-      final newClient = LocalUser(
-        key: const Uuid().v4(),
+      if (currentUser == null) {
+        Loader.showError("❌ المستخدم غير موجود");
+        Loader.dismiss();
+        return;
+      }
+
+      final baseUser = currentUser.user;
+
+      String? doctorKey;
+
+      // ✅ Doctor
+      if (baseUser is DoctorUser) {
+        doctorKey = baseUser.uid;
+      }
+      // ✅ Assistant
+      else if (baseUser is AssistantUser) {
+        doctorKey = baseUser.doctorKey;
+      }
+
+      // ✅ إنشاء BaseUser (patient)
+      final patientBase = BaseUser(
         uid: uid,
         name: patientNameController.text,
         phone: phone,
-        identifier: email,
-        userType: UserType.patient,
+        email: email,
         password: password,
-        code: patientCodeController.text,
-        doctorKey: currentUser.doctorKey, // ✅ link to current doctor
+        userType: UserType.patient,
+        isProfileCompleted: true,
       );
+
+      // 🔥 لفه بـ LocalUser
+      final newClient = LocalUser(patientBase);
 
       await AuthenticationService().addClientsData(
         userclient: newClient,
         voidCallBack: (_) async {
           Loader.dismiss();
-          clientUser = newClient; // ✅ NOW we assign it directly here
+
+          clientUser = newClient;
+
           _updateClientsSyncStatus();
           update();
         },
       );
     } on FirebaseAuthException catch (e) {
+      Loader.dismiss();
       Loader.showError("فشل إنشاء الحساب: ${e.message}");
-      Loader.dismiss();
     } catch (e) {
-      Loader.showError("حدث خطأ أثناء إنشاء الحساب");
       Loader.dismiss();
+      Loader.showError("حدث خطأ أثناء إنشاء الحساب");
     }
   }
 
@@ -1086,54 +1138,5 @@ class CreateReservationViewModel extends GetxController {
     restAmountController.dispose();
     resOrderController.dispose();
     super.dispose();
-  }
-}
-
-String convertArabicToEnglishNumbers(String input) {
-  const arabic = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-  const english = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-
-  for (int i = 0; i < arabic.length; i++) {
-    input = input.replaceAll(arabic[i], english[i]);
-  }
-  return input;
-}
-
-String _toDashFormat(DateTime date) {
-  return DateFormat('dd-MM-yyyy').format(date);
-}
-
-String normalizeToDashDate(String? date) {
-  if (date == null || date.isEmpty) {
-    return DateFormat('dd-MM-yyyy').format(DateTime.now());
-  }
-
-  try {
-    // dd/MM/yyyy
-    if (date.contains('/')) {
-      final parsed = DateFormat('dd/MM/yyyy').parse(date);
-      return DateFormat('dd-MM-yyyy').format(parsed);
-    }
-
-    // yyyy-MM-dd
-    if (RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(date)) {
-      final parsed = DateFormat('yyyy-MM-dd').parse(date);
-      return DateFormat('dd-MM-yyyy').format(parsed);
-    }
-
-    // dd-MM-yyyy (already correct)
-    if (RegExp(r'^\d{2}-\d{2}-\d{4}$').hasMatch(date)) {
-      return date;
-    }
-
-    // fallback
-    final parsed = DateTime.tryParse(date);
-    if (parsed != null) {
-      return DateFormat('dd-MM-yyyy').format(parsed);
-    }
-
-    return date;
-  } catch (_) {
-    return DateFormat('dd-MM-yyyy').format(DateTime.now());
   }
 }

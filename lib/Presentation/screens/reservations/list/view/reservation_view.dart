@@ -79,7 +79,7 @@ class _ReservationViewState extends State<ReservationView> {
 
             onPressed: () async {
               final trueTotal = await controller.getTotalTodayReservations();
-              final userType = LocalUser().getUserData().userType;
+              final userType = Get.find<UserSession>().user?.user.userType;
 
               if (userType == UserType.patient) {
                 Get.delete<CreateReservationFromPatientViewModel>();
@@ -471,7 +471,8 @@ class _ReservationViewState extends State<ReservationView> {
           borderRadius: BorderRadius.circular(12),
 
           onTap: () {
-            if (LocalUser().getUserData().userType?.name != Strings.assistant) {
+            if (Get.find<UserSession>().user?.user.userType?.name !=
+                Strings.assistant) {
               Get.to(
                 () => PatientForAssistantProfileView(
                   reservationModel: reservation ?? ReservationModel(),

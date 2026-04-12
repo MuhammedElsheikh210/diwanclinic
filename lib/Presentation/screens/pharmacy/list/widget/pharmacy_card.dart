@@ -2,7 +2,7 @@ import 'package:diwanclinic/Presentation/screens/pharmacy/list/pharmacy_view_mod
 import '../../../../../index/index_main.dart';
 
 class PharmacyCard extends StatelessWidget {
-  final LocalUser pharmacy;
+  final LocalUser? pharmacy;
   final PharmacyViewModel controller;
 
   const PharmacyCard({Key? key, required this.pharmacy, required this.controller})
@@ -24,7 +24,7 @@ class PharmacyCard extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10.0),
               child: Text(
-                pharmacy.name ?? "",
+                pharmacy?.name ?? "",
                 style: context.typography.lgBold.copyWith(
                   color: AppColors.background_black,
                   fontSize: 16,

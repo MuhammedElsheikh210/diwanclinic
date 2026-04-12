@@ -1,6 +1,4 @@
 import 'dart:io';
-import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import '../../../../index/index_main.dart';
 
 class UploadPrescriptionScreen extends StatefulWidget {
@@ -41,14 +39,16 @@ class _UploadPrescriptionScreenState extends State<UploadPrescriptionScreen> {
               //--------------------------------
               PrimaryTextButton(
                 appButtonSize: AppButtonSize.xxLarge,
-                customBackgroundColor: selectedImages.isEmpty
-                    ? AppColors.buttonDisabledColor
-                    : AppColors.primary,
-                onTap: selectedImages.isEmpty
-                    ? null
-                    : () async {
-                        await _uploadAllAndOpenSheet(context);
-                      },
+                customBackgroundColor:
+                    selectedImages.isEmpty
+                        ? AppColors.buttonDisabledColor
+                        : AppColors.primary,
+                onTap:
+                    selectedImages.isEmpty
+                        ? null
+                        : () async {
+                          await _uploadAllAndOpenSheet(context);
+                        },
                 label: AppText(
                   text: "طلب الروشتة",
                   textStyle: context.typography.lgBold.copyWith(
@@ -71,45 +71,50 @@ class _UploadPrescriptionScreenState extends State<UploadPrescriptionScreen> {
     showDialog(
       barrierDismissible: false,
       context: context,
-      builder: (_) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: EdgeInsets.all(20.w),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AppText(
-                text: "جاري رفع الروشتة...",
-                textStyle: context.typography.mdBold.copyWith(
-                  color: AppColors.textDisplay,
-                ),
-              ),
-              SizedBox(height: 16.h),
-
-              ValueListenableBuilder<double>(
-                valueListenable: uploadProgress,
-                builder: (_, value, __) => LinearProgressIndicator(
-                  value: value,
-                  color: AppColors.primary,
-                  backgroundColor: Colors.grey.shade300,
-                ),
-              ),
-
-              SizedBox(height: 12.h),
-
-              ValueListenableBuilder<int>(
-                valueListenable: currentIndex,
-                builder: (_, value, __) => AppText(
-                  text: "صورة ${value + 1} من ${selectedImages.length}",
-                  textStyle: context.typography.smMedium.copyWith(
-                    color: AppColors.textSecondaryParagraph,
+      builder:
+          (_) => Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(20.w),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AppText(
+                    text: "جاري رفع الروشتة...",
+                    textStyle: context.typography.mdBold.copyWith(
+                      color: AppColors.textDisplay,
+                    ),
                   ),
-                ),
+                  SizedBox(height: 16.h),
+
+                  ValueListenableBuilder<double>(
+                    valueListenable: uploadProgress,
+                    builder:
+                        (_, value, __) => LinearProgressIndicator(
+                          value: value,
+                          color: AppColors.primary,
+                          backgroundColor: Colors.grey.shade300,
+                        ),
+                  ),
+
+                  SizedBox(height: 12.h),
+
+                  ValueListenableBuilder<int>(
+                    valueListenable: currentIndex,
+                    builder:
+                        (_, value, __) => AppText(
+                          text: "صورة ${value + 1} من ${selectedImages.length}",
+                          textStyle: context.typography.smMedium.copyWith(
+                            color: AppColors.textSecondaryParagraph,
+                          ),
+                        ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
     );
 
     final urls = await uploadPrescriptionImages(selectedImages);
@@ -120,15 +125,15 @@ class _UploadPrescriptionScreenState extends State<UploadPrescriptionScreen> {
       Loader.showError("فشل الرفع، حاول مرة أخرى");
       return;
     }
+    final user = Get.find<UserSession>().user;
 
     // Build reservation with urls
     final reservation = mapUrlsToReservation(
       ReservationModel(
-        patientKey: LocalUser().getUserData().key,
-        patientUid: LocalUser().getUserData().uid,
-        fcmToken_patient: LocalUser().getUserData().fcmToken,
-        patientPhone: LocalUser().getUserData().phone,
-        patientName: LocalUser().getUserData().name,
+        patientUid: user?.uid,
+        fcmToken_patient: user?.fcmToken,
+        patientPhone: user?.phone,
+        patientName: user?.name,
       ),
       urls,
     );
@@ -264,9 +269,8 @@ class _UploadPrescriptionScreenState extends State<UploadPrescriptionScreen> {
               mainAxisSpacing: 12.h,
               crossAxisSpacing: 12.w,
             ),
-            itemCount: selectedImages.length == 5
-                ? 5
-                : selectedImages.length + 1,
+            itemCount:
+                selectedImages.length == 5 ? 5 : selectedImages.length + 1,
             physics: const NeverScrollableScrollPhysics(),
             itemBuilder: (_, index) {
               if (index == selectedImages.length && selectedImages.length < 5) {
@@ -351,19 +355,25 @@ class _UploadPrescriptionScreenState extends State<UploadPrescriptionScreen> {
     required BuildContext context,
     required ReservationModel reservation,
   }) async {
+    final user = Get.find<UserSession>().user;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => OrderConfirmationSheet(
-        reservation: reservation,
-        user: LocalUser().getUserData(),
-        onConfirmed: (ReservationModel p1) {
-          Get.offAll(() => const MainPage(initialIndex: 2), binding: Binding());
-        },
-      ),
+      builder:
+          (_) => OrderConfirmationSheet(
+            reservation: reservation,
+            user: user,
+            onConfirmed: (ReservationModel p1) {
+              Get.offAll(
+                () => const MainPage(initialIndex: 2),
+                binding: Binding(),
+              );
+            },
+          ),
     );
   }
 }

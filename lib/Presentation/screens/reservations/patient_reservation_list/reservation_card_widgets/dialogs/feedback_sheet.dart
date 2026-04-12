@@ -1,6 +1,3 @@
-import 'package:flutter/material.dart';
-import 'package:uuid/uuid.dart';
-import 'package:diwanclinic/Presentation/screens/reservations/patient_reservation_list/patient_reservation_view_model.dart';
 import '../../../../../../../../index/index_main.dart';
 
 class FeedbackSheet extends StatefulWidget {
@@ -103,7 +100,8 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                         return;
                       }
 
-                      final user = LocalUser().getUserData();
+                      final user = Get.find<UserSession>().user;
+
                       final reviewKey = const Uuid().v4().toString();
                       final doctorKey = widget.reservation.doctorKey ?? "";
                       print("doctorKey is ${doctorKey}");
@@ -112,8 +110,8 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                         path: reviewKey,
                         key: reviewKey,
                         doctorId: doctorKey,
-                        patientId: user.key ?? "",
-                        patientName: user.name ?? "",
+                        patientId: user?.uid ?? "",
+                        patientName: user?.name ?? "",
                         comment: comment.text.trim(),
                         rateValue: rating.toInt(),
                         reserv_id: widget.reservation.key ?? "",

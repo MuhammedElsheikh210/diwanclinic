@@ -11,7 +11,7 @@ abstract class AuthenticationRepository {
   Future<void> dispose();
 
   // ============================================================
-  // 🔥 REALTIME STREAMS (Expose to upper layers)
+  // 🔥 REALTIME STREAMS (Mapped to Domain)
   // ============================================================
 
   Stream<LocalUser> get onAdded;
@@ -24,7 +24,7 @@ abstract class AuthenticationRepository {
   // 🔹 LOCAL CLIENTS (Offline First)
   // ============================================================
 
-  Future<Either<AppError, List<LocalUser?>>> getClientsDomain(
+  Future<Either<AppError, List<LocalUser>>> getClientsDomain(
       SQLiteQueryParams query,
       );
 
@@ -38,7 +38,7 @@ abstract class AuthenticationRepository {
   // 🌐 ONLINE CLIENTS (Firebase Direct Fetch)
   // ============================================================
 
-  Future<Either<AppError, List<LocalUser?>>> getClientsOnlineDomain(
+  Future<Either<AppError, List<LocalUser>>> getClientsOnlineDomain(
       Map<String, dynamic> firebaseFilter,
       );
 }

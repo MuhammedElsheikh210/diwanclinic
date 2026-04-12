@@ -11,10 +11,7 @@ class PharmacyViewModel extends GetxController {
 
   void getData() {
     AuthenticationService().getClientsData(
-      query: SQLiteQueryParams(
-        where: "userType = ?",
-        whereArgs: ["pharmacy"],
-      ),
+      query: SQLiteQueryParams(where: "userType = ?", whereArgs: ["pharmacy"]),
       voidCallBack: (data) {
         Loader.dismiss();
         listPharmacies = data;
@@ -23,9 +20,9 @@ class PharmacyViewModel extends GetxController {
     );
   }
 
-  void deletePharmacy(LocalUser pharmacy) {
+  void deletePharmacy(LocalUser? pharmacy) {
     AuthenticationService().deleteClientsData(
-      uid: pharmacy.uid ?? "",
+      uid: pharmacy?.uid ?? "",
       voidCallBack: (_) {
         getData();
       },

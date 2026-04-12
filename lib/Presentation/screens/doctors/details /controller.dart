@@ -47,19 +47,26 @@ class DoctorDetailsViewModel extends GetxController {
   double? selectedPrice;
   double? depositPercent;
   double? depositAmount;
+  late final LocalUser currentUser;
 
-  // ─────────────────────────────────────────────
-  // 🔹 Lifecycle
   @override
-  Future<void> onInit() async {
+  void onInit() {
     super.onInit();
 
+    final user = Get.find<UserSession>().user;
+
+    if (user == null) {
+      throw Exception("User not initialized");
+    }
+
+    currentUser = user;
+
     selectedDate = DateTime.now();
-    await loadOpenCloseStatusForSelectedDate();
+    loadOpenCloseStatusForSelectedDate();
 
     getDoctorData();
     _initReservationTypes();
-    await _loadClinics();
+    _loadClinics();
   }
 
   Future<void> loadOpenCloseStatusForSelectedDate() async {
@@ -118,7 +125,7 @@ class DoctorDetailsViewModel extends GetxController {
       isPatient: true,
       firebaseFilter: FirebaseFilter(
         orderBy: "clinicShiftKey",
-        equalTo: "${LocalUser().getUserData().clinicKey}_${selectedShift?.key}",
+        equalTo: "${currentUser.clinicKey}_${selectedShift?.key}",
       ),
       doctorUid: doctor.uid,
       voidCallBack: (data) {
@@ -423,7 +430,6 @@ class DoctorDetailsViewModel extends GetxController {
 
       // 🔹 Step 2: Prepare keys and format date
       final formattedDate = DateFormat("dd/MM/yyyy").format(selectedDate!);
-      final doctorData = LocalUser().getUserData();
 
       final clinicKey = selectedClinic?.key ?? "";
       final shiftKey = selectedShift?.key ?? "";
@@ -457,29 +463,36 @@ class DoctorDetailsViewModel extends GetxController {
         doctorKey: doctor.uid,
         doctorName: doctor.name,
         transfer_image: transfer_url_image,
-        patientKey: LocalUser().getUserData().key,
-        patientName: LocalUser().getUserData().name,
-        patientPhone: LocalUser().getUserData().phone,
-        patientUid: LocalUser().getUserData().uid,
+
+        // ✅ user من session
+        patientKey: currentUser.uid,
+        patientName: currentUser.name,
+        patientPhone: currentUser.phone,
+        patientUid: currentUser.uid,
+
         clinicKey: clinicKey,
         order_num: expectedOrder,
         shiftKey: shiftKey,
-        fcmToken_patient: LocalUser().getUserData().fcmToken,
+
+        // ✅ fcm من BaseUser
+        fcmToken_patient: currentUser.user.fcmToken,
+
         reservationType: selectedReservationType,
         appointmentDateTime: formattedDate,
         createAt: DateTime.now().millisecondsSinceEpoch,
-        //  order_num: nextOrder,
+
         paidAmount:
             selectedClinic?.reserveWithDeposit == 1
                 ? depositAmount.toStringAsFixed(2)
                 : totalAmount?.toStringAsFixed(2),
+
         restAmount:
             selectedClinic?.reserveWithDeposit == 1
                 ? ((totalAmount ?? 0) - depositAmount).toStringAsFixed(2)
                 : "0",
+
         status: ReservationStatus.pending.value,
       );
-
       // 🔹 Step 6: Save reservation in Firebase & local DB
       await ReservationService().addReservationData(
         reservation: reservation,
