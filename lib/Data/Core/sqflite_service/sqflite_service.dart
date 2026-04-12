@@ -22,7 +22,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 61, // ⬅️ bumped
+      version: 69, // ⬅️ bumped
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onConfigure: (db) async {
@@ -82,56 +82,50 @@ class DatabaseService {
     } catch (_) {}
   }
 
-  // ─────────────────────────────────────────────
-  // 👥 CLIENTS (SYNC READY)
-  // ─────────────────────────────────────────────
   Future<void> _createClients(Database db) async {
     await db.execute('''
-      CREATE TABLE clients (
-        key TEXT PRIMARY KEY,
-        token TEXT,
-        medical_center_key TEXT,
-        medicalCenterKey TEXT,
-        client_name TEXT,
-        doctorKey_fromAdmin TEXT,
-        phone TEXT,
-        doctorQualifications TEXT,
-        whats_app_phone TEXT,
-        image TEXT,
-        profile_image TEXT,
-        cover_image TEXT,
-        address TEXT,
-        code TEXT,
-        userType TEXT,
-        doctor_key TEXT,
-        doctor_name TEXT,
-        sales_key TEXT,
-        clinic_key TEXT,
-        specialize_key TEXT,
-        specialization_name TEXT,
-        identifier TEXT,
-        password TEXT,
-        isCompleteProfile INTEGER,
-        createAt INTEGER,
-        transfer_number TEXT,
-        is_insta_pay INTEGER DEFAULT 0,
-        is_electronic_wallet INTEGER DEFAULT 0,
-        show_file_number INTEGER DEFAULT 0,
-        file_number INTEGER DEFAULT 0,
-        remote_reservation_ability INTEGER DEFAULT 1,
-        fcm_token TEXT,
-        total_rate REAL DEFAULT 0.0,
-        number_of_rates INTEGER DEFAULT 0,
-        facebook_link TEXT,
-        instagram_link TEXT,
-        tiktok_link TEXT,
+    CREATE TABLE clients (
+      key TEXT PRIMARY KEY,
 
-        -- 🔥 SYNC ENGINE
-        updated_at INTEGER NOT NULL DEFAULT 0,
-        server_updated_at INTEGER,
-        is_deleted INTEGER NOT NULL DEFAULT 0
-      );
-    ''');
+      -- 🔥 BaseUser
+      uid TEXT,
+      createdAt INTEGER,
+      userType TEXT,
+      isCompleteProfile INTEGER,
+      fcm_token TEXT,
+      app_version TEXT,
+      identifier TEXT,
+      profile_image TEXT,
+      phone TEXT,
+      name TEXT,
+      address TEXT,
+      password TEXT,
+
+      -- 🔥 AssistantUser
+      clinic_key TEXT,
+      doctor_key TEXT,
+      transfer_number TEXT,
+      is_insta_pay INTEGER DEFAULT 0,
+
+      -- 🔥 DoctorUser
+      specialization_name TEXT,
+      specialize_key TEXT,
+      doctorQualifications TEXT,
+      facebook_link TEXT,
+      instagram_link TEXT,
+      tiktok_link TEXT,
+      total_rate REAL DEFAULT 0.0,
+      number_of_rates INTEGER DEFAULT 0,
+      remote_reservation_ability INTEGER DEFAULT 0,
+      serverUpdatedAt TEXT,
+      updatedAt TEXT,
+      is_deleted INTEGER
+
+     
+
+    
+    );
+  ''');
   }
 
   // ─────────────────────────────────────────────

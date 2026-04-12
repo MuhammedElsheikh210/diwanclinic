@@ -161,7 +161,7 @@ class CreateDoctorViewModel extends GetxController {
       isProfileCompleted: base.isProfileCompleted,
       fcmToken: base.fcmToken,
       appVersion: base.appVersion,
-      email: base.email,
+      identifier: base.identifier,
       password: base.password,
 
       name: nameController.text,
@@ -215,7 +215,7 @@ class CreateDoctorViewModel extends GetxController {
         uid: uid,
         phone: phoneController.text,
         name: nameController.text,
-        email: email,
+        identifier: email,
         password: password,
         userType: UserType.doctor,
 

@@ -137,7 +137,7 @@ class LoginViewModel extends GetxController {
     final baseUser = BaseUser(
       uid: uid,
       phone: phone.value,
-      email: "${phone.value}@link.com",
+      identifier: "${phone.value}@link.com",
       isProfileCompleted: false,
       fcmToken: token,
       userType: UserType.admin,

@@ -1,4 +1,6 @@
 import 'dart:developer';
+import 'package:flutter/services.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'index/index_main.dart';
 
 /// 🔔 MUST be top-level
@@ -10,58 +12,77 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 void main() {
   runZonedGuarded(
-    () async {
+        () async {
       WidgetsFlutterBinding.ensureInitialized();
 
+      // 🔥 Firebase
       await Firebase.initializeApp();
 
-      // DB
+      // 🔔 Background notifications
+      FirebaseMessaging.onBackgroundMessage(
+        firebaseMessagingBackgroundHandler,
+      );
+
+      // 🔹 Lock Orientation
+      await SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+      ]);
+
+      // 🔹 Local DB
       final dbService = DatabaseService();
       await dbService.database;
+      await dbService.checkTables();
 
-      // Storage
+      // 🔹 Storage
       final storage = StorageService();
       await storage.init();
       Get.put(storage, permanent: true);
 
-      // 🔥 Local User Module
+      // 🔥 Local User Module (NEW)
       Get.lazyPut<LocalUserDataSource>(
-        () => LocalUserDataSource(Get.find()),
+            () => LocalUserDataSource(Get.find()),
         fenix: true,
       );
 
       Get.lazyPut<LocalUserRepository>(
-        () => LocalUserRepository(Get.find()),
+            () => LocalUserRepository(Get.find()),
         fenix: true,
       );
 
       await Get.putAsync<UserSession>(
-        () async => await UserSession(Get.find()).init(),
+            () async => await UserSession(Get.find()).init(),
       );
 
-      // Notifications
+      // 🔔 Notification Core
       await NotificationService().initCore();
 
-      // Bindings
+      final apns = await FirebaseMessaging.instance.getAPNSToken();
+      log("APNS: $apns");
+      log("BUNDLE: ${await PackageInfo.fromPlatform()}");
+
+      // 🔥 Remote Config
+      await FirebaseRemoteConfigService().checkForceUpdate();
+
+      // 🔹 Register Dependencies
       Binding().dependencies();
 
-      // ✅ IMPORTANT: ScreenUtil FIRST
+      // 🎨 ThemeScope (🔥 مهم جدًا)
+      final app = await ThemeScopeWidget.initialize(const MyApp());
+
+      // ✅ ScreenUtil AFTER initialize
       runApp(
         ScreenUtilInit(
-          designSize: const Size(375, 812),
+          designSize: const Size(430, 932),
           minTextAdapt: true,
           splitScreenMode: true,
-          builder: (_, __) {
-            return ThemeScopeWidget(
-              preferences: ThemePreferences(), // 👈 مش null
-              child: const MyApp(),
-            );
-          },
+          useInheritedMediaQuery: true,
+          builder: (_, __) => app,
         ),
       );
     },
-    (e, s) {
+        (e, s) {
       debugPrint("❌ ZONE ERROR: $e");
+      debugPrintStack(stackTrace: s);
     },
   );
 }
@@ -88,7 +109,10 @@ class MyApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
 
-      supportedLocales: const [Locale('en'), Locale('ar')],
+      supportedLocales: const [
+        Locale('en'),
+        Locale('ar'),
+      ],
 
       locale: Locale(getLocalLan()),
       fallbackLocale: const Locale('ar'),

@@ -90,7 +90,7 @@ class CreateSalesViewModel extends GetxController {
         uid: uid,
         name: nameController.text,
         phone: phoneController.text,
-        email: email,
+        identifier: email,
         password: password,
         userType: UserType.sales,
         isProfileCompleted: true,

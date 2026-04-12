@@ -81,7 +81,7 @@ class CreatePharmacyViewModel extends GetxController {
         uid: uid,
         phone: phoneController.text,
         name: nameController.text,
-        email: email,
+        identifier: email,
         password: password,
         userType: UserType.pharmacy,
         isProfileCompleted: true,

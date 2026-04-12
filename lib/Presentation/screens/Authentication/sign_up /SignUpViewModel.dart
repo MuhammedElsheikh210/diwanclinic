@@ -76,7 +76,7 @@ class SignUpViewModel extends GetxController {
         name: name,
         phone: phone,
         address: address,
-        email: email,
+        identifier: email,
         password: password,
         fcmToken: token,
         userType: UserType.patient,

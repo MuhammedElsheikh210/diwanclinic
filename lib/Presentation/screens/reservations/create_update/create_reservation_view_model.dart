@@ -980,7 +980,7 @@ class CreateReservationViewModel extends GetxController {
         uid: uid,
         name: patientNameController.text,
         phone: phone,
-        email: email,
+        identifier: email,
         password: password,
         userType: UserType.patient,
         isProfileCompleted: true,

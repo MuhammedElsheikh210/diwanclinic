@@ -24,7 +24,7 @@ class DoctorUser extends BaseUser {
     super.isProfileCompleted,
     super.fcmToken,
     super.appVersion,
-    super.email,
+    super.identifier,
     super.profileImage,
     super.phone,
     super.name,
@@ -73,7 +73,7 @@ class DoctorUser extends BaseUser {
       isProfileCompleted: base.isProfileCompleted,
       fcmToken: base.fcmToken,
       appVersion: base.appVersion,
-      email: base.email,
+      identifier: base.identifier,
       profileImage: base.profileImage,
       phone: base.phone,
       name: base.name,
@@ -92,8 +92,9 @@ class DoctorUser extends BaseUser {
       numberOfRates: parseInt(json['number_of_rates']),
 
       // ✅ NEW
-      remoteReservationAbility:
-      parseBoolToInt(json['remote_reservation_ability']),
+      remoteReservationAbility: parseBoolToInt(
+        json['remote_reservation_ability'],
+      ),
     );
   }
 }

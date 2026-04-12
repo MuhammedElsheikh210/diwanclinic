@@ -90,7 +90,7 @@ class AccountViewModel extends GetxController {
           uid: base.uid,
           name: base.name,
           phone: base.phone,
-          email: base.email,
+          identifier: base.identifier,
           password: newPass,
 
           clinicKey: base.clinicKey,

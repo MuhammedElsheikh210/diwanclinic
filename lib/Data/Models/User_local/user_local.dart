@@ -47,7 +47,7 @@ class LocalUser {
 
   String? get fcmToken => user.fcmToken;
 
-  String? get email => user.email;
+  String? get email => user.identifier;
 
   String? get address => user.address;
 

@@ -69,7 +69,7 @@ class CreateAssistantViewModel extends GetxController {
       isProfileCompleted: base.isProfileCompleted,
       fcmToken: base.fcmToken,
       appVersion: base.appVersion,
-      email: base.email,
+      identifier: base.identifier,
       password: phoneController.text,
 
       name: nameController.text,
@@ -133,7 +133,7 @@ class CreateAssistantViewModel extends GetxController {
         uid: uid,
         phone: phoneController.text,
         name: nameController.text,
-        email: email,
+        identifier: email,
         password: password,
         userType: UserType.assistant,
         isProfileCompleted: true,

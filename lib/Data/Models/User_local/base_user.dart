@@ -18,7 +18,7 @@ class BaseUser {
   final String? fcmToken;
   final String? appVersion;
 
-  final String? email;
+  final String? identifier;
 
   final String? profileImage;
   final String? phone;
@@ -35,7 +35,7 @@ class BaseUser {
     this.isProfileCompleted = false,
     this.fcmToken,
     this.appVersion,
-    this.email,
+    this.identifier,
     this.profileImage,
     this.phone,
     this.name,
@@ -68,7 +68,7 @@ class BaseUser {
       isProfileCompleted: parseBool(json['isCompleteProfile']),
       fcmToken: json['fcm_token'],
       appVersion: json['app_version'],
-      email: json['email'] ?? json['identifier'],
+      identifier: json['identifier'] ?? json['identifier'],
       profileImage: json['profile_image'] ?? json['profileImage'],
       phone: json['phone'],
       name: json['name'] ?? json['client_name'],
@@ -94,7 +94,7 @@ class BaseUser {
     put('isCompleteProfile', isProfileCompleted ? 1 : 0);
     put('fcm_token', fcmToken);
     put('app_version', appVersion);
-    put('email', email);
+    put('identifier', identifier);
     put('profile_image', profileImage);
     put('phone', phone);
     put('name', name);
@@ -115,7 +115,7 @@ class BaseUser {
     bool? isProfileCompleted,
     String? fcmToken,
     String? appVersion,
-    String? email,
+    String? identifier,
     String? profileImage,
     String? phone,
     String? name,
@@ -129,7 +129,7 @@ class BaseUser {
       isProfileCompleted: isProfileCompleted ?? this.isProfileCompleted,
       fcmToken: fcmToken ?? this.fcmToken,
       appVersion: appVersion ?? this.appVersion,
-      email: email ?? this.email,
+      identifier: identifier ?? this.identifier,
       profileImage: profileImage ?? this.profileImage,
       phone: phone ?? this.phone,
       name: name ?? this.name,
