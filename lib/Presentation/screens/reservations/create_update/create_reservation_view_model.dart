@@ -19,9 +19,12 @@ class CreateReservationViewModel extends GetxController {
   bool isLoadingShifts = false;
   ReservationModel? lastReservation;
   int? manualRevisitCount;
-
   int _calcRequestId = 0;
+  int maxRevisitePerClinic = 0;
+  int maxDateRevisitePerClinic = 0;
   bool isCalculatingOrder = false;
+  List<ReservationModel?> patientReservations = [];
+  bool isTimelineExpanded = false;
 
   // Delegate fields
   final TextEditingController delegateNameController = TextEditingController();
@@ -127,55 +130,73 @@ class CreateReservationViewModel extends GetxController {
     paidAmountController.addListener(_updateRestAmount);
   }
 
-  Future<void> loadLastReservation() async {
-    if (clientUser == null) return;
-    manualRevisitCount = null; // 🔥 reset
-
-    await ReservationService().getReservationsData(
-      query: SQLiteQueryParams(
-        where: "patient_uid = ?",
-        whereArgs: [clientUser!.uid],
-        orderBy: "created_at DESC",
-        limit: 1,
-      ),
-      voidCallBack: (list) {
-        if (list.isNotEmpty) {
-          lastReservation = list.first;
-        } else {
-          lastReservation = null; // 🔥 مهم جدًا
-        }
-
-        Future.microtask(() => applyAutoTypeLogic());      },
-    );
-  }
-
+  // Future<void> loadLastReservation() async {
+  //   if (clientUser == null) return;
+  //   manualRevisitCount = null; // 🔥 reset
+  //
+  //   await ReservationService().getReservationsData(
+  //     query: SQLiteQueryParams(
+  //       where: "patient_uid = ?",
+  //       whereArgs: [clientUser!.uid],
+  //       orderBy: "created_at DESC",
+  //       limit: 1,
+  //     ),
+  //     voidCallBack: (list) {
+  //       if (list.isNotEmpty) {
+  //         lastReservation = list.first;
+  //       } else {
+  //         lastReservation = null; // 🔥 مهم جدًا
+  //       }
+  //
+  //       print("lastReservation is ${lastReservation?.toJson()}");
+  //
+  //       Future.microtask(() => applyAutoTypeLogic());
+  //     },
+  //   );
+  // }
 
   Future<void> onPatientSelected(LocalUser user) async {
     clientUser = user;
 
-    print("🧑 Selected Patient: ${user.uid}");
-
-    await loadLastReservation(); // 🔥 أهم سطر
+    await loadReservationsForPatient(); // 🔥 أهم سطر
 
     update();
   }
 
   void applyAutoTypeLogic() {
-    final now = DateTime.now().millisecondsSinceEpoch;
-
     final result = ReservationTypeService.determine(
       lastReservation: lastReservation,
-      maxRevisitCount: clinicModel?.maxRevisitCount ?? 3,
-      revisitValidityDays: clinicModel?.revisitValidityDays ?? 14,
-      now: now,
+      maxRevisitCount: maxRevisitePerClinic,
+      revisitValidityDays: maxDateRevisitePerClinic,
+      newAppointmentDate: companyNameController.text,
       selectedType: selectedType,
       manualRevisitCount: manualRevisitCount,
     );
 
-    selectedType = result.type;
-
     _autoRevisitCount = result.revisitCount;
     _autoParentKey = result.parentKey;
+
+    /// 🔥 أهم سطر (fix السعر)
+    setReservationType(selectedType);
+
+    update();
+  }
+
+  void resetPatientSelection() {
+    print("🔄 Reset Patient Selection بسبب تغيير التاريخ");
+
+    clientUser = null;
+    lastReservation = null;
+    lastReservationHumanText = null;
+
+    patientNameController.clear();
+    patientPhoneController.clear();
+    patientCodeController.clear();
+
+    manualRevisitCount = null;
+
+    _autoRevisitCount = 0;
+    _autoParentKey = "";
 
     update();
   }
@@ -689,7 +710,7 @@ class CreateReservationViewModel extends GetxController {
     // Patient data
     patientNameController.text = reservation.patientName ?? "";
     patientNameController.text = reservation.patientName ?? "";
-    patientPhoneController.text = clientUser?.phone ?? "";
+    patientPhoneController.text = reservation.patientPhone ?? "";
     resOrderController.text = reservation.orderNum?.toString() ?? "";
 
     // Payment
@@ -823,8 +844,8 @@ class CreateReservationViewModel extends GetxController {
     // ============================================================
     if (is_update && existingReservation != null) {
       final updatedReservation = existingReservation!.copyWith(
-        patientUid: clientUser?.uid,
-        patientFcm: clientUser?.fcmToken,
+        patientUid: existingReservation?.patientUid,
+        patientFcm: existingReservation?.patientFcm,
 
         patientName:
             selectedType == "زيارة مندوب"
@@ -898,36 +919,85 @@ class CreateReservationViewModel extends GetxController {
     createReservation(newReservation);
   }
 
-  Future<void> getLastReservationDateHuman(LocalUser client) async {
-    lastReservationHumanText = null;
+  // Future<void> getLastReservationDateHuman(LocalUser client) async {
+  //   lastReservationHumanText = null;
+  //   update();
+  //
+  //   try {
+  //     final query = SQLiteQueryParams(
+  //       is_filtered: false,
+  //       where: "patient_uid = ? AND status = ?",
+  //       whereArgs: [client.uid, ReservationStatus.completed.value],
+  //       orderBy: "created_at DESC",
+  //       limit: 1
+  //     );
+  //
+  //     await ReservationService().getReservationsData(
+  //       query: query,
+  //       voidCallBack: (reservations) {
+  //         if (reservations.isEmpty) {
+  //           lastReservationHumanText = "لا يوجد حجز سابق مكتمل";
+  //           update();
+  //           return;
+  //         }
+  //
+  //         final last = reservations.first as ReservationModel;
+  //         lastReservationHumanText = _humanizeDate(last.createdAt);
+  //         update();
+  //       },
+  //     );
+  //   } catch (e) {
+  //     lastReservationHumanText = "خطأ في تحميل آخر حجز";
+  //     update();
+  //   }
+  // }
+
+  void toggleTimeline() {
+    isTimelineExpanded = !isTimelineExpanded;
     update();
+  }
 
-    try {
-      final query = SQLiteQueryParams(
-        is_filtered: false,
-        where: "patient_uid = ? AND status = ?",
-        whereArgs: [client.uid, ReservationStatus.completed.value],
+  Future<void> loadReservationsForPatient() async {
+    if (clientUser == null) return;
+
+    manualRevisitCount = null;
+
+    await ReservationService().getReservationsData(
+      query: SQLiteQueryParams(
+        where: "patient_uid = ?",
+        whereArgs: [clientUser!.uid],
         orderBy: "created_at DESC",
-      );
-
-      await ReservationService().getReservationsData(
-        query: query,
-        voidCallBack: (reservations) {
-          if (reservations.isEmpty) {
-            lastReservationHumanText = "لا يوجد حجز سابق مكتمل";
-            update();
-            return;
-          }
-
-          final last = reservations.first as ReservationModel;
-          lastReservationHumanText = _humanizeDate(last.createdAt);
+        // ❌ no limit
+      ),
+      voidCallBack: (list) {
+        if (list.isEmpty) {
+          lastReservation = null;
+          lastReservationHumanText = "لا يوجد حجز سابق";
           update();
-        },
-      );
-    } catch (e) {
-      lastReservationHumanText = "خطأ في تحميل آخر حجز";
-      update();
-    }
+          return;
+        }
+
+        patientReservations = list; // 🔥 أهم سطر
+
+
+        /// ✅ 1. آخر حجز خالص (لـ UI)
+        final latestAny = list.first;
+
+        lastReservationHumanText = _humanizeDate(latestAny?.createdAt);
+
+        final lastCompleted =
+            list
+                .where((r) => r?.status == ReservationStatus.completed.value)
+                .toList();
+
+        lastReservation = lastCompleted.isNotEmpty ? lastCompleted.first : null;
+
+        /// ✅ 3. apply logic
+        Future.microtask(() => applyAutoTypeLogic());
+
+        update();
+      },
+    );
   }
 
   String _humanizeDate(int? timestamp) {
@@ -943,26 +1013,6 @@ class CreateReservationViewModel extends GetxController {
     if (diff.inDays < 30) return "منذ ${diff.inDays} يوم";
     if (diff.inDays < 365) return "منذ ${diff.inDays ~/ 30} شهر";
     return "منذ ${diff.inDays ~/ 365} سنة";
-  }
-
-  Future<void> getPatientData(ReservationModel reservation) async {
-    AuthenticationService().getClientsData(
-      query: SQLiteQueryParams(
-        where: "key = ?",
-        whereArgs: [reservation.patientUid ?? ""],
-        limit: 1,
-      ),
-      voidCallBack: (users) {
-        Loader.dismiss();
-
-        if (users.isNotEmpty && users.first != null) {
-          clientUser = users.first;
-          populateFields(reservation);
-        }
-
-        update();
-      },
-    );
   }
 
   void updateClinic(ClinicModel clinic) {
@@ -1131,10 +1181,6 @@ class CreateReservationViewModel extends GetxController {
       voidCallBack: (_) {},
     );
 
-    // await Get.find<ReservationSyncController>().pushSingleReservation(
-    //   reservation,
-    // );
-
     updatePatientReservation(reservation);
   }
 
@@ -1162,10 +1208,12 @@ class CreateReservationViewModel extends GetxController {
     ClinicModel? clinicModel,
     ReservationModel reservation,
   ) async {
+    clinicModel = clinicModel;
     consultationPrice = clinicModel?.consultationPrice ?? "";
     followUpPrice = clinicModel?.followUpPrice ?? "";
     urgentConsultationPrice = clinicModel?.urgentConsultationPrice ?? "";
-    clinicModel = clinicModel;
+    maxRevisitePerClinic = clinicModel?.maxRevisitCount ?? 0;
+    maxDateRevisitePerClinic = clinicModel?.revisitValidityDays ?? 0;
     getPatientData(reservation);
 
     /// 👇 default selected type
@@ -1173,6 +1221,26 @@ class CreateReservationViewModel extends GetxController {
       selectedType = typeOptions.first;
       setReservationType(selectedType);
     }
+  }
+
+  Future<void> getPatientData(ReservationModel reservation) async {
+    AuthenticationService().getClientsData(
+      query: SQLiteQueryParams(
+        where: "key = ?",
+        whereArgs: [reservation.patientUid ?? ""],
+        limit: 1,
+      ),
+      voidCallBack: (users) {
+        Loader.dismiss();
+
+        if (users.isNotEmpty && users.first != null) {
+          clientUser = users.first;
+          populateFields(reservation);
+        }
+
+        update();
+      },
+    );
   }
 
   @override

@@ -1,6 +1,7 @@
 import 'package:diwanclinic/Presentation/screens/patients/search/patient_search_view.dart';
 import 'package:diwanclinic/Presentation/screens/reservations/create_update/horizontal_steppers_widget.dart';
 import 'package:diwanclinic/Presentation/screens/reservations/create_update/reservation_bottom_navigation.dart';
+import 'package:diwanclinic/Presentation/screens/reservations/create_update/timeline_widget.dart';
 import 'package:intl/intl.dart';
 import '../../../../index/index_main.dart';
 
@@ -92,14 +93,7 @@ class _CreateReservationViewState extends State<CreateReservationView> {
 
     /// 🔥 IMPORTANT: async flow
     Future.microtask(() async {
-      if (vm.isCenterAssistant) {
-        /// 🏥 Center Mode
-        /// loadDoctors → onDoctorChanged → full flow
-        await vm.loadDoctorsOfCenter();
-      } else {
-        /// 👨‍⚕️ Single Doctor Mode
-        await _initData(formattedDate);
-      }
+      await _initData(formattedDate);
     });
   }
 
@@ -142,21 +136,16 @@ class _CreateReservationViewState extends State<CreateReservationView> {
   }
 
   void _fillPatientData(
-      CreateReservationViewModel controller,
-      LocalUser client,
-      ) async {
+    CreateReservationViewModel controller,
+    LocalUser client,
+  ) async {
     controller.clientUser = client;
 
     controller.patientNameController.text = client.name ?? "";
     controller.patientPhoneController.text = client.phone ?? "";
 
     // 🔥 أهم سطر في الفيتشر كلها
-    await controller.loadLastReservation();
-
-    controller.applyAutoTypeLogic();
-
-
-    controller.getLastReservationDateHuman(client);
+    await controller.loadReservationsForPatient();
 
     setState(() {
       showNameList = false;
@@ -412,13 +401,17 @@ class _CreateReservationViewState extends State<CreateReservationView> {
 
                                               return GestureDetector(
                                                 onTap: () {
-                                                  controller.setReservationType(type);
+                                                  controller.setReservationType(
+                                                    type,
+                                                  );
 
                                                   // 🔥 خليه suggestion مش قرار نهائي
-                                                  controller.selectedType = type;
+                                                  controller.selectedType =
+                                                      type;
 
                                                   // 🔥 أهم سطر
-                                                  controller.applyAutoTypeLogic();
+                                                  controller
+                                                      .applyAutoTypeLogic();
 
                                                   controller.update();
                                                 },
@@ -514,15 +507,21 @@ class _CreateReservationViewState extends State<CreateReservationView> {
 
                                       if (controller.lastReservation == null &&
                                           controller.selectedType == "إعادة")
-                                        AppTextField(
-                                          hintText: "رقم الإعادة",
-                                          keyboardType: TextInputType.number,
-                                          onChanged: (val) {
-                                            controller.manualRevisitCount = int.tryParse(val);
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 20.0,
+                                          ),
+                                          child: AppTextField(
+                                            hintText: "رقم الإعادة",
+                                            keyboardType: TextInputType.number,
+                                            onChanged: (val) {
+                                              controller.manualRevisitCount =
+                                                  int.tryParse(val);
 
-                                            // 🔥 لازم تعيد الحساب
-                                            controller.applyAutoTypeLogic();
-                                          },
+                                              // 🔥 لازم تعيد الحساب
+                                              controller.applyAutoTypeLogic();
+                                            },
+                                          ),
                                         ),
                                     ],
                                   ),
@@ -534,7 +533,7 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                     : Padding(
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 15.0,
-                                        vertical: 30,
+                                        vertical: 15,
                                       ),
                                       child: Row(
                                         children: [
@@ -570,6 +569,8 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                         ],
                                       ),
                                     ),
+
+                                buildTimeline(controller,context),
                               ],
                             ),
 
@@ -837,20 +838,20 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                         'dd-MM-yyyy',
                                       ).format(pickedDate);
 
+                                      /// 🔥🔥🔥 أهم سطر
+                                      controller.resetPatientSelection();
+
                                       controller.companyNameController.text =
                                           formatted;
-                                      final formattedLegacyDate = DateFormat(
-                                        'dd-MM-yyyy',
-                                      ).format(pickedDate);
-                                      // 1️⃣ حمّل الكشكول
 
-                                      // 🔥 حالة اليوم (open / close)
                                       await controller
                                           .loadOpenCloseStatusForDate(
-                                            formattedLegacyDate,
+                                            formatted,
                                           );
 
                                       vm.calculateOrderNumber();
+
+                                      controller.applyAutoTypeLogic();
 
                                       controller.update();
                                     },

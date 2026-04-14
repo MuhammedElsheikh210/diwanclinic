@@ -186,6 +186,8 @@ class ReservationViewModel extends GetxController {
             orElse: () => clinics.first,
           );
 
+          print("selectedClinic is ${selectedClinic?.toJson()}");
+
           await getShiftList();
         }
 
