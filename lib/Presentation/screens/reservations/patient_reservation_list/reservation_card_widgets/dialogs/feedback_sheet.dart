@@ -103,7 +103,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                       final user = Get.find<UserSession>().user;
 
                       final reviewKey = const Uuid().v4().toString();
-                      final doctorKey = widget.reservation.doctorKey ?? "";
+                      final doctorKey = widget.reservation.doctorUid ?? "";
                       print("doctorKey is ${doctorKey}");
 
                       final review = DoctorReviewModel(

@@ -19,7 +19,7 @@ class ReservationAssistantDetailsView extends StatelessWidget {
       reservations: controller.listReservations,
       target: reservation,
     );
-    final transferImage = reservation.transfer_image;
+    final transferImage = reservation.transferImage;
     final bool isCompletedOrCancelled =
         reservation.status == ReservationNewStatus.completed.value ||
         reservation.status == ReservationNewStatus.cancelledByAssistant.value;
@@ -141,7 +141,7 @@ class ReservationAssistantDetailsView extends StatelessWidget {
                               ),
                               const SizedBox(width: 5),
                               AppText(
-                                text: "${reservation.order_num ?? '-'}",
+                                text: "${reservation.orderNum ?? '-'}",
                                 textStyle: context.typography.lgBold.copyWith(
                                   color: ColorMappingImpl().textDisplay,
                                 ),
@@ -493,7 +493,7 @@ class ReservationAssistantDetailsView extends StatelessWidget {
                     icon: IconsConstants.calendar,
                     title: "تاريخ الحجز",
                     body: DatesUtilis.convertTimestamp(
-                      reservation.createAt ?? 0,
+                      reservation.createdAt ?? 0,
                     ),
                   ),
                 ),
@@ -548,8 +548,8 @@ class ReservationAssistantDetailsView extends StatelessWidget {
                 ?.where(
                   (r) =>
                       r != null &&
-                      r.order_num != null &&
-                      r.order_num.toString().isNotEmpty &&
+                      r.orderNum != null &&
+                      r.orderNum.toString().isNotEmpty &&
                       (r.status == ReservationStatus.approved.value ||
                           r.status == ReservationStatus.inProgress.value),
                 )
@@ -805,7 +805,7 @@ class ReservationAssistantDetailsView extends StatelessWidget {
         await NotificationHandler().sendStatusNotification(
           newStatus: ReservationStatus.approved,
           reservation: reservation,
-          toToken: reservation.fcmToken_patient ?? "",
+          toToken: reservation.patientFcm ?? "",
         );
 
         await WhatsAppStatusMessageService.sendStatusWhatsAppMessage(
@@ -822,7 +822,7 @@ class ReservationAssistantDetailsView extends StatelessWidget {
         await NotificationHandler().sendStatusNotification(
           newStatus: ReservationStatus.completed,
           reservation: reservation,
-          toToken: reservation.fcmToken_patient ?? "",
+          toToken: reservation.patientFcm ?? "",
         );
 
         await WhatsAppStatusMessageService.sendStatusWhatsAppMessage(
@@ -850,7 +850,7 @@ class ReservationAssistantDetailsView extends StatelessWidget {
         await NotificationHandler().sendStatusNotification(
           newStatus: newStatus,
           reservation: reservation,
-          toToken: reservation.fcmToken_patient ?? "",
+          toToken: reservation.patientFcm ?? "",
         );
         break;
 

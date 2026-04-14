@@ -14,7 +14,7 @@ class OpenclosereservationViewModel extends GetxController{
 
   BaseUser? get _user=>Get.find<UserSession>().user?.user;
 
-  bool get isCenterMode=>_user is AssistantUser && (_user as AssistantUser).clinicKey!=null;
+  bool get isCenterMode=>false;
 
   String get formattedDate=>DateFormat('dd-MM-yyyy').format(selectedDate);
 

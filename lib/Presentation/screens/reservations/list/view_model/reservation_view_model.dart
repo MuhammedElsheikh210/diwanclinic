@@ -359,7 +359,7 @@ class ReservationViewModel extends GetxController {
     await NotificationHandler().sendStatusNotification(
       newStatus: newStatus,
       reservation: reservation,
-      toToken: reservation.fcmToken_patient ?? "",
+      toToken: reservation.patientFcm ?? "",
       cancelReason: cancelReason,
     );
 
@@ -578,7 +578,7 @@ extension ReservationData on ReservationViewModel {
     selectedPatientLastVisit =
         reservation == null
             ? "لا يوجد كشف سابق"
-            : DatesUtilis.humanizeTimestamp(reservation.createAt);
+            : DatesUtilis.humanizeTimestamp(reservation.createdAt);
 
     update();
   }

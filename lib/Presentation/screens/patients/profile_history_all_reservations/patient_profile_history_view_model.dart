@@ -52,14 +52,14 @@ class PatientProfileAllHistoryViewModel extends GetxController {
         is_filtered: true,
         where: "patient_key = ?",
         whereArgs: [patientKey],
-        orderBy: "create_at DESC",
+        orderBy: "created_at DESC",
       ),
       voidCallBack: (list) {
         reservations = list.whereType<ReservationModel>().toList();
 
         reservations.sort((a, b) {
-          final aDate = a.createAt ?? 0;
-          final bDate = b.createAt ?? 0;
+          final aDate = a.createdAt ?? 0;
+          final bDate = b.createdAt ?? 0;
           return bDate.compareTo(aDate);
         });
 

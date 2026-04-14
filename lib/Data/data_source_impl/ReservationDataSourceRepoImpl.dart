@@ -11,6 +11,7 @@ class ReservationDataSourceRepoImpl extends ReservationDataSourceRepo {
         fromJson: (json) => ReservationModel.fromJson(json),
         toJson: (model) => model.toJson(),
         getId: (model) => model.key,
+        idColumn: "key",
       );
 
   // ============================================================
@@ -55,9 +56,7 @@ class ReservationDataSourceRepoImpl extends ReservationDataSourceRepo {
   Future<void> updateReservation(ReservationModel model) async {
     final now = DateTime.now().millisecondsSinceEpoch;
 
-    final updated = model.copyWith(
-      updatedAt: now,
-    );
+    final updated = model.copyWith(updatedAt: now);
 
     await _sqliteRepo.updateItem(updated);
   }
@@ -69,16 +68,10 @@ class ReservationDataSourceRepoImpl extends ReservationDataSourceRepo {
 
     final now = DateTime.now().millisecondsSinceEpoch;
 
-    final deleted = existing.copyWith(
-      isDeleted: true,
-      updatedAt: now,
-    );
+    final deleted = existing.copyWith(isDeleted: true, updatedAt: now);
 
     await _sqliteRepo.updateItem(deleted);
   }
-
-
-
 
   @override
   Future<List<ReservationModel>> getPendingReservations() async {
@@ -91,7 +84,6 @@ class ReservationDataSourceRepoImpl extends ReservationDataSourceRepo {
 
     return list.whereType<ReservationModel>().toList();
   }
-
 
   @override
   Future<SuccessModel> addPatientReservationMeta(
@@ -130,8 +122,8 @@ class ReservationDataSourceRepoImpl extends ReservationDataSourceRepo {
 
   @override
   Future<List<ReservationModel>> getPatientReservationsMeta(
-      String? patientKey,
-      ) async {
+    String? patientKey,
+  ) async {
     // ============================================================
     // 🧠 RESOLVE UID
     // ============================================================
@@ -178,8 +170,6 @@ class ReservationDataSourceRepoImpl extends ReservationDataSourceRepo {
     return result;
   }
 
-
-
   @override
   Future<void> upsertFromServer(ReservationModel serverModel) async {
     if (serverModel.key == null) return;
@@ -216,10 +206,6 @@ class ReservationDataSourceRepoImpl extends ReservationDataSourceRepo {
 
     final serverTime = serverUpdatedAt ?? DateTime.now().millisecondsSinceEpoch;
 
-    await _sqliteRepo.updateItem(
-      local.copyWith(
-        serverUpdatedAt: serverTime,
-      ),
-    );
+    await _sqliteRepo.updateItem(local.copyWith(serverUpdatedAt: serverTime));
   }
 }

@@ -62,7 +62,7 @@ class ReservationSuccessScreen extends StatelessWidget {
                     _infoRow(
                       context,
                       "رقم الحجز",
-                      "#${reservation.order_num ?? '-'}",
+                      "#${reservation.orderNum ?? '-'}",
                     ),
                     SizedBox(height: 8.h),
                     _infoRow(

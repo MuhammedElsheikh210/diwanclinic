@@ -47,8 +47,8 @@ class ReservationPatientViewModel extends GetxController {
     final list = List<ReservationModel?>.from(listReservations ?? []);
 
     list.sort((a, b) {
-      final int timeA = a?.createAt ?? 0;
-      final int timeB = b?.createAt ?? 0;
+      final int timeA = a?.createdAt ?? 0;
+      final int timeB = b?.createdAt ?? 0;
       return timeB.compareTo(timeA); // NEW -> OLD
     });
 
@@ -148,7 +148,7 @@ class ReservationPatientViewModel extends GetxController {
             .where(
               (r) =>
                   r.patientUid == myUid &&
-                  (r.fcmToken_patient == null || r.fcmToken_patient!.isEmpty),
+                  (r.patientFcm == null || r.patientFcm!.isEmpty),
             )
             .toList() ??
         [];
@@ -161,9 +161,9 @@ class ReservationPatientViewModel extends GetxController {
     debugPrint("🧩 [FCM SYNC] Reservations to update: ${reservations.length}");
 
     for (final r in reservations) {
-      final updated = r.copyWith(fcmTokenPatient: myToken);
+      final updated = r.copyWith(patientFcm: myToken);
 
-      debugPrint("🔁 Updating reservation ${r.key} | order=${r.order_num}");
+      debugPrint("🔁 Updating reservation ${r.key} | order=${r.orderNum}");
 
       // 1️⃣ Update main reservation
       await ReservationService().updateReservationData(
@@ -228,14 +228,14 @@ class ReservationPatientViewModel extends GetxController {
       return 0;
     }
 
-    final myOrder = current.order_num ?? 0;
+    final myOrder = current.orderNum ?? 0;
     if (myOrder == 0) return 0;
 
     final activeOnlineAhead =
         listReservations!.whereType<ReservationModel>().where((r) {
           final sameDay = r.appointmentDateTime == current.appointmentDateTime;
 
-          final rOrder = r.order_num ?? 0;
+          final rOrder = r.orderNum ?? 0;
           if (rOrder == 0) return false;
 
           final isBeforeMe = rOrder < myOrder;
@@ -248,7 +248,6 @@ class ReservationPatientViewModel extends GetxController {
           return sameDay && isBeforeMe && isActive;
         }).length;
 
-    // 🔥 legacy محسوب وموجود
     return legacyQueueCount + activeOnlineAhead;
   }
 
@@ -263,8 +262,8 @@ class ReservationPatientViewModel extends GetxController {
     final metaList = await ReservationService().getPatientMetaAsync(patientKey);
     // 3) فرز NEW -> OLD
     metaList.sort((a, b) {
-      final int timeA = a.createAt ?? 0;
-      final int timeB = b.createAt ?? 0;
+      final int timeA = a.createdAt ?? 0;
+      final int timeB = b.createdAt ?? 0;
       return timeB.compareTo(timeA);
     });
 
@@ -293,7 +292,7 @@ class ReservationPatientViewModel extends GetxController {
           ).format(DateFormat('dd-MM-yyyy').parse(first.appointmentDateTime!));
 
           await loadLegacyQueueCount(
-            doctorUid: first.doctorKey ?? "",
+            doctorUid: first.doctorUid ?? "",
             clinicKey: first.clinicKey ?? "",
             date: legacyDate,
           );
@@ -330,7 +329,7 @@ class ReservationPatientViewModel extends GetxController {
     required BuildContext context,
     required ReservationModel reservation,
   }) async {
-    if (reservation.patientKey == null) {
+    if (reservation.patientUid == null) {
       Loader.showError("بيانات العميل غير متوفرة");
       return;
     }
@@ -340,7 +339,7 @@ class ReservationPatientViewModel extends GetxController {
     AuthenticationService().getClientsData(
       query: SQLiteQueryParams(
         where: "key = ?",
-        whereArgs: [reservation.patientKey!],
+        whereArgs: [reservation.patientUid!],
         limit: 1,
       ),
       voidCallBack: (users) {
@@ -494,7 +493,7 @@ class ReservationPatientViewModel extends GetxController {
 
     // 3️⃣ Assign order_reserved sequentially
     for (int i = 0; i < finalQueue.length; i++) {
-      final updated = finalQueue[i].copyWith(order_reserved: i + 1);
+      final updated = finalQueue[i].copyWith(orderReserved: i + 1);
       finalQueue[i] = updated;
 
       updateReservation(updated, localOnly: true);

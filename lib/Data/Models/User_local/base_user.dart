@@ -40,8 +40,14 @@ class BaseUser {
     this.phone,
     this.name,
     this.address,
-    this.password, // 👈 added
+    this.password,
   });
+
+  // ============================================================
+  // 🕒 HELPER (timestamp)
+  // ============================================================
+
+  static int now() => DateTime.now().millisecondsSinceEpoch;
 
   // ============================================================
   // FROM JSON
@@ -51,7 +57,9 @@ class BaseUser {
     bool parseBool(dynamic value) {
       if (value is bool) return value;
       if (value is int) return value == 1;
-      if (value is String) return value == '1' || value.toLowerCase() == 'true';
+      if (value is String) {
+        return value == '1' || value.toLowerCase() == 'true';
+      }
       return false;
     }
 
@@ -68,7 +76,7 @@ class BaseUser {
       isProfileCompleted: parseBool(json['isCompleteProfile']),
       fcmToken: json['fcm_token'],
       appVersion: json['app_version'],
-      identifier: json['identifier'] ?? json['identifier'],
+      identifier: json['identifier'],
       profileImage: json['profile_image'] ?? json['profileImage'],
       phone: json['phone'],
       name: json['name'] ?? json['client_name'],
@@ -78,10 +86,10 @@ class BaseUser {
   }
 
   // ============================================================
-  // TO JSON
+  // TO JSON (FIXED 🔥)
   // ============================================================
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toJson({bool isUpdate = false}) {
     final Map<String, dynamic> data = {};
 
     void put(String key, dynamic value) {
@@ -89,7 +97,16 @@ class BaseUser {
     }
 
     put('uid', uid);
-    put('createdAt', createdAt);
+
+    /// ✅ createdAt logic
+    /// - create → generate if null
+    /// - update → don't override
+    if (!isUpdate) {
+      put('createdAt', createdAt ?? now());
+    } else {
+      put('createdAt', createdAt);
+    }
+
     put('userType', userType?.name);
     put('isCompleteProfile', isProfileCompleted ? 1 : 0);
     put('fcm_token', fcmToken);
@@ -120,7 +137,7 @@ class BaseUser {
     String? phone,
     String? name,
     String? address,
-    String? password, // 👈 added
+    String? password,
   }) {
     return BaseUser(
       uid: uid ?? this.uid,

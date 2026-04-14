@@ -2,11 +2,7 @@ import '../../../../../index/index_main.dart';
 
 class AssistantViewModel extends GetxController {
   List<LocalUser?>? listAssistants;
-
-  /// 🧠 OLD MODE (Doctor Assistants)
-  AssistantViewModel() {
-    getData();
-  }
+  String? doctorUid; // ✅ خزّناه هنا
 
   /// 🏥 NEW MODE (Center Assistants)
   AssistantViewModel.byCenter(String centerKey) {
@@ -17,20 +13,13 @@ class AssistantViewModel extends GetxController {
   // 👨‍⚕️ Doctor Assistants
   // =========================================================
 
-  void getData() {
-    final currentUser = Get.find<UserSession>().user;
-
-    if (currentUser == null) {
-      debugPrint("❌ User not found in session");
-      return;
-    }
-
-    final doctorUid = currentUser.uid ?? "";
-
+  void getData({String? doctor_uid}) {
+    print("doctor_uid is ${doctor_uid}");
+    print("doctorUid is ${doctorUid}");
     AuthenticationService().getClientsData(
       query: SQLiteQueryParams(
         where: "doctor_key = ? AND userType = ?",
-        whereArgs: [doctorUid, "assistant"],
+        whereArgs: [doctor_uid ?? doctorUid, "assistant"],
       ),
       voidCallBack: (data) {
         listAssistants = data;
@@ -62,8 +51,10 @@ class AssistantViewModel extends GetxController {
     AuthenticationService().deleteClientsData(
       uid: assistant?.uid ?? "",
       voidCallBack: (_) {
-        getData();
+        //  getData();
       },
     );
   }
+
+  AssistantViewModel();
 }

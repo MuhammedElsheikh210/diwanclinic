@@ -8,7 +8,7 @@ class PatientInfoSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // paste your existing _buildPatientInfo logic here
-    final transferImage = reservation.transfer_image;
+    final transferImage = reservation.transferImage;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,

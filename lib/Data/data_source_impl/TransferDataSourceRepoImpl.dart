@@ -1,5 +1,3 @@
-import 'package:diwanclinic/Data/data_source/transfer_data_source.dart';
-
 import '../../index/index_main.dart';
 
 class TransferDataSourceRepoImpl extends TransferDataSourceRepo {
@@ -7,19 +5,20 @@ class TransferDataSourceRepoImpl extends TransferDataSourceRepo {
   final BaseSQLiteDataSourceRepo<TransferModel> _sqliteRepo;
 
   TransferDataSourceRepoImpl(this._clientSourceRepo)
-      : _sqliteRepo = BaseSQLiteDataSourceRepo<TransferModel>(
-    tableName: "transfers",
-    fromJson: (json) => TransferModel.fromJson(json),
-    toJson: (model) => model.toJson(),
-    getId: (model) => model.key,
-  );
+    : _sqliteRepo = BaseSQLiteDataSourceRepo<TransferModel>(
+        tableName: "transfers",
+        fromJson: (json) => TransferModel.fromJson(json),
+        toJson: (model) => model.toJson(),
+        getId: (model) => model.key,
+        idColumn: "key",
+      );
 
   @override
   Future<List<TransferModel?>> getTransferMoney(
-      Map<String, dynamic> data,
-      SQLiteQueryParams query,
-      bool? isFiltered,
-      ) async {
+    Map<String, dynamic> data,
+    SQLiteQueryParams query,
+    bool? isFiltered,
+  ) async {
     try {
       final sqliteData = await _sqliteRepo.getAll(query: query);
       if (sqliteData.isNotEmpty || (sqliteData.isEmpty && isFiltered == true)) {
@@ -36,7 +35,7 @@ class TransferDataSourceRepoImpl extends TransferDataSourceRepo {
 
       List<TransferModel?> transferList = handleResponse<TransferModel>(
         response,
-            (json) => TransferModel.fromJson(json),
+        (json) => TransferModel.fromJson(json),
       );
 
       for (final transfer in transferList) {
@@ -52,7 +51,10 @@ class TransferDataSourceRepoImpl extends TransferDataSourceRepo {
   }
 
   @override
-  Future<SuccessModel> addTransferMoney(Map<String, dynamic> data, String key) async {
+  Future<SuccessModel> addTransferMoney(
+    Map<String, dynamic> data,
+    String key,
+  ) async {
     final transfer = TransferModel.fromJson(data);
     await _sqliteRepo.addItem(transfer);
 
@@ -66,7 +68,10 @@ class TransferDataSourceRepoImpl extends TransferDataSourceRepo {
   }
 
   @override
-  Future<SuccessModel> deleteTransferMoney(Map<String, dynamic> data, String key) async {
+  Future<SuccessModel> deleteTransferMoney(
+    Map<String, dynamic> data,
+    String key,
+  ) async {
     await _sqliteRepo.deleteItem(key);
 
     final response = await _clientSourceRepo.request(
@@ -79,7 +84,10 @@ class TransferDataSourceRepoImpl extends TransferDataSourceRepo {
   }
 
   @override
-  Future<SuccessModel> updateTransferMoney(Map<String, dynamic> data, String key) async {
+  Future<SuccessModel> updateTransferMoney(
+    Map<String, dynamic> data,
+    String key,
+  ) async {
     final transfer = TransferModel.fromJson(data);
     await _sqliteRepo.updateItem(transfer);
 

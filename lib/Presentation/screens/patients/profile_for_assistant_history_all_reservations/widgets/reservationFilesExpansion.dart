@@ -35,7 +35,7 @@ class ReservationForAssistantFilesExpansion extends StatelessWidget {
             padding: EdgeInsets.all(12.0),
             child: Text("لا توجد ملفات لهذا الحجز"),
           ),
-          UploadFilesWidget(reservationKey: reservation.key ?? "",patientKey: reservation.patientKey ?? "",),
+          UploadFilesWidget(reservationKey: reservation.key ?? "",patientKey: reservation.patientUid ?? "",),
         ] else ...[
           SizedBox(
             height: 220.h,
@@ -58,7 +58,7 @@ class ReservationForAssistantFilesExpansion extends StatelessWidget {
             padding: const EdgeInsets.all(12.0),
             child: UploadFilesWidget(
               reservationKey: reservation.key ?? "",
-              patientKey: reservation.patientKey ?? "",
+              patientKey: reservation.patientUid ?? "",
             ),
           ),
         ],

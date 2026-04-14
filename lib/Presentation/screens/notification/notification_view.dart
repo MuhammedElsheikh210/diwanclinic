@@ -95,7 +95,7 @@ class _NotificationsViewState extends State<NotificationsView> {
                       description: notif.body,
                       date: formattedDate,
                       isPatient: currentUser?.user.userType == UserType.patient,
-                      imageUrl: reservation?.transfer_image,
+                      imageUrl: reservation?.transferImage,
                       isUnread: isPending,
                       showActions: showActions,
 

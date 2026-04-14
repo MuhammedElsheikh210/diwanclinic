@@ -1,3 +1,4 @@
+import 'package:diwanclinic/Presentation/screens/reservations/create_update/reservation_type_service.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:intl/intl.dart';
 import '../../../../index/index_main.dart';
@@ -16,6 +17,8 @@ class CreateReservationViewModel extends GetxController {
   List<GenericListModel> shiftItems = [];
   GenericListModel? selectedShiftModel;
   bool isLoadingShifts = false;
+  ReservationModel? lastReservation;
+  int? manualRevisitCount;
 
   int _calcRequestId = 0;
   bool isCalculatingOrder = false;
@@ -56,6 +59,8 @@ class CreateReservationViewModel extends GetxController {
   String? selectedType;
   String? patient_name;
   bool _isPopulating = false;
+  int _autoRevisitCount = 0;
+  String _autoParentKey = "";
 
   final List<String> typeOptions = [
     "كشف جديد",
@@ -120,6 +125,59 @@ class CreateReservationViewModel extends GetxController {
     patientCodeController.addListener(_triggerUpdate);
     paidAmountController.addListener(_triggerUpdate);
     paidAmountController.addListener(_updateRestAmount);
+  }
+
+  Future<void> loadLastReservation() async {
+    if (clientUser == null) return;
+    manualRevisitCount = null; // 🔥 reset
+
+    await ReservationService().getReservationsData(
+      query: SQLiteQueryParams(
+        where: "patient_uid = ?",
+        whereArgs: [clientUser!.uid],
+        orderBy: "created_at DESC",
+        limit: 1,
+      ),
+      voidCallBack: (list) {
+        if (list.isNotEmpty) {
+          lastReservation = list.first;
+        } else {
+          lastReservation = null; // 🔥 مهم جدًا
+        }
+
+        Future.microtask(() => applyAutoTypeLogic());      },
+    );
+  }
+
+
+  Future<void> onPatientSelected(LocalUser user) async {
+    clientUser = user;
+
+    print("🧑 Selected Patient: ${user.uid}");
+
+    await loadLastReservation(); // 🔥 أهم سطر
+
+    update();
+  }
+
+  void applyAutoTypeLogic() {
+    final now = DateTime.now().millisecondsSinceEpoch;
+
+    final result = ReservationTypeService.determine(
+      lastReservation: lastReservation,
+      maxRevisitCount: clinicModel?.maxRevisitCount ?? 3,
+      revisitValidityDays: clinicModel?.revisitValidityDays ?? 14,
+      now: now,
+      selectedType: selectedType,
+      manualRevisitCount: manualRevisitCount,
+    );
+
+    selectedType = result.type;
+
+    _autoRevisitCount = result.revisitCount;
+    _autoParentKey = result.parentKey;
+
+    update();
   }
 
   Future<void> onDoctorChanged(LocalUser doctor) async {
@@ -204,7 +262,7 @@ class CreateReservationViewModel extends GetxController {
         appointment_date_time = ?
         AND clinic_key = ?
         AND shift_key = ?
-        AND doctor_key = ?
+        AND doctor_uid = ?
       """,
           whereArgs: [formatted, clinic_key, shift_key, doctorUid],
           orderBy: "order_num DESC",
@@ -212,7 +270,7 @@ class CreateReservationViewModel extends GetxController {
         ),
         voidCallBack: (list) {
           if (list.isNotEmpty) {
-            lastOrder = list.first?.order_num ?? 0;
+            lastOrder = list.first?.orderNum ?? 0;
           }
         },
       );
@@ -228,9 +286,7 @@ class CreateReservationViewModel extends GetxController {
       } else {
         resOrderController.clear();
       }
-    } catch (e) {
-      print("❌ error: $e");
-    }
+    } catch (e) {}
 
     isCalculatingOrder = false;
     update();
@@ -327,13 +383,11 @@ class CreateReservationViewModel extends GetxController {
   Future<void> loadShiftsForClinic() async {
     /// ✅ safety check
     if (clinic_key == null || clinic_key!.isEmpty) {
-      print("❌ clinic_key is null → skip shifts");
       return;
     }
 
     /// ✅ center لازم يبقى فيه دكتور
     if (isCenterAssistant && (selectedDoctor?.uid == null)) {
-      print("❌ selectedDoctor is null → skip shifts");
       return;
     }
 
@@ -360,10 +414,6 @@ class CreateReservationViewModel extends GetxController {
       doctorUid = baseUser.doctorKey;
     }
 
-    print("👨‍⚕️ doctorUid: $doctorUid");
-    print("🏥 clinic_key: $clinic_key");
-    print("📌 passed shift_key: $shift_key");
-
     try {
       await ShiftService().getShiftsData(
         data: FirebaseFilter(orderBy: "clinicKey", equalTo: clinic_key),
@@ -379,8 +429,6 @@ class CreateReservationViewModel extends GetxController {
         voidCallBack: (data) async {
           shiftList = data;
 
-          print("📦 shiftList count: ${data?.length}");
-
           shiftItems =
               (data ?? [])
                   .whereType<ShiftModel>()
@@ -394,8 +442,6 @@ class CreateReservationViewModel extends GetxController {
 
           /// ❌ مفيش شيفتات
           if (shiftItems.isEmpty) {
-            print("❌ no shifts found");
-
             selectedShiftModel = null;
             shift_key = null;
 
@@ -411,21 +457,15 @@ class CreateReservationViewModel extends GetxController {
               selectedShiftModel = shiftItems.firstWhere(
                 (e) => e.key == shift_key,
               );
-
-              print("✅ selected passed shift: $shift_key");
             } catch (_) {
               /// 🔁 fallback لو مش موجود
               selectedShiftModel = shiftItems.first;
               shift_key = selectedShiftModel!.key;
-
-              print("⚠️ passed shift not found → fallback: $shift_key");
             }
           } else {
             /// 🟡 لو مفيش shift جاي
             selectedShiftModel = shiftItems.first;
             shift_key = selectedShiftModel!.key;
-
-            print("🟡 auto selected shift: $shift_key");
           }
 
           isLoadingShifts = false;
@@ -437,14 +477,10 @@ class CreateReservationViewModel extends GetxController {
           if (date.isNotEmpty && shift_key != null) {
             final formatted =
                 date.contains('/') ? normalizeToDashDate(date) : date;
-
-            print("🚀 ready with shift_date: ${shift_key}_$formatted");
           }
         },
       );
     } catch (e) {
-      print("❌ loadShifts error: $e");
-
       isLoadingShifts = false;
       Loader.showError("فشل تحميل الفترات");
       update();
@@ -654,7 +690,7 @@ class CreateReservationViewModel extends GetxController {
     patientNameController.text = reservation.patientName ?? "";
     patientNameController.text = reservation.patientName ?? "";
     patientPhoneController.text = clientUser?.phone ?? "";
-    resOrderController.text = reservation.order_num?.toString() ?? "";
+    resOrderController.text = reservation.orderNum?.toString() ?? "";
 
     // Payment
     paidAmountController.text = reservation.paidAmount ?? "";
@@ -788,13 +824,15 @@ class CreateReservationViewModel extends GetxController {
     if (is_update && existingReservation != null) {
       final updatedReservation = existingReservation!.copyWith(
         patientUid: clientUser?.uid,
-        fcmTokenPatient: clientUser?.fcmToken,
+        patientFcm: clientUser?.fcmToken,
 
         patientName:
             selectedType == "زيارة مندوب"
                 ? delegateNameController.text
                 : patientNameController.text,
-
+        revisitCount: _autoRevisitCount,
+        parentKey: _autoParentKey,
+        isAutoType: manualRevisitCount == null,
         patientPhone: patientPhoneController.text,
         reservationType: selectedType,
 
@@ -807,7 +845,7 @@ class CreateReservationViewModel extends GetxController {
         restAmount: restAmountController.text,
         clinicKey: clinic_key,
         shiftKey: shift_key,
-        doctorKey: assistant.doctorKey,
+        doctorUid: assistant.doctorKey,
 
         // 🔥 IMPORTANT
         updatedAt: now,
@@ -818,21 +856,21 @@ class CreateReservationViewModel extends GetxController {
     }
 
     final parsedOrderNum = int.tryParse(resOrderController.text) ?? 0;
+
     final newReservation = ReservationModel(
       key: const Uuid().v4(),
-      doctorKey: assistant.doctorKey,
-      // doctorName:
-      //     isCenterAssistant
-      //         ? selectedDoctor?.name
-      //         : LocalUser().getUserData().doctorName,
-      fcmToken_patient: clientUser?.fcmToken,
-      patientUid: clientUser?.uid,
-      patientName:
-          selectedType == "زيارة مندوب"
-              ? delegateNameController.text
-              : patientNameController.text,
-      patientPhone: patientPhoneController.text,
-      assistantKey: assistant.uid,
+      clinicKey: clinic_key,
+      shiftKey: shift_key,
+      createdAt: now,
+      updatedAt: now,
+
+      /// 🔥 NEW
+      revisitCount: _autoRevisitCount,
+      parentKey: _autoParentKey,
+      isAutoType: manualRevisitCount == null,
+      orderNum: parsedOrderNum,
+      status: ReservationStatus.approved.value,
+
       reservationType: selectedType,
       appointmentDateTime:
           companyNameController.text.contains('/')
@@ -840,12 +878,22 @@ class CreateReservationViewModel extends GetxController {
               : companyNameController.text,
       paidAmount: paidAmountController.text,
       restAmount: restAmountController.text,
-      clinicKey: clinic_key,
-      shiftKey: shift_key,
-      order_num: parsedOrderNum,
-      createAt: now,
-      updatedAt: now,
-      status: ReservationStatus.approved.value,
+
+      doctorUid: assistant.doctorKey,
+      doctorFcm: assistant.doctorKey,
+      doctorName: assistant.doctorName,
+
+      patientFcm: clientUser?.fcmToken,
+      patientUid: clientUser?.uid,
+      patientName:
+          selectedType == "زيارة مندوب"
+              ? delegateNameController.text
+              : patientNameController.text,
+      patientPhone: patientPhoneController.text,
+
+      assistantUid: assistant.uid,
+      assistantName: assistant.name,
+      assistantFcm: assistant.fcmToken,
     );
     createReservation(newReservation);
   }
@@ -857,9 +905,9 @@ class CreateReservationViewModel extends GetxController {
     try {
       final query = SQLiteQueryParams(
         is_filtered: false,
-        where: "patient_key = ? AND status = ?",
+        where: "patient_uid = ? AND status = ?",
         whereArgs: [client.uid, ReservationStatus.completed.value],
-        orderBy: "create_at DESC",
+        orderBy: "created_at DESC",
       );
 
       await ReservationService().getReservationsData(
@@ -872,7 +920,7 @@ class CreateReservationViewModel extends GetxController {
           }
 
           final last = reservations.first as ReservationModel;
-          lastReservationHumanText = _humanizeDate(last.createAt);
+          lastReservationHumanText = _humanizeDate(last.createdAt);
           update();
         },
       );
@@ -901,7 +949,7 @@ class CreateReservationViewModel extends GetxController {
     AuthenticationService().getClientsData(
       query: SQLiteQueryParams(
         where: "key = ?",
-        whereArgs: [reservation.patientKey ?? ""],
+        whereArgs: [reservation.patientUid ?? ""],
         limit: 1,
       ),
       voidCallBack: (users) {
@@ -1066,8 +1114,8 @@ class CreateReservationViewModel extends GetxController {
           from_assist: true,
           newStatus: ReservationStatus.approved,
         );
-        refreshListView();
-        //  Get.back();
+        //  refreshListView();
+        Get.back();
         Loader.showSuccess("تم إضافة الحجز بنجاح");
       },
     );

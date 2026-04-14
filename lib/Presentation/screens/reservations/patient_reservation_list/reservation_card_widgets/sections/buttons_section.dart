@@ -69,7 +69,7 @@ class ButtonsSection extends StatelessWidget {
               NotificationHandler().sendStatusNotification(
                 newStatus: ReservationStatus.cancelledByUser,
                 reservation: reservation,
-                toToken: reservation.fcmToken_assist ?? "",
+                toToken: reservation.assistantFcm ?? "",
               );
             },
             appButtonSize: AppButtonSize.large,

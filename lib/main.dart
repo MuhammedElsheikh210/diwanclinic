@@ -12,16 +12,14 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 void main() {
   runZonedGuarded(
-        () async {
+    () async {
       WidgetsFlutterBinding.ensureInitialized();
 
       // 🔥 Firebase
       await Firebase.initializeApp();
 
       // 🔔 Background notifications
-      FirebaseMessaging.onBackgroundMessage(
-        firebaseMessagingBackgroundHandler,
-      );
+      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
       // 🔹 Lock Orientation
       await SystemChrome.setPreferredOrientations([
@@ -30,6 +28,8 @@ void main() {
 
       // 🔹 Local DB
       final dbService = DatabaseService();
+      // await dbService.deleteDatabaseFile();
+
       await dbService.database;
       await dbService.checkTables();
 
@@ -40,17 +40,17 @@ void main() {
 
       // 🔥 Local User Module (NEW)
       Get.lazyPut<LocalUserDataSource>(
-            () => LocalUserDataSource(Get.find()),
+        () => LocalUserDataSource(Get.find()),
         fenix: true,
       );
 
       Get.lazyPut<LocalUserRepository>(
-            () => LocalUserRepository(Get.find()),
+        () => LocalUserRepository(Get.find()),
         fenix: true,
       );
 
       await Get.putAsync<UserSession>(
-            () async => await UserSession(Get.find()).init(),
+        () async => await UserSession(Get.find()).init(),
       );
 
       // 🔔 Notification Core
@@ -80,7 +80,7 @@ void main() {
         ),
       );
     },
-        (e, s) {
+    (e, s) {
       debugPrint("❌ ZONE ERROR: $e");
       debugPrintStack(stackTrace: s);
     },
@@ -109,10 +109,7 @@ class MyApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
 
-      supportedLocales: const [
-        Locale('en'),
-        Locale('ar'),
-      ],
+      supportedLocales: const [Locale('en'), Locale('ar')],
 
       locale: Locale(getLocalLan()),
       fallbackLocale: const Locale('ar'),

@@ -13,7 +13,7 @@ class CreateAssistantViewForCenter extends StatelessWidget {
     return GetBuilder<CreateAssistantViewModel>(
       init: CreateAssistantViewModel(medicalCenterKey: medicalCenterKey),
       builder: (_) {
-        return const CreateAssistantView();
+        return const CreateAssistantView(doctor_uid: '',);
       },
     );
   }

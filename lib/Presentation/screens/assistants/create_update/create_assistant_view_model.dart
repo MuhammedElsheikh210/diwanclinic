@@ -11,14 +11,14 @@ class CreateAssistantViewModel extends GetxController {
   LocalUser? existingAssistant;
 
   final String? medicalCenterKey;
+  String? doctor_uid;
+  LocalUser? doctorUser;
 
   CreateAssistantViewModel({this.medicalCenterKey});
 
   // ============================================================
   // 🧠 CURRENT USER
   // ============================================================
-
-  BaseUser? get _user => Get.find<UserSession>().user?.user;
 
   // ============================================================
   // 🚀 INIT
@@ -30,8 +30,6 @@ class CreateAssistantViewModel extends GetxController {
 
     nameController.addListener(update);
     phoneController.addListener(update);
-
-    getClinicsData();
   }
 
   // ============================================================
@@ -115,19 +113,8 @@ class CreateAssistantViewModel extends GetxController {
         throw Exception("❌ UID creation failed");
       }
 
-      final currentUser = _user;
-
-      String? doctorKey;
       String? transferNumber;
       bool isInstaPay = false;
-
-      if (currentUser is DoctorUser) {
-        doctorKey = currentUser.uid;
-      }
-
-      if (currentUser is AssistantUser) {
-        doctorKey = currentUser.doctorKey;
-      }
 
       final assistantUser = AssistantUser(
         uid: uid,
@@ -137,11 +124,12 @@ class CreateAssistantViewModel extends GetxController {
         password: password,
         userType: UserType.assistant,
         isProfileCompleted: true,
-
         clinicKey: selectedClinic?.key,
-        doctorKey: doctorKey,
+        doctorKey: doctor_uid,
         transferNumber: transferNumber,
         isInstaPay: isInstaPay,
+        doctorFcmToken: doctorUser?.fcmToken,
+        doctorName: doctorUser?.name,
       );
 
       final userClient = LocalUser(assistantUser);
@@ -175,22 +163,7 @@ class CreateAssistantViewModel extends GetxController {
   // 🏥 GET CLINICS
   // ============================================================
 
-  void getClinicsData() {
-    final user = _user;
-
-    String? doctorKey;
-
-    if (user is DoctorUser) {
-      doctorKey = user.uid;
-    } else if (user is AssistantUser) {
-      doctorKey = user.doctorKey;
-    }
-
-    if (doctorKey == null || doctorKey.isEmpty) {
-      debugPrint("❌ doctorKey missing → skip clinics");
-      return;
-    }
-
+  void getClinicsData(String doctorKey) {
     ClinicService().getClinicsData(
       data: {},
       doctorKey: doctorKey,
@@ -200,7 +173,7 @@ class CreateAssistantViewModel extends GetxController {
         where: "doctor_key = ?",
         whereArgs: [doctorKey],
       ),
-      isFiltered: true,
+      fromOnline: true,
       voidCallBack: (data) {
         Loader.dismiss();
 

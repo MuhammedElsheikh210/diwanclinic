@@ -27,11 +27,14 @@ class LegacyQueueViewModel extends GetxController {
   void onInit() {
     super.onInit();
 
-    if (isCenterMode) {
-      loadDoctorsOfCenter();
-    } else {
-      getData();
-    }
+    // if (isCenterMode) {
+    //   loadDoctorsOfCenter();
+    // } else {
+    //   getData();
+    // }
+
+    getData();
+
   }
 
   // ------------------------------------------------------------
@@ -78,30 +81,26 @@ class LegacyQueueViewModel extends GetxController {
   // 📥 GET DATA (🔥 IMPORTANT FIX)
   // ------------------------------------------------------------
   void getData() {
-    final currentUser = Get.find<UserSession>().user;
+   final currentUser = Get.find<UserSession>().user;
 
-    if (currentUser == null) {
-      debugPrint("❌ User not found in session");
-      return;
-    }
+   if (currentUser == null || !currentUser.isAssistant) {
+     debugPrint("❌ Current user is not assistant");
+     return;
+   }
 
-    final baseUser = currentUser.user;
+   final assistant = currentUser.asAssistant;
 
-    String? doctorKey;
+   if (assistant == null) {
+     debugPrint("❌ Failed to cast to AssistantUser");
+     return;
+   }
 
-    // ✅ Doctor
-    if (baseUser is DoctorUser) {
-      doctorKey = baseUser.uid;
-    }
-    // ✅ Assistant
-    else if (baseUser is AssistantUser) {
-      doctorKey = baseUser.doctorKey;
-    }
+
 
     final clinicKey = currentUser.clinicKey;
 
     service.getLegacyQueueByDateData(
-      doctorUid: isCenterMode ? selectedDoctor?.uid : doctorKey,
+      doctorUid: assistant.doctorKey,
 
       firebaseFilter:
           isCenterMode

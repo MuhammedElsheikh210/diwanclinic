@@ -23,11 +23,12 @@ class DoctorViewModel extends GetxController {
     AuthenticationService().getClientsData(
       query: SQLiteQueryParams(
         where:
-            "specialize_key = ? AND userType = ? AND remote_reservation_ability = ?",
-        whereArgs: [specializeKey, "doctor", 1],
+            "specialize_key = ? AND userType = ?",
+        whereArgs: [specializeKey, "doctor"],
       ),
       voidCallBack: (data) {
         listDoctors = data;
+        print("listDoctors is ${listDoctors}");
         update();
       },
     );

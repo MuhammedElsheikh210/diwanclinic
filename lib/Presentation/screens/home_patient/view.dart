@@ -84,9 +84,8 @@ class _PatientHomeViewState extends State<PatientHomeView> {
                                             Get.find<UserSession>().user;
 
                                         final reservation = ReservationModel(
-                                          patientKey: user?.uid,
                                           patientUid: user?.uid,
-                                          fcmToken_patient: user?.fcmToken,
+                                          patientFcm: user?.fcmToken,
                                           patientPhone: user?.phone,
                                           patientName: user?.name,
                                         );

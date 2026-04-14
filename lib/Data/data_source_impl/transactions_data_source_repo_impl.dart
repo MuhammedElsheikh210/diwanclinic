@@ -10,6 +10,7 @@ class TransactionsDataSourceRepoImpl extends TransactionsDataSourceRepo {
         fromJson: (json) => TransactionsModel.fromJson(json),
         toJson: (model) => model.toJson(),
         getId: (model) => model.key,
+        idColumn: "key",
       );
 
   /// ✅ Fetch all transactions with SQLite fallback and remote fetching support.

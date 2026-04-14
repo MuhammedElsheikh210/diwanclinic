@@ -35,7 +35,7 @@ class MainPageViewModel extends GetxController {
   final ReservationService _reservationService = ReservationService();
   final AuthenticationService _authService = AuthenticationService();
   final NotificationPatentService _notificationService =
-  NotificationPatentService();
+      NotificationPatentService();
 
   // ============================================================
   // 🚀 INIT
@@ -53,6 +53,24 @@ class MainPageViewModel extends GetxController {
     await _startClientsRealtime();
     await startReservationsRealtime();
     await _startNotificationsRealtime();
+
+    await debugRawClientsTable();
+  }
+
+  Future<void> debugRawClientsTable() async {
+    final db = await DatabaseService().database;
+
+    final result = await db.rawQuery("SELECT * FROM clients");
+
+    print("🧪 ===============================");
+    print("🧪 RAW CLIENTS TABLE");
+
+    for (var row in result) {
+      print("----------");
+      print(row); // 🔥 كل الأعمدة
+    }
+
+    print("🧪 ===============================");
   }
 
   // ============================================================
@@ -71,10 +89,7 @@ class MainPageViewModel extends GetxController {
       debugPrint("🌐 Loading current user from ONLINE...");
 
       await _authService.getClientsOnlineData(
-        firebaseFilter: FirebaseFilter(
-          orderBy: "token",
-          equalTo: uid,
-        ),
+        firebaseFilter: FirebaseFilter(orderBy: "uid", equalTo: uid),
         voidCallBack: (users) {
           if (users.isEmpty) {
             debugPrint("❌ User not found online");
@@ -133,9 +148,7 @@ class MainPageViewModel extends GetxController {
 
     debugPrint("🚀 GLOBAL Reservations Realtime START → $resolvedDoctorKey");
 
-    await _reservationService.startListening(
-      doctorKey: resolvedDoctorKey,
-    );
+    await _reservationService.startListening(doctorKey: resolvedDoctorKey);
 
     debugPrint("✅ GLOBAL Reservations Realtime RUNNING → $resolvedDoctorKey");
   }

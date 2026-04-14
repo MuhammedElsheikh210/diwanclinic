@@ -37,7 +37,7 @@ class HeaderSection extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AppText(
-                text: "رقم الحجز: ${reservation.order_num ?? '-'}",
+                text: "رقم الحجز: ${reservation.orderNum ?? '-'}",
                 textStyle: context.typography.mdMedium.copyWith(
                   color:
                   ColorMappingImpl().textSecondaryParagraph,

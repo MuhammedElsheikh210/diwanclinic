@@ -25,11 +25,9 @@ class PatientSearchViewModel extends GetxController {
 
     // ✅ Search only for patients (userType = "patient")
     //    and match client_name OR phone OR code
-    const whereClause =
-        '(userType = ? AND (client_name LIKE ? OR phone LIKE ? OR code LIKE ?))';
+    const whereClause = '(userType = ? AND (name LIKE ? OR phone LIKE ?))';
     final whereArgs = [
       'patient', // user type condition
-      '%$query%',
       '%$query%',
       '%$query%',
     ];

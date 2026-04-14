@@ -232,7 +232,7 @@ class _ReservationViewState extends State<ReservationView> {
                       shape: BoxShape.circle,
                     ),
                     child: Text(
-                      "${reservation.order_num ?? '-'}",
+                      "${reservation.orderNum ?? '-'}",
                       style: context.typography.mdBold.copyWith(
                         color: AppColors.primary,
                       ),

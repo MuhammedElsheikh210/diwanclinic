@@ -12,6 +12,7 @@ class PatientDataSourceRepoImpl extends PatientDataSourceRepo {
         fromJson: (json) => PatientModel.fromJson(json),
         toJson: (model) => model.toJson(),
         getId: (model) => model.key,
+        idColumn: "key",
       );
 
   @override

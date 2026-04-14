@@ -22,7 +22,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 69, // ⬅️ bumped
+      version: 71, // ⬅️ bumped
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onConfigure: (db) async {
@@ -84,47 +84,47 @@ class DatabaseService {
 
   Future<void> _createClients(Database db) async {
     await db.execute('''
-    CREATE TABLE clients (
-      key TEXT PRIMARY KEY,
+  CREATE TABLE clients (
+    key TEXT PRIMARY KEY,
 
-      -- 🔥 BaseUser
-      uid TEXT,
-      createdAt INTEGER,
-      userType TEXT,
-      isCompleteProfile INTEGER,
-      fcm_token TEXT,
-      app_version TEXT,
-      identifier TEXT,
-      profile_image TEXT,
-      phone TEXT,
-      name TEXT,
-      address TEXT,
-      password TEXT,
+    -- 🔥 BaseUser
+    uid TEXT,
+    createdAt INTEGER,
+    userType TEXT,
+    isCompleteProfile INTEGER,
+    fcm_token TEXT,
+    app_version TEXT,
+    identifier TEXT,
+    profile_image TEXT,
+    phone TEXT,
+    name TEXT,
+    address TEXT,
+    password TEXT,
 
-      -- 🔥 AssistantUser
-      clinic_key TEXT,
-      doctor_key TEXT,
-      transfer_number TEXT,
-      is_insta_pay INTEGER DEFAULT 0,
+    -- 🔥 AssistantUser
+    clinic_key TEXT,
+    doctor_key TEXT,
+    doctor_name TEXT, -- 🔥 NEW
+    doctor_fcm TEXT,  -- 🔥 (مهم للمستقبل)
+    transfer_number TEXT,
+    is_insta_pay INTEGER DEFAULT 0,
 
-      -- 🔥 DoctorUser
-      specialization_name TEXT,
-      specialize_key TEXT,
-      doctorQualifications TEXT,
-      facebook_link TEXT,
-      instagram_link TEXT,
-      tiktok_link TEXT,
-      total_rate REAL DEFAULT 0.0,
-      number_of_rates INTEGER DEFAULT 0,
-      remote_reservation_ability INTEGER DEFAULT 0,
-      serverUpdatedAt TEXT,
-      updatedAt TEXT,
-      is_deleted INTEGER
+    -- 🔥 DoctorUser
+    specialization_name TEXT,
+    specialize_key TEXT,
+    doctorQualifications TEXT,
+    facebook_link TEXT,
+    instagram_link TEXT,
+    tiktok_link TEXT,
+    total_rate REAL DEFAULT 0.0,
+    number_of_rates INTEGER DEFAULT 0,
+    remote_reservation_ability INTEGER DEFAULT 0,
 
-     
-
-    
-    );
+    -- 🔥 Sync
+    serverUpdatedAt INTEGER,
+    updatedAt INTEGER,
+    is_deleted INTEGER DEFAULT 0
+  );
   ''');
   }
 
@@ -134,7 +134,7 @@ class DatabaseService {
   Future<void> _createClinics(Database db) async {
     await db.execute('''
       CREATE TABLE clinics (
-        key TEXT PRIMARY KEY,
+        uid TEXT PRIMARY KEY,
         title TEXT,
         dailyWorks TEXT,
         address TEXT,
@@ -162,47 +162,75 @@ class DatabaseService {
   // ─────────────────────────────────────────────
   Future<void> _createReservations(Database db) async {
     await db.execute('''
-      CREATE TABLE reservations (
-        key TEXT PRIMARY KEY,
-        patient_uid TEXT,
-        fcmToken_patient TEXT,
-        medicalCenterKey TEXT,
-        fcmToken_assist TEXT,
-        create_at INTEGER,
-        updated_at INTEGER NOT NULL DEFAULT 0,
-        server_updated_at INTEGER,
-        sync_status TEXT,
-        is_deleted INTEGER DEFAULT 0,
-        doctor_key TEXT,
-        doctor_name TEXT,
-        transfer_image TEXT,
-        order_num INTEGER,
-        order_finished INTEGER,
-        order_reserved INTEGER,
-        patient_key TEXT,
-        assistant_key TEXT,
-        shift_key TEXT,
-        patient_name TEXT,
-        patient_phone TEXT,
-        status TEXT,
-        paid_amount TEXT,
-        rest_amount TEXT,
-        total_fees TEXT,
-        appointment_date_time TEXT,
-        waiting_num TEXT,
-        clinic_key TEXT,
-        reservation_type TEXT,
-        allergies TEXT,
-        diagnosis TEXT,
-        temperature TEXT,
-        weight TEXT,
-        height TEXT,
-        prescription_url_1 TEXT,
-        prescription_url_2 TEXT,
-        is_ordered INTEGER DEFAULT 0,
-        has_feedback INTEGER DEFAULT 0
-      );
-    ''');
+CREATE TABLE reservations (
+  key TEXT PRIMARY KEY,
+
+  -- 🕒 timestamps
+  created_at INTEGER,
+  updated_at INTEGER NOT NULL DEFAULT 0,
+  server_updated_at INTEGER,
+  is_deleted INTEGER DEFAULT 0,
+
+  -- 🏥 relations
+  clinic_key TEXT,
+  shift_key TEXT,
+  medical_center_key TEXT,
+  
+  revisit_count INTEGER,
+parent_key TEXT,
+is_auto_type INTEGER DEFAULT 0,
+
+  -- 👨‍⚕️ doctor
+  doctor_uid TEXT,
+  doctor_name TEXT,
+  doctor_fcm TEXT,
+
+  -- 🧑‍⚕️ assistant
+  assistant_uid TEXT,
+  assistant_name TEXT,
+  assistant_fcm TEXT,
+
+  -- 👤 patient
+  patient_uid TEXT,
+  patient_name TEXT,
+  patient_phone TEXT,
+  patient_fcm TEXT,
+
+  -- 📅 reservation
+  appointment_date_time TEXT,
+  status TEXT,
+  reservation_type TEXT,
+
+  -- 💰 financial
+  paid_amount TEXT,
+  rest_amount TEXT,
+  total_fees TEXT,
+
+  -- 🔢 order
+  order_num INTEGER,
+  order_reserved INTEGER,
+
+  -- 🧾 medical
+  allergies TEXT,
+  diagnosis TEXT,
+  temperature TEXT,
+  weight TEXT,
+  height TEXT,
+
+  -- 📎 attachments
+  transfer_image TEXT,
+
+  prescription_url_1 TEXT,
+  prescription_url_2 TEXT,
+  prescription_url_3 TEXT,
+  prescription_url_4 TEXT,
+  prescription_url_5 TEXT,
+
+  -- ⚙️ flags
+  is_ordered INTEGER DEFAULT 0,
+  has_feedback INTEGER DEFAULT 0
+);
+''');
   }
 
   // ─────────────────────────────────────────────

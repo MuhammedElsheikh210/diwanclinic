@@ -131,7 +131,7 @@ class _UploadPrescriptionScreenState extends State<UploadPrescriptionScreen> {
     final reservation = mapUrlsToReservation(
       ReservationModel(
         patientUid: user?.uid,
-        fcmToken_patient: user?.fcmToken,
+        patientFcm: user?.fcmToken,
         patientPhone: user?.phone,
         patientName: user?.name,
       ),

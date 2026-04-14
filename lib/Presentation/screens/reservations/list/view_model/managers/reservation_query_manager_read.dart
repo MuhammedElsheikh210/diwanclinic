@@ -42,9 +42,7 @@ class ReservationQueryManager {
 
     /// 🔥 1) شوف كل الداتا الأول (بدون فلترة)
     final allData = await getReservations(
-      query: SQLiteQueryParams(
-        where: "1=1",
-      ),
+      query: SQLiteQueryParams(where: "1=1"),
     );
 
     print("📦 ALL DATA COUNT: ${allData.length}");
@@ -59,10 +57,7 @@ class ReservationQueryManager {
 
     /// 🔥 2) جرب فلترة بالـ shift بس
     final shiftOnly = await getReservations(
-      query: SQLiteQueryParams(
-        where: "shift_key = ?",
-        whereArgs: [shiftKey],
-      ),
+      query: SQLiteQueryParams(where: "shift_key = ?", whereArgs: [shiftKey]),
     );
 
     print("🧪 SHIFT ONLY COUNT: ${shiftOnly.length}");
@@ -117,9 +112,9 @@ class ReservationQueryManager {
   ) async {
     final list = await getReservations(
       query: SQLiteQueryParams(
-        where: "patient_key = ? AND status = ?",
+        where: "patient_uid = ? AND status = ?",
         whereArgs: [patientKey, ReservationStatus.completed.value],
-        orderBy: "create_at DESC",
+        orderBy: "created_at DESC",
         limit: 1,
       ),
     );

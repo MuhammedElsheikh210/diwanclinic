@@ -5,7 +5,7 @@ Future<void> openOrderConfirmationSheet(
   ReservationViewModel controller,
   ReservationModel reservation,
 ) async {
-  if (reservation.patientKey == null) {
+  if (reservation.patientUid == null) {
     Loader.showError("بيانات العميل غير متوفرة");
     return;
   }
@@ -13,7 +13,7 @@ Future<void> openOrderConfirmationSheet(
   Loader.show();
 
   final user = await controller.queryManager.getPatientByKey(
-    reservation.patientKey!,
+    reservation.patientUid!,
   );
 
   Loader.dismiss();

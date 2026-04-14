@@ -13,7 +13,7 @@ class GridReservationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ahead = (reservation.order_reserved ?? 0) - 1;
+    final ahead = (reservation.orderReserved ?? 0) - 1;
 
     final bool isCompleted =
         reservation.status == ReservationStatus.completed.value;
@@ -85,7 +85,7 @@ class GridReservationCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  "رقم: ${reservation.order_num ?? "-"}",
+                  "رقم: ${reservation.orderNum ?? "-"}",
                   style: context.typography.smRegular.copyWith(
                     color: AppColors.textSecondaryParagraph,
                   ),

@@ -15,7 +15,7 @@ class PatientProfileHistoryViewModel extends GetxController {
       query: SQLiteQueryParams(
         is_filtered: true,
         where: "key = ? ",
-        whereArgs: [model.patientKey ?? ""],
+        whereArgs: [model.patientUid ?? ""],
       ),
       isFiltered: true,
       voidCallBack: (data) {

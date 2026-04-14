@@ -25,7 +25,7 @@ class _PatientForAssistantProfileViewState
     controller = initController(
       () => PatientForAssistantProfileHistoryViewModel(),
     );
-    controller.getData(widget.reservationModel.patientKey ?? "");
+    controller.getData(widget.reservationModel.patientUid ?? "");
     super.initState();
   }
 

@@ -53,7 +53,7 @@ class ReservationNotificationService {
       List<String> tokens = [];
 
       for (final r in todayReservations) {
-        final clientKey = r.patientKey;
+        final clientKey = r.patientUid;
         if (clientKey == null) continue;
 
         await AuthenticationService().getClientsData(

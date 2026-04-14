@@ -10,6 +10,7 @@ class IncomeDataSourceRepoImpl extends IncomeDataSourceRepo {
         fromJson: (json) => IncomeModel.fromJson(json),
         toJson: (model) => model.toJson(),
         getId: (model) => model.key,
+        idColumn: "key",
       );
 
   @override

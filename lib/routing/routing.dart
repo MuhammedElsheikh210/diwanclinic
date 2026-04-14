@@ -193,13 +193,7 @@ class Routes {
         binding: Binding(),
         transition: Transition.cupertino,
       ),
-      GetPage(
-        name: createAssistantView,
-        page: () => const CreateAssistantView(),
-        transitionDuration: const Duration(milliseconds: 500),
-        binding: Binding(),
-        transition: Transition.cupertino,
-      ),
+
       GetPage(
         name: categoryView,
         page: () => const CategoryView(),
@@ -222,6 +216,7 @@ class Routes {
         binding: Binding(),
         transition: Transition.cupertino,
       ),
+
       // GetPage(
       //   name: syncView,
       //   page: () => const SyncView(),
@@ -230,7 +225,6 @@ class Routes {
       //   transition: Transition.cupertino,
       //   // middlewares: [RouteWelcomeMiddleWare(priority: 1)],
       // ),
-
       GetPage(
         name: expenseView,
         page: () => const ExpenseView(),

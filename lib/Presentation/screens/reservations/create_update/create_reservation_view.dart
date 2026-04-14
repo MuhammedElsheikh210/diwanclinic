@@ -142,19 +142,27 @@ class _CreateReservationViewState extends State<CreateReservationView> {
   }
 
   void _fillPatientData(
-    CreateReservationViewModel controller,
-    LocalUser client,
-  ) {
-    controller.getLastReservationDateHuman(client);
+      CreateReservationViewModel controller,
+      LocalUser client,
+      ) async {
     controller.clientUser = client;
+
     controller.patientNameController.text = client.name ?? "";
     controller.patientPhoneController.text = client.phone ?? "";
-    controller.update();
+
+    // 🔥 أهم سطر في الفيتشر كلها
+    await controller.loadLastReservation();
+
+    controller.applyAutoTypeLogic();
+
+
+    controller.getLastReservationDateHuman(client);
 
     setState(() {
       showNameList = false;
       showPhoneList = false;
     });
+
     FocusScope.of(context).unfocus();
   }
 
@@ -404,11 +412,14 @@ class _CreateReservationViewState extends State<CreateReservationView> {
 
                                               return GestureDetector(
                                                 onTap: () {
-                                                  controller.setReservationType(
-                                                    type,
-                                                  );
-                                                  controller.selectedType =
-                                                      type;
+                                                  controller.setReservationType(type);
+
+                                                  // 🔥 خليه suggestion مش قرار نهائي
+                                                  controller.selectedType = type;
+
+                                                  // 🔥 أهم سطر
+                                                  controller.applyAutoTypeLogic();
+
                                                   controller.update();
                                                 },
                                                 child: AnimatedContainer(
@@ -500,6 +511,19 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                               );
                                             }).toList(),
                                       ),
+
+                                      if (controller.lastReservation == null &&
+                                          controller.selectedType == "إعادة")
+                                        AppTextField(
+                                          hintText: "رقم الإعادة",
+                                          keyboardType: TextInputType.number,
+                                          onChanged: (val) {
+                                            controller.manualRevisitCount = int.tryParse(val);
+
+                                            // 🔥 لازم تعيد الحساب
+                                            controller.applyAutoTypeLogic();
+                                          },
+                                        ),
                                     ],
                                   ),
                                 ),

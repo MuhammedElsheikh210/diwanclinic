@@ -4,8 +4,9 @@ import '../../../../../index/index_main.dart';
 class ClinicView extends StatefulWidget {
   final String? title;
   final String? doctorKey;
+  final LocalUser? doctorUser;
 
-  const ClinicView({super.key, this.title, this.doctorKey});
+  const ClinicView({super.key, this.title, this.doctorKey, this.doctorUser});
 
   @override
   State<ClinicView> createState() => _ClinicViewState();
@@ -23,6 +24,10 @@ class _ClinicViewState extends State<ClinicView> {
       child: GetBuilder<ClinicViewModel>(
         init: ClinicViewModel(doctorKey: widget.doctorKey),
         builder: (controller) {
+          final hasClinics =
+              controller.listClinics != null &&
+              controller.listClinics!.isNotEmpty;
+
           return Scaffold(
             backgroundColor: AppColors.white,
 
@@ -36,25 +41,80 @@ class _ClinicViewState extends State<ClinicView> {
               backgroundColor: AppColors.white,
             ),
 
-            /// ================= ADD CLINIC =================
-            floatingActionButton: InkWell(
-              onTap: () {
-                Get.delete<CreateClinicViewModel>();
+            /// ================= FLOATING BUTTON =================
+            floatingActionButton:
+                hasClinics
+                    ? Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        /// ➕ Add Assistant
+                        FloatingActionButton.extended(
+                          heroTag: "add_assistant",
+                          backgroundColor: AppColors.primary,
+                          onPressed: () {
+                            Get.to(
+                              () => AssistantView(
+                                doctor_uid: widget.doctorKey,
+                                doctorUser: widget.doctorUser,
+                              ),
+                              binding: Binding(),
+                            );
+                          },
+                          label: Text(
+                            "إضافة مساعدين",
+                            style: context.typography.mdBold.copyWith(
+                              color: AppColors.white,
+                            ),
+                          ),
+                        ),
 
-                Get.to(
-                  () => CreateClinicView(doctorKey: widget.doctorKey),
-                  binding: Binding(),
-                );
-              },
-              child: const Svgicon(icon: IconsConstants.fab_Button),
-            ),
+                        SizedBox(height: 10.h),
+
+                        /// ➕ Add Clinic
+                        FloatingActionButton(
+                          heroTag: "add_clinic",
+                          onPressed: () {
+                            Get.delete<CreateClinicViewModel>();
+
+                            Get.to(
+                              () =>
+                                  CreateClinicView(doctorKey: widget.doctorKey),
+                              binding: Binding(),
+                            );
+                          },
+                          child: const Icon(Icons.add),
+                        ),
+                      ],
+                    )
+                    : FloatingActionButton(
+                      onPressed: () {
+                        Get.delete<CreateClinicViewModel>();
+
+                        Get.to(
+                          () => CreateClinicView(doctorKey: widget.doctorKey),
+                          binding: Binding(),
+                        );
+                      },
+                      child: const Icon(Icons.add),
+                    ),
 
             /// ================= BODY =================
             body:
                 controller.listClinics == null
                     ? const ShimmerLoader()
                     : controller.listClinics!.isEmpty
-                    ? const NoDataWidget()
+                    ? Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const NoDataWidget(),
+                        SizedBox(height: 20.h),
+                        Text(
+                          "لازم تضيف عيادة الأول علشان تقدر تضيف مساعدين",
+                          style: context.typography.mdRegular,
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    )
                     : ListView.builder(
                       padding: EdgeInsets.symmetric(
                         vertical: 15.h,
@@ -72,13 +132,13 @@ class _ClinicViewState extends State<ClinicView> {
                           child: InkWell(
                             onTap: () {
                               final user = Get.find<UserSession>().user?.user;
+
                               final String key =
                                   widget.doctorKey ??
                                   (user is AssistantUser
                                       ? user.doctorKey
                                       : user?.uid) ??
                                   (throw Exception("❌ doctorKey missing"));
-                              print("doctod uid is $key");
 
                               Get.to(
                                 () => ShiftView(

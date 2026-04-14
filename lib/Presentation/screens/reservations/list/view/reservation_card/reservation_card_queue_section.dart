@@ -61,7 +61,7 @@ class ReservationCardQueueSection extends StatelessWidget {
             ),
             const SizedBox(width: 5),
             AppText(
-              text: "${reservation.order_num ?? '-'}",
+              text: "${reservation.orderNum ?? '-'}",
               textStyle: context.typography.lgBold.copyWith(
                 color: ColorMappingImpl().textDisplay,
               ),

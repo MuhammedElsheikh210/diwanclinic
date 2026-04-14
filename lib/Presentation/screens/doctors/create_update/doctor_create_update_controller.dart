@@ -13,9 +13,9 @@ class CreateDoctorViewModel extends GetxController {
   final TextEditingController instagramController = TextEditingController();
   final TextEditingController tiktokController = TextEditingController();
   final TextEditingController specializationNameController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController qualificationsController =
-  TextEditingController();
+      TextEditingController();
 
   File? profileImageFile;
   File? coverImageFile;
@@ -100,9 +100,9 @@ class CreateDoctorViewModel extends GetxController {
   Future<String?> _uploadImage(File file, String folder) async {
     try {
       final fileName = "${DateTime.now().millisecondsSinceEpoch}.jpg";
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child("doctors/$folder/$fileName");
+      final ref = FirebaseStorage.instance.ref().child(
+        "doctors/$folder/$fileName",
+      );
 
       await ref.putFile(file);
       return await ref.getDownloadURL();
@@ -196,18 +196,15 @@ class CreateDoctorViewModel extends GetxController {
   // ================== CREATE ==================
 
   Future<void> _createDoctorAccount(
-      String? profileUrl,
-      String? coverUrl,
-      ) async {
+    String? profileUrl,
+    String? coverUrl,
+  ) async {
     final email = "${phoneController.text}@link.com";
     final password = phoneController.text;
 
     try {
       final userCred = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+          .createUserWithEmailAndPassword(email: email, password: password);
 
       final uid = userCred.user?.uid ?? "";
 
@@ -231,6 +228,7 @@ class CreateDoctorViewModel extends GetxController {
       );
 
       final doctor = LocalUser(doctorUser);
+      print("doctor is ${doctor.toJson()}");
 
       AuthenticationService().addClientsData(
         userclient: doctor,
@@ -250,13 +248,13 @@ class CreateDoctorViewModel extends GetxController {
   void refreshListView() {
     if (medicalCenterKey != null && medicalCenterKey!.isNotEmpty) {
       final doctorVM = initController(
-            () => DoctorViewModel.byCenter(medicalCenterKey!),
+        () => DoctorViewModel.byCenter(medicalCenterKey!),
       );
       doctorVM.getDoctorsByCenter(medicalCenterKey!);
       doctorVM.update();
     } else {
       final doctorVM = initController(
-            () => DoctorViewModel(specializeKey: specializeKey),
+        () => DoctorViewModel(specializeKey: specializeKey),
       );
       doctorVM.getData();
       doctorVM.update();

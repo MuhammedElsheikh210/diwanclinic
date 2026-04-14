@@ -71,7 +71,7 @@ class ReservationDoctorCard extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                "#${reservation.order_num ?? '-'}",
+                "#${reservation.orderNum ?? '-'}",
                 style: context.typography.lgBold.copyWith(
                   color: AppColors.textDisplay,
                 ),
@@ -141,11 +141,11 @@ class ReservationDoctorCard extends StatelessWidget {
             ),
           ),
 
-          if (reservation.transfer_image != null)
+          if (reservation.transferImage != null)
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: CachedNetworkImage(
-                imageUrl: reservation.transfer_image!,
+                imageUrl: reservation.transferImage!,
                 width: 80,
                 height: 55,
                 fit: BoxFit.cover,
@@ -256,7 +256,7 @@ class ReservationDoctorCard extends StatelessWidget {
           onTap: () {
             Get.to(
               () => PatientAllHistoryView(
-                patient_key: reservation.patientKey ?? "",
+                patient_key: reservation.patientUid ?? "",
               ),
               binding: Binding(),
             );

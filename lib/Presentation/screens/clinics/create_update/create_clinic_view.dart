@@ -1,3 +1,4 @@
+// ignore_for_file: avoid_renaming_method_parameters
 import '../../../../../index/index_main.dart';
 
 class CreateClinicView extends StatefulWidget {
@@ -34,7 +35,10 @@ class _CreateClinicViewState extends State<CreateClinicView> {
 
   @override
   Widget build(BuildContext context) {
-    final keys = keyboardService.generateKeys('CreateClinicView', 9);
+    final keys = keyboardService.generateKeys(
+      'CreateClinicView',
+      10,
+    ); // 🔥 زودنا واحد
 
     return GetBuilder<CreateClinicViewModel>(
       builder: (controller) {
@@ -49,9 +53,7 @@ class _CreateClinicViewState extends State<CreateClinicView> {
             centerTitle: true,
             iconTheme: const IconThemeData(color: AppColors.white),
           ),
-          bottomNavigationBar:
-          /// 🔹 Save Button
-          SafeArea(
+          bottomNavigationBar: SafeArea(
             top: false,
             child: SizedBox(
               height: 80.h,
@@ -67,7 +69,6 @@ class _CreateClinicViewState extends State<CreateClinicView> {
             key: globalKeyClinic,
             child: KeyboardActions(
               config: keyboardService.buildConfig(context, keys),
-
               child: ListView(
                 shrinkWrap: true,
                 padding: const EdgeInsets.symmetric(
@@ -91,7 +92,7 @@ class _CreateClinicViewState extends State<CreateClinicView> {
                     controller: controller.dailyWorksController,
                     hintText: "مثال: من السبت إلى الخميس",
                     validator: InputValidators.combine([notEmptyValidator]),
-                    focusNode: keyboardService.getFocusNode(keys[7]),
+                    focusNode: keyboardService.getFocusNode(keys[1]),
                     voidCallbackAction: (_) => controller.update(),
                     keyboardType: TextInputType.text,
                   ),
@@ -102,9 +103,8 @@ class _CreateClinicViewState extends State<CreateClinicView> {
                     controller: controller.phone1Controller,
                     hintText: "ادخل الهاتف الأول",
                     validator: InputValidators.combine([notEmptyValidator]),
-                    focusNode: keyboardService.getFocusNode(keys[1]),
+                    focusNode: keyboardService.getFocusNode(keys[2]),
                     voidCallbackAction: (_) => controller.update(),
-
                     keyboardType: TextInputType.phone,
                   ),
                   SizedBox(height: 12.h),
@@ -114,22 +114,20 @@ class _CreateClinicViewState extends State<CreateClinicView> {
                     controller: controller.addressController,
                     hintText: "ادخل عنوان العيادة",
                     validator: InputValidators.combine([notEmptyValidator]),
-                    focusNode: keyboardService.getFocusNode(keys[2]),
+                    focusNode: keyboardService.getFocusNode(keys[3]),
                     voidCallbackAction: (_) => controller.update(),
-
                     keyboardType: TextInputType.text,
                   ),
                   SizedBox(height: 12.h),
 
-                  /// 🔹 Consultation Prices
+                  /// 🔹 Prices
                   CustomInputField(
                     label: "سعر الكشف",
                     controller: controller.consultationPriceController,
                     hintText: "ادخل سعر الكشف",
                     validator: InputValidators.combine([notEmptyValidator]),
+                    focusNode: keyboardService.getFocusNode(keys[4]),
                     voidCallbackAction: (_) => controller.update(),
-
-                    focusNode: keyboardService.getFocusNode(keys[3]),
                     keyboardType: TextInputType.number,
                   ),
                   SizedBox(height: 12.h),
@@ -139,9 +137,8 @@ class _CreateClinicViewState extends State<CreateClinicView> {
                     controller: controller.followUpPriceController,
                     hintText: "ادخل سعر الإعادة",
                     validator: InputValidators.combine([notEmptyValidator]),
+                    focusNode: keyboardService.getFocusNode(keys[5]),
                     voidCallbackAction: (_) => controller.update(),
-
-                    focusNode: keyboardService.getFocusNode(keys[4]),
                     keyboardType: TextInputType.number,
                   ),
                   SizedBox(height: 12.h),
@@ -149,12 +146,10 @@ class _CreateClinicViewState extends State<CreateClinicView> {
                   CustomInputField(
                     label: "سعر الكشف المستعجل",
                     controller: controller.urgentConsultationPriceController,
-
                     hintText: "ادخل سعر الكشف المستعجل",
                     validator: InputValidators.combine([notEmptyValidator]),
-                    focusNode: keyboardService.getFocusNode(keys[5]),
+                    focusNode: keyboardService.getFocusNode(keys[6]),
                     voidCallbackAction: (_) => controller.update(),
-
                     keyboardType: TextInputType.number,
                   ),
                   SizedBox(height: 16.h),
@@ -164,22 +159,45 @@ class _CreateClinicViewState extends State<CreateClinicView> {
                     controller: controller.urgentPolicyController,
                     hintText: "بعد كام كشف عادي",
                     validator: InputValidators.combine([notEmptyValidator]),
-                    focusNode: keyboardService.getFocusNode(keys[6]),
+                    focusNode: keyboardService.getFocusNode(keys[7]),
                     voidCallbackAction: (_) => controller.update(),
-
                     keyboardType: TextInputType.number,
                   ),
                   SizedBox(height: 16.h),
 
-                  /// 🔹 Deposit Toggle
+                  /// 🔥 max revisit
+                  CustomInputField(
+                    label: "عدد الإعادات قبل الكشف الجديد",
+                    controller: controller.maxRevisitController,
+                    hintText: "مثال: 3",
+                    validator: InputValidators.combine([notEmptyValidator]),
+                    focusNode: keyboardService.getFocusNode(keys[8]),
+                    voidCallbackAction: (_) => controller.update(),
+                    keyboardType: TextInputType.number,
+                  ),
+
+                  SizedBox(height: 12.h),
+
+                  /// 🔥🔥 revisit validity
+                  CustomInputField(
+                    label: "مدة صلاحية الإعادة (بالأيام)",
+                    controller: controller.revisitValidityController,
+                    hintText: "مثال: 14",
+                    validator: InputValidators.combine([notEmptyValidator]),
+                    focusNode: keyboardService.getFocusNode(keys[9]),
+                    voidCallbackAction: (_) => controller.update(),
+                    keyboardType: TextInputType.number,
+                  ),
+
+                  /// 🔹 Deposit
                   SwitchListTile(
                     title: Text(
                       "هل الحجز بعربون؟",
                       style: context.typography.smMedium,
                     ),
-                    value: controller.reserveWithDeposit == 0 ? false : true,
+                    value: controller.reserveWithDeposit == 1,
                     onChanged: (val) {
-                      controller.reserveWithDeposit = val == true ? 1 : 0;
+                      controller.reserveWithDeposit = val ? 1 : 0;
                       controller.update();
                     },
                     activeColor: AppColors.primary,
@@ -189,9 +207,9 @@ class _CreateClinicViewState extends State<CreateClinicView> {
                     CustomInputField(
                       label: "النسبة المئوية للعربون %",
                       controller: controller.depositPercentController,
-                      hintText: "ادخل النسبة المئوية للعربون",
+                      hintText: "ادخل النسبة",
                       validator: InputValidators.combine([notEmptyValidator]),
-                      focusNode: keyboardService.getFocusNode(keys[6]),
+                      focusNode: keyboardService.getFocusNode(keys[9]),
                       keyboardType: TextInputType.number,
                     ),
                     SizedBox(height: 12.h),

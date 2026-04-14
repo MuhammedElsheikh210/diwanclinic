@@ -23,13 +23,13 @@ class NotificationHandler {
       case ReservationStatus.approved:
         title = "تم تأكيد الحجز";
         body =
-            "تم تأكيد حجزك رقم ${reservation.order_num} بنجاح. ننتظرك في العيادة.";
+            "تم تأكيد حجزك رقم ${reservation.orderNum} بنجاح. ننتظرك في العيادة.";
         break;
 
       case ReservationStatus.inProgress:
         title = "بدأ الكشف";
         body =
-            "بدأ الكشف لحجزك رقم ${reservation.order_num}. يرجى التوجه للطبيب.";
+            "بدأ الكشف لحجزك رقم ${reservation.orderNum}. يرجى التوجه للطبيب.";
         break;
 
       case ReservationStatus.completed:
@@ -37,22 +37,22 @@ class NotificationHandler {
 
       case ReservationStatus.cancelledByAssistant:
         title = "تم إلغاء الحجز";
-        body = "تم إلغاء حجزك رقم ${reservation.order_num} بواسطة المساعد.";
+        body = "تم إلغاء حجزك رقم ${reservation.orderNum} بواسطة المساعد.";
         break;
 
       case ReservationStatus.cancelledByDoctor:
         title = "تم إلغاء الحجز";
-        body = "تم إلغاء حجزك رقم ${reservation.order_num} بواسطة الطبيب.";
+        body = "تم إلغاء حجزك رقم ${reservation.orderNum} بواسطة الطبيب.";
         break;
 
       case ReservationStatus.cancelledByUser:
         title = "إلغاء من المريض";
-        body = "تم إلغاء الحجز رقم ${reservation.order_num} بواسطة المريض.";
+        body = "تم إلغاء الحجز رقم ${reservation.orderNum} بواسطة المريض.";
         break;
 
       case ReservationStatus.pending:
         title = "في انتظار التأكيد";
-        body = "حجزك رقم ${reservation.order_num} قيد المراجعة للتأكيد.";
+        body = "حجزك رقم ${reservation.orderNum} قيد المراجعة للتأكيد.";
         break;
     }
 
@@ -65,12 +65,12 @@ class NotificationHandler {
           final notification = NotificationModel.newNotification(
             title: title,
             body: body,
-            toKey: reservation.patientKey,
+            toKey: reservation.patientUid,
             userType: UserType.assistant,
             notificationType: newStatus.value,
             extraData: {
               "reservation_key": reservation.key ?? "",
-              "order_num": reservation.order_num ?? "",
+              "order_num": reservation.orderNum ?? "",
               "clinic_key": reservation.clinicKey ?? "",
               "status": newStatus.value,
             },

@@ -38,7 +38,7 @@ class WhatsAppReservationMessages {
     ReservationModel r,
     String phone,
   ) {
-    final ahead = (r.order_reserved != null) ? (r.order_reserved! - 1) : null;
+    final ahead = (r.orderReserved != null) ? (r.orderReserved! - 1) : null;
 
     final queueText =
         ahead == null
@@ -49,7 +49,7 @@ class WhatsAppReservationMessages {
 👨‍⚕️ *عيادة د. $doctor*
 
 تم تأكيد حجزك يا *$patient* ✅  
-🧾 رقم الحجز: ${r.order_num ?? "-"}
+🧾 رقم الحجز: ${r.orderNum ?? "-"}
 
 👥 $queueText
 

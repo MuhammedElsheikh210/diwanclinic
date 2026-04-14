@@ -12,7 +12,6 @@ class FirebaseRemote_DataSourceImpl extends Firebase_DataSourceRepo {
   ) async {
     try {
       final response = await _firebaseClient.signInUser(firebaseAuthModel);
-      print("login_firebase credential is$response");
 
       return Success(response); // Return success result
     } catch (error) {
@@ -41,12 +40,10 @@ class FirebaseRemote_DataSourceImpl extends Firebase_DataSourceRepo {
       Reference storageReference = FirebaseStorage.instance.ref().child(key);
 
       UploadTask uploadTask = storageReference.putFile(image);
-      print("uploadTask is $uploadTask");
 
       // Await the upload completion
       await uploadTask.whenComplete(() async {
         logoBrandUrl = await storageReference.getDownloadURL();
-        print("logoBrandUrl is $logoBrandUrl");
       });
       return Success(logoBrandUrl);
     } catch (error) {

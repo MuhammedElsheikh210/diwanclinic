@@ -12,7 +12,7 @@ class ReservationCardBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final transferImage = reservation.transfer_image;
+    final transferImage = reservation.transferImage;
 
     return Row(
       children: [

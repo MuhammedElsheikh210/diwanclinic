@@ -25,11 +25,11 @@ class ReservationQueueManager {
   // Reorder approved reservations and assign sequential order_reserved
   List<ReservationModel> reorderApprovedQueue(List<ReservationModel> approved) {
     approved.sort(
-      (a, b) => (a.order_num ?? 9999).compareTo(b.order_num ?? 9999),
+      (a, b) => (a.orderNum ?? 9999).compareTo(b.orderNum ?? 9999),
     );
 
     for (int i = 0; i < approved.length; i++) {
-      approved[i] = approved[i].copyWith(order_reserved: i + 1);
+      approved[i] = approved[i].copyWith(orderReserved: i + 1);
     }
 
     return approved;
@@ -82,7 +82,7 @@ class ReservationQueueManager {
     debugPrint("✅ Approved reservations count: ${approvedQueue.length}");
 
     approvedQueue.sort(
-      (a, b) => (a.order_num ?? 9999).compareTo(b.order_num ?? 9999),
+      (a, b) => (a.orderNum ?? 9999).compareTo(b.orderNum ?? 9999),
     );
 
     for (int i = 0; i < approvedQueue.length; i++) {
@@ -90,11 +90,11 @@ class ReservationQueueManager {
 
       debugPrint(
         "➡️ Processing reservation index: $i | "
-        "order_num: ${r.order_num} | "
+        "order_num: ${r.orderNum} | "
         "patientUid: ${r.patientUid}",
       );
 
-      if (r.patientUid == null || r.fcmToken_patient == null) {
+      if (r.patientUid == null || r.patientFcm == null) {
         debugPrint("⛔ Skipped - Missing UID or FCM token");
         continue;
       }
@@ -109,7 +109,7 @@ class ReservationQueueManager {
       try {
         await NotificationHandler().sendCustomNotification(
           toKey: r.patientUid!,
-          toToken: r.fcmToken_patient!,
+          toToken: r.patientFcm!,
           title: "تحديث الدور",
           body: body,
           reservation: r,

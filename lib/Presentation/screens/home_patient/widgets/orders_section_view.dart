@@ -19,10 +19,8 @@ class OrdersSectionView extends StatelessWidget {
           final currentUser = Get.find<UserSession>().user;
 
           final reservation = ReservationModel(
-            patientKey: currentUser?.user.uid,
-            // أو key حسب system عندك
             patientUid: currentUser?.user.uid,
-            fcmToken_patient: currentUser?.user.fcmToken,
+            patientFcm: currentUser?.user.fcmToken,
             patientPhone: currentUser?.user.phone,
             patientName: currentUser?.user.name,
           );

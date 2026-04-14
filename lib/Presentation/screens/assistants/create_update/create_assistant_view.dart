@@ -2,8 +2,15 @@ import '../../../../../index/index_main.dart';
 
 class CreateAssistantView extends StatefulWidget {
   final LocalUser? assistant;
+  final String doctor_uid;
+  final LocalUser? doctorUser;
 
-  const CreateAssistantView({Key? key, this.assistant}) : super(key: key);
+  const CreateAssistantView({
+    Key? key,
+    this.assistant,
+    required this.doctor_uid,
+    this.doctorUser,
+  }) : super(key: key);
 
   @override
   State<CreateAssistantView> createState() => _CreateAssistantViewState();
@@ -20,6 +27,9 @@ class _CreateAssistantViewState extends State<CreateAssistantView> {
     super.initState();
 
     vm = initController(() => CreateAssistantViewModel());
+    vm.doctor_uid = widget.doctor_uid;
+    vm.doctorUser = widget.doctorUser;
+    vm.getClinicsData(widget.doctor_uid ?? "");
 
     final assistant = widget.assistant;
 
@@ -52,7 +62,7 @@ class _CreateAssistantViewState extends State<CreateAssistantView> {
             expand: false,
             initialChildSize: 0.6,
             minChildSize: 0.4,
-            maxChildSize: 0.95,
+            maxChildSize: 0.7,
             builder: (context, scrollController) {
               return Container(
                 decoration: const BoxDecoration(

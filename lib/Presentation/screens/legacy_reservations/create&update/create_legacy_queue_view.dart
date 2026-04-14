@@ -61,61 +61,50 @@ class CreateLegacyQueueViewModel extends GetxController {
   Future<void> _loadShiftsForClinic() async {
     final currentUser = Get.find<UserSession>().user;
 
-    if (currentUser == null) {
-      debugPrint("❌ User not found in session");
+    if (currentUser == null || !currentUser.isAssistant) {
+      debugPrint("❌ Current user is not assistant");
       return;
     }
 
-    final baseUser = currentUser.user;
+    final assistant = currentUser.asAssistant;
 
-    final clinicKey = currentUser.clinicKey ?? "";
-
-    String? doctorKey;
-
-    // ✅ لو Doctor
-    if (baseUser is DoctorUser) {
-      doctorKey = baseUser.uid;
-    }
-
-    // ✅ لو Assistant
-    else if (baseUser is AssistantUser) {
-      doctorKey = baseUser.doctorKey;
+    if (assistant == null) {
+      debugPrint("❌ Failed to cast to AssistantUser");
+      return;
     }
 
     // ✅ fallback (center mode)
-    doctorKey = selectedDoctor?.uid ?? doctorKey ?? "";
 
     isLoadingShifts = true;
     update();
 
     try {
       await ShiftService().getShiftsData(
-        data: isCenterMode
-            ? FirebaseFilter()
-            : FirebaseFilter(orderBy: "clinicKey", equalTo: clinicKey),
+        data:
+            isCenterMode
+                ? FirebaseFilter()
+                : FirebaseFilter(
+                  orderBy: "clinicKey",
+                  equalTo: assistant.clinicKey,
+                ),
 
-        doctorKey: doctorKey,
+        doctorKey: assistant.doctorKey ?? "",
 
-        query: isCenterMode
-            ? SQLiteQueryParams()
-            : SQLiteQueryParams(
-          is_filtered: true,
-          where: "clinicKey = ?",
-          whereArgs: [clinicKey],
-        ),
+        query: isCenterMode ? SQLiteQueryParams() : SQLiteQueryParams(),
 
         voidCallBack: (data) {
           listShifts = data;
 
-          shiftItems = (data ?? [])
-              .whereType<ShiftModel>()
-              .map(
-                (s) => GenericListModel(
-              key: s.key ?? "",
-              name: "${s.name ?? "فترة"} ",
-            ),
-          )
-              .toList();
+          shiftItems =
+              (data ?? [])
+                  .whereType<ShiftModel>()
+                  .map(
+                    (s) => GenericListModel(
+                      key: s.key ?? "",
+                      name: "${s.name ?? "فترة"} ",
+                    ),
+                  )
+                  .toList();
 
           if (shiftItems.isNotEmpty) {
             selectedShift = shiftItems.first;
@@ -130,7 +119,8 @@ class CreateLegacyQueueViewModel extends GetxController {
       isLoadingShifts = false;
       update();
     }
-  }  // ------------------------------------------------------------
+  } // ------------------------------------------------------------
+
   // 🔹 CHANGE DOCTOR
   // ------------------------------------------------------------
   Future<void> changeDoctor(LocalUser doctor) async {
@@ -188,7 +178,8 @@ class CreateLegacyQueueViewModel extends GetxController {
       return;
     }
 
-    final clinicKey = selectedDoctor?.clinicKey;
+    final currentUser = Get.find<UserSession>().user;
+    final clinicKey = currentUser?.asAssistant?.clinicKey;
 
     final doctorKey = selectedDoctor?.uid;
 

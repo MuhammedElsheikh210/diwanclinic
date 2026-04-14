@@ -1,94 +1,117 @@
-
 class ReservationModel {
   final String? key;
-  final int? createAt;
-  String? fcmToken_patient;
-  String? fcmToken_assist;
-  final String? doctorKey;
-  final String? doctorName;
-  final String? assistantKey;
+
+  /// 🕒 timestamps
+  final int? createdAt;
+  int? updatedAt;
+  int? serverUpdatedAt;
+
+  /// 🏥 relations
   final String? clinicKey;
   final String? shiftKey;
-  final String? patientKey;
   String? medicalCenterKey;
 
+  /// 👨‍⚕️ doctor
+  final String? doctorUid;
+  final String? doctorName;
+  final String? doctorFcm;
+
+  /// 🧑‍⚕️ assistant
+  String? assistantUid;
+  final String? assistantName;
+  final String? assistantFcm;
+
+  /// 👤 patient
+  final String? patientUid;
   final String? patientName;
   final String? patientPhone;
+  final String? patientFcm;
 
+  final int? revisitCount;
+  final String? parentKey;
+  final bool? isAutoType;
+
+  /// 📅 reservation
+  final String? appointmentDateTime;
+  String? status;
+  final String? reservationType;
+
+  /// 💰 financial
   final String? paidAmount;
   final String? restAmount;
   final String? totalFees;
 
-  final String? appointmentDateTime;
-  String? status;
-  int? order_num;
-  final int? order_finished;
-  final String? transfer_image;
+  /// 🔢 order
+  int? orderNum;
+  final int? orderReserved;
 
-  int? updatedAt; // local update timestamp
-  int? serverUpdatedAt; // last known server timestamp
-  bool isDeleted;
+  /// 🧾 medical
+  final String? allergies;
+  final String? diagnosis;
+  final String? temperature;
+  final String? weight;
+  final String? height;
 
-  // 🆕 NEW — تم إضافته
-  final int? order_reserved;
-  final String? patientUid; // 🆕 Firebase Auth UID
+  /// 📎 attachments
+  final String? transferImage;
 
-  final String? reservationType;
-
-  // الكشف
-  String? temperature;
-  String? weight;
-  String? height;
-  String? diagnosis;
-  String? allergies;
-
-  // 💊 Prescription Images (UPDATED TO 5)
   String? prescriptionUrl1;
   String? prescriptionUrl2;
   String? prescriptionUrl3;
   String? prescriptionUrl4;
   String? prescriptionUrl5;
 
-  // NEW
-  bool? isOrdered;
-
-  // NEW — هل تم التقييم؟
-  bool? hasFeedback;
+  /// ⚙️ flags
+  bool isOrdered;
+  bool hasFeedback;
+  bool isDeleted;
 
   ReservationModel({
     this.key,
-    this.transfer_image,
-    this.createAt,
-    this.medicalCenterKey,
-    this.doctorKey,
-    this.doctorName,
-    this.fcmToken_patient,
-    this.fcmToken_assist,
-    this.patientName,
-    this.patientPhone,
+    this.createdAt,
     this.updatedAt,
     this.serverUpdatedAt,
-    this.isDeleted = false,
-    this.order_num,
+
+    this.clinicKey,
     this.shiftKey,
+    this.medicalCenterKey,
+
+    this.doctorUid,
+    this.doctorName,
+    this.doctorFcm,
+
+    this.revisitCount,
+    this.parentKey,
+    this.isAutoType,
+
+    this.assistantUid,
+    this.assistantName,
+    this.assistantFcm,
+
     this.patientUid,
-    this.patientKey,
-    this.assistantKey,
-    this.order_finished,
-    this.order_reserved, // 🆕 NEW
+    this.patientName,
+    this.patientPhone,
+    this.patientFcm,
+
+    this.appointmentDateTime,
     this.status,
+    this.reservationType,
+
     this.paidAmount,
-    this.allergies,
-    this.diagnosis,
     this.restAmount,
     this.totalFees,
-    this.appointmentDateTime,
-    this.clinicKey,
-    this.reservationType,
+
+    this.orderNum,
+    this.orderReserved,
+
+    this.allergies,
+    this.diagnosis,
     this.temperature,
     this.weight,
     this.height,
-    // UPDATED
+
+    this.transferImage,
+
     this.prescriptionUrl1,
     this.prescriptionUrl2,
     this.prescriptionUrl3,
@@ -97,6 +120,7 @@ class ReservationModel {
 
     this.isOrdered = false,
     this.hasFeedback = false,
+    this.isDeleted = false,
   });
 
   // Helper
@@ -108,204 +132,285 @@ class ReservationModel {
     return null;
   }
 
-  // 🔹 Convert to JSON
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
-    if (updatedAt != null) data['updated_at'] = updatedAt;
-    if (serverUpdatedAt != null) data['server_updated_at'] = serverUpdatedAt;
+
+    void put(String key, dynamic value) {
+      if (value != null) data[key] = value;
+    }
+
+    /// 🕒 timestamps
+    put('created_at', createdAt);
+    put('updated_at', updatedAt);
+    put('server_updated_at', serverUpdatedAt);
     data['is_deleted'] = isDeleted ? 1 : 0;
 
-    if (key?.isNotEmpty == true) data['key'] = key;
-    if (fcmToken_patient?.isNotEmpty == true)
-      data['fcmToken_patient'] = fcmToken_patient;
-    if (fcmToken_assist?.isNotEmpty == true)
-      data['fcmToken_assist'] = fcmToken_assist;
-    if (transfer_image?.isNotEmpty == true)
-      data['transfer_image'] = transfer_image;
-    if (order_num != null) data['order_num'] = order_num;
-    if (order_finished != null) data['order_finished'] = order_finished;
+    /// 🔑 key
+    put('key', key);
 
-    // 🆕 NEW
-    if (order_reserved != null) data['order_reserved'] = order_reserved;
+    /// 🏥 relations
+    put('clinic_key', clinicKey);
+    put('shift_key', shiftKey);
+    put('medical_center_key', medicalCenterKey);
 
-    if (createAt != null) data['create_at'] = createAt;
-    if (medicalCenterKey != null) data['medicalCenterKey'] = medicalCenterKey;
+    /// 👨‍⚕️ doctor
+    put('doctor_uid', doctorUid);
+    put('doctor_name', doctorName);
+    put('doctor_fcm', doctorFcm);
 
-    if (shiftKey?.isNotEmpty == true) data['shift_key'] = shiftKey;
-    if (patientName?.isNotEmpty == true) data['patient_name'] = patientName;
-    if (patientPhone?.isNotEmpty == true) data['patient_phone'] = patientPhone;
-    if (doctorKey?.isNotEmpty == true) data['doctor_key'] = doctorKey;
-    if (doctorName?.isNotEmpty == true) data['doctor_name'] = doctorName;
-    if (patientKey?.isNotEmpty == true) data['patient_key'] = patientKey;
-    if (patientUid?.isNotEmpty == true) data['patient_uid'] = patientUid;
-    if (assistantKey?.isNotEmpty == true) data['assistant_key'] = assistantKey;
-    if (status?.isNotEmpty == true) data['status'] = status;
-    if (paidAmount?.isNotEmpty == true) data['paid_amount'] = paidAmount;
-    if (restAmount?.isNotEmpty == true) data['rest_amount'] = restAmount;
-    if (totalFees?.isNotEmpty == true) data['total_fees'] = totalFees;
-    if (appointmentDateTime?.isNotEmpty == true) {
-      data['appointment_date_time'] = appointmentDateTime;
-    }
-    if (clinicKey?.isNotEmpty == true) data['clinic_key'] = clinicKey;
-    if (reservationType?.isNotEmpty == true) {
-      data['reservation_type'] = reservationType;
-    }
-    if (temperature?.isNotEmpty == true) data['temperature'] = temperature;
-    if (weight?.isNotEmpty == true) data['weight'] = weight;
-    if (height?.isNotEmpty == true) data['height'] = height;
-    // UPDATED 5 PRESCRIPTION URLS
-    if (prescriptionUrl1 != null) data['prescription_url_1'] = prescriptionUrl1;
-    if (prescriptionUrl2 != null) data['prescription_url_2'] = prescriptionUrl2;
-    if (prescriptionUrl3 != null) data['prescription_url_3'] = prescriptionUrl3;
-    if (prescriptionUrl4 != null) data['prescription_url_4'] = prescriptionUrl4;
-    if (prescriptionUrl5 != null) data['prescription_url_5'] = prescriptionUrl5;
+    put('revisit_count', revisitCount);
+    put('parent_key', parentKey);
+    data['is_auto_type'] = (isAutoType ?? false) ? 1 : 0;
 
-    data['is_ordered'] = (isOrdered ?? false) ? 1 : 0;
-    data['has_feedback'] = (hasFeedback ?? false) ? 1 : 0;
+    /// 🧑‍⚕️ assistant
+    put('assistant_uid', assistantUid);
+    put('assistant_name', assistantName);
+    put('assistant_fcm', assistantFcm);
+
+    /// 👤 patient
+    put('patient_uid', patientUid);
+    put('patient_name', patientName);
+    put('patient_phone', patientPhone);
+    put('patient_fcm', patientFcm);
+
+    /// 📅 reservation
+    put('appointment_date_time', appointmentDateTime);
+    put('status', status);
+    put('reservation_type', reservationType);
+
+    /// 💰 financial
+    put('paid_amount', paidAmount);
+    put('rest_amount', restAmount);
+    put('total_fees', totalFees);
+
+    /// 🔢 order
+    put('order_num', orderNum);
+    put('order_reserved', orderReserved);
+
+    /// 🧾 medical
+    put('allergies', allergies);
+    put('diagnosis', diagnosis);
+    put('temperature', temperature);
+    put('weight', weight);
+    put('height', height);
+
+    /// 📎 attachments
+    put('transfer_image', transferImage);
+
+    put('prescription_url_1', prescriptionUrl1);
+    put('prescription_url_2', prescriptionUrl2);
+    put('prescription_url_3', prescriptionUrl3);
+    put('prescription_url_4', prescriptionUrl4);
+    put('prescription_url_5', prescriptionUrl5);
+
+    /// ⚙️ flags
+    data['is_ordered'] = isOrdered ? 1 : 0;
+    data['has_feedback'] = hasFeedback ? 1 : 0;
 
     return data;
   }
 
   // 🔹 From JSON
   factory ReservationModel.fromJson(Map<String, dynamic> json) {
+    int? toInt(dynamic v) {
+      if (v == null) return null;
+      if (v is int) return v;
+      return int.tryParse(v.toString());
+    }
+
+    bool toBool(dynamic v) {
+      return v == 1 || v == true || v == "1";
+    }
+
     return ReservationModel(
       key: json['key'],
-      medicalCenterKey: json['medicalCenterKey'],
-      updatedAt: _toInt(json['updated_at']),
-      serverUpdatedAt: _toInt(json['server_updated_at']),
-      isDeleted:
-          json['is_deleted'] == 1 ||
-          json['is_deleted'] == true ||
-          json['is_deleted'] == "1",
-      fcmToken_patient: json['fcmToken_patient'],
-      fcmToken_assist: json['fcmToken_assist'],
-      patientUid: json['patient_uid'],
-      transfer_image: json['transfer_image'],
-      order_num: _toInt(json['order_num']),
-      order_finished: _toInt(json['order_finished']),
 
-      // 🆕 NEW
-      order_reserved: _toInt(json['order_reserved']),
+      /// 🕒 timestamps
+      createdAt: toInt(json['created_at']),
+      updatedAt: toInt(json['updated_at']),
+      serverUpdatedAt: toInt(json['server_updated_at']),
+      isDeleted: toBool(json['is_deleted']),
 
+      isAutoType: toBool(json["is_auto_type"]),
+      revisitCount: _toInt(json["revisit_count"]),
+      parentKey: json["parent_key"],
+
+      /// 🏥 relations
+      clinicKey: json['clinic_key'],
       shiftKey: json['shift_key'],
-      allergies: json['allergies'],
-      diagnosis: json['diagnosis'],
-      createAt: _toInt(json['create_at']),
+      medicalCenterKey: json['medical_center_key'],
+
+      /// 👨‍⚕️ doctor
+      doctorUid: json['doctor_uid'],
+      doctorName: json['doctor_name'],
+      doctorFcm: json['doctor_fcm'],
+
+      /// 🧑‍⚕️ assistant
+      assistantUid: json['assistant_uid'],
+      assistantName: json['assistant_name'],
+      assistantFcm: json['assistant_fcm'],
+
+      /// 👤 patient
+      patientUid: json['patient_uid'],
       patientName: json['patient_name'],
       patientPhone: json['patient_phone'],
-      doctorKey: json['doctor_key'],
-      doctorName: json['doctor_name'],
-      patientKey: json['patient_key'],
-      assistantKey: json['assistant_key'],
+      patientFcm: json['patient_fcm'],
+
+      /// 📅 reservation
+      appointmentDateTime: json['appointment_date_time'],
       status: json['status'],
+      reservationType: json['reservation_type'],
+
+      /// 💰 financial
       paidAmount: json['paid_amount'],
       restAmount: json['rest_amount'],
       totalFees: json['total_fees'],
-      appointmentDateTime: json['appointment_date_time'],
-      clinicKey: json['clinic_key'],
-      reservationType: json['reservation_type'],
+
+      /// 🔢 order
+      orderNum: toInt(json['order_num']),
+      orderReserved: toInt(json['order_reserved']),
+
+      /// 🧾 medical
+      allergies: json['allergies'],
+      diagnosis: json['diagnosis'],
       temperature: json['temperature'],
       weight: json['weight'],
       height: json['height'],
-      // UPDATED 5 URLS
+
+      /// 📎 attachments
+      transferImage: json['transfer_image'],
+
       prescriptionUrl1: json['prescription_url_1'],
       prescriptionUrl2: json['prescription_url_2'],
       prescriptionUrl3: json['prescription_url_3'],
       prescriptionUrl4: json['prescription_url_4'],
       prescriptionUrl5: json['prescription_url_5'],
-      isOrdered:
-          json['is_ordered'] == 1 ||
-          json['is_ordered'] == true ||
-          json['is_ordered'] == "1",
-      hasFeedback:
-          json['has_feedback'] == 1 ||
-          json['has_feedback'] == true ||
-          json['has_feedback'] == "1",
+
+      /// ⚙️ flags
+      isOrdered: toBool(json['is_ordered']),
+      hasFeedback: toBool(json['has_feedback']),
     );
   }
 
-  // 🔹 CopyWith
+  // 🔹 CopyWith (FIXED 🔥)
   ReservationModel copyWith({
     String? key,
-    String? fcmTokenPatient,
-    String? fcmTokenAssist,
-    String? patientUid,
-    String? medicalCenterKey,
+
+    /// 🕒 timestamps
+    int? createdAt,
     int? updatedAt,
     int? serverUpdatedAt,
     bool? isDeleted,
-    String? transfer_image,
-    int? createAt,
-    int? order_finished,
-    int? order_reserved, // 🆕 NEW
+
+    /// 🏥 relations
+    String? clinicKey,
     String? shiftKey,
-    int? order_num,
+    String? medicalCenterKey,
+
+    int? revisitCount,
+    String? parentKey,
+    bool? isAutoType,
+
+    /// 👨‍⚕️ doctor
+    String? doctorUid,
+    String? doctorName,
+    String? doctorFcm,
+
+    /// 🧑‍⚕️ assistant
+    String? assistantUid,
+    String? assistantName,
+    String? assistantFcm,
+
+    /// 👤 patient
+    String? patientUid,
     String? patientName,
     String? patientPhone,
-    String? doctorKey,
-    String? doctorName,
-    String? patientKey,
-    String? assistantKey,
-    String? allergies,
-    String? diagnosis,
+    String? patientFcm,
+
+    /// 📅 reservation
+    String? appointmentDateTime,
     String? status,
+    String? reservationType,
+
+    /// 💰 financial
     String? paidAmount,
     String? restAmount,
     String? totalFees,
-    String? appointmentDateTime,
-    String? clinicKey,
-    String? reservationType,
-    String? temperature,
-    String? weight,
-    String? height,
-    // UPDATED
+
+    /// 🔢 order
+    int? orderNum,
+    int? orderReserved,
+
+    /// 📎 attachments
+    String? transferImage,
+
     String? prescriptionUrl1,
     String? prescriptionUrl2,
     String? prescriptionUrl3,
     String? prescriptionUrl4,
     String? prescriptionUrl5,
+
+    /// ⚙️ flags
     bool? isOrdered,
     bool? hasFeedback,
   }) {
     return ReservationModel(
       key: key ?? this.key,
-      medicalCenterKey: medicalCenterKey ?? this.medicalCenterKey,
-      fcmToken_assist: fcmTokenAssist ?? this.fcmToken_assist,
-      fcmToken_patient: fcmTokenPatient ?? this.fcmToken_patient,
-      patientUid: patientUid ?? this.patientUid,
+
+      /// 🕒 timestamps
+      createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       serverUpdatedAt: serverUpdatedAt ?? this.serverUpdatedAt,
       isDeleted: isDeleted ?? this.isDeleted,
-      transfer_image: transfer_image ?? this.transfer_image,
-      order_num: order_num ?? this.order_num,
-      order_finished: order_finished ?? this.order_finished,
-      order_reserved: order_reserved ?? this.order_reserved,
-      // 🆕 NEW
-      createAt: createAt ?? this.createAt,
+      revisitCount: revisitCount ?? this.revisitCount,
+      isAutoType: isAutoType ?? this.isAutoType,
+      parentKey: parentKey ?? this.parentKey,
+
+      /// 🏥 relations
+      clinicKey: clinicKey ?? this.clinicKey,
       shiftKey: shiftKey ?? this.shiftKey,
+      medicalCenterKey: medicalCenterKey ?? this.medicalCenterKey,
+
+      /// 👨‍⚕️ doctor
+      doctorUid: doctorUid ?? this.doctorUid,
+      doctorName: doctorName ?? this.doctorName,
+      doctorFcm: doctorFcm ?? this.doctorFcm,
+
+      /// 🧑‍⚕️ assistant
+      assistantUid: assistantUid ?? this.assistantUid,
+      assistantName: assistantName ?? this.assistantName,
+      assistantFcm: assistantFcm ?? this.assistantFcm,
+
+      /// 👤 patient
+      patientUid: patientUid ?? this.patientUid,
       patientName: patientName ?? this.patientName,
       patientPhone: patientPhone ?? this.patientPhone,
-      doctorKey: doctorKey ?? this.doctorKey,
-      doctorName: doctorName ?? this.doctorName,
-      patientKey: patientKey ?? this.patientKey,
-      allergies: allergies ?? this.allergies,
-      diagnosis: diagnosis ?? this.diagnosis,
-      assistantKey: assistantKey ?? this.assistantKey,
+      patientFcm: patientFcm ?? this.patientFcm,
+
+      /// 📅 reservation
+      appointmentDateTime: appointmentDateTime ?? this.appointmentDateTime,
       status: status ?? this.status,
+      reservationType: reservationType ?? this.reservationType,
+
+      /// 💰 financial
       paidAmount: paidAmount ?? this.paidAmount,
       restAmount: restAmount ?? this.restAmount,
       totalFees: totalFees ?? this.totalFees,
-      appointmentDateTime: appointmentDateTime ?? this.appointmentDateTime,
-      clinicKey: clinicKey ?? this.clinicKey,
-      reservationType: reservationType ?? this.reservationType,
-      temperature: temperature ?? this.temperature,
-      weight: weight ?? this.weight,
-      height: height ?? this.height,
+
+      /// 🔢 order
+      orderNum: orderNum ?? this.orderNum,
+      orderReserved: orderReserved ?? this.orderReserved,
+
+      /// 📎 attachments
+      transferImage: transferImage ?? this.transferImage,
+
       prescriptionUrl1: prescriptionUrl1 ?? this.prescriptionUrl1,
       prescriptionUrl2: prescriptionUrl2 ?? this.prescriptionUrl2,
       prescriptionUrl3: prescriptionUrl3 ?? this.prescriptionUrl3,
       prescriptionUrl4: prescriptionUrl4 ?? this.prescriptionUrl4,
       prescriptionUrl5: prescriptionUrl5 ?? this.prescriptionUrl5,
+
+      /// ⚙️ flags
       isOrdered: isOrdered ?? this.isOrdered,
       hasFeedback: hasFeedback ?? this.hasFeedback,
     );

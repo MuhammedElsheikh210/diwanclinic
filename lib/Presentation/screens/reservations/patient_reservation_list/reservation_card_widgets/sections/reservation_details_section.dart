@@ -7,7 +7,7 @@ class ReservationDetailsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final value = DatesUtilis.convertTimestamp(reservation.createAt ?? 0);
+    final value = DatesUtilis.convertTimestamp(reservation.createdAt ?? 0);
     return Row(
       children: [
         Expanded(
@@ -33,7 +33,7 @@ class ReservationDetailsSection extends StatelessWidget {
 
 Widget _buildDatesSection(BuildContext context, ReservationModel reservation) {
   final bookingDate = DatesUtilis.convertTimestamp<String>(
-    reservation.createAt ?? 0,
+    reservation.createdAt ?? 0,
   );
 
   final appointmentDate = reservation.appointmentDateTime ?? "";

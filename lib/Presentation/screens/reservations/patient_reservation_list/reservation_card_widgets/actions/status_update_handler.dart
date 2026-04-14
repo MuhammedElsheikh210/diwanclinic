@@ -205,13 +205,13 @@ class NotificationHandler {
       case ReservationStatus.approved:
         return (
           "تم تأكيد الحجز",
-          "تم تأكيد حجزك رقم ${r.order_num} بنجاح. ننتظرك في العيادة.",
+          "تم تأكيد حجزك رقم ${r.orderNum} بنجاح. ننتظرك في العيادة.",
         );
 
       case ReservationStatus.inProgress:
         return (
           "بدأ الكشف",
-          "بدأ الكشف لحجزك رقم ${r.order_num}. يرجى التوجه للطبيب.",
+          "بدأ الكشف لحجزك رقم ${r.orderNum}. يرجى التوجه للطبيب.",
         );
 
       case ReservationStatus.completed:
@@ -223,25 +223,25 @@ class NotificationHandler {
       case ReservationStatus.cancelledByAssistant:
         return (
           "تم إلغاء الحجز",
-          "تم إلغاء حجزك رقم ${r.order_num} بواسطة المساعد.",
+          "تم إلغاء حجزك رقم ${r.orderNum} بواسطة المساعد.",
         );
 
       case ReservationStatus.cancelledByDoctor:
         return (
           "تم إلغاء الحجز",
-          "تم إلغاء حجزك رقم ${r.order_num} بواسطة الطبيب.",
+          "تم إلغاء حجزك رقم ${r.orderNum} بواسطة الطبيب.",
         );
 
       case ReservationStatus.cancelledByUser:
         return (
           "إلغاء من المريض",
-          "تم إلغاء الحجز رقم ${r.order_num} بواسطة المريض.",
+          "تم إلغاء الحجز رقم ${r.orderNum} بواسطة المريض.",
         );
 
       case ReservationStatus.pending:
         return (
           "في انتظار التأكيد",
-          "حجزك رقم ${r.order_num} قيد المراجعة للتأكيد.",
+          "حجزك رقم ${r.orderNum} قيد المراجعة للتأكيد.",
         );
     }
   }

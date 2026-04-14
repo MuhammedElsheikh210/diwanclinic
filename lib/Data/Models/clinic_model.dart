@@ -26,8 +26,14 @@ class ClinicModel {
   // 🔹 WhatsApp Auto-sender
   final int? sendWhatsapp;
 
-  // 🔹 NEW FIELD
-  final int? file_number; // ✅ NEW FIELD
+  // 🔹 OLD
+  final int? file_number;
+
+  // 🔥 NEW (count)
+  final int? maxRevisitCount;
+
+  // 🔥🔥 NEW (time)
+  final int? revisitValidityDays;
 
   ClinicModel({
     this.key,
@@ -48,12 +54,14 @@ class ClinicModel {
     this.minimumDepositPercent,
     this.urgentPolicy,
     this.sendWhatsapp,
-    this.file_number, // ✅ NEW
+    this.file_number,
+    this.maxRevisitCount,
+    this.revisitValidityDays, // 🔥 NEW
   });
 
-  /// ✅ Convert Model to JSON
+  /// ✅ TO JSON
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
+    final data = <String, dynamic>{};
 
     if (key?.isNotEmpty == true) data['key'] = key;
     if (dailyWorks?.isNotEmpty == true) data['dailyWorks'] = dailyWorks;
@@ -87,12 +95,18 @@ class ClinicModel {
 
     if (sendWhatsapp != null) data['send_whatsapp'] = sendWhatsapp;
 
-    if (file_number != null) data['file_number'] = file_number; // ✅ NEW
+    if (file_number != null) data['file_number'] = file_number;
+
+    if (maxRevisitCount != null) data['max_revisit_count'] = maxRevisitCount;
+
+    // 🔥 NEW
+    if (revisitValidityDays != null)
+      data['revisit_validity_days'] = revisitValidityDays;
 
     return data;
   }
 
-  /// ✅ Create Model from JSON
+  /// ✅ FROM JSON
   factory ClinicModel.fromJson(Map<String, dynamic> json) {
     return ClinicModel(
       key: json['key'],
@@ -112,21 +126,27 @@ class ClinicModel {
       urgentConsultationPrice: json['urgent_consultation_price'],
 
       reserveWithDeposit: json['reserve_with_deposit'],
-      minimumDepositPercent: (json['minimum_deposit_percent'] != null)
-          ? (json['minimum_deposit_percent'] as num).toDouble()
-          : null,
+      minimumDepositPercent:
+          (json['minimum_deposit_percent'] != null)
+              ? (json['minimum_deposit_percent'] as num).toDouble()
+              : null,
 
-      urgentPolicy: json['urgent_policy'] is String
-          ? int.tryParse(json['urgent_policy'])
-          : json['urgent_policy'],
+      urgentPolicy:
+          json['urgent_policy'] is String
+              ? int.tryParse(json['urgent_policy'])
+              : json['urgent_policy'],
 
       sendWhatsapp: json['send_whatsapp'],
+      file_number: json['file_number'],
 
-      file_number: json['file_number'], // ✅ NEW
+      maxRevisitCount: json['max_revisit_count'],
+
+      // 🔥 NEW
+      revisitValidityDays: json['revisit_validity_days'],
     );
   }
 
-  /// ✅ CopyWith
+  /// ✅ COPY WITH
   ClinicModel copyWith({
     String? key,
     String? title,
@@ -146,7 +166,9 @@ class ClinicModel {
     double? minimumDepositPercent,
     int? urgentPolicy,
     int? sendWhatsapp,
-    int? file_number, // ✅ NEW
+    int? file_number,
+    int? maxRevisitCount,
+    int? revisitValidityDays, // 🔥 NEW
   }) {
     return ClinicModel(
       key: key ?? this.key,
@@ -169,7 +191,11 @@ class ClinicModel {
           minimumDepositPercent ?? this.minimumDepositPercent,
       urgentPolicy: urgentPolicy ?? this.urgentPolicy,
       sendWhatsapp: sendWhatsapp ?? this.sendWhatsapp,
-      file_number: file_number ?? this.file_number, // ✅ NEW
+      file_number: file_number ?? this.file_number,
+      maxRevisitCount: maxRevisitCount ?? this.maxRevisitCount,
+
+      // 🔥 NEW
+      revisitValidityDays: revisitValidityDays ?? this.revisitValidityDays,
     );
   }
 }

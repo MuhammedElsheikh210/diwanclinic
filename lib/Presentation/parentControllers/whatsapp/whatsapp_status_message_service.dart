@@ -60,31 +60,85 @@ class WhatsAppStatusMessageService {
     required String iosLink,
     required ReservationModel reservation,
   }) {
+    final hasApp = _hasApp(reservation);
+
     switch (status) {
+    // ============================================================
+    // ✅ COMPLETED
+    // ============================================================
       case ReservationStatus.completed:
-        return """
+        final baseMessage = """
 👨‍⚕️ *من عيادة د. $doctorName*
 الكشف خلص يا $patientName، وتقدر الآن تطلب علاجك بخصم يصل ل 10٪؜ ويوصلك لحد البيت 🚚
-
-📱 *طريقة الدخول للتطبيق:*
-✍️ اسم المستخدم: *رقم الموبايل*  
-🔐 كلمة السر: *رقم الموبايل نفسه*  
-(اكتب نفس الرقم في الخانتين)
-
-📱 أندرويد: $androidLink
-🍎 آيفون: $iosLink
 """;
 
-      case ReservationStatus.approved:
-        final orderNum = reservation.order_num ?? "-";
+        if (hasApp) return baseMessage;
 
-        if (from_assist == true) {
-          return """
+        return baseMessage +
+            _buildAppLinks(
+              phone: phone,
+              androidLink: androidLink,
+              iosLink: iosLink,
+            );
+
+    // ============================================================
+    // ✅ APPROVED
+    // ============================================================
+      case ReservationStatus.approved:
+        final orderNum = reservation.orderNum ?? "-";
+
+        final baseMessage = from_assist == true
+            ? """
 ⏳ *تم تسجيل حجزك يا $patientName* عند د. $doctorName ✔️
 
 🔢 *رقم حجزك:* $orderNum  
 تابع دورك بسهولة من تطبيق *لينك*  
 الدور بيتحدّث باستمرار.
+
+🎁 بعد الكشف تقدر تطلب العلاج  
+بخصم يوصل لـ *10%* 🚚
+"""
+            : """
+⏳ *تم استلام حجزك يا $patientName* عند د. $doctorName ✔️
+
+🔢 *رقم الحجز:* $orderNum  
+تابع دورك أول بأول من تطبيق *لينك* 📱
+""";
+
+        if (hasApp) return baseMessage;
+
+        return baseMessage +
+            _buildAppLinks(
+              phone: phone,
+              androidLink: androidLink,
+              iosLink: iosLink,
+            );
+
+    // ============================================================
+    // 🔁 DEFAULT
+    // ============================================================
+      default:
+        return "تم تحديث حالة الحجز.";
+    }
+  }
+
+// ============================================================
+// 🔧 HELPERS
+// ============================================================
+
+  /// ✅ Check if patient has app
+  static bool _hasApp(ReservationModel reservation) {
+    return reservation.patientFcm != null &&
+        reservation.patientFcm!.trim().isNotEmpty;
+  }
+
+  /// ✅ Build app links block
+  static String _buildAppLinks({
+    required String phone,
+    required String androidLink,
+    required String iosLink,
+  }) {
+    return """
 
 📱 *طريقة الدخول للتطبيق:*
 ✍️ اسم المستخدم: *رقم الموبايل*  
@@ -93,24 +147,9 @@ class WhatsAppStatusMessageService {
 
 📞 رقمك: $phone
 
-🎁 بعد الكشف تقدر تطلب العلاج  
-بخصم يوصل لـ *10%* 🚚
-
-أندرويد: $androidLink  
-آيفون: $iosLink
+📱 أندرويد: $androidLink  
+🍎 آيفون: $iosLink
 """;
-        }
-
-        return """
-⏳ *تم استلام حجزك يا $patientName* عند د. $doctorName ✔️
-
-🔢 *رقم الحجز:* $orderNum  
-تابع دورك أول بأول من تطبيق *لينك* 📱
-""";
-
-      default:
-        return "تم تحديث حالة الحجز.";
-    }
   }
 }
 

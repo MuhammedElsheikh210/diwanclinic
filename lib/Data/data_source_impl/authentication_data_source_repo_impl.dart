@@ -5,12 +5,14 @@ class AuthenticationDataSourceRepoImpl extends AuthenticationDataSourceRepo {
   final BaseSQLiteDataSourceRepo<Map<String, dynamic>> _sqliteRepo;
 
   AuthenticationDataSourceRepoImpl()
-      : _sqliteRepo = BaseSQLiteDataSourceRepo<Map<String, dynamic>>(
-    tableName: "clients",
-    fromJson: (json) => json,
-    toJson: (model) => model,
-    getId: (model) => model['uid'], // 🔥 مهم جدًا
-  );
+    : _sqliteRepo = BaseSQLiteDataSourceRepo<Map<String, dynamic>>(
+        tableName: "clients",
+        idColumn: "uid",
+        // 🔥 أهم سطر
+        fromJson: (json) => json,
+        toJson: (model) => model,
+        getId: (model) => model['uid'], // 🔥 لازم يطابق idColumn
+      );
 
   // ============================================================
   // 🔹 LOCAL CLIENTS (Offline First)
@@ -19,9 +21,10 @@ class AuthenticationDataSourceRepoImpl extends AuthenticationDataSourceRepo {
   @override
   Future<List<LocalUser>> getClients(SQLiteQueryParams query) async {
     final finalQuery = SQLiteQueryParams(
-      where: query.where != null
-          ? "(${query.where}) AND is_deleted = 0"
-          : "is_deleted = 0",
+      where:
+          query.where != null
+              ? "(${query.where}) AND (is_deleted IS NULL OR is_deleted = 0)"
+              : "(is_deleted IS NULL OR is_deleted = 0)",
       whereArgs: query.whereArgs,
       orderBy: query.orderBy,
       limit: query.limit,
@@ -30,12 +33,9 @@ class AuthenticationDataSourceRepoImpl extends AuthenticationDataSourceRepo {
       having: query.having,
       distinct: query.distinct,
     );
-
     final result = await _sqliteRepo.getAll(query: finalQuery);
 
-    return result
-        .map((e) => LocalUser.fromMap(e))
-        .toList();
+    return result.map((e) => LocalUser.fromMap(e)).toList();
   }
 
   @override
@@ -69,9 +69,6 @@ class AuthenticationDataSourceRepoImpl extends AuthenticationDataSourceRepo {
 
     final now = DateTime.now().millisecondsSinceEpoch;
 
-    existing['is_deleted'] = 1;
-    existing['updatedAt'] = now;
-
     await _sqliteRepo.updateItem(existing);
   }
 
@@ -89,8 +86,7 @@ class AuthenticationDataSourceRepoImpl extends AuthenticationDataSourceRepo {
     final local = await _sqliteRepo.getItem(key);
 
     final serverTime =
-        json['serverUpdatedAt'] ??
-            DateTime.now().millisecondsSinceEpoch;
+        json['serverUpdatedAt'] ?? DateTime.now().millisecondsSinceEpoch;
 
     json['serverUpdatedAt'] = serverTime;
     json['updatedAt'] = serverTime;
@@ -100,11 +96,25 @@ class AuthenticationDataSourceRepoImpl extends AuthenticationDataSourceRepo {
       return;
     }
 
-    final localServerTime = local['serverUpdatedAt'] ?? 0;
+    final localServerTime = _parseToInt(local['serverUpdatedAt']);
+    print("local is ${local}");
+    print("localServerTime is ${localServerTime}");
 
     if (serverTime >= localServerTime) {
       await _sqliteRepo.updateItem(json);
     }
+  }
+
+  int _parseToInt(dynamic value) {
+    if (value == null) return 0;
+
+    if (value is int) return value;
+
+    if (value is String) {
+      return int.tryParse(value) ?? 0;
+    }
+
+    return 0;
   }
 
   @override
@@ -112,8 +122,7 @@ class AuthenticationDataSourceRepoImpl extends AuthenticationDataSourceRepo {
     final local = await _sqliteRepo.getItem(key);
     if (local == null) return;
 
-    final serverTime =
-        serverUpdatedAt ?? DateTime.now().millisecondsSinceEpoch;
+    final serverTime = serverUpdatedAt ?? DateTime.now().millisecondsSinceEpoch;
 
     local['serverUpdatedAt'] = serverTime;
 
@@ -129,8 +138,6 @@ class AuthenticationDataSourceRepoImpl extends AuthenticationDataSourceRepo {
       ),
     );
 
-    return list
-        .map((e) => LocalUser.fromMap(e))
-        .toList();
+    return list.map((e) => LocalUser.fromMap(e)).toList();
   }
 }

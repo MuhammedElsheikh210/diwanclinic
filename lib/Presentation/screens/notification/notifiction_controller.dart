@@ -214,7 +214,7 @@ extension NotificationFeature on NotificationController {
     final updated = reservation.copyWith(
       status: ReservationStatus.approved.value,
     );
-    updated.fcmToken_assist = Get.find<UserSession>().user?.fcmToken;
+    updated.assistantUid = Get.find<UserSession>().user?.fcmToken;
 
     await ReservationService().updateReservationData(
       reservation: updated,
@@ -225,7 +225,7 @@ extension NotificationFeature on NotificationController {
         await NotificationHandler().sendStatusNotification(
           newStatus: ReservationStatus.approved,
           reservation: updated,
-          toToken: updated.fcmToken_patient ?? "",
+          toToken: updated.patientFcm ?? "",
         );
 
         // 📱 WhatsApp
@@ -304,7 +304,7 @@ extension NotificationFeature on NotificationController {
     final updated = reservation.copyWith(
       status: ReservationStatus.cancelledByAssistant.value,
     );
-    updated.fcmToken_assist = Get.find<UserSession>().user?.fcmToken;
+    updated.assistantUid = Get.find<UserSession>().user?.fcmToken;
     await ReservationService().updateReservationData(
       reservation: updated,
       voidCallBack: (_) async {
@@ -314,7 +314,7 @@ extension NotificationFeature on NotificationController {
         await NotificationHandler().sendStatusNotification(
           newStatus: ReservationStatus.cancelledByAssistant,
           reservation: updated,
-          toToken: updated.fcmToken_patient ?? "",
+          toToken: updated.patientUid ?? "",
         );
 
         // 📱 WhatsApp
@@ -412,7 +412,7 @@ extension NotificationFeature on NotificationController {
         }
 
         lastOrderNum = list
-            .map((r) => int.tryParse(r?.order_num?.toString() ?? "0") ?? 0)
+            .map((r) => int.tryParse(r?.orderNum?.toString() ?? "0") ?? 0)
             .reduce((a, b) => a > b ? a : b);
       },
     );

@@ -460,26 +460,24 @@ class DoctorDetailsViewModel extends GetxController {
       // 🔹 Step 5: Build Reservation model
       final reservation = ReservationModel(
         key: const Uuid().v4(),
-        doctorKey: doctor.uid,
+        doctorUid: doctor.uid,
         doctorName: doctor.name,
-        transfer_image: transfer_url_image,
+        doctorFcm: doctor.fcmToken,
+        transferImage: transfer_url_image,
 
         // ✅ user من session
-        patientKey: currentUser.uid,
+        patientFcm: currentUser.fcmToken,
         patientName: currentUser.name,
         patientPhone: currentUser.phone,
         patientUid: currentUser.uid,
 
         clinicKey: clinicKey,
-        order_num: expectedOrder,
+        orderNum: expectedOrder,
         shiftKey: shiftKey,
-
-        // ✅ fcm من BaseUser
-        fcmToken_patient: currentUser.user.fcmToken,
 
         reservationType: selectedReservationType,
         appointmentDateTime: formattedDate,
-        createAt: DateTime.now().millisecondsSinceEpoch,
+        createdAt: DateTime.now().millisecondsSinceEpoch,
 
         paidAmount:
             selectedClinic?.reserveWithDeposit == 1

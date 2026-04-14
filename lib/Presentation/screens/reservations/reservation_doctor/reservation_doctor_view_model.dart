@@ -395,12 +395,10 @@ class ReservationDoctorViewModel extends GetxController {
             .where((r) => r.status == ReservationStatus.approved.value)
             .toList();
 
-    waiting.sort(
-      (a, b) => (a.order_num ?? 9999).compareTo(b.order_num ?? 9999),
-    );
+    waiting.sort((a, b) => (a.orderNum ?? 9999).compareTo(b.orderNum ?? 9999));
 
     for (int i = 0; i < waiting.length; i++) {
-      waiting[i] = waiting[i].copyWith(order_reserved: i + 1);
+      waiting[i] = waiting[i].copyWith(orderReserved: i + 1);
     }
 
     return waiting;

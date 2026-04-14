@@ -93,7 +93,7 @@ class CreateReservationFromPatientViewModel extends GetxController {
   /// Fill fields if reservation exists
   void populateFields(ReservationModel reservation) {
     patientNameController.text = reservation.patientName ?? "";
-    patientPhoneController.text = reservation.patientKey ?? "";
+    patientPhoneController.text = reservation.patientUid ?? "";
     //  patientCodeController.text = reservation.patientCode ?? "";
     //  patientAddressController.text = reservation.patientAddress ?? "";
     selectedType = reservation.reservationType;
@@ -169,19 +169,19 @@ class CreateReservationFromPatientViewModel extends GetxController {
               : patient_name,
           reservationType: selectedType,
           appointmentDateTime: formattedDate,
-          createAt: DateTime.now().millisecondsSinceEpoch,
+          createdAt: DateTime.now().millisecondsSinceEpoch,
           paidAmount: paidAmountController.text,
           restAmount: restAmountController.text,
           clinicKey: clinic_key,
           shiftKey: shift_key,
-          order_num: total_reservations + 1,
+          orderNum: total_reservations + 1,
           status: ReservationStatus.approved.value,
         ) ??
         ReservationModel(
           key: const Uuid().v4(),
         //  doctorKey: LocalUser().getUserData().doctorKey,
-          patientKey: clientUser?.uid,
-          createAt: DateTime.now().millisecondsSinceEpoch,
+          patientUid: clientUser?.uid,
+          createdAt: DateTime.now().millisecondsSinceEpoch,
           patientName: selectedType == "زيارة مندوب"
               ? delegateNameController.text
               : patient_name,
@@ -191,7 +191,7 @@ class CreateReservationFromPatientViewModel extends GetxController {
           shiftKey: shift_key,
           paidAmount: paidAmountController.text,
           restAmount: restAmountController.text,
-          order_num: total_reservations + 1,
+          orderNum: total_reservations + 1,
           status: ReservationStatus.approved.value,
         );
 

@@ -26,7 +26,7 @@ class OrdersListBody extends StatelessWidget {
             // Build reservation with urls
             final reservation = ReservationModel(
               patientUid: user?.uid,
-              fcmToken_patient: user?.fcmToken,
+              patientFcm: user?.fcmToken,
               patientPhone: user?.phone,
               patientName: user?.name,
             );

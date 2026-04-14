@@ -34,11 +34,12 @@ class CreateOpenclosereservationViewModel extends GetxController {
         formattedDate = model.date;
       } catch (_) {}
     }
-    if (isCenterMode) {
-      loadDoctorsOfCenter();
-    } else {
-      loadShiftList();
-    }
+    // if (isCenterMode) {
+    //   loadDoctorsOfCenter();
+    // } else {
+    //   loadShiftList();
+    // }
+    loadShiftList();
   }
 
   Future<void> loadDoctorsOfCenter() async {
@@ -67,11 +68,7 @@ class CreateOpenclosereservationViewModel extends GetxController {
   Future<void> loadShiftList() async {
     final user = Get.find<UserSession>().user?.user;
     final clinicKey = user is AssistantUser ? user.clinicKey : null;
-
-    final doctorKey =
-        isCenterMode
-            ? selectedDoctor?.uid
-            : (user is AssistantUser ? user.doctorKey : user?.uid);
+    final doctorKey = user is AssistantUser ? user.doctorKey : null;
 
     if (clinicKey == null || doctorKey == null) return;
 
@@ -81,15 +78,9 @@ class CreateOpenclosereservationViewModel extends GetxController {
               ? FirebaseFilter()
               : FirebaseFilter(orderBy: "clinicKey", equalTo: clinicKey),
       doctorKey: doctorKey,
-      query:
-          isCenterMode
-              ? SQLiteQueryParams()
-              : SQLiteQueryParams(
-                is_filtered: true,
-                where: "clinicKey = ?",
-                whereArgs: [clinicKey],
-              ),
+      query: SQLiteQueryParams(),
       voidCallBack: (data) {
+        print("shift dataaa is ${data}");
         if (data != null && data.isNotEmpty) {
           shiftDropdownItems = ShiftModelAdapterUtil.convertShiftListToGeneric(
             data,
@@ -156,11 +147,7 @@ class CreateOpenclosereservationViewModel extends GetxController {
 
     final user = Get.find<UserSession>().user?.user;
     final clinicKey = user is AssistantUser ? user.clinicKey : null;
-
-    final doctorKey =
-        isCenterMode
-            ? selectedDoctor?.uid
-            : (user is AssistantUser ? user.doctorKey : user?.uid);
+    final doctorKey = user is AssistantUser ? user.doctorKey : null;
 
     if (clinicKey == null || doctorKey == null) {
       Loader.showError("❌ Missing data");
@@ -187,6 +174,7 @@ class CreateOpenclosereservationViewModel extends GetxController {
         doctorUid: isCenterMode ? model.doctorKey : null,
       );
     } else {
+      print("modeeeeel is ${isCenterMode ? model.doctorKey : null}");
       service.addOpenCloseDayData(
         model: model,
         voidCallBack: _handleResult,

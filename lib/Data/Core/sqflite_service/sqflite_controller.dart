@@ -1,38 +1,43 @@
 import 'package:sqflite/sqlite_api.dart';
 import '../../../index/index_main.dart';
-import 'sqflite_service.dart'; // Replace with the correct import path
 
 class BaseSQLiteDataSourceRepo<T> {
   final String tableName;
+
+  /// 🔥 dynamic id column (uid / key / anything)
+  final String idColumn;
+
   final T Function(Map<String, dynamic>) fromJson;
   final Map<String, dynamic> Function(T model) toJson;
   final String? Function(T model) getId;
 
-  final DatabaseService _dbService =
-      DatabaseService(); // Only one instance of DatabaseService
+  final DatabaseService _dbService = DatabaseService();
 
   BaseSQLiteDataSourceRepo({
     required this.tableName,
+    required this.idColumn, // 🔥 مهم
     required this.fromJson,
     required this.toJson,
     required this.getId,
   });
 
-  Future<Database> get db async =>
-      await _dbService.database; // Reuse the same database instance
+  Future<Database> get db async => await _dbService.database;
 
-  /// ✅ Start a batch operation.
+  // ============================================================
+  // 🧱 BATCH
+  // ============================================================
+
   Future<Batch> startBatch() async {
     final dbValue = await db;
     return dbValue.batch();
   }
 
-  /// ✅ Add an item within a batch operation.
   void addItemWithBatch(Batch batch, T item) {
     final key = getId(item);
     if (key == null) {
       throw Exception("❌ [ERROR] - Key is null, cannot add item in batch.");
     }
+
     batch.insert(
       tableName,
       toJson(item),
@@ -40,12 +45,14 @@ class BaseSQLiteDataSourceRepo<T> {
     );
   }
 
-  /// ✅ Commit a batch operation.
   Future<void> commitBatch(Batch batch) async {
     await batch.commit(noResult: true);
   }
 
-  /// Get all items from the table.
+  // ============================================================
+  // 📥 GET ALL
+  // ============================================================
+
   Future<List<T>> getAll({SQLiteQueryParams? query}) async {
     final dbValue = await db;
     try {
@@ -60,30 +67,42 @@ class BaseSQLiteDataSourceRepo<T> {
         offset: query?.offset,
         groupBy: query?.groupBy,
       );
+
       return maps.map((map) => fromJson(map)).toList();
     } catch (e) {
+      print("❌ SQLITE GET ALL ERROR: $e");
       return [];
     }
   }
 
-  /// Get a single item using a key.
+  // ============================================================
+  // 📥 GET ONE
+  // ============================================================
+
   Future<T?> getItem(String key) async {
     final dbValue = await db;
+
     try {
       final List<Map<String, dynamic>> maps = await dbValue.query(
         tableName,
-        where: 'key = ?',
+        where: '$idColumn = ?', // 🔥 dynamic
         whereArgs: [key],
       );
+
       if (maps.isNotEmpty) {
         return fromJson(maps.first);
-      } else {
-        return null;
       }
+
+      return null;
     } catch (e) {
+      print("❌ SQLITE GET ITEM ERROR: $e");
       return null;
     }
   }
+
+  // ============================================================
+  // ➕ INSERT
+  // ============================================================
 
   Future<void> addItem(T item) async {
     final dbValue = await db;
@@ -99,6 +118,7 @@ class BaseSQLiteDataSourceRepo<T> {
 
       print("🟢 SQLITE INSERT START");
       print("Table: $tableName");
+      print("ID Column: $idColumn");
       print("Key: $key");
       print("Data: $jsonData");
 
@@ -110,10 +130,10 @@ class BaseSQLiteDataSourceRepo<T> {
 
       print("✅ SQLITE INSERT SUCCESS → rowId: $result");
 
-      // 🔥 Verify immediately after insert
+      // 🔥 VERIFY
       final verify = await dbValue.query(
         tableName,
-        where: 'key = ?',
+        where: '$idColumn = ?', // 🔥 dynamic
         whereArgs: [key],
       );
 
@@ -124,53 +144,82 @@ class BaseSQLiteDataSourceRepo<T> {
     }
   }
 
-  /// Update an existing item.
+  // ============================================================
+  // ✏️ UPDATE
+  // ============================================================
+
   Future<void> updateItem(T item) async {
     final dbValue = await db;
     final key = getId(item);
+
     if (key == null) {
       throw Exception("❌ [ERROR] - Key is null, cannot update item.");
     }
+
     await dbValue.update(
       tableName,
       toJson(item),
-      where: 'key = ?',
+      where: '$idColumn = ?', // 🔥 dynamic
       whereArgs: [key],
     );
   }
 
-  /// Delete an item.
+  // ============================================================
+  // 🗑 DELETE
+  // ============================================================
+
   Future<void> deleteItem(String key) async {
     final dbValue = await db;
-    await dbValue.delete(tableName, where: 'key = ?', whereArgs: [key]);
+
+    await dbValue.delete(
+      tableName,
+      where: '$idColumn = ?', // 🔥 dynamic
+      whereArgs: [key],
+    );
   }
 
-  /// ✅ Run raw SQL query
+  // ============================================================
+  // 🔍 RAW QUERY
+  // ============================================================
+
   Future<List<Map<String, dynamic>>> getRawQuery(
-    String sql, [
-    List<Object?>? args,
-  ]) async {
+      String sql, [
+        List<Object?>? args,
+      ]) async {
     final dbValue = await db;
     return await dbValue.rawQuery(sql, args ?? []);
   }
 
-  /// ✅ Get items with custom WHERE condition
+  // ============================================================
+  // 🎯 WHERE
+  // ============================================================
+
   Future<List<T>> getWhere({
     required String where,
     required List<Object?> whereArgs,
   }) async {
     final dbValue = await db;
+
     final result = await dbValue.query(
       tableName,
       where: where,
       whereArgs: whereArgs,
     );
+
     return result.map((map) => fromJson(map)).toList();
   }
 
-  /// ✅ Delete with custom WHERE condition
+  // ============================================================
+  // 🗑 DELETE WHERE
+  // ============================================================
+
   Future<void> deleteWhere(String where, List<Object?> whereArgs) async {
     final dbValue = await db;
-    await dbValue.delete(tableName, where: where, whereArgs: whereArgs);
+
+    await dbValue.delete(
+      tableName,
+      where: where,
+      whereArgs: whereArgs,
+    );
   }
 }

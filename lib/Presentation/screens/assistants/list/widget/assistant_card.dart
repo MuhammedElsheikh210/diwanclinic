@@ -43,7 +43,10 @@ class AssistantCard extends StatelessWidget {
                   Get.delete<CreateAssistantViewModel>();
                   showCustomBottomSheet(
                     context: context,
-                    child: CreateAssistantView(assistant: assistant),
+                    child: CreateAssistantView(
+                      assistant: assistant,
+                      doctor_uid: controller.doctorUid ?? "",
+                    ),
                   );
                 },
                 child: Svgicon(

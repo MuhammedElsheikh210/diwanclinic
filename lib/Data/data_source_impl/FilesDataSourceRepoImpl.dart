@@ -7,19 +7,20 @@ class FilesDataSourceRepoImpl extends FilesDataSourceRepo {
   final BaseSQLiteDataSourceRepo<FilesModel> _sqliteRepo;
 
   FilesDataSourceRepoImpl(this._clientSourceRepo)
-      : _sqliteRepo = BaseSQLiteDataSourceRepo<FilesModel>(
-    tableName: "files",
-    fromJson: (json) => FilesModel.fromJson(json),
-    toJson: (model) => model.toJson(),
-    getId: (model) => model.key,
-  );
+    : _sqliteRepo = BaseSQLiteDataSourceRepo<FilesModel>(
+        tableName: "files",
+        fromJson: (json) => FilesModel.fromJson(json),
+        toJson: (model) => model.toJson(),
+        idColumn: "key",
+        getId: (model) => model.key,
+      );
 
   @override
   Future<List<FilesModel?>> getFiles(
-      Map<String, dynamic> data,
-      SQLiteQueryParams query,
-      bool? isFiltered,
-      ) async {
+    Map<String, dynamic> data,
+    SQLiteQueryParams query,
+    bool? isFiltered,
+  ) async {
     try {
       final sqliteData = await _sqliteRepo.getAll(query: query);
       if (sqliteData.isNotEmpty || (sqliteData.isEmpty && isFiltered == true)) {
@@ -36,7 +37,7 @@ class FilesDataSourceRepoImpl extends FilesDataSourceRepo {
 
       List<FilesModel?> fileList = handleResponse<FilesModel>(
         response,
-            (json) => FilesModel.fromJson(json),
+        (json) => FilesModel.fromJson(json),
       );
 
       for (final file in fileList) {
