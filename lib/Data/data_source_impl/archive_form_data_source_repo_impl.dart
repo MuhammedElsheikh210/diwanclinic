@@ -38,7 +38,7 @@ class ArchiveFormDataSourceRepoImpl extends ArchiveFormDataSourceRepo {
 
       return forms;
     } catch (e) {
-      print("❌ [ArchiveForm] Get forms failed: $e");
+      
       return [];
     }
   }
@@ -58,7 +58,7 @@ class ArchiveFormDataSourceRepoImpl extends ArchiveFormDataSourceRepo {
         Map<String, dynamic>.from(response),
       );
     } catch (e) {
-      print("❌ [ArchiveForm] Get form failed: $e");
+      
       rethrow;
     }
   }
@@ -78,7 +78,7 @@ class ArchiveFormDataSourceRepoImpl extends ArchiveFormDataSourceRepo {
 
       return SuccessModel.fromJson(response);
     } catch (e) {
-      print("❌ [ArchiveForm] Create form failed: $e");
+      
       return SuccessModel(message: "Create form failed");
     }
   }
@@ -99,7 +99,7 @@ class ArchiveFormDataSourceRepoImpl extends ArchiveFormDataSourceRepo {
 
       return SuccessModel.fromJson(response);
     } catch (e) {
-      print("❌ [ArchiveForm] Update form failed: $e");
+      
       return SuccessModel(message: "Update form failed");
     }
   }
@@ -118,7 +118,7 @@ class ArchiveFormDataSourceRepoImpl extends ArchiveFormDataSourceRepo {
           ? SuccessModel(message: "Form deleted successfully")
           : SuccessModel.fromJson(response);
     } catch (e) {
-      print("❌ [ArchiveForm] Delete form failed: $e");
+      
       return SuccessModel(message: "Delete form failed");
     }
   }

@@ -14,7 +14,7 @@ class LocalMedicineChecker {
     final result = await db.rawQuery(
       'SELECT COUNT(*) as count FROM medicines',
     );
-    print("count is ${result}");
+    
 
     final count = Sqflite.firstIntValue(result) ?? 0;
     return count > 0;

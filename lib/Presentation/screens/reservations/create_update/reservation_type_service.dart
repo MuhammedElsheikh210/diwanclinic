@@ -24,8 +24,8 @@ class ReservationTypeService {
   }) {
     print("\n🧠 ===== ReservationTypeService.determine START =====");
 
-    print("👉 selectedType: $selectedType");
-    print("👉 newAppointmentDate: $newAppointmentDate");
+    
+    
 
     /// 🔧 helper لتحويل التاريخ
     DateTime parse(String? date) {
@@ -44,7 +44,7 @@ class ReservationTypeService {
     /// 🟢 1. USER DECISION (أولوية مطلقة)
     /// ============================================================
     if (selectedType != null && selectedType.isNotEmpty) {
-      print("🧠 USER DECISION → $selectedType");
+      
 
       /// 🆕 كشف جديد
       if (selectedType == "كشف جديد") {
@@ -78,7 +78,7 @@ class ReservationTypeService {
     /// 🟡 2. مفيش حجز سابق
     /// ============================================================
     if (lastReservation == null) {
-      print("❌ No last reservation → New");
+      
 
       return const ReservationTypeResult(
         type: "كشف جديد",
@@ -95,13 +95,13 @@ class ReservationTypeService {
 
     final diffDays = newDate.difference(lastDate).inDays;
 
-    print("📅 lastDate: $lastDate");
-    print("📅 newDate: $newDate");
-    print("⏱ diffDays: $diffDays");
+    
+    
+    
 
     /// 🔴 خارج المدة → جديد
     if (diffDays > revisitValidityDays) {
-      print("🔴 Expired → New");
+      
 
       return const ReservationTypeResult(
         type: "كشف جديد",
@@ -113,7 +113,7 @@ class ReservationTypeService {
     final lastType = lastReservation.reservationType;
     final lastCount = lastReservation.revisitCount ?? 0;
 
-    print("📊 lastType: $lastType | lastCount: $lastCount");
+    
 
     /// ============================================================
     /// 🟣 4. AUTO LOGIC
@@ -121,7 +121,7 @@ class ReservationTypeService {
 
     /// 🆕 لو آخر حجز جديد → أول إعادة
     if (lastType == "كشف جديد") {
-      print("🟣 Auto → First Revisit");
+      
 
       return ReservationTypeResult(
         type: "إعادة",
@@ -134,7 +134,7 @@ class ReservationTypeService {
     if (lastType == "إعادة") {
       /// 🔴 وصل للحد → جديد
       if (lastCount >= maxRevisitCount) {
-        print("🟠 Max Reached → New");
+        
 
         return const ReservationTypeResult(
           type: "كشف جديد",
@@ -146,7 +146,7 @@ class ReservationTypeService {
       /// 🟢 يكمل إعادة
       final nextCount = lastCount + 1;
 
-      print("🟠 Continue Revisit → $nextCount");
+      
 
       return ReservationTypeResult(
         type: "إعادة",
@@ -158,7 +158,7 @@ class ReservationTypeService {
     /// ============================================================
     /// ⚠️ fallback
     /// ============================================================
-    print("⚠️ FALLBACK → New");
+    
 
     return const ReservationTypeResult(
       type: "كشف جديد",

@@ -12,7 +12,7 @@ class _PatientHomeViewState extends State<PatientHomeView> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    print("initttttt");
+    
   }
 
   @override

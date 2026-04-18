@@ -25,7 +25,7 @@ class MedicalCenterDataSourceRepoImpl implements MedicalCenterDataSourceRepo {
 
       return centerList;
     } catch (e) {
-      print("❌ Remote fetch medical centers failed: $e");
+      
       return [];
     }
   }

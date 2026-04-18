@@ -36,6 +36,6 @@ class AppLanguage extends GetxController {
 
     Get.updateLocale(Locale(lang));
 
-    debugPrint("🌍 App language changed to: $lang");
+    
   }
 }

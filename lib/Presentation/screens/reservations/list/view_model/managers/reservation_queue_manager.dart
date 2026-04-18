@@ -71,14 +71,14 @@ class ReservationQueueManager {
   Future<void> notifyApprovedQueueUpdate({
     required List<ReservationModel> allReservations,
   }) async {
-    debugPrint("🔔 ================== QUEUE UPDATE START ==================");
+    
 
     final approvedQueue =
         allReservations
             .where((r) => r.status == ReservationStatus.approved.value)
             .toList();
 
-    debugPrint("📊 Approved Count: ${approvedQueue.length}");
+    
 
     /// ترتيب ثابت
     approvedQueue.sort(
@@ -92,10 +92,10 @@ class ReservationQueueManager {
       final newOrder = i + 1;
       final ahead = i;
 
-      debugPrint("--------------------------------------------------");
-      debugPrint("👤 Patient: ${r.patientName}");
-      debugPrint("🆔 Reservation: ${r.key}");
-      debugPrint("📌 Old Order: $oldOrder → New Order: $newOrder");
+      
+      
+      
+      
 
       // /// 💣 ابعت بس لو فيه تغيير فعلي
       // if (oldOrder == newOrder) {
@@ -108,7 +108,7 @@ class ReservationQueueManager {
               ? "دورك الآن ✨ تفضل بالاستعداد للدخول"
               : "قبلك $ahead حالات، نرجو الاستعداد";
 
-      debugPrint("📨 Message: $message");
+      
 
       /// تحديث محلي علشان المقارنة المرة الجاية
       r.orderReserved = newOrder;
@@ -117,7 +117,7 @@ class ReservationQueueManager {
       if (r.key == null ||
           r.doctorUid == null ||
           r.appointmentDateTime == null) {
-        debugPrint("❌ Missing required data");
+        
         continue;
       }
 
@@ -137,31 +137,31 @@ class ReservationQueueManager {
           "queue_trigger": DateTime.now().millisecondsSinceEpoch,
         };
 
-        debugPrint("📍 PATH: $path");
-        debugPrint("📦 DATA: $updateData");
+        
+        
 
         await ref.update(updateData);
 
         debugPrint("✅ UPDATED SUCCESS (Queue change pushed)");
       } catch (e, stack) {
-        debugPrint("❌ ERROR: $e");
+        
         debugPrintStack(stackTrace: stack);
       }
     }
 
-    debugPrint("🏁 ================== QUEUE UPDATE END ==================");
+    
   }
 
   // Future<void> notifyApprovedQueueUpdate({
   //   required List<ReservationModel> allReservations,
   // }) async {
-  //   debugPrint("🔔 ================== QUEUE UPDATE START ==================");
+  //   
   //
   //   final approvedQueue = allReservations
   //       .where((r) => r.status == ReservationStatus.approved.value)
   //       .toList();
   //
-  //   debugPrint("📊 Approved Count: ${approvedQueue.length}");
+  //   
   //
   //   approvedQueue.sort(
   //         (a, b) => (a.orderNum ?? 9999).compareTo(b.orderNum ?? 9999),
@@ -174,10 +174,10 @@ class ReservationQueueManager {
   //     final newOrder = i + 1;
   //     final ahead = i;
   //
-  //     debugPrint("--------------------------------------------------");
-  //     debugPrint("👤 Patient: ${r.patientName}");
-  //     debugPrint("🆔 Reservation: ${r.key}");
-  //     debugPrint("📌 Old Order: $oldOrder → New Order: $newOrder");
+  //     
+  //     
+  //     
+  //     
   //
   //     // /// 💣 أهم شرط (Tracking)
   //     // if (oldOrder == newOrder) {
@@ -189,13 +189,13 @@ class ReservationQueueManager {
   //         ? "دورك الآن ✨ تفضل بالاستعداد للدخول"
   //         : "قبلك $ahead حالات، نرجو الاستعداد";
   //
-  //     debugPrint("📨 Message: $message");
+  //     
   //
   //     /// ✅ update local (عشان المرة الجاية يقارن صح)
   //     r.orderReserved = newOrder;
   //
   //     // if (r.key == null || r.doctorUid == null) {
-  //     //   debugPrint("❌ Missing key or doctorUid");
+  //     //   
   //     //   continue;
   //     // }
   //
@@ -215,8 +215,8 @@ class ReservationQueueManager {
   //         "queue_trigger": DateTime.now().millisecondsSinceEpoch,
   //       };
   //
-  //       debugPrint("📍 PATH: $path");
-  //       debugPrint("📦 DATA: $updateData");
+  //       
+  //       
   //
   //       /// 🔥 ده اللي هيشغل Firebase Function
   //       await ref.update(updateData);
@@ -224,11 +224,11 @@ class ReservationQueueManager {
   //       debugPrint("✅ UPDATED SUCCESS (Notification will be triggered)");
   //
   //     } catch (e, stack) {
-  //       debugPrint("❌ ERROR: $e");
+  //       
   //       debugPrintStack(stackTrace: stack);
   //     }
   //   }
   //
-  //   debugPrint("🏁 ================== QUEUE UPDATE END ==================");
+  //   
   // }
 }

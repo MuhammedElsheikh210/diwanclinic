@@ -26,7 +26,7 @@ class CategoryDataSourceRepoImpl extends CategoryDataSourceRepo {
       //   return sqliteData;
       // }
     } catch (e) {
-      print("❌ [ERROR] - Fetching Categories from SQLite failed: $e");
+      
     }
 
     try {
@@ -51,7 +51,7 @@ class CategoryDataSourceRepoImpl extends CategoryDataSourceRepo {
 
       return categoryList;
     } catch (e) {
-      print("❌ Remote fetch failed: $e");
+      
       return [];
     }
   }
@@ -174,7 +174,7 @@ class CategoryDataSourceRepoImpl extends CategoryDataSourceRepo {
 
       return SuccessModel.fromJson(response);
     } catch (e) {
-      print("❌ Bulk insert failed: $e");
+      
       return SuccessModel(message: "Bulk insertion failed");
     }
   }

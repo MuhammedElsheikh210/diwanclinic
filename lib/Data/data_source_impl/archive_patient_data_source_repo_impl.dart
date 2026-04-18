@@ -40,7 +40,7 @@ class ArchivePatientDataSourceRepoImpl
 
       return archivePatients;
     } catch (e) {
-      print("❌ [ArchivePatient] Get archive patients failed: $e");
+      
       return [];
     }
   }
@@ -62,7 +62,7 @@ class ArchivePatientDataSourceRepoImpl
         Map<String, dynamic>.from(response),
       );
     } catch (e) {
-      print("❌ [ArchivePatient] Get archive patient failed: $e");
+      
       rethrow;
     }
   }
@@ -82,7 +82,7 @@ class ArchivePatientDataSourceRepoImpl
 
       return SuccessModel.fromJson(response);
     } catch (e) {
-      print("❌ [ArchivePatient] Create archive patient failed: $e");
+      
       return SuccessModel(message: "Create archive patient failed");
     }
   }
@@ -103,7 +103,7 @@ class ArchivePatientDataSourceRepoImpl
 
       return SuccessModel.fromJson(response);
     } catch (e) {
-      print("❌ [ArchivePatient] Update archive patient failed: $e");
+      
       return SuccessModel(message: "Update archive patient failed");
     }
   }
@@ -124,7 +124,7 @@ class ArchivePatientDataSourceRepoImpl
           ? SuccessModel(message: "Archive patient deleted successfully")
           : SuccessModel.fromJson(response);
     } catch (e) {
-      print("❌ [ArchivePatient] Delete archive patient failed: $e");
+      
       return SuccessModel(message: "Delete archive patient failed");
     }
   }

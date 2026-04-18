@@ -15,7 +15,7 @@ class SyncViewModel extends GetxController {
       if (value >= 1.0) {
         Future.delayed(const Duration(seconds: 1), () {
           // Example: navigate or show success message
-          print("done");
+          
           //  Get.snackbar("Sync Completed", "All data synced successfully!");
         });
       }
@@ -23,7 +23,7 @@ class SyncViewModel extends GetxController {
 
     await parentSyncService.syncAllData(
       voidCallBack: (data) {
-        print("data is $data");
+        
         WidgetsBinding.instance.addPostFrameCallback((_) {
           Get.offAll(() => const MainPage(), binding: Binding());
         });

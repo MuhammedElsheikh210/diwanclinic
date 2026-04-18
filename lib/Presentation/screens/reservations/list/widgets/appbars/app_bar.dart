@@ -25,7 +25,7 @@ class ReservationDateAppBar extends StatelessWidget
   Widget build(BuildContext context) {
     final bool showShift =
         (controller.shiftDropdownItems?.length ?? 0) > 1 &&
-            controller.selectedShift != null;
+        controller.selectedShift != null;
 
     return AppBar(
       backgroundColor: AppColors.background,
@@ -46,9 +46,10 @@ class ReservationDateAppBar extends StatelessWidget
 
                 if (onFilterTap != null)
                   _IconButton(
-                    icon: isGrid
-                        ? Icons.grid_view_rounded
-                        : Icons.view_list_rounded,
+                    icon:
+                        isGrid
+                            ? Icons.grid_view_rounded
+                            : Icons.view_list_rounded,
                     onTap: onFilterTap!,
                   ),
               ],
@@ -101,11 +102,7 @@ class _BasePill extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(24),
-        child: Container(
-          height: height,
-          padding: padding,
-          child: child,
-        ),
+        child: Container(height: height, padding: padding, child: child),
       ),
     );
   }
@@ -134,14 +131,18 @@ class _DatePill extends StatelessWidget {
             child: CalendarDropdown(
               controller: controller,
               initialTimestamp:
-              controller.create_at ??
-                  DateTime.now().millisecondsSinceEpoch,
+                  controller.create_at ?? DateTime.now().millisecondsSinceEpoch,
               onDateSelected: (timestamp, _) {
                 final date = timestamp.toDate();
 
                 controller.create_at = date.millisecondsSinceEpoch;
-                controller.appointmentDate =
-                    DateFormat('dd MMM yyyy').format(date);
+
+                // ✅ FIX
+                controller.appointmentDate = DateFormat(
+                  'dd-MM-yyyy',
+                ).format(date);
+
+                
 
                 controller.getReservations();
                 controller.update();
@@ -158,10 +159,7 @@ class _IconButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const _IconButton({
-    required this.icon,
-    required this.onTap,
-  });
+  const _IconButton({required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -180,6 +178,7 @@ class _IconButton extends StatelessWidget {
     );
   }
 }
+
 class _ShiftPill extends StatelessWidget {
   final ReservationViewModel controller;
 
@@ -217,4 +216,3 @@ class _ShiftPill extends StatelessWidget {
     );
   }
 }
-

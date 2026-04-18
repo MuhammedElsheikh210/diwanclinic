@@ -71,7 +71,7 @@ class AppBarDealsDetails extends StatelessWidget
           visible: show_support == true,
           child: GestureDetector(
             onTap: () {
-              print("support icon");
+              
             },
             child: const Padding(
               padding: EdgeInsets.only(left: 10.0),

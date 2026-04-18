@@ -22,7 +22,7 @@ class TransactionsDataSourceRepoImpl extends TransactionsDataSourceRepo {
   ) async {
     try {
       // ✅ Fetch from SQLite first
-      print("query is $query");
+      
       final sqliteData = await _sqliteRepo.getAll(query: query);
 
       if (sqliteData.isNotEmpty || (sqliteData.isEmpty && isFiltered == true)) {

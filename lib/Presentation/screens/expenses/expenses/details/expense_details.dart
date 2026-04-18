@@ -130,7 +130,7 @@ class ExpenseDetailScreen extends StatelessWidget {
                 ),
                 onPressed: () {
                   // Handle edit action
-                  print("Editing expense: ${expense.key}");
+                  
                 },
                 child: Text(
                   "تعديل",

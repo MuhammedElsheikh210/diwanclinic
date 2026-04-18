@@ -17,7 +17,7 @@ class TransactionService {
         .call(transaction);
 
     result.fold((l) {
-      print("error message is ${l.messege}");
+      
       return Loader.showError(l.messege);
     }, (r) => voidCallBack(ResponseStatus.success));
 

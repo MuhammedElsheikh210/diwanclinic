@@ -10,7 +10,7 @@ class ApiErrorModel {
 
   /// Factory method to handle dynamic response and return an appropriate ApiErrorModel
   factory ApiErrorModel.fromDynamic(dynamic response, {int? statusCode}) {
-    print("response innn api is $response");
+    
     if (response is String) {
       // If response is a plain string, directly assign it to the message
       return ApiErrorModel(message: response, code: statusCode);

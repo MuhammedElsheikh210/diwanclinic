@@ -87,7 +87,7 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
         (json) => LegacyQueueModel.fromJson(json),
       );
     } catch (e) {
-      debugPrint("❌ getLegacyQueueByDate error: $e");
+      
       return [];
     }
   }
@@ -120,7 +120,7 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
         (json) => LegacyQueueModel.fromJson(json),
       );
     } catch (e) {
-      debugPrint("❌ getOpenCloseDaysByDate error: $e");
+      
       return [];
     }
   }
@@ -137,7 +137,7 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
     String? doctorUid,
   }) async {
     final isOpenClose = _isOpenCloseFeature(data);
-     print("doctorUid in path is ${doctorUid}");
+     
     final path = _resolveQueuePath(
       isPatient: isPatient,
       doctorUid: doctorUid,
@@ -202,7 +202,7 @@ class LegacyQueueDataSourceRepoImpl extends LegacyQueueDataSourceRepo {
       HttpMethod.DELETE,
       "/$path/$key.json",
     );
-    print("delete path is ${ "/$path/$key.json"}");
+    
 
     return SuccessModel.fromJson(response ?? {"message": "تم الحذف بنجاح"});
   }

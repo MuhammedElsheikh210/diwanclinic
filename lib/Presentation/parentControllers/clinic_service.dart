@@ -112,7 +112,7 @@ class ClinicService {
     } catch (e) {
       Loader.dismiss(); // 🔥 مهم جدًا
 
-      print("❌ [ClinicService] Exception: $e");
+      
 
       Loader.showError("حدث خطأ غير متوقع أثناء تحميل البيانات");
 

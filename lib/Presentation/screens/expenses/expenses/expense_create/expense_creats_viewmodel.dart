@@ -73,7 +73,7 @@ class CreateExpenseViewModel extends GetxController {
 
     selectedDateTimestamp = expense.createAt;
 
-    print("selectedCategory is ${selectedCategory?.name}");
+    
     update();
   }
 

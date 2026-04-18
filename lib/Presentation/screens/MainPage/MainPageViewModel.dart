@@ -74,7 +74,6 @@ class MainPageViewModel extends GetxController {
       final uid = _user?.uid;
 
       if (uid == null || uid.isEmpty) {
-        debugPrint("❌ UID missing → skip online user load");
         return;
       }
 
@@ -82,7 +81,6 @@ class MainPageViewModel extends GetxController {
         firebaseFilter: FirebaseFilter(orderBy: "uid", equalTo: uid),
         voidCallBack: (users) {
           if (users.isEmpty) {
-            debugPrint("❌ User not found online");
             return;
           }
 
@@ -93,7 +91,7 @@ class MainPageViewModel extends GetxController {
         },
       );
     } catch (e) {
-      debugPrint("❌ Error loading online user: $e");
+      
     }
   }
 
@@ -120,7 +118,6 @@ class MainPageViewModel extends GetxController {
       final patientUid = user?.uid;
 
       if (patientUid == null || patientUid.isEmpty) {
-        debugPrint("⚠️ No patientUid → skip patient reservations");
         return;
       }
 
@@ -144,7 +141,6 @@ class MainPageViewModel extends GetxController {
     }
 
     if (resolvedDoctorKey == null || resolvedDoctorKey.isEmpty) {
-      debugPrint("⚠️ No doctorKey → skip realtime reservations");
       return;
     }
 
@@ -165,7 +161,7 @@ class MainPageViewModel extends GetxController {
     // }
     //
     // if (clinicKey == null || clinicKey.isEmpty) {
-    //   debugPrint("⚠️ No clinicKey → skip notifications realtime");
+    //   
     //   return;
     // }
 

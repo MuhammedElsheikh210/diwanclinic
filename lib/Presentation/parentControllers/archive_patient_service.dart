@@ -87,13 +87,13 @@ class ArchivePatientService {
           Loader.showError("حدث خطأ أثناء جلب أرشيف المريض");
         },
         (r) {
-          print("✅ [ArchivePatientService] Archive fetched successfully");
+          
           voidCallBack(r);
         },
       );
     } catch (e) {
       Loader.showError("حدث خطأ غير متوقع أثناء تحميل البيانات");
-      print("❌ [ArchivePatientService] Exception: $e");
+      
     }
   }
 }

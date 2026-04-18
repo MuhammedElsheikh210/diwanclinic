@@ -12,7 +12,7 @@
 //         body: message,
 //       );
 //     } catch (e) {
-//       debugPrint("❌ WhatsApp send error: $e");
+//       
 //     }
 //   }
 // }

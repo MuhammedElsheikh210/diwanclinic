@@ -14,8 +14,8 @@ class AssistantViewModel extends GetxController {
   // =========================================================
 
   void getData({String? doctor_uid}) {
-    print("doctor_uid is ${doctor_uid}");
-    print("doctorUid is ${doctorUid}");
+    
+    
     AuthenticationService().getClientsData(
       query: SQLiteQueryParams(
         where: "doctor_key = ? AND userType = ?",

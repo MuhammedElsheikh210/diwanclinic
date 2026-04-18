@@ -48,7 +48,7 @@ class _CreateExpenseViewState extends State<CreateExpenseView> {
     return GetBuilder<CreateExpenseViewModel>(
       init: createExpenseVM,
       builder: (controller) {
-        print("controller.selectedCategory is ${controller.selectedCategory}");
+        
         return Container(
           height: 550.h,
           padding: EdgeInsets.symmetric(horizontal: 15.w),

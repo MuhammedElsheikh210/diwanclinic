@@ -58,13 +58,13 @@ class OtpViewModel extends GetxController {
 
   Color codeViewBorderColor() {
     if (code.isEmpty) {
-      print("1");
+      
       return ColorResources.COLOR_GREY70;
     } else if (code.isNotEmpty && isFill == false) {
-      print("2");
+      
       return ColorResources.COLOR_red;
     } else {
-      print("3");
+      
       return ColorResources.COLOR_Primary;
     }
   }

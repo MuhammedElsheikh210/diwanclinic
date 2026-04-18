@@ -44,38 +44,38 @@ class PatientReservationService {
     }
 
     if (_currentPatientUid == patientUid && _isListening) {
-      print("🟡 PatientService already listening for this user");
+      
       return;
     }
 
     if (_isListening) {
-      print("🔄 Switching patient → restarting listener");
+      
       await stopListening();
     }
 
-    print("🎧 PatientService START listening → $patientUid");
+    
 
     await useCase.startListening(patientUid: patientUid);
 
     _addedSub = useCase.onAdded.listen((reservation) {
-      print("📡 Patient Event → ADDED ${reservation.key}");
+      
       onReservationAdded?.call(reservation);
     });
 
     _changedSub = useCase.onChanged.listen((reservation) {
-      print("📡 Patient Event → CHANGED ${reservation.key}");
+      
       onReservationUpdated?.call(reservation);
     });
 
     _removedSub = useCase.onRemoved.listen((key) {
-      print("📡 Patient Event → REMOVED $key");
+      
       onReservationRemoved?.call(key);
     });
 
     _currentPatientUid = patientUid;
     _isListening = true;
 
-    print("✅ PatientService listening ACTIVE");
+    
   }
 
   // ============================================================
@@ -83,7 +83,7 @@ class PatientReservationService {
   // ============================================================
 
   Future<void> stopListening() async {
-    print("🛑 PatientService stopListening");
+    
 
     await _addedSub?.cancel();
     await _changedSub?.cancel();
@@ -152,7 +152,7 @@ class PatientReservationService {
   // ============================================================
 
   Future<void> dispose() async {
-    print("🛑 PatientService dispose");
+    
 
     await stopListening();
     await useCase.dispose();

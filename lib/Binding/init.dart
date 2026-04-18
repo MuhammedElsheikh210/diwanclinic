@@ -1,5 +1,3 @@
-
-
 import 'package:firebase_database/firebase_database.dart';
 import '../index/index_main.dart';
 
@@ -163,25 +161,24 @@ class Binding implements Bindings {
 
     // ───────────── Patient Reservation (Realtime Only) ─────────────
 
-// 🔹 Remote DS
+    // 🔹 Remote DS
     Get.lazyPut<PatientReservationRemoteDataSource>(
-          () => PatientReservationRemoteDataSourceImpl(FirebaseDatabase.instance),
+      () => PatientReservationRemoteDataSourceImpl(FirebaseDatabase.instance),
       fenix: true,
     );
 
-// 🔹 Repository
+    // 🔹 Repository
     Get.lazyPut<PatientReservationRepository>(
-          () => PatientReservationRepositoryImpl(
+      () => PatientReservationRepositoryImpl(
         Get.find<PatientReservationRemoteDataSource>(),
       ),
       fenix: true,
     );
 
-// 🔹 UseCases
+    // 🔹 UseCases
     Get.lazyPut<PatientReservationUseCases>(
-          () => PatientReservationUseCases(
-        Get.find<PatientReservationRepository>(),
-      ),
+      () =>
+          PatientReservationUseCases(Get.find<PatientReservationRepository>()),
       fenix: true,
     );
 
@@ -304,6 +301,8 @@ class Binding implements Bindings {
     Get.lazyPut<LoginViewModel>(() => LoginViewModel());
     Get.lazyPut<MainPageViewModel>(() => MainPageViewModel());
     Get.lazyPut<ReservationViewModel>(() => ReservationViewModel());
-    Get.put(ReservationPatientViewModel(), permanent: true);
+    Get.lazyPut<ReservationPatientViewModel>(
+      () => ReservationPatientViewModel(),
+    );
   }
 }

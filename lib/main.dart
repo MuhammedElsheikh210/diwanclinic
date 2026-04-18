@@ -26,19 +26,17 @@ void main() {
         DeviceOrientation.portraitUp,
       ]);
 
-      // 🔹 Local DB
+      // 🔹 Local DB (خفيف ومهم)
       final dbService = DatabaseService();
-      // await dbService.deleteDatabaseFile();
-
+    //  dbService.deleteDatabaseFile();
       await dbService.database;
-      await dbService.checkTables();
 
-      // 🔹 Storage
+      // 🔹 Storage (خفيف)
       final storage = StorageService();
       await storage.init();
       Get.put(storage, permanent: true);
 
-      // 🔥 Local User Module (NEW)
+      // 🔥 Local User Module (Lazy 🔥)
       Get.lazyPut<LocalUserDataSource>(
         () => LocalUserDataSource(Get.find()),
         fenix: true,
@@ -49,23 +47,16 @@ void main() {
         fenix: true,
       );
 
-      await Get.putAsync<UserSession>(
-        () async => await UserSession(Get.find()).init(),
-      );
+      // 🔥 UserSession (NO BLOCKING)
+      Get.lazyPut<UserSession>(() => UserSession(Get.find()), fenix: true);
 
-      // 🔔 Notification Core
-      await NotificationService().initCore();
-
-      // 🔥 Remote Config
-      await FirebaseRemoteConfigService().checkForceUpdate();
-
-      // 🔹 Register Dependencies
+      // 🔹 باقي الـ dependencies
       Binding().dependencies();
 
-      // 🎨 ThemeScope (🔥 مهم جدًا)
+      // 🎨 ThemeScope (مهم)
       final app = await ThemeScopeWidget.initialize(const MyApp());
 
-      // ✅ ScreenUtil AFTER initialize
+      // 🚀 run app بسرعة
       runApp(
         ScreenUtilInit(
           designSize: const Size(430, 932),
@@ -75,9 +66,28 @@ void main() {
           builder: (_, __) => app,
         ),
       );
+
+      // =========================
+      // 🔥 INIT AFTER RUN APP 🔥
+      // =========================
+
+      // 🔔 Notifications (background init)
+      NotificationService().initCore();
+
+      // 🔥 Remote Config (background)
+      FirebaseRemoteConfigService().checkForceUpdate();
+
+      // 🔥 UserSession init (مهم جدًا)
+      Future.microtask(() async {
+        try {
+          await Get.find<UserSession>().init();
+        } catch (e) {
+          log("❌ UserSession init error: $e");
+        }
+      });
     },
     (e, s) {
-      debugPrint("❌ ZONE ERROR: $e");
+      
       debugPrintStack(stackTrace: s);
     },
   );

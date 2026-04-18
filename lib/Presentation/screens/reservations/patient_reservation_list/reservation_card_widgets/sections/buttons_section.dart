@@ -65,7 +65,7 @@ class ButtonsSection extends StatelessWidget {
             onTap: () async {
               await _updateStatus(ReservationStatus.cancelledByUser);
 
-              print("يخرررث");
+              
               NotificationHandler().sendStatusNotification(
                 newStatus: ReservationStatus.cancelledByUser,
                 reservation: reservation,

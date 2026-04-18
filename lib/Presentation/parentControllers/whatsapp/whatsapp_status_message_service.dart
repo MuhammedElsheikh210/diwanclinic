@@ -46,7 +46,7 @@ class WhatsAppStatusMessageService {
 
       await WhatsAppManager.sendMessage(to: phone, body: message);
     } catch (e) {
-      print("❌ WhatsApp Error: $e");
+      
     }
   }
 
@@ -204,13 +204,13 @@ class WhatsAppOrderMessageService {
 
       final phone = _formatPhone(rawPhone);
       final message = _buildMessageByStatus(order);
-      print("phone is ${phone}");
+      
 
       if (message.isEmpty) return;
 
       await WhatsAppManager.sendMessage(to: phone, body: message);
     } catch (e) {
-      debugPrint("❌ WhatsApp Order Error: $e");
+      
     }
   }
 

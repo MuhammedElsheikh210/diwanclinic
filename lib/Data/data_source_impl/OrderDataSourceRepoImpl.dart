@@ -30,7 +30,7 @@ class OrderDataSourceRepoImpl extends OrderDataSourceRepo {
 
       return orderList;
     } catch (e) {
-      print("❌ Error while fetching online orders: $e");
+      
       return [];
     }
   }
@@ -47,10 +47,10 @@ class OrderDataSourceRepoImpl extends OrderDataSourceRepo {
         params: data,
       );
 
-      print("✅ Order added successfully to Firebase: $key");
+      
       return SuccessModel.fromJson(response);
     } catch (e) {
-      print("❌ Error adding order online: $e");
+      
       return SuccessModel(message: "فشل إضافة الطلب أونلاين");
     }
   }
@@ -67,10 +67,10 @@ class OrderDataSourceRepoImpl extends OrderDataSourceRepo {
         params: data,
       );
 
-      print("✅ Order updated successfully on Firebase: $key");
+      
       return SuccessModel.fromJson(response);
     } catch (e) {
-      print("❌ Error updating order online: $e");
+      
       return SuccessModel(message: "فشل تحديث الطلب أونلاين");
     }
   }
@@ -87,10 +87,10 @@ class OrderDataSourceRepoImpl extends OrderDataSourceRepo {
         params: data,
       );
 
-      print("🗑️ Order deleted successfully from Firebase: $key");
+      
       return SuccessModel.fromJson(response ?? {"message": "تم الحذف بنجاح"});
     } catch (e) {
-      print("❌ Error deleting order online: $e");
+      
       return SuccessModel(message: "فشل حذف الطلب أونلاين");
     }
   }

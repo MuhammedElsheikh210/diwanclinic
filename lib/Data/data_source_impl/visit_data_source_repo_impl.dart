@@ -44,7 +44,7 @@ class VisitDataSourceRepoImpl extends VisitDataSourceRepo {
 
       return visitList;
     } catch (e) {
-      print("❌ [ERROR] - Fetching Visits failed: $e");
+      
       return [];
     }
   }
@@ -68,7 +68,7 @@ class VisitDataSourceRepoImpl extends VisitDataSourceRepo {
       // await _sqliteRepo.addItem(visit);
       return visit;
     } catch (e) {
-      print("❌ [ERROR] - getVisit failed: $e");
+      
       rethrow;
     }
   }
@@ -85,7 +85,7 @@ class VisitDataSourceRepoImpl extends VisitDataSourceRepo {
       // await _sqliteRepo.addItem(model);
       return SuccessModel.fromJson(response);
     } catch (e) {
-      print("❌ [ERROR] - addVisit failed: $e");
+      
       return SuccessModel(message: "Add Visit failed");
     }
   }
@@ -108,7 +108,7 @@ class VisitDataSourceRepoImpl extends VisitDataSourceRepo {
           ? SuccessModel(message: "تمت العملية بنجاح")
           : SuccessModel.fromJson(response);
     } catch (e) {
-      print("❌ [ERROR] - deleteVisit failed: $e");
+      
       return SuccessModel(message: "Delete Visit failed");
     }
   }
@@ -130,7 +130,7 @@ class VisitDataSourceRepoImpl extends VisitDataSourceRepo {
 
       return SuccessModel.fromJson(response);
     } catch (e) {
-      print("❌ [ERROR] - updateVisit failed: $e");
+      
       return SuccessModel(message: "Update Visit failed");
     }
   }

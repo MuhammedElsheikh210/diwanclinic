@@ -26,7 +26,7 @@ class ProfileViewModel extends GetxController {
     final currentUser = Get.find<UserSession>().user;
 
     if (currentUser == null) {
-      debugPrint("❌ User not found in session");
+      
       return;
     }
 
@@ -85,7 +85,7 @@ class ProfileViewModel extends GetxController {
       await ref.putFile(file);
       return await ref.getDownloadURL();
     } catch (e) {
-      debugPrint("Upload failed: $e");
+      
       return null;
     }
   }

@@ -9,8 +9,8 @@ class RouteWelcomeMiddleWare extends GetMiddleware {
     final sessionUser = Get.find<UserSession>().user?.user;
     final forceUpdateModel = ForceUdpate().getForceUpdateData();
 
-    print("Current route: $route");
-    print("User type: ${sessionUser?.userType}");
+    
+    
 
     // ---------------------------------------------------------
     // 1️⃣ FORCE UPDATE FIRST

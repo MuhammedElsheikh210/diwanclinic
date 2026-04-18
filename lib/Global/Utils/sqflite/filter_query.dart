@@ -38,7 +38,7 @@ class QueryBuilder {
 
     final String whereClause = whereConditions.join(' AND ');
     String order = order_by ?? "DESC";
-    print("order is ${order}");
+    
 
     return SQLiteQueryParams(
       where: whereClause.isNotEmpty ? whereClause : null,

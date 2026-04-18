@@ -185,7 +185,6 @@ class CreateReservationViewModel extends GetxController {
   }
 
   void resetPatientSelection() {
-    print("🔄 Reset Patient Selection بسبب تغيير التاريخ");
 
     clientUser = null;
     lastReservation = null;
@@ -239,7 +238,7 @@ class CreateReservationViewModel extends GetxController {
     final currentUser = Get.find<UserSession>().user;
 
     if (currentUser == null) {
-      debugPrint("❌ User not found in session");
+      
       return;
     }
 
@@ -422,7 +421,7 @@ class CreateReservationViewModel extends GetxController {
     final currentUser = Get.find<UserSession>().user;
 
     if (currentUser == null) {
-      debugPrint("❌ User not found in session");
+      
       return;
     }
 
@@ -589,7 +588,7 @@ class CreateReservationViewModel extends GetxController {
     final currentUser = Get.find<UserSession>().user;
 
     if (currentUser == null) {
-      debugPrint("❌ User not found in session");
+      
       return;
     }
 
@@ -710,7 +709,6 @@ class CreateReservationViewModel extends GetxController {
     _isPopulating = true; // 🔥 stop listeners during loading
 
     existingReservation = reservation;
-
     // Patient data
     patientNameController.text = reservation.patientName ?? "";
     patientNameController.text = reservation.patientName ?? "";
@@ -832,14 +830,14 @@ class CreateReservationViewModel extends GetxController {
     final currentUser = Get.find<UserSession>().user;
 
     if (currentUser == null || !currentUser.isAssistant) {
-      debugPrint("❌ Current user is not assistant");
+      
       return;
     }
 
     final assistant = currentUser.asAssistant;
 
     if (assistant == null) {
-      debugPrint("❌ Failed to cast to AssistantUser");
+      
       return;
     }
 
@@ -1163,8 +1161,7 @@ class CreateReservationViewModel extends GetxController {
           from_assist: true,
           newStatus: ReservationStatus.approved,
         );
-        //   refreshListView();
-        Get.back();
+        refreshListView();
         Loader.showSuccess("تم إضافة الحجز بنجاح");
       },
     );
@@ -1194,7 +1191,7 @@ class CreateReservationViewModel extends GetxController {
     await PatientReservationService().updateReservationData(
       reservation: reservation,
       voidCallBack: (_) async {
-        Get.back();
+        refreshListView();
         Loader.showSuccess("تم تحديث الحجز بنجاح");
       },
     );
@@ -1230,15 +1227,15 @@ class CreateReservationViewModel extends GetxController {
   Future<void> getPatientData(ReservationModel reservation) async {
     AuthenticationService().getClientsData(
       query: SQLiteQueryParams(
-        where: "key = ?",
+        where: "uid = ?",
         whereArgs: [reservation.patientUid ?? ""],
         limit: 1,
       ),
       voidCallBack: (users) {
         Loader.dismiss();
-
         if (users.isNotEmpty && users.first != null) {
           clientUser = users.first;
+
           populateFields(reservation);
         }
 

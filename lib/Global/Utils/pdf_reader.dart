@@ -40,7 +40,7 @@ class _GenericPdfViewerState extends State<GenericPdfViewer> {
       }
     } catch (e) {
       setState(() => isLoading = false);
-      debugPrint("Error: $e");
+      
     }
   }
 

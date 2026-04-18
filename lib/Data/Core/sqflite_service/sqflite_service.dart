@@ -41,7 +41,7 @@ class DatabaseService {
     await _createReservations(db);
     await _createReservationsOrder(db);
 
-    print("✅ DATABASE CREATED SUCCESSFULLY");
+    
   }
 
   // ─────────────────────────────────────────────
@@ -250,7 +250,7 @@ is_auto_type INTEGER DEFAULT 0,
   // 🔁 UPGRADE
   // ─────────────────────────────────────────────
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    print("🔄 UPGRADING DATABASE FROM $oldVersion TO $newVersion");
+    
 
     await db.transaction((txn) async {
       await txn.execute('DROP TABLE IF EXISTS medicines;');
@@ -281,6 +281,6 @@ is_auto_type INTEGER DEFAULT 0,
     final tables = await db.rawQuery(
       'SELECT name FROM sqlite_master WHERE type="table"',
     );
-    print("📋 TABLES: $tables");
+    
   }
 }

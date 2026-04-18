@@ -10,6 +10,8 @@ class ReservationQueryManager {
   }) async {
     List<ReservationModel> result = [];
 
+    
+
     await ReservationService().getReservationsData(
       query: query,
       voidCallBack: (list) {
@@ -30,14 +32,12 @@ class ReservationQueryManager {
     ClinicModel? selectedClinic,
     String? medicalCenterKey,
   }) async {
-
     if (appointmentDate == null || shiftKey == null) {
       return [];
     }
 
     /// ✅ 🔥 أهم سطر في الكلاس كله
-    final normalizedDate = AppDateFormatter.normalize(appointmentDate);
-
+    final normalizedDate = AppDateFormatter.toDash(appointmentDate);
 
     // ============================================================
     // 🔍 DEBUG STEP 1: Fetch All Data
@@ -47,9 +47,7 @@ class ReservationQueryManager {
       query: SQLiteQueryParams(where: "1=1"),
     );
 
-
-    for (var r in allData.take(5)) {
-    }
+    for (var r in allData.take(5)) {}
 
     // ============================================================
     // 🔍 DEBUG STEP 2: Shift Only
@@ -58,7 +56,6 @@ class ReservationQueryManager {
     final shiftOnly = await getReservations(
       query: SQLiteQueryParams(where: "shift_key = ?", whereArgs: [shiftKey]),
     );
-
 
     // ============================================================
     // 🔍 DEBUG STEP 3: Date Only
@@ -70,7 +67,6 @@ class ReservationQueryManager {
         whereArgs: ["%$normalizedDate%"],
       ),
     );
-
 
     // ============================================================
     // 🔥 FINAL QUERY
@@ -89,7 +85,6 @@ class ReservationQueryManager {
       whereArgs.add(medicalCenterKey);
     }
 
-
     final result = await getReservations(
       query: SQLiteQueryParams(
         where: where,
@@ -97,7 +92,6 @@ class ReservationQueryManager {
         orderBy: "order_num ASC",
       ),
     );
-
 
     // ============================================================
     // 🔥 EXTRA DEBUG (Manual Filter Check)
@@ -109,7 +103,6 @@ class ReservationQueryManager {
               r.shiftKey == shiftKey &&
               r.clinicKey == selectedClinic?.key;
         }).toList();
-
 
     return result;
   }

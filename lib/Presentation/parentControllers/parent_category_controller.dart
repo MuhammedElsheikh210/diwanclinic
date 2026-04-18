@@ -80,7 +80,7 @@ class CategoryService {
 
     result.fold(
       (l) {
-        print("l error is ${l.messege}");
+        
         return Loader.showError(l.messege);
       },
       (r) {

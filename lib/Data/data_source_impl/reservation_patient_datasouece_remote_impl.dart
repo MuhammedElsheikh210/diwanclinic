@@ -34,7 +34,7 @@ class PatientReservationRemoteDataSourceImpl
     final path = "patients/$patientUid/reservationsMeta";
     _ref = _database.ref(path);
 
-    print("🎧 Patient Listening → $path");
+    
 
     final addedSub = _ref!.onChildAdded.listen(_onAdded);
     final changedSub = _ref!.onChildChanged.listen(_onChanged);
@@ -51,7 +51,7 @@ class PatientReservationRemoteDataSourceImpl
     final key = event.snapshot.key;
     if (key == null) return;
 
-    print("➕ Patient Reservation Added → $key");
+    
 
     final model = _parseReservation(event.snapshot);
     if (model != null) _addedController.add(model);
@@ -61,7 +61,7 @@ class PatientReservationRemoteDataSourceImpl
     final key = event.snapshot.key;
     if (key == null) return;
 
-    print("🔄 Patient Reservation Changed → $key");
+    
 
     final model = _parseReservation(event.snapshot);
     if (model != null) _changedController.add(model);
@@ -71,7 +71,7 @@ class PatientReservationRemoteDataSourceImpl
     final key = event.snapshot.key;
     if (key == null) return;
 
-    print("❌ Patient Reservation Removed → $key");
+    
 
     _removedController.add(key);
   }
@@ -93,7 +93,7 @@ class PatientReservationRemoteDataSourceImpl
 
       return ReservationModel.fromJson(json);
     } catch (e) {
-      print("🔥 Patient Parse error → $e");
+      
       return null;
     }
   }
@@ -105,7 +105,7 @@ class PatientReservationRemoteDataSourceImpl
   Future<void> createReservation(ReservationModel reservation) async {
     final path = _buildPath(reservation);
 
-    print("☁️ Patient Create → $path");
+    
 
     await _database.ref(path).set(reservation.toJson());
   }
@@ -117,7 +117,7 @@ class PatientReservationRemoteDataSourceImpl
   Future<void> updateReservation(ReservationModel reservation) async {
     final path = _buildPath(reservation);
 
-    print("☁️ Patient Update → $path");
+    
 
     await _database.ref(path).update(reservation.toJson());
   }
@@ -129,7 +129,7 @@ class PatientReservationRemoteDataSourceImpl
   Future<void> deleteReservation(ReservationModel reservation) async {
     final path = _buildPath(reservation);
 
-    print("☁️ Patient Delete → $path");
+    
 
     await _database.ref(path).remove();
   }
@@ -147,7 +147,7 @@ class PatientReservationRemoteDataSourceImpl
 
     final path = "patients/$patientUid/reservationsMeta/$key";
 
-    print("📍 Patient Path → $path");
+    
 
     return path;
   }
@@ -164,7 +164,7 @@ class PatientReservationRemoteDataSourceImpl
     _subscriptions.clear();
     _ref = null;
 
-    print("🛑 Patient Listeners stopped");
+    
   }
 
   // ============================================================

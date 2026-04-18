@@ -29,7 +29,7 @@ class DoctorListRemoteDataSourceImpl implements DoctorListRemoteDataSource {
 
       return doctorList;
     } catch (e) {
-      print("❌ [ERROR] - Fetching Doctor List failed: $e");
+      
       return [];
     }
   }
@@ -44,7 +44,7 @@ class DoctorListRemoteDataSourceImpl implements DoctorListRemoteDataSource {
 
       return DoctorListModel.fromJson(response);
     } catch (e) {
-      print("❌ [ERROR] - getDoctor failed: $e");
+      
       rethrow;
     }
   }
@@ -60,7 +60,7 @@ class DoctorListRemoteDataSourceImpl implements DoctorListRemoteDataSource {
 
       return SuccessModel.fromJson(response);
     } catch (e) {
-      print("❌ [ERROR] - addDoctor failed: $e");
+      
       return SuccessModel(message: "Add Doctor failed");
     }
   }
@@ -76,7 +76,7 @@ class DoctorListRemoteDataSourceImpl implements DoctorListRemoteDataSource {
 
       return SuccessModel.fromJson(response);
     } catch (e) {
-      print("❌ [ERROR] - updateDoctor failed: $e");
+      
       return SuccessModel(message: "Update Doctor failed");
     }
   }
@@ -93,7 +93,7 @@ class DoctorListRemoteDataSourceImpl implements DoctorListRemoteDataSource {
           ? SuccessModel(message: "تمت العملية بنجاح")
           : SuccessModel.fromJson(response);
     } catch (e) {
-      print("❌ [ERROR] - deleteDoctor failed: $e");
+      
       return SuccessModel(message: "Delete Doctor failed");
     }
   }

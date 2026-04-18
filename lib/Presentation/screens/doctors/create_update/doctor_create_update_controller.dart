@@ -107,7 +107,7 @@ class CreateDoctorViewModel extends GetxController {
       await ref.putFile(file);
       return await ref.getDownloadURL();
     } catch (e) {
-      debugPrint("❌ Failed to upload image: $e");
+      
       return null;
     }
   }

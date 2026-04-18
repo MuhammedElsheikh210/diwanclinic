@@ -316,7 +316,7 @@ class DoctorDetailsViewModel extends GetxController {
     } catch (e, stack) {
       Loader.dismiss();
       //  Loader.showError("فشل تحميل الفترات");
-      debugPrint("❌ [Shifts] Error while loading shifts: $e");
+      
       debugPrint(stack.toString());
       isLoadingShifts = false;
       update();
@@ -472,7 +472,7 @@ class DoctorDetailsViewModel extends GetxController {
     } catch (e) {
       Loader.dismiss();
       Loader.showError("❌ حدث خطأ أثناء إنشاء الحجز: $e");
-      debugPrint("Reservation creation error: $e");
+      
     }
   }
 

@@ -77,17 +77,17 @@ class ArchiveFormService {
 
       result.fold(
         (l) {
-          print("❌ [ArchiveFormService] Error fetching form: ${l.messege}");
+          
           Loader.showError("حدث خطأ أثناء جلب الفورم");
         },
         (r) {
-          print("✅ [ArchiveFormService] Form fetched successfully");
+          
           voidCallBack(r);
         },
       );
     } catch (e) {
       Loader.showError("حدث خطأ غير متوقع أثناء تحميل البيانات");
-      print("❌ [ArchiveFormService] Exception: $e");
+      
     }
   }
 }

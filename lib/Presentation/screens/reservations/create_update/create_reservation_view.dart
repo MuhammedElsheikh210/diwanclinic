@@ -54,8 +54,6 @@ class _CreateReservationViewState extends State<CreateReservationView> {
     vm.shift_key = widget.shift_key;
     vm.doctor_key = widget.doctor_key;
 
-    print("shift_key is ${widget.shift_key}");
-
     final today = DateTime.now();
     DateTime selectedDate = today;
 
@@ -65,6 +63,7 @@ class _CreateReservationViewState extends State<CreateReservationView> {
     if (widget.reservation != null &&
         widget.reservation!.appointmentDateTime != null &&
         widget.reservation!.appointmentDateTime!.isNotEmpty) {
+      
       try {
         selectedDate = DateFormat(
           'dd-MM-yyyy',
@@ -106,8 +105,6 @@ class _CreateReservationViewState extends State<CreateReservationView> {
 
     /// ❗ لو مفيش شيفت → stop
     if (vm.shift_key == null || vm.shift_key!.isEmpty) {
-      print("❌ shift_key still null → stop init");
-
       vm.isLoadingReservations = false;
       vm.update();
       return;
@@ -401,7 +398,8 @@ class _CreateReservationViewState extends State<CreateReservationView> {
 
                                               return GestureDetector(
                                                 onTap: () {
-                                                  controller.isAutoApplied = true; // 🔥 وقف الأوتو
+                                                  controller.isAutoApplied =
+                                                      true; // 🔥 وقف الأوتو
 
                                                   controller.setReservationType(
                                                     type,
@@ -410,8 +408,6 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                                   // 🔥 خليه suggestion مش قرار نهائي
                                                   controller.selectedType =
                                                       type;
-
-
 
                                                   controller.update();
                                                 },
@@ -760,7 +756,14 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                   child: AppTextField(
                                     hintText: "رقم الكشف",
                                     enabled: controller.isFromLegacyQueue,
-                                    controller: controller.resOrderController,
+                                    controller:
+                                        controller.is_update
+                                            ? TextEditingController(
+                                              text:
+                                                  widget.reservation?.orderNum
+                                                      .toString(),
+                                            )
+                                            : controller.resOrderController,
                                     keyboardType: TextInputType.number,
                                     focusNode: keyboardService.getFocusNode(
                                       keys[6],
@@ -814,9 +817,11 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                   ),
 
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 15.0,
-                                    vertical: 10,
+                                  padding: const EdgeInsets.only(
+                                    left: 15.0,
+                                    right: 15.0,
+                                    top: 15,
+                                    bottom: 5,
                                   ),
                                   child: Text(
                                     "تاريخ الكشف ",
@@ -831,44 +836,64 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                     left: 15.0,
                                     right: 15,
 
-                                    top: 8,
+                                    top: 0,
                                   ),
-                                  child: CalenderWidget(
-                                    hintText: "تاريخ الحجز",
-                                    initialTimestamp:
-                                        controller.create_at ??
-                                        DateTime.now().millisecondsSinceEpoch,
-                                    onDateSelected: (timeStamp, date) async {
-                                      final pickedDate =
-                                          DateTime.fromMillisecondsSinceEpoch(
-                                            timeStamp.millisecondsSinceEpoch,
-                                          );
+                                  child:
+                                      controller.is_update
+                                          ? Text(
+                                            widget
+                                                    .reservation
+                                                    ?.appointmentDateTime ??
+                                                "",
+                                            style: context.typography.lgBold
+                                                .copyWith(
+                                                  color: AppColors.primary,
+                                                ),
+                                          )
+                                          : CalenderWidget(
+                                            hintText: "تاريخ الحجز",
+                                            initialTimestamp:
+                                                controller.create_at ??
+                                                DateTime.now()
+                                                    .millisecondsSinceEpoch,
+                                            onDateSelected: (
+                                              timeStamp,
+                                              date,
+                                            ) async {
+                                              final pickedDate =
+                                                  DateTime.fromMillisecondsSinceEpoch(
+                                                    timeStamp
+                                                        .millisecondsSinceEpoch,
+                                                  );
 
-                                      controller.create_at =
-                                          timeStamp.millisecondsSinceEpoch;
+                                              controller.create_at =
+                                                  timeStamp
+                                                      .millisecondsSinceEpoch;
 
-                                      final formatted = DateFormat(
-                                        'dd-MM-yyyy',
-                                      ).format(pickedDate);
+                                              final formatted = DateFormat(
+                                                'dd-MM-yyyy',
+                                              ).format(pickedDate);
 
-                                      /// 🔥🔥🔥 أهم سطر
-                                      controller.resetPatientSelection();
+                                              /// 🔥🔥🔥 أهم سطر
+                                              controller
+                                                  .resetPatientSelection();
 
-                                      controller.companyNameController.text =
-                                          formatted;
+                                              controller
+                                                  .companyNameController
+                                                  .text = formatted;
 
-                                      await controller
-                                          .loadOpenCloseStatusForDate(
-                                            formatted,
-                                          );
+                                              await controller
+                                                  .loadOpenCloseStatusForDate(
+                                                    formatted,
+                                                  );
 
-                                      vm.calculateOrderNumber();
+                                              vm.calculateOrderNumber();
 
-                                      controller.applyAutoTypeLogic();
+                                              controller.applyAutoTypeLogic();
 
-                                      controller.update();
-                                    },
-                                  ),
+                                              controller.update();
+                                            },
+                                          ),
                                 ),
                               ],
                             ),

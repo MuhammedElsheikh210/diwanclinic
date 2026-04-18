@@ -42,7 +42,7 @@ class OrderController extends GetxController {
       final currentUser = Get.find<UserSession>().user;
 
       if (currentUser == null) {
-        debugPrint("❌ User not found in session");
+        
         return;
       }
 

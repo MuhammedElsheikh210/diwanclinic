@@ -166,14 +166,14 @@ class _PrescriptionBottomSheetWidgetState
       final currentUser = Get.find<UserSession>().user;
 
       if (currentUser == null || !currentUser.isAssistant) {
-        debugPrint("❌ Current user is not assistant");
+        
         return;
       }
 
       final assistant = currentUser.asAssistant;
 
       if (assistant == null) {
-        debugPrint("❌ Failed to cast to AssistantUser");
+        
         return;
       }
 
@@ -234,7 +234,7 @@ class _PrescriptionBottomSheetWidgetState
 
           return compressedXFile != null ? File(compressedXFile.path) : file;
         } catch (e) {
-          debugPrint("⚠️ Compression skipped: $e");
+          
           return file;
         }
       }

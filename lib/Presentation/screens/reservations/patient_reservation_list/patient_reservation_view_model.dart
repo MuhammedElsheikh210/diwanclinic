@@ -98,7 +98,7 @@ class ReservationPatientViewModel extends GetxController {
     final patientUid = Get.find<UserSession>().user?.uid;
 
     if (patientUid == null || patientUid.isEmpty) {
-      debugPrint("❌ No patientUid");
+      
       return;
     }
 
@@ -107,19 +107,19 @@ class ReservationPatientViewModel extends GetxController {
 
     // ➕ ADDED
     service.onReservationAdded = (reservation) {
-      debugPrint("📥 VM Added → ${reservation.key}");
+      
       _updateList(reservation);
     };
 
     // 🔄 UPDATED
     service.onReservationUpdated = (reservation) {
-      debugPrint("🔄 VM Updated → ${reservation.key}");
+      
       _updateList(reservation);
     };
 
     // ❌ REMOVED
     service.onReservationRemoved = (key) {
-      debugPrint("❌ VM Removed → $key");
+      
 
       listReservations?.removeWhere((e) => e?.key == key);
 
@@ -182,20 +182,20 @@ class ReservationPatientViewModel extends GetxController {
     final String? myToken = user?.fcmToken;
 
     if (myUid == null || myUid.isEmpty) {
-      debugPrint("❌ [FCM SYNC] No user uid");
+      
       return;
     }
 
     if (myToken == null || myToken.isEmpty) {
-      debugPrint("❌ [FCM SYNC] No FCM token on device");
+      
       return;
     }
 
-    debugPrint("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    debugPrint("🔄 [FCM SYNC] Start syncing missing tokens");
-    debugPrint("👤 UID: $myUid");
-    debugPrint("📱 Token: $myToken");
-    debugPrint("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    
+    
+    
+    
+    
 
     final reservations =
         listReservations
@@ -209,16 +209,16 @@ class ReservationPatientViewModel extends GetxController {
         [];
 
     if (reservations.isEmpty) {
-      debugPrint("ℹ️ [FCM SYNC] No reservations need update");
+      
       return;
     }
 
-    debugPrint("🧩 [FCM SYNC] Reservations to update: ${reservations.length}");
+    
 
     for (final r in reservations) {
       final updated = r.copyWith(patientFcm: myToken);
 
-      debugPrint("🔁 Updating reservation ${r.key} | order=${r.orderNum}");
+      
 
       // 1️⃣ Update main reservation
       await ReservationService().updateReservationData(
@@ -232,8 +232,8 @@ class ReservationPatientViewModel extends GetxController {
       );
     }
     await _updateClientsSyncStatus();
-    debugPrint("✅ [FCM SYNC] Finished updating tokens");
-    debugPrint("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    
+    
   }
 
   Future<void> _updateClientsSyncStatus() async {

@@ -70,7 +70,7 @@ class BaseSQLiteDataSourceRepo<T> {
 
       return maps.map((map) => fromJson(map)).toList();
     } catch (e) {
-      print("❌ SQLITE GET ALL ERROR: $e");
+      
       return [];
     }
   }
@@ -95,7 +95,7 @@ class BaseSQLiteDataSourceRepo<T> {
 
       return null;
     } catch (e) {
-      print("❌ SQLITE GET ITEM ERROR: $e");
+      
       return null;
     }
   }
@@ -109,18 +109,18 @@ class BaseSQLiteDataSourceRepo<T> {
     final key = getId(item);
 
     if (key == null) {
-      print("❌ SQLITE ADD FAILED → Key is NULL");
+      
       throw Exception("Key is null, cannot add item.");
     }
 
     try {
       final jsonData = toJson(item);
 
-      print("🟢 SQLITE INSERT START");
-      print("Table: $tableName");
-      print("ID Column: $idColumn");
-      print("Key: $key");
-      print("Data: $jsonData");
+      
+      
+      
+      
+      
 
       final result = await dbValue.insert(
         tableName,
@@ -128,7 +128,7 @@ class BaseSQLiteDataSourceRepo<T> {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
-      print("✅ SQLITE INSERT SUCCESS → rowId: $result");
+      
 
       // 🔥 VERIFY
       final verify = await dbValue.query(
@@ -137,10 +137,10 @@ class BaseSQLiteDataSourceRepo<T> {
         whereArgs: [key],
       );
 
-      print("🔎 VERIFY COUNT: ${verify.length}");
+      
     } catch (e, s) {
-      print("❌ SQLITE INSERT ERROR: $e");
-      print("STACK: $s");
+      
+      
     }
   }
 

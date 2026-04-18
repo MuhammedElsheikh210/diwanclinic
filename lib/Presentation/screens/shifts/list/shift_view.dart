@@ -22,7 +22,7 @@ class _ShiftViewState extends State<ShiftView> {
     ShiftViewModel shiftViewModel = initController(() => ShiftViewModel());
     shiftViewModel.clinic_key = widget.clinic_key;
     shiftViewModel.doctor_key = widget.doctor_key;
-    print("doc key is ${widget.clinic_key}");
+    
     shiftViewModel.getData();
     shiftViewModel.update();
     super.initState();

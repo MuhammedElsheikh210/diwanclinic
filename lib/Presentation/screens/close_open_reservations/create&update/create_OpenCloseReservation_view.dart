@@ -80,7 +80,7 @@ class CreateOpenclosereservationViewModel extends GetxController {
       doctorKey: doctorKey,
       query: SQLiteQueryParams(),
       voidCallBack: (data) {
-        print("shift dataaa is ${data}");
+        
         if (data != null && data.isNotEmpty) {
           shiftDropdownItems = ShiftModelAdapterUtil.convertShiftListToGeneric(
             data,
@@ -174,7 +174,7 @@ class CreateOpenclosereservationViewModel extends GetxController {
         doctorUid: isCenterMode ? model.doctorKey : null,
       );
     } else {
-      print("modeeeeel is ${isCenterMode ? model.doctorKey : null}");
+      
       service.addOpenCloseDayData(
         model: model,
         voidCallBack: _handleResult,

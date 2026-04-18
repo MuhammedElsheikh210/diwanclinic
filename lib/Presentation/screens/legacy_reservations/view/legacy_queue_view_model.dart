@@ -84,14 +84,14 @@ class LegacyQueueViewModel extends GetxController {
    final currentUser = Get.find<UserSession>().user;
 
    if (currentUser == null || !currentUser.isAssistant) {
-     debugPrint("❌ Current user is not assistant");
+     
      return;
    }
 
    final assistant = currentUser.asAssistant;
 
    if (assistant == null) {
-     debugPrint("❌ Failed to cast to AssistantUser");
+     
      return;
    }
 

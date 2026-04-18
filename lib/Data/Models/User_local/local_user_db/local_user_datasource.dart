@@ -36,7 +36,7 @@ class LocalUserDataSource {
       return null;
     } catch (e) {
       // مهم جدًا علشان لو حصل corruption
-      print('Error parsing local user: $e');
+      
       return null;
     }
   }

@@ -143,14 +143,14 @@ class ReservationViewModel extends GetxController {
     final currentUser = Get.find<UserSession>().user;
 
     if (currentUser == null || !currentUser.isAssistant) {
-      debugPrint("❌ Current user is not assistant");
+      
       return;
     }
 
     final assistant = currentUser.asAssistant;
 
     if (assistant == null) {
-      debugPrint("❌ Failed to cast to AssistantUser");
+      
       return;
     }
     final clinicKey = assistant.clinicKey ?? "";
@@ -217,7 +217,7 @@ class ReservationViewModel extends GetxController {
     final currentUser = Get.find<UserSession>().user;
 
     if (currentUser == null) {
-      debugPrint("❌ User not found in session");
+      
       return;
     }
 
@@ -321,7 +321,7 @@ class ReservationViewModel extends GetxController {
 
       Loader.showSuccess("تم تحديث الحالة إلى ${newStatus.label}");
     } catch (e, stack) {
-      debugPrint("❌ changeReservationStatus ERROR: $e");
+      
       debugPrintStack(stackTrace: stack);
 
       Loader.showError("حدث خطأ أثناء تحديث الحالة");
@@ -371,7 +371,7 @@ class ReservationViewModel extends GetxController {
       //       extraData: reservation.toJson(),
       //     ),
       //     voidCallBack: (status) {
-      //       debugPrint("💾 Saved notification → $status");
+      //       
       //     },
       //   );
       // }
@@ -381,7 +381,7 @@ class ReservationViewModel extends GetxController {
         await _handleQueueUpdate();
       }
     } catch (e, stack) {
-      debugPrint("❌ SideEffects Error: $e");
+      
       debugPrintStack(stackTrace: stack);
     }
   }
@@ -447,9 +447,9 @@ extension ReservationData on ReservationViewModel {
     if (selectedShift == null) return false;
     if (selectedClinic == null) return false;
 
-    final reservationDate = AppDateFormatter.normalize(r.appointmentDateTime);
+    final reservationDate = AppDateFormatter.toDash(r.appointmentDateTime);
 
-    final screenDate = AppDateFormatter.normalize(appointmentDate);
+    final screenDate = AppDateFormatter.toDash(appointmentDate);
 
     return reservationDate == screenDate &&
         r.shiftKey == selectedShift!.key &&
@@ -487,14 +487,14 @@ extension ReservationData on ReservationViewModel {
     final currentUser = Get.find<UserSession>().user;
 
     if (currentUser == null || !currentUser.isAssistant) {
-      debugPrint("❌ Current user is not assistant");
+      
       return;
     }
 
     final assistant = currentUser.asAssistant;
 
     if (assistant == null) {
-      debugPrint("❌ Failed to cast to AssistantUser");
+      
       return;
     }
 
@@ -508,6 +508,8 @@ extension ReservationData on ReservationViewModel {
     }
 
     final normalizedDate = AppDateFormatter.toDash(appointmentDate);
+
+    AppLogger.info("data in res", doctorKey + normalizedDate);
 
     try {
       /// 🔥 الترتيب مهم جدًا
@@ -523,7 +525,7 @@ extension ReservationData on ReservationViewModel {
 
       update();
     } catch (e, stack) {
-      debugPrint("❌ getReservations ERROR: $e");
+      
       debugPrintStack(stackTrace: stack);
     }
   }
@@ -550,6 +552,8 @@ extension ReservationData on ReservationViewModel {
       selectedClinic: selectedClinic,
     );
 
+
+
     _cachedReservations = all;
 
     completeDayReservations = all;
@@ -563,6 +567,8 @@ extension ReservationData on ReservationViewModel {
         _cachedReservations
             .where((e) => e.status == ReservationStatus.completed.value)
             .toList();
+    AppLogger.info("total list in repots", completedForReport.length.toString());
+
   }
 
   Future<int> getTotalTodayReservations() async {

@@ -48,7 +48,7 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
       return;
     }
 
-    print("uid in assis is $uid");
+    
 
     _rootRef = _database.ref("notifications/$uid");
 

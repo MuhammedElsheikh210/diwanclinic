@@ -327,7 +327,7 @@ class ReservationAssistantDetailsView extends StatelessWidget {
                                     true)
                                   reservation.prescriptionUrl2!,
                               ];
-                              print("images is ${images}");
+                              
 
                               // ✅ If no images → show upload button
                               // ✅ If no images
@@ -336,13 +336,13 @@ class ReservationAssistantDetailsView extends StatelessWidget {
                                     reservation.status ==
                                     ReservationNewStatus.completed.value;
 
-                                print("isCompleted is ${isCompleted}");
+                                
 
                                 if (isCompleted) {
                                   // 🔹 Allow upload after finish
                                   return GestureDetector(
                                     onTap: () {
-                                      print("doneee");
+                                      
                                       controller.prescriptionService
                                           .openBottomSheet(
                                             context: context,

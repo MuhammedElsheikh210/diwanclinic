@@ -4,12 +4,11 @@ class ReservationReportWidget extends StatelessWidget {
   final ReservationViewModel controller;
 
   const ReservationReportWidget({Key? key, required this.controller})
-      : super(key: key);
+    : super(key: key);
 
   /// 🔥 helper لتوحيد المقارنة
   bool _isCompleted(ReservationModel r) {
-    return r.status.toString() ==
-        ReservationStatus.completed.value.toString();
+    return r.status == ReservationStatus.completed.value;
   }
 
   @override
@@ -58,9 +57,10 @@ class ReservationReportWidget extends StatelessWidget {
         AnimatedCrossFade(
           firstChild: const SizedBox.shrink(),
           secondChild: _buildReportContent(context),
-          crossFadeState: controller.showDailyReport
-              ? CrossFadeState.showSecond
-              : CrossFadeState.showFirst,
+          crossFadeState:
+              controller.showDailyReport
+                  ? CrossFadeState.showSecond
+                  : CrossFadeState.showFirst,
           duration: const Duration(milliseconds: 250),
         ),
       ],
@@ -68,29 +68,35 @@ class ReservationReportWidget extends StatelessWidget {
   }
 
   Widget _buildReportContent(BuildContext context) {
-    final reservations = controller.completeDayReservations
-        .whereType<ReservationModel>()
-        .where(_isCompleted) // 🔥 هنا التعديل
-        .toList();
+    AppLogger.info("total list ",  controller.completeDayReservations.length.toString());
+    final reservations =
+        controller.completeDayReservations
+            .whereType<ReservationModel>()
+            .where(_isCompleted) // 🔥 هنا التعديل
+            .toList();
+
 
     if (reservations.isEmpty) {
       return const SizedBox();
     }
 
-    final newCheckups = reservations.where((r) {
-      final type = (r.reservationType ?? "").trim();
-      return type == "كشف جديد";
-    }).toList();
+    final newCheckups =
+        reservations.where((r) {
+          final type = (r.reservationType ?? "").trim();
+          return type == "كشف جديد";
+        }).toList();
 
-    final urgentCheckups = reservations.where((r) {
-      final type = (r.reservationType ?? "").trim();
-      return type == "كشف مستعجل";
-    }).toList();
+    final urgentCheckups =
+        reservations.where((r) {
+          final type = (r.reservationType ?? "").trim();
+          return type == "كشف مستعجل";
+        }).toList();
 
-    final reCheckups = reservations.where((r) {
-      final type = (r.reservationType ?? "").trim();
-      return type == "إعادة" || type == "متابعة";
-    }).toList();
+    final reCheckups =
+        reservations.where((r) {
+          final type = (r.reservationType ?? "").trim();
+          return type == "إعادة" || type == "متابعة";
+        }).toList();
 
     final newTotal = _sum(newCheckups);
     final reTotal = _sum(reCheckups);
@@ -111,7 +117,7 @@ class ReservationReportWidget extends StatelessWidget {
   double _sum(List<ReservationModel> list) {
     return list.fold(
       0,
-          (sum, r) => sum + (double.tryParse(r.paidAmount ?? "") ?? 0),
+      (sum, r) => sum + (double.tryParse(r.paidAmount ?? "") ?? 0),
     );
   }
 }
@@ -201,13 +207,13 @@ class _ReportRow extends StatelessWidget {
   final bool showTotal;
 
   const _ReportRow(
-      this.title,
-      this.count,
-      this.total, {
-        required this.icon,
-        this.highlight = false,
-        this.showTotal = true,
-      });
+    this.title,
+    this.count,
+    this.total, {
+    required this.icon,
+    this.highlight = false,
+    this.showTotal = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -215,25 +221,21 @@ class _ReportRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          Icon(icon,
-              color: highlight ? AppColors.primary : Colors.grey[600]),
+          Icon(icon, color: highlight ? AppColors.primary : Colors.grey[600]),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               "$title ${showTotal ? "($count)" : ""}",
               style: context.typography.mdMedium.copyWith(
-                color: highlight
-                    ? AppColors.primary
-                    : AppColors.background_black,
+                color:
+                    highlight ? AppColors.primary : AppColors.background_black,
               ),
             ),
           ),
           Text(
             "${total.toStringAsFixed(2)} ج.م",
             style: context.typography.lgBold.copyWith(
-              color: highlight
-                  ? AppColors.primary
-                  : AppColors.background_black,
+              color: highlight ? AppColors.primary : AppColors.background_black,
             ),
           ),
         ],

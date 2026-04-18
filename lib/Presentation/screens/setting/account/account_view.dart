@@ -344,7 +344,7 @@ class AccountView extends StatelessWidget {
         }
       }
     } catch (e) {
-      debugPrint("Store launch error: $e");
+      
       Loader.showError("تعذر فتح صفحة التقييم");
     }
   }

@@ -15,7 +15,7 @@ class SpecializeCard extends StatelessWidget {
   /// ✅ Return FontAwesome icon based on `icon_name` string
   IconData _getIconFromName(String? iconName) {
     if (iconName == null || iconName.isEmpty) {
-      debugPrint("⚠️ iconName is null or empty → using fallback icon");
+      
       return FontAwesomeIcons.userDoctor;
     }
 
@@ -70,7 +70,7 @@ class SpecializeCard extends StatelessWidget {
         return FontAwesomeIcons.handDots; // 🖐️ Skin dermatology
 
       default:
-        debugPrint("⚠️ Unknown iconName: $iconName → using fallback");
+        
         return FontAwesomeIcons.userDoctor;
     }
   }

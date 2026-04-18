@@ -21,7 +21,7 @@ class StorageService {
       final jsonData = json.encode(data);
       return await _preferences.setString(key, jsonData);
     } catch (e) {
-      print('Error setting data: $e');
+      
       return false;
     }
   }
@@ -37,7 +37,7 @@ class StorageService {
         return json.decode(jsonData) as Map<String, dynamic>;
       }
     } catch (e) {
-      print('Error getting data: $e');
+      
     }
     return null;
   }

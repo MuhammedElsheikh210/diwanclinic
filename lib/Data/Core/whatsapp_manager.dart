@@ -45,7 +45,7 @@ class WhatsAppManager {
     final url = Uri.parse("$_baseUrl/$_instanceId/messages/chat");
 
     final headers = {'Content-Type': 'application/x-www-form-urlencoded'};
-    print("tooo is $to");
+    
 
     final normalizedPhone = normalizeEgyptPhone(to);
 
@@ -62,7 +62,7 @@ class WhatsAppManager {
 
       if (response.statusCode == 200) {
         final res = jsonDecode(response.body);
-        print("✅ WhatsApp Message Sent: $res");
+        
         return true;
       } else {
         print(
@@ -71,7 +71,7 @@ class WhatsAppManager {
         return false;
       }
     } catch (e) {
-      print("❌ WhatsApp Send Error: $e");
+      
       return false;
     }
   }

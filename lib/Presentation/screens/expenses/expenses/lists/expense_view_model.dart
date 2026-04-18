@@ -74,7 +74,7 @@ class ExpenseViewModel extends GetxController {
     TransactionService().getAllTransactionsData(
       voidCallBack: (data) {
         listExpenseForBanner = data;
-        print("listExpenseForBanner is ${listExpenseForBanner?.length}");
+        
         _calculateStatistics(listExpenseForBanner); // stats use all
         update();
       },

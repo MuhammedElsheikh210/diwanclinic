@@ -18,10 +18,10 @@ class NotificationHandler {
     final parentService = NotificationPatentService();
 
     await sendAction((status) async {
-      debugPrint("📬 FCM response → toKey=$toKey | status=$status");
+      
 
       if (status != ResponseStatus.success) {
-        debugPrint("❌ FCM FAILED → toKey=$toKey");
+        
         return;
       }
 
@@ -58,7 +58,7 @@ class NotificationHandler {
     String notificationType = "new_reservation",
   }) async {
     if (assistants.isEmpty) {
-      debugPrint("❌ assistants list is empty");
+      
       return;
     }
 
@@ -76,7 +76,7 @@ class NotificationHandler {
       final uid = assistant.uid!;
       final token = assistant.fcmToken!;
 
-      debugPrint("📡 Sending to assistant uid=$uid");
+      
 
       await _sendAndSave(
         toKey: uid,
@@ -113,7 +113,7 @@ class NotificationHandler {
     final notificationService = NotificationManagerService();
 
     final titleBody = _statusText(newStatus, reservation);
-    print("titleBody is ${titleBody}");
+    
     if (titleBody == null) return;
 
     await _sendAndSave(

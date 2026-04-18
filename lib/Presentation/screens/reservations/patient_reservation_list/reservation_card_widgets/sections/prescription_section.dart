@@ -22,8 +22,8 @@ class PrescriptionSection extends StatelessWidget {
     ];
 
     final isCompleted = reservation.status == ReservationStatus.completed.value;
-    print("isCompleted is ${isCompleted}");
-    print("images is ${images.isEmpty}");
+    
+    
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10),

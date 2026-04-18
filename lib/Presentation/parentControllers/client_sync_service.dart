@@ -38,8 +38,8 @@ class ClientSyncService {
       final int lastAdd = status.lastAddDataTimestamp;
       final int lastSync = status.lastUpdateTimestamp;
 
-      debugPrint("📊 lastAdd: $lastAdd");
-      debugPrint("📊 lastSync: $lastSync");
+      
+      
 
       // Already synced
       if (lastAdd == lastSync) return;
@@ -60,7 +60,7 @@ class ClientSyncService {
 
       _isSyncing = false;
 
-      debugPrint("✅ Shared sync finished");
+      
     });
   }
 

@@ -160,7 +160,7 @@ class _DoctorViewState extends State<DoctorView> {
                             return InkWell(
                               onTap: () {
                                 final user = Get.find<UserSession>().user;
-                                print("user doctor is ${user?.user.userType}");
+                                
                                 if (user?.user.userType == UserType.admin) {
                                   print(
                                     "user doctor is ${user?.user.toJson()}",

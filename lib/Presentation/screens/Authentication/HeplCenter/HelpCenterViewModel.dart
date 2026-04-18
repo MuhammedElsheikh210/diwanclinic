@@ -18,7 +18,7 @@ class HelpCenterViewModel extends GetxController {
   globalData() {
     // getGlobalData(voidCallBack: (model) {
     //   globalModel = model;
-    //   print("phone is ${globalModel?.whatsphone ?? ""}");
+    //   
     //   update();
     // });
   }
@@ -42,7 +42,7 @@ class HelpCenterViewModel extends GetxController {
       }
     } else {
       // android , web
-      print("phone and $whatsappURl_android");
+      
 
       if (!await launchUrl(Uri.parse(whatsappURl_android))) {
         throw 'Could not launch $whatsappURl_android';

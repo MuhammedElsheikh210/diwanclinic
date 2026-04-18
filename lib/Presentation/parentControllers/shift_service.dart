@@ -96,13 +96,13 @@ class ShiftService {
           Loader.showError("حدث خطأ أثناء جلب بيانات الفترات");
         },
         (r) {
-          print("✅ [ShiftService] Shifts fetched for doctor: ${r.length}");
+          
           voidCallBack(r);
         },
       );
     } catch (e) {
       Loader.dismiss();
-      print("❌ [ShiftService] Exception: $e");
+      
     }
   }
 }

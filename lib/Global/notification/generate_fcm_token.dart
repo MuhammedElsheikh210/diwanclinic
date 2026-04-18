@@ -12,6 +12,6 @@ void main() async {
   final scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
 
   final client = await clientViaServiceAccount(credentials, scopes);
-  print('🔑 Access Token: ${client.credentials.accessToken.data}');
+  
   client.close();
 }

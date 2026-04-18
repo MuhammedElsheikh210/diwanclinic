@@ -122,7 +122,7 @@ class OrderMedicineViewModel extends GetxController {
   // ===========================================================================
   Future<void> uploadImagesAndNext() async {
     if (selectedImages.isEmpty) {
-      debugPrint("❌ No images selected");
+      
       return;
     }
 
@@ -134,8 +134,8 @@ class OrderMedicineViewModel extends GetxController {
     Loader.show();
 
     final uploadStart = DateTime.now();
-    debugPrint("🚀 Upload started at $uploadStart");
-    debugPrint("🖼️ Total images: ${selectedImages.length}");
+    
+    
 
     try {
       for (int i = 0; i < selectedImages.length; i++) {
@@ -146,8 +146,8 @@ class OrderMedicineViewModel extends GetxController {
 
         final originalSize = (await originalFile.length()) / (1024 * 1024);
 
-        debugPrint("📸 Image ${i + 1}/${selectedImages.length}");
-        debugPrint("   ├─ Path: $imagePath");
+        
+        
         debugPrint(
           "   ├─ Original size: ${originalSize.toStringAsFixed(2)} MB",
         );
@@ -171,7 +171,7 @@ class OrderMedicineViewModel extends GetxController {
           "prescriptions/${reservation.key}_${i}_${DateTime.now().millisecondsSinceEpoch}.jpg",
         );
 
-        debugPrint("   ├─ Uploading to: ${ref.fullPath}");
+        
 
         final uploadTask = ref.putFile(finalFile);
 
@@ -196,7 +196,7 @@ class OrderMedicineViewModel extends GetxController {
         final url = await ref.getDownloadURL();
         uploadedUrls.add(url);
 
-        debugPrint("   └─ ✅ Uploaded URL saved");
+        
       }
 
       currentStep = 1;
@@ -207,8 +207,8 @@ class OrderMedicineViewModel extends GetxController {
         "✅ All uploads finished in ${uploadEnd.difference(uploadStart).inSeconds} seconds",
       );
     } catch (e, s) {
-      debugPrint("🔥 Upload error: $e");
-      debugPrint("📛 StackTrace: $s");
+      
+      
       Loader.showError("فشل رفع الصور، حاول مرة أخرى");
     } finally {
       isUploading.value = false;
@@ -247,11 +247,11 @@ class OrderMedicineViewModel extends GetxController {
     );
 
     if (result == null) {
-      debugPrint("❌ Compression failed → returning original");
+      
       return file;
     }
 
-    debugPrint("✅ Compression done → ${result.path}");
+    
     return File(result.path);
   }
 
@@ -275,11 +275,11 @@ class OrderMedicineViewModel extends GetxController {
     );
 
     if (result == null) {
-      debugPrint("❌ Compression failed → returning original");
+      
       return File(path);
     }
 
-    debugPrint("✅ Compression done → ${result.path}");
+    
     return File(result.path);
   }
 

@@ -68,7 +68,7 @@ class CreateSpecializeViewModel extends GetxController {
 
   /// ✅ Validation function
   bool validateStep() {
-    print("checcck is ${nameController.text.isNotEmpty}");
+    
     return nameController.text.isNotEmpty;
   }
 

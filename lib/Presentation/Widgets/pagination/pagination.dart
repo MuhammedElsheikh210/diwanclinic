@@ -50,7 +50,7 @@ class PaginationController<T> extends GetxController {
       }
     } catch (e) {
       hasMoreData = false;
-      print('Error fetching data: $e');
+      
     }
 
     isLoading = false;

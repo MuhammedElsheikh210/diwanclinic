@@ -14,16 +14,16 @@ class SyncMedicineViewModel extends GetxController {
 
   Future<void> _start() async {
     try {
-      debugPrint('🚀 SyncMedicineViewModel start');
+      
 
       await service.prepareDatabase();
       await service.openDatabaseInstance();
 
-      debugPrint('🏁 DB ready, go to MainPage');
+      
 
       Get.offAll(() => const MainPage(), binding: Binding());
     } catch (e, s) {
-      debugPrint('❌ ViewModel ERROR: $e');
+      
       debugPrintStack(stackTrace: s);
 
       Get.snackbar("خطأ", "فشل تجهيز قاعدة بيانات الأدوية");
