@@ -240,6 +240,22 @@ class _ReservationViewState extends State<ReservationView> {
   }) {
     final isActive = !isFinished;
 
+    /// 🔥 FIX: detect cancel
+    final isCancelled = (reservation.status ?? "").toLowerCase().contains(
+      "cancelled",
+    );
+
+    /// 🔥 FIX: smart status text
+    String getStatusText() {
+      if (reservation.status == "completed") return "تم الكشف";
+
+      if (isCancelled) return "تم إلغاء الحجز";
+
+      if (ahead <= 0) return "دورك الآن";
+
+      return "قدامك $ahead";
+    }
+
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
@@ -248,8 +264,6 @@ class _ReservationViewState extends State<ReservationView> {
                 ? AppColors.background.withValues(alpha: 0.5)
                 : AppColors.background,
         borderRadius: BorderRadius.circular(12),
-
-        /// ❌ نشيل البوردر لو finished
         border:
             isFinished
                 ? null
@@ -284,7 +298,6 @@ class _ReservationViewState extends State<ReservationView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                /// 👤 Name
                 Text(
                   reservation.patientName ?? "",
                   style: context.typography.lgBold.copyWith(
@@ -300,7 +313,6 @@ class _ReservationViewState extends State<ReservationView> {
 
                 const SizedBox(height: 6),
 
-                /// 💰 Type + Paid
                 Row(
                   children: [
                     Container(
@@ -319,18 +331,14 @@ class _ReservationViewState extends State<ReservationView> {
                         ),
                       ),
                     ),
-
                     const SizedBox(width: 6),
-
                     Text(
                       "•",
                       style: context.typography.smRegular.copyWith(
                         color: AppColors.textSecondaryParagraph,
                       ),
                     ),
-
                     const SizedBox(width: 6),
-
                     Text(
                       "${reservation.paidAmount ?? 0} ج.م",
                       style: context.typography.smMedium.copyWith(
@@ -353,36 +361,33 @@ class _ReservationViewState extends State<ReservationView> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              /// 🔢 Queue Badge
-              if (status != ReservationNewStatus.inProgress)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
+              /// 🔥 FIX: Status Badge
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color:
+                      isCancelled
+                          ? Colors.red.withValues(alpha: 0.1)
+                          : isFinished
+                          ? AppColors.successBackground.withValues(alpha: 0.3)
+                          : AppColors.successBackground.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  getStatusText(),
+                  style: context.typography.mdBold.copyWith(
                     color:
-                        isFinished
-                            ? AppColors.successBackground.withValues(alpha: 0.3)
-                            : AppColors.successBackground.withValues(
-                              alpha: 0.6,
-                            ),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    isFinished
-                        ? "تم"
-                        : ahead <= 0
-                        ? "دورك الآن"
-                        : "قدامك $ahead",
-                    style: context.typography.mdBold.copyWith(
-                      color:
-                          ahead <= 0
-                              ? AppColors.successForeground
-                              : AppColors.textSecondaryParagraph,
-                    ),
+                        isCancelled
+                            ? Colors.red
+                            : ahead <= 0
+                            ? AppColors.successForeground
+                            : AppColors.textSecondaryParagraph,
                   ),
                 ),
+              ),
 
               /// 🎯 Action Button
               if (isActive)
@@ -400,11 +405,11 @@ class _ReservationViewState extends State<ReservationView> {
   }
 
   Widget _primaryActionButton(
-      BuildContext context, {
-        required ReservationNewStatus status,
-        required ReservationModel reservation,
-        required ReservationViewModel controller,
-      }) {
+    BuildContext context, {
+    required ReservationNewStatus status,
+    required ReservationModel reservation,
+    required ReservationViewModel controller,
+  }) {
     Future<void> _handleAction({
       required ReservationStatus newStatus,
       String? cancelReason,
@@ -425,27 +430,21 @@ class _ReservationViewState extends State<ReservationView> {
         return _mainBtn(
           text: "تأكيد",
           color: AppColors.successForeground,
-          onTap: () => _handleAction(
-            newStatus: ReservationStatus.approved,
-          ),
+          onTap: () => _handleAction(newStatus: ReservationStatus.approved),
         );
 
       case ReservationNewStatus.approved:
         return _mainBtn(
           text: "ابدأ الكشف",
           color: AppColors.primary,
-          onTap: () => _handleAction(
-            newStatus: ReservationStatus.inProgress,
-          ),
+          onTap: () => _handleAction(newStatus: ReservationStatus.inProgress),
         );
 
       case ReservationNewStatus.inProgress:
         return _mainBtn(
           text: "إنهاء",
           color: AppColors.background_black,
-          onTap: () => _handleAction(
-            newStatus: ReservationStatus.completed,
-          ),
+          onTap: () => _handleAction(newStatus: ReservationStatus.completed),
         );
 
       default:

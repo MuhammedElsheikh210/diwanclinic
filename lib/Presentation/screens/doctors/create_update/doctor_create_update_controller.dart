@@ -246,19 +246,13 @@ class CreateDoctorViewModel extends GetxController {
   // ================== REFRESH ==================
 
   void refreshListView() {
-    if (medicalCenterKey != null && medicalCenterKey!.isNotEmpty) {
-      final doctorVM = initController(
-        () => DoctorViewModel.byCenter(medicalCenterKey!),
-      );
-      doctorVM.getDoctorsByCenter(medicalCenterKey!);
-      doctorVM.update();
-    } else {
+
       final doctorVM = initController(
         () => DoctorViewModel(specializeKey: specializeKey),
       );
       doctorVM.getData();
       doctorVM.update();
-    }
+
     Get.back();
   }
 

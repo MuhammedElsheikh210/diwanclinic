@@ -453,15 +453,15 @@ class DoctorDetailsViewModel extends GetxController {
           await addPatientReservation(reservation);
           // 1️⃣ إعادة ترتيب الطابور
 
-          await NotificationHandler().sendToClinicAssistants(
-            reservation: reservation,
-            title: "🩺 حجز جديد",
-            body:
-                "حجز جديد من ${reservation.patientName} بتاريخ ${reservation.appointmentDateTime}",
-            notificationType: "new_reservation",
-
-            assistants: assisList ?? [],
-          );
+          // await NotificationHandler().sendToClinicAssistants(
+          //   reservation: reservation,
+          //   title: "🩺 حجز جديد",
+          //   body:
+          //       "حجز جديد من ${reservation.patientName} بتاريخ ${reservation.appointmentDateTime}",
+          //   notificationType: "new_reservation",
+          //
+          //   assistants: assisList ?? [],
+          // );
 
           Loader.dismiss();
 

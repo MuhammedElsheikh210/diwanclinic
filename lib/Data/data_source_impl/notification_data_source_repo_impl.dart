@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:diwanclinic/Global/Utils/logger.dart';
 import 'package:firebase_database/firebase_database.dart';
 import '../../index/index_main.dart';
 
@@ -32,39 +33,47 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
   // 🎧 START LISTENING
   // ============================================================
 
+
   @override
   Future<void> startListening() async {
     await stopListening();
-
-    // ============================================================
-    // 🧠 GET CURRENT USER FROM SESSION
-    // ============================================================
 
     final sessionUser = Get.find<UserSession>().user?.user;
     final uid = sessionUser?.uid;
 
     if (uid == null || uid.isEmpty) {
+      AppLogger.warning("NOTIFICATION", "UID is null → skip listening");
       return;
     }
 
-    // ============================================================
-    // 🎧 FIREBASE QUERY
-    // ============================================================
+    /// 🔥 FIXED PATH
+    _rootRef = _database.ref("notifications/$uid");
 
-    final query = _database
-        .ref("notifications")
-        .orderByChild("to_key")
-        .equalTo(uid);
-
+    AppLogger.info("NOTIFICATION", "Start listening → notifications/$uid");
 
     // ============================================================
     // 🟢 ADDED
     // ============================================================
 
-    final addedSub = query.onChildAdded.listen((event) {
+    final addedSub = _rootRef!.onChildAdded.listen((event) {
+      AppLogger.debug(
+        "NOTIFICATION",
+        "🔥 onChildAdded → ${event.snapshot.key}",
+      );
+
       final model = _parseNotification(event.snapshot);
+
       if (model != null) {
         _addedController.add(model);
+        AppLogger.success(
+          "NOTIFICATION",
+          "Notification added → ${model.title}",
+        );
+      } else {
+        AppLogger.warning(
+          "NOTIFICATION",
+          "Failed to parse notification",
+        );
       }
     });
 
@@ -72,32 +81,65 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
     // 🔄 UPDATED
     // ============================================================
 
-    final changedSub = query.onChildChanged.listen((event) {
+    final changedSub = _rootRef!.onChildChanged.listen((event) {
+      AppLogger.debug(
+        "NOTIFICATION",
+        "🔄 onChildChanged → ${event.snapshot.key}",
+      );
+
       final model = _parseNotification(event.snapshot);
+
       if (model != null) {
         _changedController.add(model);
       }
     });
 
     // ============================================================
-    // ❌ REMOVED (Global listener)
+    // ❌ REMOVED
     // ============================================================
 
-    final removedSub = _database.ref("notifications").onChildRemoved.listen(
-          (event) {
-        final key = event.snapshot.key;
-        if (key != null) {
-          _removedController.add(key);
-        }
-      },
-    );
+    final removedSub = _rootRef!.onChildRemoved.listen((event) {
+      final key = event.snapshot.key;
+
+      AppLogger.warning(
+        "NOTIFICATION",
+        "❌ Removed → $key",
+      );
+
+      if (key != null) {
+        _removedController.add(key);
+      }
+    });
 
     _subscriptions.addAll([addedSub, changedSub, removedSub]);
   }
 
   // ============================================================
-  // 🌐 FETCH NOTIFICATIONS (ONLINE READ)
+  // 🧠 PARSE
   // ============================================================
+
+  NotificationModel? _parseNotification(DataSnapshot snapshot) {
+    final data = snapshot.value;
+
+    if (data == null || data is! Map) {
+      AppLogger.warning("NOTIFICATION", "Invalid snapshot data");
+      return null;
+    }
+
+    try {
+      final json = Map<String, dynamic>.from(
+        data.map((k, v) => MapEntry(k.toString(), v)),
+      );
+
+      json['key'] = snapshot.key;
+
+      return NotificationModel.fromJson(json);
+    } catch (e, stack) {
+      AppLogger.error("NOTIFICATION", "Parse error", e, stack);
+      return null;
+    }
+  }
+
 
   @override
   Future<List<NotificationModel>> fetchNotifications(
@@ -132,27 +174,7 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
     }
   }
 
-  // ============================================================
-  // 🧠 PARSE NOTIFICATION
-  // ============================================================
 
-  NotificationModel? _parseNotification(DataSnapshot snapshot) {
-    final data = snapshot.value;
-
-    if (data == null || data is! Map) return null;
-
-    try {
-      final json = Map<String, dynamic>.from(
-        data.map((k, v) => MapEntry(k.toString(), v)),
-      );
-
-      json['key'] = snapshot.key;
-
-      return NotificationModel.fromJson(json);
-    } catch (e) {
-      return null;
-    }
-  }
 
   // ============================================================
   // ☁️ CREATE NOTIFICATION

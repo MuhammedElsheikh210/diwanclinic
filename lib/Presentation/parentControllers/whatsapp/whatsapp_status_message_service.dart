@@ -1,7 +1,6 @@
 import 'package:diwanclinic/index/index_main.dart';
 
 class WhatsAppStatusMessageService {
-  /// 🔧 Format Egyptian phone number with +2
   static String _formatPhone(String phone) {
     var p = phone.trim();
 
@@ -12,12 +11,12 @@ class WhatsAppStatusMessageService {
     return "+2$p";
   }
 
-  /// 🔥 Main shared method
   static Future<void> sendStatusWhatsAppMessage({
     required ReservationModel reservation,
     required ClinicModel? clinic,
     bool? from_assist,
     required ReservationStatus newStatus,
+    ReservationStatus? previousStatus,
   }) async {
     try {
       final rawPhone = reservation.patientPhone ?? "";
@@ -33,15 +32,17 @@ class WhatsAppStatusMessageService {
 
       final message = _buildMessageByStatus(
         status: newStatus,
+        previousStatus: previousStatus,
         doctorName: doctorName,
         patientName: patientName,
         phone: rawPhone,
-        // 👈 نسيبها للمسج من غير +2
         from_assist: from_assist,
         androidLink: androidLink,
         iosLink: iosLink,
         reservation: reservation,
       );
+
+      if (message == null) return;
 
       await WhatsAppManager.sendMessage(to: phone, body: message);
     } catch (e) {
@@ -49,9 +50,9 @@ class WhatsAppStatusMessageService {
     }
   }
 
-  /// 🔥 Build a smart WhatsApp message
-  static String _buildMessageByStatus({
+  static String? _buildMessageByStatus({
     required ReservationStatus status,
+    required ReservationStatus? previousStatus,
     required String doctorName,
     required String patientName,
     required String phone,
@@ -63,13 +64,25 @@ class WhatsAppStatusMessageService {
     final hasApp = _hasApp(reservation);
 
     switch (status) {
+
     // ============================================================
     // ✅ COMPLETED
     // ============================================================
       case ReservationStatus.completed:
         final baseMessage = """
-👨‍⚕️ *من عيادة د. $doctorName*
-الكشف خلص يا $patientName، وتقدر الآن تطلب علاجك بخصم يصل ل 10٪؜ ويوصلك لحد البيت 🚚
+🎉 *ألف سلامة عليك يا $patientName!*
+
+👨‍⚕️ من عيادة *د. $doctorName*  
+تم الانتهاء من الكشف بنجاح ✅
+
+💊 *هنبعتلك علاجك بسهولة لحد البيت 👇*
+
+📱 اضغط *اطلب علاجك* من التطبيق  
+📸 صوّر الروشتة وارفعها  
+💰 وهنبعتلك السعر في ثواني  
+✔️ وافق على الطلب  
+🚚 ويوصلك لحد باب البيت بخصم يصل الي 10%*
+✨ كل ده وانت في مكانك 💙
 """;
 
         if (hasApp) return baseMessage;
@@ -86,23 +99,49 @@ class WhatsAppStatusMessageService {
     // ============================================================
       case ReservationStatus.approved:
         final orderNum = reservation.orderNum ?? "-";
+        final isFromPending =
+            previousStatus == ReservationStatus.pending;
 
-        final baseMessage = from_assist == true
+        final baseMessage =
+        isFromPending
             ? """
-⏳ *تم تسجيل حجزك يا $patientName* عند د. $doctorName ✔️
+✅ *تم تأكيد حجزك يا $patientName!*
 
-🔢 *رقم حجزك:* $orderNum  
-تابع دورك بسهولة من تطبيق *لينك*  
-الدور بيتحدّث باستمرار.
+👨‍⚕️ عند *د. $doctorName*  
+🔢 رقم الحجز: *$orderNum*
 
-🎁 بعد الكشف تقدر تطلب العلاج  
-بخصم يوصل لـ *10%* 🚚
+⏳ تابع دورك لحظة بلحظة من تطبيق *لينك*  
+وخليك جاهز… دورك قرب 😉
+
+💊 *بعد الكشف هنبعتلك علاجك بسهولة لحد البيت 👇*
+
+📱 اضغط *اطلب علاجك* من التطبيق  
+📸 صوّر الروشتة وارفعها  
+💰 وهنبعتلك السعر في ثواني  
+✔️ وافق على الطلب  
+🚚 ويوصلك لحد باب البيت بخصم يصل الي 10%*
+
+📲 حمل التطبيق وابدأ:
 """
             : """
-⏳ *تم استلام حجزك يا $patientName* عند د. $doctorName ✔️
+📌 *حجزك اتسجل بنجاح يا $patientName!*
 
-🔢 *رقم الحجز:* $orderNum  
-تابع دورك أول بأول من تطبيق *لينك* 📱
+👨‍⚕️ عند *د. $doctorName*  
+🔢 رقمك في الكشف: *$orderNum*
+
+⏳ تابع دورك بسهولة من تطبيق *لينك*  
+📡 التحديث بيتم لحظيًا
+
+💊 *بعد الكشف هنبعتلك علاجك بسهولة لحد البيت 👇*
+
+📱 اضغط *اطلب علاجك* من التطبيق  
+📸 صوّر الروشتة وارفعها  
+💰 وهنبعتلك السعر في ثواني  
+
+✔️ وافق على الطلب  
+🚚 ويوصلك لحد باب البيت  
+
+💸 *بخصم 10%*
 """;
 
         if (hasApp) return baseMessage;
@@ -114,25 +153,16 @@ class WhatsAppStatusMessageService {
               iosLink: iosLink,
             );
 
-    // ============================================================
-    // 🔁 DEFAULT
-    // ============================================================
       default:
-        return "تم تحديث حالة الحجز.";
+        return null;
     }
   }
 
-// ============================================================
-// 🔧 HELPERS
-// ============================================================
-
-  /// ✅ Check if patient has app
   static bool _hasApp(ReservationModel reservation) {
     return reservation.patientFcm != null &&
         reservation.patientFcm!.trim().isNotEmpty;
   }
 
-  /// ✅ Build app links block
   static String _buildAppLinks({
     required String phone,
     required String androidLink,
@@ -140,21 +170,17 @@ class WhatsAppStatusMessageService {
   }) {
     return """
 
-📱 *طريقة الدخول للتطبيق:*
-✍️ اسم المستخدم: *رقم الموبايل*  
-🔐 كلمة السر: *رقم الموبايل نفسه*  
-(اكتب نفس الرقم في الخانتين)
+📱 *ادخل على التطبيق بسهولة:*
+👤 اسم المستخدم: *رقم موبايلك*  
+🔐 كلمة السر: *نفس الرقم*
 
 📞 رقمك: $phone
 
-📱 أندرويد: $androidLink  
+📲 أندرويد: $androidLink  
 🍎 آيفون: $iosLink
 """;
   }
-}
-
-// ============================================================================
-// 📦 ORDERS WHATSAPP
+}// 📦 ORDERS WHATSAPP
 // ============================================================================
 class WhatsAppOrderMessageService {
   /// 🔧 Format phone

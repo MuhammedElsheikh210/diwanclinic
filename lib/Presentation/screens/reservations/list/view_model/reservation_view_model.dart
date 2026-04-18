@@ -340,21 +340,43 @@ class ReservationViewModel extends GetxController {
   }
 
   Future<void> _handleSideEffects(
-    ReservationModel reservation,
-    ReservationStatus newStatus,
-    String? cancelReason,
-  ) async {
+      ReservationModel reservation,
+      ReservationStatus newStatus,
+      String? cancelReason,
+      ) async {
     try {
-      // ❌ لا notification
-      // ❌ لا WhatsApp
-
+      /// ✅ WhatsApp
       await WhatsAppStatusMessageService.sendStatusWhatsAppMessage(
         reservation: reservation,
         clinic: selectedClinic,
         newStatus: newStatus,
       );
 
-      // ✅ Queue فقط
+      /// 🔥 NEW: SAVE NOTIFICATION
+      final text = _buildNotificationText(
+        reservation,
+        newStatus,
+        cancelReason,
+      );
+
+      if (text != null && reservation.patientUid != null) {
+        await NotificationPatentService().addNotificationData(
+          notification: NotificationModel.newNotification(
+            title: text.$1,
+            body: text.$2,
+            reservationKey: reservation.key,
+            toKey: reservation.patientUid!, // 🔥 مهم
+            userType: UserType.patient,
+            notificationType: newStatus.value,
+            extraData: reservation.toJson(),
+          ),
+          voidCallBack: (status) {
+            debugPrint("💾 Saved notification → $status");
+          },
+        );
+      }
+
+      /// ✅ Queue
       if (newStatus == ReservationStatus.completed) {
         await _handleQueueUpdate();
       }
@@ -364,51 +386,8 @@ class ReservationViewModel extends GetxController {
     }
   }
 
-  bool _shouldSendStatusNotification(ReservationStatus status) {
-    return [
-      ReservationStatus.approved,
-      ReservationStatus.completed,
-      ReservationStatus.cancelledByAssistant,
-      ReservationStatus.cancelledByDoctor,
-      ReservationStatus.cancelledByUser,
-    ].contains(status);
-  }
 
-  Future<void> _sendStatusNotification(
-    ReservationModel reservation,
-    ReservationStatus newStatus,
-    String? cancelReason,
-  ) async {
-    try {
-      await NotificationHandler().sendStatusNotification(
-        newStatus: newStatus,
-        reservation: reservation,
-        toToken: reservation.patientFcm!,
-        cancelReason: cancelReason,
-      );
 
-      if (newStatus == ReservationStatus.completed ||
-          newStatus == ReservationStatus.approved) {
-        await WhatsAppStatusMessageService.sendStatusWhatsAppMessage(
-          reservation: reservation,
-          clinic: selectedClinic,
-          newStatus: newStatus,
-        );
-      }
-    } catch (e, s) {
-      debugPrint("❌ Notification Error: $e");
-      debugPrintStack(stackTrace: s);
-    }
-
-    if (newStatus == ReservationStatus.completed ||
-        newStatus == ReservationStatus.approved) {
-      await WhatsAppStatusMessageService.sendStatusWhatsAppMessage(
-        reservation: reservation,
-        clinic: selectedClinic,
-        newStatus: newStatus,
-      );
-    }
-  }
 
   Future<void> _handleQueueUpdate() async {
     final snapshot = List<ReservationModel>.from(
@@ -612,5 +591,37 @@ extension ReservationData on ReservationViewModel {
             : DatesUtilis.humanizeTimestamp(reservation.createdAt);
 
     update();
+  }
+}
+
+
+(String, String)? _buildNotificationText(
+    ReservationModel r,
+    ReservationStatus status,
+    String? cancelReason,
+    ) {
+  switch (status) {
+    case ReservationStatus.approved:
+      return (
+      "تم تأكيد الحجز ✅",
+      "حجزك رقم ${r.orderNum} تم تأكيده بنجاح 👍",
+      );
+
+    case ReservationStatus.completed:
+      return (
+      "تم الانتهاء من الكشف 🎉",
+      "نتمنى لك الشفاء 💙 تقدر تطلب علاجك ويوصلك لحد البيت 🚚",
+      );
+
+    case ReservationStatus.cancelledByAssistant:
+    case ReservationStatus.cancelledByDoctor:
+    case ReservationStatus.cancelledByUser:
+      return (
+      "تم إلغاء الحجز",
+      cancelReason ?? "تم إلغاء الحجز. يمكنك الحجز مرة أخرى في أي وقت 🙏",
+      );
+
+    default:
+      return null;
   }
 }

@@ -84,7 +84,6 @@ class _CenterDoctorsViewState extends State<CenterDoctorsView>
         children: [
           /// ================== 👨‍⚕️ DOCTORS TAB ==================
           GetBuilder<DoctorViewModel>(
-            init: DoctorViewModel.byCenter(widget.center.key ?? ""),
             builder: (controller) {
               return controller.listDoctors == null
                   ? const ShimmerLoader()

@@ -6,11 +6,6 @@ class DoctorViewModel extends GetxController {
 
   DoctorViewModel({required this.specializeKey});
 
-  /// ✅ NEW Constructor for Medical Center
-  DoctorViewModel.byCenter(String centerKey) : specializeKey = "" {
-    getDoctorsByCenter(centerKey);
-  }
-
   @override
   Future<void> onInit() async {
     if (specializeKey.isNotEmpty) {
@@ -20,36 +15,16 @@ class DoctorViewModel extends GetxController {
   }
 
   void getData() {
-    AuthenticationService().getClientsData(
-      query: SQLiteQueryParams(
-        where:
-            "specialize_key = ? AND userType = ?",
-        whereArgs: [specializeKey, "doctor"],
-      ),
-      voidCallBack: (data) {
-        listDoctors = data;
-        print("listDoctors is ${listDoctors}");
+    AuthenticationService().getClientsOnlineData(
+      firebaseFilter: FirebaseFilter(orderBy: "userType", equalTo: "doctor"),
+      voidCallBack: (users) {
+        listDoctors = users;
         update();
       },
     );
   }
 
   /// ✅ NEW
-  void getDoctorsByCenter(String centerKey) {
-    print("centerKey is ${centerKey}");
-    AuthenticationService().getClientsData(
-      query: SQLiteQueryParams(
-        where:
-        "medicalCenterKey = ? AND userType = ? AND remote_reservation_ability = ?",
-        whereArgs: [centerKey, "doctor", 1],
-      ),
-      voidCallBack: (data) {
-        print("data in doctors is ${data.length}");
-        listDoctors = data;
-        update();
-      },
-    );
-  }
 
   void deleteDoctor(LocalUser doctor) {
     AuthenticationService().deleteClientsData(
