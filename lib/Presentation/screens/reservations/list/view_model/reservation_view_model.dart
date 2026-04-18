@@ -275,7 +275,6 @@ class ReservationViewModel extends GetxController {
     );
   }
 
-
   Future<void> changeReservationStatus({
     required ReservationModel reservation,
     required ReservationStatus newStatus,
@@ -305,13 +304,19 @@ class ReservationViewModel extends GetxController {
         if (cancelReason != null) "cancelReason": cancelReason,
       };
 
-      /// 🔥 TRIGGER Firebase Function
+      /// 🔥 UPDATE DOCTOR (trigger function)
       await ref.update(updateData);
+
+      /// ✅ 🔥🔥🔥 UPDATE PATIENT COPY
+      await PatientReservationService().updateReservationData(
+        reservation: reservation.copyWith(status: newStatus.value),
+        voidCallBack: (_) {},
+      );
 
       /// ✅ UI Update
       _updateListInMemory(reservation);
 
-      /// ✅ Side Effects (Queue only)
+      /// ✅ Side Effects
       _runSideEffectsInBackground(reservation, newStatus, cancelReason);
 
       Loader.showSuccess("تم تحديث الحالة إلى ${newStatus.label}");
@@ -342,6 +347,12 @@ class ReservationViewModel extends GetxController {
     try {
       // ❌ لا notification
       // ❌ لا WhatsApp
+
+      await WhatsAppStatusMessageService.sendStatusWhatsAppMessage(
+        reservation: reservation,
+        clinic: selectedClinic,
+        newStatus: newStatus,
+      );
 
       // ✅ Queue فقط
       if (newStatus == ReservationStatus.completed) {
