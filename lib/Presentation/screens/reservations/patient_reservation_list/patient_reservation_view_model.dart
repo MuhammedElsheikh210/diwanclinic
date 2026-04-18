@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:diwanclinic/Presentation/parentControllers/patientReservationService.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:intl/intl.dart';
 
@@ -85,10 +86,64 @@ class ReservationPatientViewModel extends GetxController {
   ];
 
   @override
-  Future<void> onInit() async {
+  void onInit() {
     super.onInit();
-    getReservations();
-    getSyncReservations(initLocalData: true);
+
+    startRealtimeReservations(); // ✅ هنا الصح
+  }
+
+  Future<void> startRealtimeReservations() async {
+    final service = PatientReservationService(); // ✅ FIX (مش new)
+
+    final patientUid = Get.find<UserSession>().user?.uid;
+
+    if (patientUid == null || patientUid.isEmpty) {
+      debugPrint("❌ No patientUid");
+      return;
+    }
+
+
+    listReservations = [];
+
+    // ➕ ADDED
+    service.onReservationAdded = (reservation) {
+      debugPrint("📥 VM Added → ${reservation.key}");
+      _updateList(reservation);
+    };
+
+    // 🔄 UPDATED
+    service.onReservationUpdated = (reservation) {
+      debugPrint("🔄 VM Updated → ${reservation.key}");
+      _updateList(reservation);
+    };
+
+    // ❌ REMOVED
+    service.onReservationRemoved = (key) {
+      debugPrint("❌ VM Removed → $key");
+
+      listReservations?.removeWhere((e) => e?.key == key);
+
+      update();
+    };
+  }
+
+  void _updateList(ReservationModel model) {
+    listReservations ??= [];
+
+    final index = listReservations!.indexWhere((e) => e?.key == model.key);
+
+    if (index != -1) {
+      listReservations![index] = model;
+    } else {
+      listReservations!.insert(0, model);
+    }
+
+    // 🔥 مهم جدًا علشان ترتيب الريل تايم
+    listReservations!.sort(
+      (a, b) => (b?.createdAt ?? 0).compareTo(a?.createdAt ?? 0),
+    );
+
+    update();
   }
 
   Future<void> loadLegacyQueueCount({
@@ -171,19 +226,14 @@ class ReservationPatientViewModel extends GetxController {
         voidCallBack: (_) {},
       );
 
-      // 2️⃣ Update patient meta
-      await ReservationService().updatePatientReservationData(
-        key: updated.key ?? "",
-        data: updated,
+      await PatientReservationService().updateReservationData(
+        reservation: updated,
         voidCallBack: (_) {},
       );
     }
     await _updateClientsSyncStatus();
     debugPrint("✅ [FCM SYNC] Finished updating tokens");
     debugPrint("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-
-    // 🔄 Reload reservations
-    getReservations();
   }
 
   Future<void> _updateClientsSyncStatus() async {
@@ -251,80 +301,6 @@ class ReservationPatientViewModel extends GetxController {
     return legacyQueueCount + activeOnlineAhead;
   }
 
-  Future<List<ReservationModel?>> loadMyReservations() async {
-    final patientKey = Get.find<UserSession>().user?.uid ?? "";
-
-    if (patientKey.isEmpty) return [];
-
-    // Loader.show();
-
-    // 1) جِب الميتا كـ Future
-    final metaList = await ReservationService().getPatientMetaAsync(patientKey);
-    // 3) فرز NEW -> OLD
-    metaList.sort((a, b) {
-      final int timeA = a.createdAt ?? 0;
-      final int timeB = b.createdAt ?? 0;
-      return timeB.compareTo(timeA);
-    });
-
-    Loader.dismiss();
-    update();
-
-    return metaList;
-  }
-
-  void getReservations() {
-    final patientKey = Get.find<UserSession>().user?.uid ?? "";
-
-    ReservationService().getPatientReservationsMeta(
-      patientKey: patientKey,
-      voidCallBack: (list) async {
-        listReservations = list;
-
-        await syncMissingFcmTokenForMyReservations();
-
-        // 🔥 أول reservation نستخدمها
-        final first = list.whereType<ReservationModel>().firstOrNull;
-
-        if (first != null) {
-          final legacyDate = DateFormat(
-            'dd-MM-yyyy',
-          ).format(DateFormat('dd-MM-yyyy').parse(first.appointmentDateTime!));
-
-          await loadLegacyQueueCount(
-            doctorUid: first.doctorUid ?? "",
-            clinicKey: first.clinicKey ?? "",
-            date: legacyDate,
-          );
-
-          print("🔥 legacyQueueCount = $legacyQueueCount");
-        }
-
-        update();
-      },
-    );
-  }
-
-  void getSyncReservations({bool? initLocalData}) {
-    syncService.listen(
-      selectedClinic: selectedClinic,
-      appointmentDate: appointment_date_time,
-      onAddLocal: (model) async {
-        initLocalData = null;
-        getReservations();
-      },
-      onUpdatedLocal: (model) async {
-        initLocalData = null;
-        await updateReservation(model, localOnly: true);
-      },
-      onReloadLocal: () {
-        if (initLocalData == null) {
-          getReservations();
-        }
-      },
-    );
-  }
-
   Future<void> openOrderConfirmationSheet({
     required BuildContext context,
     required ReservationModel reservation,
@@ -387,13 +363,13 @@ class ReservationPatientViewModel extends GetxController {
           (_) => PrescriptionPatientBottomSheetWidget(
             reservation: reservation,
             onUpdated: () {
-              getReservations();
-              HomePatientController controller = initController(
-                () => HomePatientController(),
-              );
-              controller.reservationVM.getReservations();
-              controller.update();
-              update();
+              // getReservations();
+              // HomePatientController controller = initController(
+              //   () => HomePatientController(),
+              // );
+              // controller.reservationVM.getReservations();
+              // controller.update();
+              // update();
             },
           ),
     );
@@ -416,22 +392,18 @@ class ReservationPatientViewModel extends GetxController {
             await ReservationService().updateReservationData(
               reservation: reservation,
 
-              voidCallBack: (_) {
-                ReservationService().updatePatientReservationData(
-                  key: reservation.key ?? "",
-                  data: reservation,
+              voidCallBack: (_) async {
+                await PatientReservationService().updateReservationData(
+                  reservation: reservation,
                   voidCallBack: (_) {
-                    getReservations();
-                    HomePatientController controller = initController(
-                      () => HomePatientController(),
-                    );
-                    controller.reservationVM.getReservations();
-                    controller.update();
-
-                    update();
+                    // HomePatientController controller = initController(
+                    //   () => HomePatientController(),
+                    // );
+                    //
+                    // controller.update();
+                    // update();
                   },
                 );
-                update();
               },
             );
 
@@ -516,22 +488,10 @@ class ReservationPatientViewModel extends GetxController {
     );
   }
 
-  /// Update reservation locally / remotely
   Future<void> updatePatientReservation(ReservationModel reservation) async {
-    await ReservationService().updatePatientReservationData(
-      data: reservation,
-      key: reservation.key ?? "",
-
-      voidCallBack: (_) {
-        getReservations();
-        HomePatientController controller = initController(
-          () => HomePatientController(),
-        );
-        controller.reservationVM.getReservations();
-        controller.fetchOrders();
-        controller.update();
-        Loader.dismiss();
-      },
+    await PatientReservationService().updateReservationData(
+      reservation: reservation,
+      voidCallBack: (_) {},
     );
   }
 
@@ -539,7 +499,7 @@ class ReservationPatientViewModel extends GetxController {
   void deleteReservation(ReservationModel reservation) {
     ReservationService().deleteReservationData(
       reservationKey: reservation.key ?? "",
-      voidCallBack: (_) => getReservations(),
+      voidCallBack: (_) => {},
     );
   }
 
@@ -549,7 +509,6 @@ class ReservationPatientViewModel extends GetxController {
     selectedStatus = null;
     create_at = null;
     _isInitialLoad = true;
-    getReservations();
   }
 
   bool get hasActiveFilters =>
@@ -565,7 +524,6 @@ class ReservationPatientViewModel extends GetxController {
         "label": "العيادة: ${selectedClinic?.title ?? ''}",
         "onRemove": () {
           selectedClinic = null;
-          getReservations();
           update();
         },
       });
@@ -575,7 +533,6 @@ class ReservationPatientViewModel extends GetxController {
         "label": "الوردية: ${selectedShift?.name ?? ''}",
         "onRemove": () {
           selectedShift = null;
-          getReservations();
           update();
         },
       });
@@ -585,7 +542,6 @@ class ReservationPatientViewModel extends GetxController {
         "label": "الحالة: ${selectedStatus!.label}",
         "onRemove": () {
           selectedStatus = null;
-          getReservations();
           update();
         },
       });
@@ -598,7 +554,6 @@ class ReservationPatientViewModel extends GetxController {
         "label": "التاريخ: $date",
         "onRemove": () {
           create_at = null;
-          getReservations();
           update();
         },
       });

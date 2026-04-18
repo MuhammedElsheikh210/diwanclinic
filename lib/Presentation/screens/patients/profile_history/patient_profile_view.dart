@@ -198,7 +198,7 @@ class _PatientProfileViewState extends State<PatientProfileView> {
   String _calculateAge(String? birthday) {
     if (birthday == null || birthday.isEmpty) return "-";
     try {
-      final birthDate = DateFormat("dd/MM/yyyy").parse(birthday);
+      final birthDate = DateFormat("dd-MM-yyyy").parse(birthday);
       final today = DateTime.now();
       int age = today.year - birthDate.year;
       if (today.month < birthDate.month ||

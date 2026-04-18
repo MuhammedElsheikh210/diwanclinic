@@ -97,8 +97,6 @@ class AuthenticationDataSourceRepoImpl extends AuthenticationDataSourceRepo {
     }
 
     final localServerTime = _parseToInt(local['serverUpdatedAt']);
-    print("local is ${local}");
-    print("localServerTime is ${localServerTime}");
 
     if (serverTime >= localServerTime) {
       await _sqliteRepo.updateItem(json);

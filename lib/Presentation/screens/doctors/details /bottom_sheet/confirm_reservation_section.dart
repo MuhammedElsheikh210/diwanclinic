@@ -199,74 +199,85 @@ class _SelectReservationDateBottomSheetState
                     controller.listShifts == null
                         ? const SizedBox()
                         : Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: controller.listShifts!.map((shift) {
-                              final isSelected =
-                                  controller.selectedShift?.key == shift?.key;
+                          spacing: 8,
+                          runSpacing: 8,
+                          children:
+                              controller.listShifts!.map((shift) {
+                                final isSelected =
+                                    controller.selectedShift?.key == shift?.key;
 
-                              return GestureDetector(
-                                onTap: () {
-                                  controller.selectedShift = shift;
-                                  controller
-                                      .loadExpectedOrderFromExistingData();
-                                  controller.update();
-                                },
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 10,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? AppColors.primary.withValues(
-                                            alpha: 0.1,
-                                          )
-                                        : Colors.white,
-                                    borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(
-                                      color: isSelected
-                                          ? AppColors.primary
-                                          : Colors.grey.shade300,
-                                      width: 1.5,
+                                return GestureDetector(
+                                  onTap: () async {
+                                    controller.selectedShift = shift;
+
+                                    // 🔥 أهم حاجة
+                                    await controller
+                                        .loadLegacyQueueForSelectedDate();
+                                    await controller
+                                        .loadOpenCloseStatusForSelectedDate();
+
+                                    controller.update();
+                                  },
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 10,
                                     ),
-                                    boxShadow: isSelected
-                                        ? [
-                                            BoxShadow(
-                                              color: AppColors.primary
-                                                  .withValues(alpha: 0.15),
-                                              blurRadius: 8,
-                                              offset: const Offset(0, 3),
-                                            ),
-                                          ]
-                                        : [],
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.access_time,
-                                        size: 18,
-                                        color: isSelected
-                                            ? AppColors.primary
-                                            : Colors.grey,
+                                    decoration: BoxDecoration(
+                                      color:
+                                          isSelected
+                                              ? AppColors.primary.withValues(
+                                                alpha: 0.1,
+                                              )
+                                              : Colors.white,
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(
+                                        color:
+                                            isSelected
+                                                ? AppColors.primary
+                                                : Colors.grey.shade300,
+                                        width: 1.5,
                                       ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        shift?.name ?? "",
-                                        style: typography.mdMedium.copyWith(
-                                          color: isSelected
-                                              ? AppColors.primary
-                                              : Colors.grey.shade700,
+                                      boxShadow:
+                                          isSelected
+                                              ? [
+                                                BoxShadow(
+                                                  color: AppColors.primary
+                                                      .withValues(alpha: 0.15),
+                                                  blurRadius: 8,
+                                                  offset: const Offset(0, 3),
+                                                ),
+                                              ]
+                                              : [],
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.access_time,
+                                          size: 18,
+                                          color:
+                                              isSelected
+                                                  ? AppColors.primary
+                                                  : Colors.grey,
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          shift?.name ?? "",
+                                          style: typography.mdMedium.copyWith(
+                                            color:
+                                                isSelected
+                                                    ? AppColors.primary
+                                                    : Colors.grey.shade700,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
+                                );
+                              }).toList(),
+                        ),
                   ],
                 ),
 
@@ -282,68 +293,73 @@ class _SelectReservationDateBottomSheetState
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: controller.reservationTypes.map((type) {
-                          final isSelected =
-                              controller.selectedReservationType == type;
+                        children:
+                            controller.reservationTypes.map((type) {
+                              final isSelected =
+                                  controller.selectedReservationType == type;
 
-                          return GestureDetector(
-                            onTap: () {
-                              controller.selectedReservationType = type;
-                              controller.update();
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? AppColors.primary.withOpacity(0.1)
-                                    : Colors.white,
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? AppColors.primary
-                                      : Colors.grey.shade300,
-                                  width: 1.5,
-                                ),
-                                boxShadow: isSelected
-                                    ? [
-                                        BoxShadow(
-                                          color: AppColors.primary.withOpacity(
-                                            0.15,
-                                          ),
-                                          blurRadius: 8,
-                                          offset: const Offset(0, 3),
-                                        ),
-                                      ]
-                                    : [],
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.check_circle,
-                                    size: 18,
-                                    color: isSelected
-                                        ? AppColors.primary
-                                        : Colors.transparent,
+                              return GestureDetector(
+                                onTap: () {
+                                  controller.selectedReservationType = type;
+                                  controller.update();
+                                },
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 10,
                                   ),
-                                  if (isSelected) const SizedBox(width: 6),
-                                  Text(
-                                    type,
-                                    style: typography.mdMedium.copyWith(
-                                      color: isSelected
-                                          ? AppColors.primary
-                                          : Colors.grey.shade700,
+                                  decoration: BoxDecoration(
+                                    color:
+                                        isSelected
+                                            ? AppColors.primary.withOpacity(0.1)
+                                            : Colors.white,
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color:
+                                          isSelected
+                                              ? AppColors.primary
+                                              : Colors.grey.shade300,
+                                      width: 1.5,
                                     ),
+                                    boxShadow:
+                                        isSelected
+                                            ? [
+                                              BoxShadow(
+                                                color: AppColors.primary
+                                                    .withOpacity(0.15),
+                                                blurRadius: 8,
+                                                offset: const Offset(0, 3),
+                                              ),
+                                            ]
+                                            : [],
                                   ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }).toList(),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.check_circle,
+                                        size: 18,
+                                        color:
+                                            isSelected
+                                                ? AppColors.primary
+                                                : Colors.transparent,
+                                      ),
+                                      if (isSelected) const SizedBox(width: 6),
+                                      Text(
+                                        type,
+                                        style: typography.mdMedium.copyWith(
+                                          color:
+                                              isSelected
+                                                  ? AppColors.primary
+                                                  : Colors.grey.shade700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }).toList(),
                       ),
                     ],
                   ),
@@ -458,9 +474,10 @@ class _SelectReservationDateBottomSheetState
                         );
                         controller.onSelectDate(pickedDate);
                       },
-                      initialTimestamp: controller.selectedDate != null
-                          ? controller.selectedDate!.millisecondsSinceEpoch
-                          : DateTime.now().millisecondsSinceEpoch,
+                      initialTimestamp:
+                          controller.selectedDate != null
+                              ? controller.selectedDate!.millisecondsSinceEpoch
+                              : DateTime.now().millisecondsSinceEpoch,
                       hintText: "اختر تاريخ الحجز",
                     ),
                   ],
@@ -469,12 +486,8 @@ class _SelectReservationDateBottomSheetState
                 SizedBox(height: 15.h),
 
                 if (!controller.isSelectedDayClosed) ...[
-                  if (controller.isLoadingOrderInfo)
-                    Padding(
-                      padding: EdgeInsets.symmetric(vertical: 12.h),
-                      child: const CircularProgressIndicator(),
-                    )
-                  else if (controller.beforeYouCount != null)
+                  // ⚡ حالة الكشف المستعجل
+                  if (controller.selectedReservationType == "كشف مستعجل")
                     Container(
                       width: double.infinity,
                       padding: EdgeInsets.all(12.w),
@@ -484,25 +497,103 @@ class _SelectReservationDateBottomSheetState
                         borderRadius: BorderRadius.circular(12.r),
                         border: Border.all(color: AppColors.primary40),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "👥 هيكون قبلك ${controller.beforeYouCount} حالة ",
-                            style: typography.mdBold.copyWith(
-                              color: AppColors.primary,
-                            ),
-                          ),
-                          SizedBox(height: 6.h),
-                          Text(
-                            "📌 دورك رقم ${controller.expectedOrder}",
-                            style: typography.smRegular.copyWith(
-                              color: AppColors.textSecondaryParagraph,
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        "⚡ يتم استقبال الحالات المستعجلة فور الوصول، يُرجى التنسيق مع المساعدة لضمان سرعة الخدمة",
+                        style: typography.mdMedium.copyWith(
+                          color: AppColors.primary,
+                        ),
                       ),
-                    ),
+                    )
+                  // 🧠 باقي الحالات (عادي / إعادة)
+                  else ...[
+                    if (controller.isLoadingOrderInfo)
+                      Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        child: const CircularProgressIndicator(),
+                      )
+                    else if (controller.beforeYouCount != null)
+                      Container(
+                        width: double.infinity,
+                        margin: EdgeInsets.only(top: 12.h),
+                        padding: EdgeInsets.all(14.w),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppColors.primary.withOpacity(0.08),
+                              AppColors.primary.withOpacity(0.03),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(16.r),
+                          border: Border.all(
+                            color: AppColors.primary.withOpacity(0.2),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.04),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            // 🔵 Icon Circle
+                            Container(
+                              padding: EdgeInsets.all(10.w),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.groups_rounded,
+                                color: AppColors.primary,
+                                size: 22.sp,
+                              ),
+                            ),
+
+                            SizedBox(width: 12.w),
+
+                            // 📊 Texts
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // 👥 قبلّك
+                                  Text(
+                                    "هيكون قبلك ${controller.beforeYouCount} حالة",
+                                    style: typography.mdMedium.copyWith(
+                                      color: AppColors.textDisplay,
+                                    ),
+                                  ),
+
+                                  SizedBox(height: 4.h),
+
+                                  // 📌 دورك
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.confirmation_number_outlined,
+                                        size: 16.sp,
+                                        color: AppColors.primary,
+                                      ),
+                                      SizedBox(width: 4.w),
+                                      Text(
+                                        "دورك رقم ${controller.expectedOrder}",
+                                        style: typography.lgBold.copyWith(
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
                 ],
 
                 SizedBox(height: 20.h),

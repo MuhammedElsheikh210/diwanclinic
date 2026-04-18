@@ -10,10 +10,6 @@ class ReservationRemoteDataSourceImpl implements ReservationRemoteDataSource {
   DatabaseReference? _rootRef;
   final List<StreamSubscription> _subscriptions = [];
 
-  // ============================================================
-  // 🌊 STREAM CONTROLLERS
-  // ============================================================
-
   final _addedController = StreamController<ReservationModel>.broadcast();
   final _changedController = StreamController<ReservationModel>.broadcast();
   final _removedController = StreamController<String>.broadcast();
@@ -27,10 +23,6 @@ class ReservationRemoteDataSourceImpl implements ReservationRemoteDataSource {
   @override
   Stream<String> get onRemoved => _removedController.stream;
 
-  // ============================================================
-  // 🎧 START LISTENING
-  // ============================================================
-
   @override
   Future<void> startListening({required String doctorKey}) async {
     await stopListening();
@@ -38,13 +30,11 @@ class ReservationRemoteDataSourceImpl implements ReservationRemoteDataSource {
     final path = "doctors/$doctorKey/reservations";
     _rootRef = _database.ref(path);
 
-    print("🎧 Listening on → $path");
 
     final dateSub = _rootRef!.onChildAdded.listen((dateEvent) {
       final dateKey = dateEvent.snapshot.key;
       if (dateKey == null) return;
 
-      print("📅 Date detected → $dateKey");
 
       // ✅ Build correct reference manually
       final dateRef = _rootRef!.child(dateKey);
@@ -55,19 +45,13 @@ class ReservationRemoteDataSourceImpl implements ReservationRemoteDataSource {
     _subscriptions.add(dateSub);
   }
 
-  // ============================================================
-  // 📅 LISTEN INSIDE DATE NODE
-  // ============================================================
-
   void _listenInsideDate(DatabaseReference dateRef) {
-    print("📂 Entering date → ${dateRef.key}");
 
     // ➕ Reservation Added
     final addedSub = dateRef.onChildAdded.listen((event) {
       final key = event.snapshot.key;
       if (key == null) return;
 
-      print("➕ Reservation Added → $key");
 
       final model = _parseReservation(event.snapshot);
       if (model != null) _addedController.add(model);
@@ -78,7 +62,6 @@ class ReservationRemoteDataSourceImpl implements ReservationRemoteDataSource {
       final key = event.snapshot.key;
       if (key == null) return;
 
-      print("🔄 Reservation Changed → $key");
 
       final model = _parseReservation(event.snapshot);
       if (model != null) _changedController.add(model);
@@ -89,16 +72,11 @@ class ReservationRemoteDataSourceImpl implements ReservationRemoteDataSource {
       final key = event.snapshot.key;
       if (key == null) return;
 
-      print("❌ Reservation Removed → $key");
       _removedController.add(key);
     });
 
     _subscriptions.addAll([addedSub, changedSub, removedSub]);
   }
-
-  // ============================================================
-  // 🧠 PARSE RESERVATION
-  // ============================================================
 
   ReservationModel? _parseReservation(DataSnapshot snapshot) {
     final data = snapshot.value;
@@ -114,66 +92,37 @@ class ReservationRemoteDataSourceImpl implements ReservationRemoteDataSource {
 
       return ReservationModel.fromJson(json);
     } catch (e) {
-      print("🔥 Parse error → $e");
       return null;
     }
   }
 
-  // ============================================================
-  // ☁️ CREATE
-  // ============================================================
-
   @override
   Future<void> createReservation(ReservationModel reservation) async {
     final path = _buildPath(reservation);
-    print("☁️ Create → $path");
     await _database.ref(path).set(reservation.toJson());
   }
-
-  // ============================================================
-  // 🔄 UPDATE
-  // ============================================================
 
   @override
   Future<void> updateReservation(ReservationModel reservation) async {
     final path = _buildPath(reservation);
-    print("☁️ Update → $path");
     await _database.ref(path).update(reservation.toJson());
   }
-
-  // ============================================================
-  // ❌ DELETE
-  // ============================================================
 
   @override
   Future<void> deleteReservation(ReservationModel reservation) async {
     final path = _buildPath(reservation);
-    print("☁️ Delete → $path");
     await _database.ref(path).remove();
   }
-
-  // ============================================================
-  // 🔧 HELPERS
-  // ============================================================
 
   String _buildPath(ReservationModel reservation) {
     final normalizedDate = AppDateFormatter.toDash(
       reservation.appointmentDateTime,
-    );
-    print(
-      "path in reservation is ${"doctors/${reservation.doctorUid}"
-          "/reservations/$normalizedDate"
-          "/${reservation.key}"}",
     );
 
     return "doctors/${reservation.doctorUid}"
         "/reservations/$normalizedDate"
         "/${reservation.key}";
   }
-
-  // ============================================================
-  // 🛑 STOP LISTENING
-  // ============================================================
 
   @override
   Future<void> stopListening() async {
@@ -183,6 +132,53 @@ class ReservationRemoteDataSourceImpl implements ReservationRemoteDataSource {
     _subscriptions.clear();
     _rootRef = null;
 
-    print("🛑 Listeners stopped");
+  }
+
+  @override
+  Future<List<ReservationModel>> fetchReservationsOnce({
+    required String doctorKey,
+    required String date, // yyyy-MM-dd
+  }) async {
+    try {
+      final ref = _database.ref("doctors/$doctorKey/reservations/$date");
+
+
+      final snapshot = await ref.get();
+
+      // ❗ مفيش داتا
+      if (!snapshot.exists || snapshot.value == null) {
+        return [];
+      }
+
+      final data = snapshot.value;
+
+      if (data is! Map) {
+        return [];
+      }
+
+      final List<ReservationModel> list = [];
+
+      data.forEach((key, value) {
+        try {
+          if (value == null || value is! Map) return;
+
+          final json = Map<String, dynamic>.from(
+            value.map((k, v) => MapEntry(k.toString(), v)),
+          );
+
+          json['key'] = key;
+
+          final model = ReservationModel.fromJson(json);
+
+          list.add(model);
+        } catch (e) {
+        }
+      });
+
+
+      return list;
+    } catch (e) {
+      return [];
+    }
   }
 }

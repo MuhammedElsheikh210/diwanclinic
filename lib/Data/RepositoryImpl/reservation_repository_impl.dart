@@ -44,11 +44,9 @@ class ReservationRepositoryImpl implements ReservationRepository {
   @override
   Future<void> startListening({required String doctorKey}) async {
     if (_isListening) {
-      log("🟡 Reservations already listening — skip");
       return;
     }
 
-    log("🎧 Start Listening Reservations → doctor: $doctorKey");
 
     _processedKeys.clear();
 
@@ -65,10 +63,8 @@ class ReservationRepositoryImpl implements ReservationRepository {
       if (_processedKeys.contains(key)) return;
       _processedKeys.add(key);
 
-      log("🔥 Firebase Added → $key");
 
       await _local.upsertFromServer(model);
-      log("💾 Saved To SQLite → $key");
 
       _addedController.add(model);
 
@@ -78,20 +74,16 @@ class ReservationRepositoryImpl implements ReservationRepository {
       final key = model.key;
       if (key == null) return;
 
-      log("🔄 Firebase Changed → $key");
 
       await _local.upsertFromServer(model);
-      log("💾 SQLite Updated → $key");
 
       _changedController.add(model);
 
     });
 
     _removedSub = _remote.onRemoved.listen((key) async {
-      log("❌ Firebase Removed → $key");
 
       await _local.deleteReservation(key);
-      log("💾 SQLite Deleted → $key");
 
       _removedController.add(key);
 
@@ -138,17 +130,13 @@ class ReservationRepositoryImpl implements ReservationRepository {
     SQLiteQueryParams query,
   ) async {
     try {
-      log("⏳ Waiting for Initial Sync...");
 
-      log("📦 Fetch Reservations From SQLite");
 
       final result = await _local.getReservations(query);
 
-      log("📦 SQLite Result Count → ${result.length}");
 
       return Right(result);
     } catch (e) {
-      log("❌ SQLite Fetch Error → $e");
       return Left(AppError(e.toString()));
     }
   }
@@ -163,7 +151,6 @@ class ReservationRepositoryImpl implements ReservationRepository {
   ) async {
     try {
       await _local.addReservation(model);
-     print("start track add ");
         await _remote.createReservation(model);
 
         // await _local.markAsSynced(
@@ -229,7 +216,6 @@ class ReservationRepositoryImpl implements ReservationRepository {
 
       return const Right(unit);
     } catch (e) {
-      log("❌ Delete Error → $e");
       return Left(AppError(e.toString()));
     }
   }
@@ -238,38 +224,62 @@ class ReservationRepositoryImpl implements ReservationRepository {
   // ⭐ PATIENT META
   // ============================================================
 
-  @override
-  Future<Either<AppError, SuccessModel>> addPatientReservationMetaDomain(
-    ReservationModel meta,
-    String patientKey,
-  ) async {
-    try {
-      final result = await _local.addPatientReservationMeta(meta, patientKey);
-      return Right(result);
-    } catch (e) {
-      return Left(AppError(e.toString()));
-    }
-  }
+  // @override
+  // Future<Either<AppError, SuccessModel>> addPatientReservationMetaDomain(
+  //   ReservationModel meta,
+  //   String patientKey,
+  // ) async {
+  //   try {
+  //     final result = await _local.addPatientReservationMeta(meta, patientKey);
+  //     return Right(result);
+  //   } catch (e) {
+  //     return Left(AppError(e.toString()));
+  //   }
+  // }
+  //
+  // @override
+  // Future<Either<AppError, SuccessModel>> updatePatientReservationDomain(
+  //   ReservationModel meta,
+  //   String key,
+  // ) async {
+  //   try {
+  //     final result = await _local.updatePatientReservation(meta, key);
+  //     return Right(result);
+  //   } catch (e) {
+  //     return Left(AppError(e.toString()));
+  //   }
+  // }
+  //
+  // @override
+  // Future<Either<AppError, List<ReservationModel>>>
+  // getPatientReservationsMetaDomain(String patientKey) async {
+  //   try {
+  //     final result = await _local.getPatientReservationsMeta(patientKey);
+  //     return Right(result);
+  //   } catch (e) {
+  //     return Left(AppError(e.toString()));
+  //   }
+  // }
 
-  @override
-  Future<Either<AppError, SuccessModel>> updatePatientReservationDomain(
-    ReservationModel meta,
-    String key,
-  ) async {
-    try {
-      final result = await _local.updatePatientReservation(meta, key);
-      return Right(result);
-    } catch (e) {
-      return Left(AppError(e.toString()));
-    }
-  }
+// ============================================================
+// 📥 PATIENT FETCH (REMOTE ONLY)
+// ============================================================
 
   @override
   Future<Either<AppError, List<ReservationModel>>>
-  getPatientReservationsMetaDomain(String patientKey) async {
+  fetchReservationsOnceDomain({
+    required String doctorKey,
+    required String date,
+  }) async {
     try {
-      final result = await _local.getPatientReservationsMeta(patientKey);
-      return Right(result);
+
+      final list = await _remote.fetchReservationsOnce(
+        doctorKey: doctorKey,
+        date: date,
+      );
+
+
+      return Right(list);
     } catch (e) {
       return Left(AppError(e.toString()));
     }

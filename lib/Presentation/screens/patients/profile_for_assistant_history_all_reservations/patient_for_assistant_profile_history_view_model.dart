@@ -113,7 +113,7 @@ class PatientForAssistantProfileHistoryViewModel extends GetxController {
   String calculateAge(String? birthday) {
     if (birthday == null || birthday.isEmpty) return "-";
     try {
-      final birth = DateFormat("dd/MM/yyyy").parse(birthday);
+      final birth = DateFormat("dd-MM-yyyy").parse(birthday);
       final now = DateTime.now();
       int age = now.year - birth.year;
       if (now.month < birth.month ||

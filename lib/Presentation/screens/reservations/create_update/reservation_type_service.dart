@@ -18,7 +18,7 @@ class ReservationTypeService {
     required ReservationModel? lastReservation,
     required int maxRevisitCount,
     required int revisitValidityDays,
-    required String? newAppointmentDate, // ✅ التاريخ الجديد
+    required String? newAppointmentDate,
     required String? selectedType,
     int? manualRevisitCount,
   }) {
@@ -26,8 +26,6 @@ class ReservationTypeService {
 
     print("👉 selectedType: $selectedType");
     print("👉 newAppointmentDate: $newAppointmentDate");
-    print("👉 maxRevisitCount: $maxRevisitCount");
-    print("👉 revisitValidityDays: $revisitValidityDays");
 
     /// 🔧 helper لتحويل التاريخ
     DateTime parse(String? date) {
@@ -42,23 +40,45 @@ class ReservationTypeService {
       }
     }
 
-    /// 🟡 CASE 1: مفيش حجز سابق
-    if (lastReservation == null) {
-      print("❌ lastReservation = NULL");
+    /// ============================================================
+    /// 🟢 1. USER DECISION (أولوية مطلقة)
+    /// ============================================================
+    if (selectedType != null && selectedType.isNotEmpty) {
+      print("🧠 USER DECISION → $selectedType");
 
+      /// 🆕 كشف جديد
+      if (selectedType == "كشف جديد") {
+        return const ReservationTypeResult(
+          type: "كشف جديد",
+          revisitCount: 0,
+          parentKey: "",
+        );
+      }
+
+      /// 🔁 إعادة (manual)
       if (selectedType == "إعادة") {
         final count = manualRevisitCount ?? 1;
-
-        print("🟡 CASE 1A → Manual Revisit | count: $count");
 
         return ReservationTypeResult(
           type: "إعادة",
           revisitCount: count,
-          parentKey: "MANUAL_PARENT",
+          parentKey: lastReservation?.key ?? "MANUAL_PARENT",
         );
       }
 
-      print("🟡 CASE 1B → New Reservation");
+      /// ⚡ مستعجل أو أي نوع تاني
+      return ReservationTypeResult(
+        type: selectedType,
+        revisitCount: 0,
+        parentKey: "",
+      );
+    }
+
+    /// ============================================================
+    /// 🟡 2. مفيش حجز سابق
+    /// ============================================================
+    if (lastReservation == null) {
+      print("❌ No last reservation → New");
 
       return const ReservationTypeResult(
         type: "كشف جديد",
@@ -67,7 +87,9 @@ class ReservationTypeService {
       );
     }
 
-    /// 🟢 حساب الفرق بين التواريخ الصح
+    /// ============================================================
+    /// 🟢 3. حساب فرق الأيام
+    /// ============================================================
     final lastDate = parse(lastReservation.appointmentDateTime);
     final newDate = parse(newAppointmentDate);
 
@@ -77,9 +99,9 @@ class ReservationTypeService {
     print("📅 newDate: $newDate");
     print("⏱ diffDays: $diffDays");
 
-    /// 🔴 CASE 2: خارج المدة
+    /// 🔴 خارج المدة → جديد
     if (diffDays > revisitValidityDays) {
-      print("🔴 CASE 2 → Expired");
+      print("🔴 Expired → New");
 
       return const ReservationTypeResult(
         type: "كشف جديد",
@@ -93,9 +115,13 @@ class ReservationTypeService {
 
     print("📊 lastType: $lastType | lastCount: $lastCount");
 
-    /// 🟣 CASE 3: آخر حجز = جديد
+    /// ============================================================
+    /// 🟣 4. AUTO LOGIC
+    /// ============================================================
+
+    /// 🆕 لو آخر حجز جديد → أول إعادة
     if (lastType == "كشف جديد") {
-      print("🟣 CASE 3 → New → Revisit = 1");
+      print("🟣 Auto → First Revisit");
 
       return ReservationTypeResult(
         type: "إعادة",
@@ -104,11 +130,11 @@ class ReservationTypeService {
       );
     }
 
-    /// 🟠 CASE 4: آخر حجز = إعادة
+    /// 🔁 لو آخر حجز إعادة
     if (lastType == "إعادة") {
-      /// 🔴 وصل للحد الأقصى
+      /// 🔴 وصل للحد → جديد
       if (lastCount >= maxRevisitCount) {
-        print("🟠 CASE 4A → Max Reached → New");
+        print("🟠 Max Reached → New");
 
         return const ReservationTypeResult(
           type: "كشف جديد",
@@ -120,7 +146,7 @@ class ReservationTypeService {
       /// 🟢 يكمل إعادة
       final nextCount = lastCount + 1;
 
-      print("🟠 CASE 4B → Continue Revisit | nextCount: $nextCount");
+      print("🟠 Continue Revisit → $nextCount");
 
       return ReservationTypeResult(
         type: "إعادة",
@@ -129,8 +155,10 @@ class ReservationTypeService {
       );
     }
 
+    /// ============================================================
     /// ⚠️ fallback
-    print("⚠️ FALLBACK CASE");
+    /// ============================================================
+    print("⚠️ FALLBACK → New");
 
     return const ReservationTypeResult(
       type: "كشف جديد",

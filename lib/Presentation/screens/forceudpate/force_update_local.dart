@@ -22,10 +22,8 @@ class ForceUdpate {
 
 extension SaveLocalData on ForceUdpate {
   Future<void> saveOnBoardLocal({Function? saveCallback}) async {
-    print("to json is ${toJson()}");
     final isSaved = await StorageService().setData("forceUpdate", toJson());
     if (isSaved) {
-      print("Saving data: ${toJson()}");
       saveCallback?.call();
     } else {
       Loader.showError("Not saved locally");

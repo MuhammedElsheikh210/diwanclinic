@@ -1,4 +1,3 @@
-import 'package:diwanclinic/Presentation/screens/reservations/patient_reservation_list/ReservationSuccessScreen.dart';
 import 'package:intl/intl.dart';
 import '../../../../../index/index_main.dart';
 
@@ -13,12 +12,14 @@ class DoctorDetailsViewModel extends GetxController {
   int completedCount = 0;
   LegacyQueueModel? legacyQueueForDay;
   bool isSelectedDayClosed = false;
+  bool get isUrgentReservation =>
+      selectedReservationType == "كشف مستعجل";
 
   DoctorDetailsViewModel({required this.doctor});
 
   // ─────────────────────────────────────────────
   // 🔹 Data Sources
-  List<ClinicModel?>? listClinics;
+  List<ClinicModel> listClinics = [];
   List<ShiftModel?>? listShifts;
   List<LocalUser?>? assisList;
 
@@ -62,87 +63,14 @@ class DoctorDetailsViewModel extends GetxController {
     currentUser = user;
 
     selectedDate = DateTime.now();
-    loadOpenCloseStatusForSelectedDate();
+    _loadClinics();
 
     getDoctorData();
     _initReservationTypes();
-    _loadClinics();
-  }
-
-  Future<void> loadOpenCloseStatusForSelectedDate() async {
-    isSelectedDayClosed = false;
-
-    if (selectedDate == null) {
-      update();
-      return;
-    }
-
-    final date = DateFormat("dd/MM/yyyy").format(selectedDate!);
-
-    await LegacyQueueService().getOpenCloseDaysByDateData(
-      date: date,
-      isPatient: true,
-      doctorUid: doctor.uid,
-      firebaseFilter: FirebaseFilter(
-        orderBy: "clinicShiftKey",
-        equalTo: "${selectedClinic?.key}_${selectedShift?.key}",
-      ),
-      voidCallBack: (data) {
-        if (data.isNotEmpty) {
-          final item = data.first;
-          if (item?.isClosed == true) {
-            isSelectedDayClosed = true;
-          }
-        }
-        update();
-      },
-    );
   }
 
   String _formatLegacyDate(DateTime date) {
-    return DateFormat("dd/MM/yyyy").format(date);
-  }
-
-  Future<void> loadLegacyQueueForSelectedDate() async {
-    if (selectedClinic == null || selectedDate == null) {
-      legacyQueueCount = 0;
-      beforeYouCount = null;
-      expectedOrder = null;
-      update();
-      return;
-    }
-
-    isLoadingOrderInfo = true;
-    update();
-
-    final myClinicKey = selectedClinic!.key;
-    final date = _formatLegacyDate(selectedDate!);
-
-    legacyQueueCount = 0;
-    legacyQueueForDay = null;
-
-    await LegacyQueueService().getLegacyQueueByDateData(
-      isPatient: true,
-      firebaseFilter: FirebaseFilter(
-        orderBy: "clinicShiftKey",
-        equalTo: "${currentUser.clinicKey}_${selectedShift?.key}",
-      ),
-      doctorUid: doctor.uid,
-      voidCallBack: (data) {
-        for (final item in data) {
-          if (item == null) continue;
-
-          if (item.clinic_key == myClinicKey) {
-            legacyQueueCount = item.value ?? 0;
-            legacyQueueForDay = item;
-            break;
-          }
-        }
-
-        // 🔥 بعد ما legacy اتحسب → احسب الدور
-        loadExpectedOrderFromExistingData();
-      },
-    );
+    return DateFormat("dd-MM-yyyy").format(date);
   }
 
   void changeTab(int index) {
@@ -175,7 +103,9 @@ class DoctorDetailsViewModel extends GetxController {
   }
 
   Future<void> loadExpectedOrderFromExistingData() async {
-    if (selectedDate == null) {
+    if (selectedClinic == null ||
+        selectedShift == null ||
+        selectedDate == null) {
       beforeYouCount = null;
       expectedOrder = null;
       isLoadingOrderInfo = false;
@@ -183,35 +113,41 @@ class DoctorDetailsViewModel extends GetxController {
       return;
     }
 
-    final formattedDate = DateFormat('dd/MM/yyyy').format(selectedDate!);
+    isLoadingOrderInfo = true;
+    update();
 
+    final formattedDate = DateFormat("dd-MM-yyyy").format(selectedDate!);
     int activeCount = 0;
-    int doneCount = 0;
 
-    await ReservationService().getReservationsData(
-      query: SQLiteQueryParams(),
-      voidCallBack: (list) {
+    final result = await ReservationService().useCase.fetchReservationsOnce(
+      doctorKey: doctor.uid ?? "",
+      date: formattedDate,
+    );
+
+    result.fold(
+      (error) {
+        beforeYouCount = null;
+        expectedOrder = null;
+      },
+      (list) {
         for (final r in list) {
-          if (r == null) continue;
+          // 🔥 فلترة أساسية
+          if (r.clinicKey != selectedClinic?.key) continue;
+          if (r.shiftKey != selectedShift?.key) continue;
 
-          if (r.status == ReservationStatus.completed.value) {
-            doneCount++;
-          } else if (r.status == ReservationStatus.pending.value ||
+          // 🔥 active فقط
+          if (r.status == ReservationStatus.pending.value ||
               r.status == ReservationStatus.approved.value ||
               r.status == ReservationStatus.inProgress.value) {
             activeCount++;
           }
         }
+
+        // ✅ الحساب الصح
+        beforeYouCount = legacyQueueCount + activeCount;
+        expectedOrder = beforeYouCount! + 1;
       },
     );
-
-    completedCount = doneCount;
-
-    // 🔢 رقم الحجز الحقيقي
-    expectedOrder = legacyQueueCount + activeCount + doneCount + 1;
-
-    // 👥 اللي قبلك فعليًا
-    beforeYouCount = expectedOrder! - completedCount - 1;
 
     isLoadingOrderInfo = false;
     update();
@@ -224,7 +160,7 @@ class DoctorDetailsViewModel extends GetxController {
       return 0;
     }
 
-    final formattedDate = DateFormat('dd/MM/yyyy').format(selectedDate!);
+    final formattedDate = DateFormat('dd-MM-yyyy').format(selectedDate!);
 
     int count = 0;
 
@@ -267,18 +203,22 @@ class DoctorDetailsViewModel extends GetxController {
     update();
 
     try {
-      final uid = doctor.uid ?? "";
+      final uid = doctor.uid?.trim() ?? "";
+
       await ClinicService().getClinicsFromPatientData(
         data: {},
         doctorKey: uid,
         voidCallBack: (data) async {
           Loader.dismiss();
-          listClinics = data;
+
+          // ✅ دايمًا list نظيفة
+          listClinics = data.whereType<ClinicModel>().toList();
+
           isLoadingClinics = false;
 
+          // ✅ dropdown
           clinicItems =
-              (listClinics ?? [])
-                  .whereType<ClinicModel>()
+              listClinics
                   .map(
                     (c) => GenericListModel(
                       key: c.key ?? "",
@@ -287,27 +227,42 @@ class DoctorDetailsViewModel extends GetxController {
                   )
                   .toList();
 
-          if (listClinics?.isNotEmpty == true) {
-            selectedClinic = listClinics!.first;
+          // ❗ مهم: reset القديم
+          selectedClinic = null;
+          selectedShift = null;
+
+          // ✅ اختار أول عيادة لو موجودة
+          if (listClinics.isNotEmpty) {
+            selectedClinic = listClinics?.first;
+
+            // 🔥 حمل الشيفتات (هي اللي تحدد selectedShift)
             await _loadShiftsForClinic(selectedClinic!);
 
-            // 🔥 IMPORTANT: احسب دور النهارده أول ما العيادة تتحدد
-            await loadLegacyQueueForSelectedDate();
+            // ✅ أمان 100%
+            if (selectedClinic != null &&
+                selectedShift != null &&
+                selectedDate != null) {
+              await loadLegacyQueueForSelectedDate();
+              await loadOpenCloseStatusForSelectedDate();
+            }
           }
 
-          getAssistantData();
+          // ✅ assistants
+          await getAssistantData();
+
           update();
         },
       );
     } catch (e) {
       Loader.dismiss();
+
       Loader.showError("حدث خطأ أثناء تحميل بيانات العيادات");
+
       isLoadingClinics = false;
       update();
     }
-  }
+  } // ─────────────────────────────────────────────
 
-  // ─────────────────────────────────────────────
   // 🔹 Select Clinic
   Future<void> onSelectClinic(ClinicModel clinic) async {
     selectedClinic = clinic;
@@ -429,7 +384,7 @@ class DoctorDetailsViewModel extends GetxController {
       Loader.show();
 
       // 🔹 Step 2: Prepare keys and format date
-      final formattedDate = DateFormat("dd/MM/yyyy").format(selectedDate!);
+      final formattedDate = DateFormat("dd-MM-yyyy").format(selectedDate!);
 
       final clinicKey = selectedClinic?.key ?? "";
       final shiftKey = selectedShift?.key ?? "";
@@ -521,29 +476,13 @@ class DoctorDetailsViewModel extends GetxController {
     }
   }
 
-  String _normalizeDate(String date) {
-    try {
-      if (date.contains("/")) {
-        final parsed = DateFormat("dd/MM/yyyy").parse(date);
-        return DateFormat("dd-MM-yyyy").format(parsed);
-      }
-
-      if (date.contains("-")) {
-        final parsed = DateFormat("dd-MM-yyyy").parse(date);
-        return DateFormat("dd-MM-yyyy").format(parsed);
-      }
-
-      return date;
-    } catch (_) {
-      return date.replaceAll("/", "-");
-    }
-  }
-
   Future<void> addPatientReservation(ReservationModel model) async {
-    await ReservationService().addPatientReservationMeta(
-      meta: model,
-      patientKey: "",
-      voidCallBack: (status) {},
+    await PatientReservationService().addReservationData(
+      reservation: model,
+      voidCallBack: (status) {
+        if (status == ResponseStatus.success) {
+        } else {}
+      },
     );
   }
 
@@ -554,5 +493,79 @@ class DoctorDetailsViewModel extends GetxController {
         selectedShift != null &&
         selectedReservationType != null &&
         selectedDate != null;
+  }
+}
+
+extension LoadApis on DoctorDetailsViewModel {
+  Future<void> loadOpenCloseStatusForSelectedDate() async {
+    isSelectedDayClosed = false;
+
+    if (selectedDate == null) {
+      update();
+      return;
+    }
+
+    final date = DateFormat("dd-MM-yyyy").format(selectedDate!);
+
+    await LegacyQueueService().getOpenCloseDaysByDateData(
+      date: date,
+      isPatient: true,
+      doctorUid: doctor.uid,
+      firebaseFilter: FirebaseFilter(
+        orderBy: "clinicShiftKey",
+        equalTo: "${selectedClinic?.key}_${selectedShift?.key}",
+      ),
+      voidCallBack: (data) {
+        if (data.isNotEmpty) {
+          final item = data.first;
+          if (item?.isClosed == true) {
+            isSelectedDayClosed = true;
+          }
+        }
+        update();
+      },
+    );
+  }
+
+  Future<void> loadLegacyQueueForSelectedDate() async {
+    if (selectedClinic == null || selectedDate == null) {
+      legacyQueueCount = 0;
+      beforeYouCount = null;
+      expectedOrder = null;
+      update();
+      return;
+    }
+
+    isLoadingOrderInfo = true;
+    update();
+
+    final myClinicKey = selectedClinic!.key;
+    final date = _formatLegacyDate(selectedDate!);
+
+    legacyQueueCount = 0;
+    legacyQueueForDay = null;
+
+    await LegacyQueueService().getLegacyQueueByDateData(
+      isPatient: true,
+      firebaseFilter: FirebaseFilter(
+        orderBy: "clinicShiftKey",
+        equalTo: "${selectedClinic?.key}_${selectedShift?.key}",
+      ),
+      doctorUid: doctor.uid,
+      voidCallBack: (data) {
+        for (final item in data) {
+          if (item == null) continue;
+
+          if (item.clinic_key == myClinicKey) {
+            legacyQueueCount = item.value ?? 0;
+            legacyQueueForDay = item;
+            break;
+          }
+        }
+
+        // 🔥 بعد ما legacy اتحسب → احسب الدور
+        loadExpectedOrderFromExistingData();
+      },
+    );
   }
 }

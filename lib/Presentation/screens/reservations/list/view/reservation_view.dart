@@ -216,148 +216,13 @@ class _ReservationViewState extends State<ReservationView> {
                       ],
             ),
 
-            child: Opacity(
-              opacity: isFinished ? 0.35 : 1,
-              child: Row(
-                children: [
-                  /// 🔢 Order Number
-                  Container(
-                    width: 42,
-                    height: 42,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(
-                        alpha: isFinished ? 0.04 : 0.12,
-                      ),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      "${reservation.orderNum ?? '-'}",
-                      style: context.typography.mdBold.copyWith(
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(width: 14),
-
-                  /// 🧾 Main Info
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        /// 👤 Name
-                        Text(
-                          reservation.patientName ?? "",
-                          style: context.typography.mdRegular.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color:
-                                isFinished
-                                    ? AppColors.textSecondaryParagraph
-                                    : AppColors.background_black,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-
-                        const SizedBox(height: 6),
-
-                        /// 💰 Type + Paid
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(
-                                  alpha: 0.08,
-                                ),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                reservation.reservationType ?? "",
-                                style: context.typography.xsMedium.copyWith(
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ),
-
-                            const SizedBox(width: 6),
-
-                            Text(
-                              "•",
-                              style: context.typography.smRegular.copyWith(
-                                color: AppColors.textSecondaryParagraph,
-                              ),
-                            ),
-
-                            const SizedBox(width: 6),
-
-                            /// 💰 amount (أهم بصريًا)
-                            Text(
-                              "${reservation.paidAmount ?? 0} ج.م",
-                              style: context.typography.smMedium.copyWith(
-                                color: AppColors.background_black,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(width: 10),
-
-                  /// 🚀 Right Side
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      /// 🔢 Queue Badge
-                      status == ReservationNewStatus.inProgress
-                          ? const SizedBox()
-                          : Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.successBackground.withValues(
-                                alpha: 0.6,
-                              ),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              isFinished
-                                  ? "تم"
-                                  : ahead <= 0
-                                  ? "دورك الآن"
-                                  : "قدامك $ahead",
-                              style: context.typography.mdBold.copyWith(
-                                color:
-                                    ahead <= 0
-                                        ? AppColors.successForeground
-                                        : AppColors.textSecondaryParagraph,
-                              ),
-                            ),
-                          ),
-
-                      const SizedBox(height: 8),
-
-                      /// 🎯 Action Button
-                      if (!isFinished)
-                        _primaryActionButton(
-                          context,
-                          status: status,
-                          reservation: reservation,
-                          controller: controller,
-                        ),
-                    ],
-                  ),
-                ],
-              ),
+            child: reservationCard(
+              context: context,
+              reservation: reservation,
+              status: status,
+              controller: controller,
+              ahead: ahead,
+              isFinished: isFinished,
             ),
           ),
         );
@@ -365,52 +230,227 @@ class _ReservationViewState extends State<ReservationView> {
     );
   }
 
-  Widget _primaryActionButton(
-    BuildContext context, {
-    required ReservationNewStatus status,
+  Widget reservationCard({
+    required BuildContext context,
     required ReservationModel reservation,
+    required ReservationNewStatus status,
     required ReservationViewModel controller,
+    required int ahead,
+    required bool isFinished,
   }) {
-    if (status == ReservationNewStatus.pending) {
-      return _mainBtn(
-        text: "تأكيد",
-        color: AppColors.successForeground,
-        onTap: () async {
-          await controller.changeReservationStatus(
-            reservation: reservation,
+    final isActive = !isFinished;
+
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color:
+            isFinished
+                ? AppColors.background.withValues(alpha: 0.5)
+                : AppColors.background,
+        borderRadius: BorderRadius.circular(12),
+
+        /// ❌ نشيل البوردر لو finished
+        border:
+            isFinished
+                ? null
+                : Border.all(color: AppColors.borderNeutralPrimary, width: 1),
+      ),
+      child: Row(
+        children: [
+          /// 🔢 Order Number
+          Container(
+            width: 40.w,
+            height: 40.h,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color:
+                  isActive
+                      ? AppColors.primary.withValues(alpha: 0.12)
+                      : AppColors.primary.withValues(alpha: 0.05),
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              "${reservation.orderNum ?? '-'}",
+              style: context.typography.mdRegular.copyWith(
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 14),
+
+          /// 🧾 Main Info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                /// 👤 Name
+                Text(
+                  reservation.patientName ?? "",
+                  style: context.typography.lgBold.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color:
+                        isActive
+                            ? AppColors.background_black
+                            : AppColors.textSecondaryParagraph,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+
+                const SizedBox(height: 6),
+
+                /// 💰 Type + Paid
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        reservation.reservationType ?? "",
+                        style: context.typography.xsMedium.copyWith(
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 6),
+
+                    Text(
+                      "•",
+                      style: context.typography.smRegular.copyWith(
+                        color: AppColors.textSecondaryParagraph,
+                      ),
+                    ),
+
+                    const SizedBox(width: 6),
+
+                    Text(
+                      "${reservation.paidAmount ?? 0} ج.م",
+                      style: context.typography.smMedium.copyWith(
+                        color:
+                            isActive
+                                ? AppColors.background_black
+                                : AppColors.textSecondaryParagraph,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(width: 10),
+
+          /// 🚀 Right Side
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              /// 🔢 Queue Badge
+              if (status != ReservationNewStatus.inProgress)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color:
+                        isFinished
+                            ? AppColors.successBackground.withValues(alpha: 0.3)
+                            : AppColors.successBackground.withValues(
+                              alpha: 0.6,
+                            ),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    isFinished
+                        ? "تم"
+                        : ahead <= 0
+                        ? "دورك الآن"
+                        : "قدامك $ahead",
+                    style: context.typography.mdBold.copyWith(
+                      color:
+                          ahead <= 0
+                              ? AppColors.successForeground
+                              : AppColors.textSecondaryParagraph,
+                    ),
+                  ),
+                ),
+
+              /// 🎯 Action Button
+              if (isActive)
+                _primaryActionButton(
+                  context,
+                  status: status,
+                  reservation: reservation,
+                  controller: controller,
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _primaryActionButton(
+      BuildContext context, {
+        required ReservationNewStatus status,
+        required ReservationModel reservation,
+        required ReservationViewModel controller,
+      }) {
+    Future<void> _handleAction({
+      required ReservationStatus newStatus,
+      String? cancelReason,
+    }) async {
+      try {
+        await controller.changeReservationStatus(
+          reservation: reservation,
+          newStatus: newStatus,
+          cancelReason: cancelReason,
+        );
+      } catch (e) {
+        print("❌ Action Error: $e");
+      }
+    }
+
+    switch (status) {
+      case ReservationNewStatus.pending:
+        return _mainBtn(
+          text: "تأكيد",
+          color: AppColors.successForeground,
+          onTap: () => _handleAction(
             newStatus: ReservationStatus.approved,
-          );
-        },
-      );
-    }
+          ),
+        );
 
-    if (status == ReservationNewStatus.approved) {
-      return _mainBtn(
-        text: "ابدأ الكشف",
-        color: AppColors.primary,
-        onTap: () async {
-          await controller.changeReservationStatus(
-            reservation: reservation,
+      case ReservationNewStatus.approved:
+        return _mainBtn(
+          text: "ابدأ الكشف",
+          color: AppColors.primary,
+          onTap: () => _handleAction(
             newStatus: ReservationStatus.inProgress,
-          );
-        },
-      );
-    }
+          ),
+        );
 
-    if (status == ReservationNewStatus.inProgress) {
-      return _mainBtn(
-        text: "إنهاء",
-        color: AppColors.background_black,
-        onTap: () async {
-          await controller.changeReservationStatus(
-            reservation: reservation,
+      case ReservationNewStatus.inProgress:
+        return _mainBtn(
+          text: "إنهاء",
+          color: AppColors.background_black,
+          onTap: () => _handleAction(
             newStatus: ReservationStatus.completed,
-          );
-        },
-      );
-    }
+          ),
+        );
 
-    return const SizedBox();
+      default:
+        return const SizedBox();
+    }
   }
 
   Widget _mainBtn({
@@ -419,7 +459,7 @@ class _ReservationViewState extends State<ReservationView> {
     required VoidCallback onTap,
   }) {
     return SizedBox(
-      height: 32,
+      height: 45.h,
       width: 100.w,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(

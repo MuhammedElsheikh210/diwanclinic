@@ -64,7 +64,7 @@ class _NotificationsViewState extends State<NotificationsView> {
 
                   final formattedDate =
                       notif.createAt != null
-                          ? DateFormat('dd/MM/yyyy').format(
+                          ? DateFormat('dd-MM-yyyy').format(
                             DateTime.fromMillisecondsSinceEpoch(
                               notif.createAt!,
                             ),

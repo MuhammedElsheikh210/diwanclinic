@@ -36,7 +36,42 @@ class ReservationDataSourceRepoImpl extends ReservationDataSourceRepo {
       distinct: query.distinct,
     );
 
-    return await _sqliteRepo.getAll(query: finalQuery);
+    // 🔥 LOG 1: Incoming Query
+
+    // 🔥 LOG 2: Final Query (after repo modify)
+
+    final result = await _sqliteRepo.getAll(query: finalQuery);
+
+    // 🔥 LOG 3: Raw Data Count
+
+    // 🔥 LOG 4: Sample Data
+    for (var r in result.take(5)) {
+      if (r == null) continue;
+
+    }
+
+    // 🔥 LOG 5: Manual Debug Filter (مهم جدًا)
+    if (query.whereArgs != null && query.whereArgs!.length >= 3) {
+      final date = query.whereArgs![0];
+      final shift = query.whereArgs![1];
+      final clinic = query.whereArgs![2];
+
+      final manualFiltered =
+          result.where((r) {
+            if (r == null) return false;
+
+            return r.appointmentDateTime == date &&
+                r.shiftKey == shift &&
+                r.clinicKey == clinic;
+          }).toList();
+
+
+      for (var r in manualFiltered) {
+      }
+    }
+
+
+    return result;
   }
 
   @override
@@ -85,90 +120,91 @@ class ReservationDataSourceRepoImpl extends ReservationDataSourceRepo {
     return list.whereType<ReservationModel>().toList();
   }
 
-  @override
-  Future<SuccessModel> addPatientReservationMeta(
-    ReservationModel meta,
-    String patientKey,
-  ) async {
-    final uid = meta.patientUid;
-    final key = meta.key;
-    final path = "patients/$uid/reservationsMeta";
-
-    final res = await _clientSourceRepo.request(
-      HttpMethod.PATCH,
-      "/$path/$key.json",
-      params: meta.toJson(),
-    );
-
-    return SuccessModel.fromJson(res);
-  }
-
-  @override
-  Future<SuccessModel> updatePatientReservation(
-    ReservationModel meta,
-    String key,
-  ) async {
-    final uid = meta.patientUid;
-    final path = "patients/$uid/reservationsMeta";
-
-    final res = await _clientSourceRepo.request(
-      HttpMethod.PATCH,
-      "/$path/$key.json",
-      params: meta.toJson(),
-    );
-
-    return SuccessModel.fromJson(res);
-  }
-
-  @override
-  Future<List<ReservationModel>> getPatientReservationsMeta(
-    String? patientKey,
-  ) async {
-    // ============================================================
-    // 🧠 RESOLVE UID
-    // ============================================================
-
-    final sessionUser = Get.find<UserSession>().user?.user;
-
-    final uid = patientKey ?? sessionUser?.uid;
-
-    if (uid == null || uid.isEmpty) {
-      throw Exception("❌ Patient UID is missing");
-    }
-
-    final path = "patients/$uid/reservationsMeta";
-
-    // ============================================================
-    // 🌐 API CALL
-    // ============================================================
-
-    final response = await _clientSourceRepo.request(
-      HttpMethod.GET,
-      "/$path.json",
-      params: {},
-    );
-
-    if (response == null) return [];
-
-    final List<ReservationModel> result = [];
-
-    // ============================================================
-    // 🧩 PARSE RESPONSE
-    // ============================================================
-
-    if (response is Map<String, dynamic>) {
-      response.forEach((key, value) {
-        if (value is Map<String, dynamic>) {
-          final map = Map<String, dynamic>.from(value);
-          map['key'] ??= key;
-
-          result.add(ReservationModel.fromJson(map));
-        }
-      });
-    }
-
-    return result;
-  }
+  //
+  // @override
+  // Future<SuccessModel> addPatientReservationMeta(
+  //   ReservationModel meta,
+  //   String patientKey,
+  // ) async {
+  //   final uid = meta.patientUid;
+  //   final key = meta.key;
+  //   final path = "patients/$uid/reservationsMeta";
+  //
+  //   final res = await _clientSourceRepo.request(
+  //     HttpMethod.PATCH,
+  //     "/$path/$key.json",
+  //     params: meta.toJson(),
+  //   );
+  //
+  //   return SuccessModel.fromJson(res);
+  // }
+  //
+  // @override
+  // Future<SuccessModel> updatePatientReservation(
+  //   ReservationModel meta,
+  //   String key,
+  // ) async {
+  //   final uid = meta.patientUid;
+  //   final path = "patients/$uid/reservationsMeta";
+  //
+  //   final res = await _clientSourceRepo.request(
+  //     HttpMethod.PATCH,
+  //     "/$path/$key.json",
+  //     params: meta.toJson(),
+  //   );
+  //
+  //   return SuccessModel.fromJson(res);
+  // }
+  //
+  // @override
+  // Future<List<ReservationModel>> getPatientReservationsMeta(
+  //   String? patientKey,
+  // ) async {
+  //   // ============================================================
+  //   // 🧠 RESOLVE UID
+  //   // ============================================================
+  //
+  //   final sessionUser = Get.find<UserSession>().user?.user;
+  //
+  //   final uid = patientKey ?? sessionUser?.uid;
+  //
+  //   if (uid == null || uid.isEmpty) {
+  //     throw Exception("❌ Patient UID is missing");
+  //   }
+  //
+  //   final path = "patients/$uid/reservationsMeta";
+  //
+  //   // ============================================================
+  //   // 🌐 API CALL
+  //   // ============================================================
+  //
+  //   final response = await _clientSourceRepo.request(
+  //     HttpMethod.GET,
+  //     "/$path.json",
+  //     params: {},
+  //   );
+  //
+  //   if (response == null) return [];
+  //
+  //   final List<ReservationModel> result = [];
+  //
+  //   // ============================================================
+  //   // 🧩 PARSE RESPONSE
+  //   // ============================================================
+  //
+  //   if (response is Map<String, dynamic>) {
+  //     response.forEach((key, value) {
+  //       if (value is Map<String, dynamic>) {
+  //         final map = Map<String, dynamic>.from(value);
+  //         map['key'] ??= key;
+  //
+  //         result.add(ReservationModel.fromJson(map));
+  //       }
+  //     });
+  //   }
+  //
+  //   return result;
+  // }
 
   @override
   Future<void> upsertFromServer(ReservationModel serverModel) async {

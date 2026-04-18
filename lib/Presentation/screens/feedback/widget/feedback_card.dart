@@ -79,6 +79,6 @@ class DoctorFeedbackCard extends StatelessWidget {
   String _formatDate(int? timestamp) {
     if (timestamp == null) return "";
     final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
-    return DateFormat("dd/MM/yyyy").format(date);
+    return DateFormat("dd-MM-yyyy").format(date);
   }
 }

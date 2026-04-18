@@ -38,7 +38,13 @@ abstract class AuthenticationRepository {
   // 🌐 ONLINE CLIENTS (Firebase Direct Fetch)
   // ============================================================
 
+  /// Bulk fetch (used for sync / refresh)
   Future<Either<AppError, List<LocalUser>>> getClientsOnlineDomain(
       Map<String, dynamic> firebaseFilter,
+      );
+
+  /// ✅ NEW: Fetch single client (LOGIN / critical)
+  Future<Either<AppError, LocalUser?>> getClientByUidOnlineDomain(
+      String uid,
       );
 }

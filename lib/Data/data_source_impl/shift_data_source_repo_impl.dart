@@ -76,7 +76,6 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
     try {
       final path = _shiftsPath(doctorKey);
 
-      print("🌍 SHIFTS API PATH: $path");
 
       final response = await _clientSourceRepo.request(
         HttpMethod.GET,
@@ -85,7 +84,6 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
       );
 
       if (response == null || response.isEmpty) {
-        print("⚠️ No shifts found");
         return [];
       }
 
@@ -94,7 +92,6 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
         (json) => ShiftModel.fromJson(json),
       );
     } catch (e) {
-      print("❌ getShifts error: $e");
       return [];
     }
   }
@@ -110,7 +107,6 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
     try {
       final path = _shiftsPatientPath(doctorKey);
 
-      print("🌍 SHIFTS PATIENT API PATH: $path");
 
       final response = await _clientSourceRepo.request(
         HttpMethod.GET,
@@ -119,7 +115,6 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
       );
 
       if (response == null || response.isEmpty) {
-        print("⚠️ No patient shifts found");
         return [];
       }
 
@@ -128,7 +123,6 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
         (json) => ShiftModel.fromJson(json),
       );
     } catch (e) {
-      print("❌ getShiftsFromPatient error: $e");
       return [];
     }
   }
@@ -145,7 +139,6 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
     try {
       final path = _shiftItemPath(doctorKey, key);
 
-      print("➕ ADD SHIFT PATH: $path");
 
       final response = await _clientSourceRepo.request(
         HttpMethod.PATCH,
@@ -155,7 +148,6 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
 
       return SuccessModel.fromJson(response);
     } catch (e) {
-      print("❌ addShift error: $e");
       return SuccessModel(message: "حدث خطأ أثناء إضافة الفترة");
     }
   }
@@ -172,7 +164,6 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
     try {
       final path = _shiftItemPath(doctorKey, key);
 
-      print("❌ DELETE SHIFT PATH: $path");
 
       final response = await _clientSourceRepo.request(
         HttpMethod.DELETE,
@@ -182,7 +173,6 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
 
       return SuccessModel.fromJson(response ?? {"message": "تم الحذف بنجاح"});
     } catch (e) {
-      print("❌ deleteShift error: $e");
       return SuccessModel(message: "فشل حذف الفترة");
     }
   }
@@ -199,7 +189,6 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
     try {
       final path = _shiftItemPath(doctorKey, key);
 
-      print("✏️ UPDATE SHIFT PATH: $path");
 
       final response = await _clientSourceRepo.request(
         HttpMethod.PATCH,
@@ -209,7 +198,6 @@ class ShiftDataSourceRepoImpl extends ShiftDataSourceRepo {
 
       return SuccessModel.fromJson(response);
     } catch (e) {
-      print("❌ updateShift error: $e");
       return SuccessModel(message: "فشل تحديث بيانات الفترة");
     }
   }

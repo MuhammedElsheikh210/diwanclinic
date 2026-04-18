@@ -62,38 +62,53 @@ class ReservationUseCases {
   // ⭐ PATIENT META
   // ============================================================
 
-  Future<Either<AppError, SuccessModel>> addPatientReservationMeta(
-      ReservationModel meta,
-      String patientKey,
-      ) {
-    return _repository.addPatientReservationMetaDomain(
-      meta,
-      patientKey,
-    );
-  }
-
-  Future<Either<AppError, SuccessModel>> updatePatientReservation(
-      ReservationModel meta,
-      String key,
-      ) {
-    return _repository.updatePatientReservationDomain(
-      meta,
-      key,
-    );
-  }
-
-  Future<Either<AppError, List<ReservationModel>>>
-  getPatientReservationsMeta(
-      String patientKey,
-      ) {
-    return _repository.getPatientReservationsMetaDomain(
-      patientKey,
-    );
-  }
+  // Future<Either<AppError, SuccessModel>> addPatientReservationMeta(
+  //     ReservationModel meta,
+  //     String patientKey,
+  //     ) {
+  //   return _repository.addPatientReservationMetaDomain(
+  //     meta,
+  //     patientKey,
+  //   );
+  // }
+  //
+  // Future<Either<AppError, SuccessModel>> updatePatientReservation(
+  //     ReservationModel meta,
+  //     String key,
+  //     ) {
+  //   return _repository.updatePatientReservationDomain(
+  //     meta,
+  //     key,
+  //   );
+  // }
+  //
+  // Future<Either<AppError, List<ReservationModel>>>
+  // getPatientReservationsMeta(
+  //     String patientKey,
+  //     ) {
+  //   return _repository.getPatientReservationsMetaDomain(
+  //     patientKey,
+  //   );
+  // }
 
   // ============================================================
   // 🛑 STOP REALTIME SYNC
   // ============================================================
+
+  // ============================================================
+// 📥 PATIENT FETCH (REMOTE ONLY)
+// ============================================================
+
+  Future<Either<AppError, List<ReservationModel>>>
+  fetchReservationsOnce({
+    required String doctorKey,
+    required String date, // yyyy-MM-dd
+  }) {
+    return _repository.fetchReservationsOnceDomain(
+      doctorKey: doctorKey,
+      date: date,
+    );
+  }
 
   Future<void> dispose() {
     return _repository.dispose();

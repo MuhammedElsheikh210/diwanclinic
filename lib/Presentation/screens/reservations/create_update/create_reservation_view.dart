@@ -385,14 +385,14 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                     mainAxisAlignment: MainAxisAlignment.start,
                                     children: [
                                       Text(
-                                        "نوع الحجز",
+                                        "نوع الكشف",
                                         style: context.typography.mdMedium,
                                       ),
-                                      const SizedBox(height: 12),
+                                      const SizedBox(height: 5),
 
                                       Wrap(
-                                        spacing: 12,
-                                        runSpacing: 12,
+                                        spacing: 5,
+                                        runSpacing: 5,
                                         children:
                                             controller.typeOptions.map((type) {
                                               final isSelected =
@@ -401,6 +401,8 @@ class _CreateReservationViewState extends State<CreateReservationView> {
 
                                               return GestureDetector(
                                                 onTap: () {
+                                                  controller.isAutoApplied = true; // 🔥 وقف الأوتو
+
                                                   controller.setReservationType(
                                                     type,
                                                   );
@@ -409,9 +411,7 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                                   controller.selectedType =
                                                       type;
 
-                                                  // 🔥 أهم سطر
-                                                  controller
-                                                      .applyAutoTypeLogic();
+
 
                                                   controller.update();
                                                 },
@@ -422,7 +422,7 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                                   padding:
                                                       const EdgeInsets.symmetric(
                                                         horizontal: 18,
-                                                        vertical: 14,
+                                                        vertical: 15,
                                                       ),
                                                   decoration: BoxDecoration(
                                                     color:
@@ -434,7 +434,7 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                                             : Colors.white,
                                                     borderRadius:
                                                         BorderRadius.circular(
-                                                          14,
+                                                          8,
                                                         ),
                                                     border: Border.all(
                                                       color:
@@ -487,7 +487,7 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                                         type,
                                                         style: context
                                                             .typography
-                                                            .mdMedium
+                                                            .smRegular
                                                             .copyWith(
                                                               color:
                                                                   isSelected
@@ -526,14 +526,27 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                     ],
                                   ),
                                 ),
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    left: 15,
+                                    right: 15,
+                                    top: 10,
+                                  ),
+                                  child: Text(
+                                    "المبلغ المدفوع",
+                                    style: context.typography.mdMedium,
+                                  ),
+                                ),
 
                                 /// 🔹 المبالغ
                                 controller.selectedType == "متابعة"
                                     ? const SizedBox()
                                     : Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 15.0,
-                                        vertical: 15,
+                                      padding: const EdgeInsets.only(
+                                        bottom: 10,
+                                        left: 15,
+                                        right: 15,
+                                        top: 5,
                                       ),
                                       child: Row(
                                         children: [
@@ -570,7 +583,7 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                       ),
                                     ),
 
-                                buildTimeline(controller,context),
+                                buildTimeline(controller, context),
                               ],
                             ),
 

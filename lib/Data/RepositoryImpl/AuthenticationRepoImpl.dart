@@ -39,7 +39,6 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
 
   @override
   Future<void> startListening() async {
-    log("🎧 Start Listening Clients");
 
     _processedKeys.clear();
     await _remote.startListening();
@@ -57,7 +56,6 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
 
       final model = LocalUser.fromMap(json);
 
-      log("🔥 Client Added → $uid");
 
       await _local.upsertFromServer(model);
       _addedController.add(model);
@@ -69,14 +67,12 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
 
       final model = LocalUser.fromMap(json);
 
-      log("🔄 Client Updated → $uid");
 
       await _local.upsertFromServer(model);
       _changedController.add(model);
     });
 
     _removedSub = _remote.onRemoved.listen((key) async {
-      log("❌ Client Removed → $key");
 
       await _local.deleteClient(key);
       _removedController.add(key);
@@ -108,8 +104,8 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
 
   @override
   Future<Either<AppError, List<LocalUser>>> getClientsDomain(
-    SQLiteQueryParams query,
-  ) async {
+      SQLiteQueryParams query,
+      ) async {
     try {
       final result = await _local.getClients(query);
       return Right(result);
@@ -119,13 +115,13 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
   }
 
   // ============================================================
-  // 🌐 ONLINE
+  // 🌐 ONLINE (BULK)
   // ============================================================
 
   @override
   Future<Either<AppError, List<LocalUser>>> getClientsOnlineDomain(
-    Map<String, dynamic> firebaseFilter,
-  ) async {
+      Map<String, dynamic> firebaseFilter,
+      ) async {
     try {
       if (!await _connectivity.isOnline()) {
         return Left(AppError("No internet connection"));
@@ -140,6 +136,36 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
       }
 
       return Right(users);
+    } catch (e) {
+      return Left(AppError(e.toString()));
+    }
+  }
+
+  // ============================================================
+  // ✅ NEW: ONLINE SINGLE (LOGIN)
+  // ============================================================
+
+  @override
+  Future<Either<AppError, LocalUser?>> getClientByUidOnlineDomain(
+      String uid,
+      ) async {
+    try {
+      if (!await _connectivity.isOnline()) {
+        return Left(AppError("No internet connection"));
+      }
+
+      final json = await _remote.fetchClientByUid(uid);
+
+      if (json == null) {
+        return const Right(null); // user not found
+      }
+
+      final user = LocalUser.fromMap(json);
+
+      // 🔥 optional but مهم: cache بعد login
+      await _local.upsertFromServer(user);
+
+      return Right(user);
     } catch (e) {
       return Left(AppError(e.toString()));
     }

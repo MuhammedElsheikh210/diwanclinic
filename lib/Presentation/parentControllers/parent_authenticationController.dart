@@ -9,14 +9,14 @@ class AuthenticationService {
   // ============================================================
 
   static final AuthenticationService _instance =
-      AuthenticationService._internal();
+  AuthenticationService._internal();
 
   factory AuthenticationService() => _instance;
 
   AuthenticationService._internal();
 
   final AuthenticationUseCases useCase = initController(
-    () => AuthenticationUseCases(Get.find()),
+        () => AuthenticationUseCases(Get.find()),
   );
 
   // ============================================================
@@ -68,8 +68,8 @@ class AuthenticationService {
     final result = await useCase.addClient(userclient);
 
     result.fold(
-      (l) => voidCallBack(ResponseStatus.error),
-      (r) => voidCallBack(ResponseStatus.success),
+          (l) => voidCallBack(ResponseStatus.error),
+          (r) => voidCallBack(ResponseStatus.success),
     );
   }
 
@@ -84,8 +84,8 @@ class AuthenticationService {
     final result = await useCase.updateClient(userclient);
 
     result.fold(
-      (l) => voidCallBack(ResponseStatus.error),
-      (r) => voidCallBack(ResponseStatus.success),
+          (l) => voidCallBack(ResponseStatus.error),
+          (r) => voidCallBack(ResponseStatus.success),
     );
   }
 
@@ -100,8 +100,8 @@ class AuthenticationService {
     final result = await useCase.deleteClient(uid);
 
     result.fold(
-      (l) => voidCallBack(ResponseStatus.error),
-      (r) => voidCallBack(ResponseStatus.success),
+          (l) => voidCallBack(ResponseStatus.error),
+          (r) => voidCallBack(ResponseStatus.success),
     );
   }
 
@@ -122,18 +122,37 @@ class AuthenticationService {
   }
 
   // ============================================================
-  // 🌐 GET CLIENTS (ONLINE ONLY)
+  // 🌐 GET CLIENTS (ONLINE ONLY - BULK)
   // ============================================================
 
   Future<void> getClientsOnlineData({
     required FirebaseFilter firebaseFilter,
-    required Function(List<LocalUser?>) voidCallBack,
+    required Function(List<LocalUser>) voidCallBack,
   }) async {
     final result = await useCase.getClientsOnline(firebaseFilter.toJson());
 
     result.fold(
-      (l) => Loader.showError("Network error while loading user"),
-      (r) => voidCallBack(r),
+          (l) => Loader.showError("Network error while loading users"),
+          (r) => voidCallBack(r),
+    );
+  }
+
+  // ============================================================
+  // ✅ NEW: GET CLIENT (ONLINE ONLY - LOGIN)
+  // ============================================================
+
+  Future<void> getClientByUidOnline({
+    required String uid,
+    required Function(LocalUser? user) voidCallBack,
+  }) async {
+    final result = await useCase.getClientByUidOnline(uid);
+
+    result.fold(
+          (l) {
+        Loader.showError("Network error أثناء تسجيل الدخول");
+        voidCallBack(null);
+      },
+          (user) => voidCallBack(user),
     );
   }
 

@@ -11,7 +11,7 @@ class ApiConstatns {
   };
 
   static const String Base_Url =
-      "https://pos-app-c2ced-default-rtdb.firebaseio.com";
+      "https://link-b47c8-default-rtdb.firebaseio.com";
 
   static String? get uid {
     final sessionUser = Get.find<UserSession>().user?.user;

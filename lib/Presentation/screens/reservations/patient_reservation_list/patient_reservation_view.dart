@@ -16,7 +16,6 @@ class _ReservationPatientViewState extends State<ReservationPatientView>
   void initState() {
     super.initState();
     controller = initController(() => ReservationPatientViewModel());
-    controller.getReservations();
     controller.setupDefaultDate();
 
     tabController = TabController(length: 2, vsync: this);
@@ -118,44 +117,44 @@ class _ReservationPatientViewState extends State<ReservationPatientView>
     return RefreshIndicator(
       color: AppColors.primary,
       onRefresh: () async {
-        controller.getReservations();
         await controller.setupDefaultDate();
       },
-      child: reservations.isEmpty
-          ? ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: [
-                SizedBox(height: 150.h),
-                Center(
-                  child: NoDataAnimated(
-                    title: "لا توجد حجوزات",
-                    subtitle: "لم تقم بأي حجز بعد",
-                    lottiePath: Animations.no_prescription,
-                    height: 200.h,
-                    actionText: "إضافة حجز جديد",
-                    onAction: () {
-                      Get.to(() => const SpecializationView());
-                    },
+      child:
+          reservations.isEmpty
+              ? ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  SizedBox(height: 150.h),
+                  Center(
+                    child: NoDataAnimated(
+                      title: "لا توجد حجوزات",
+                      subtitle: "لم تقم بأي حجز بعد",
+                      lottiePath: Animations.no_prescription,
+                      height: 200.h,
+                      actionText: "إضافة حجز جديد",
+                      onAction: () {
+                        Get.to(() => const SpecializationView());
+                      },
+                    ),
                   ),
-                ),
-              ],
-            )
-          : ListView.separated(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-              physics: const AlwaysScrollableScrollPhysics(),
-              itemCount: reservations.length,
-              separatorBuilder: (_, __) => SizedBox(height: 12.h),
-              itemBuilder: (context, index) {
-                final reservation = reservations[index];
+                ],
+              )
+              : ListView.separated(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                physics: const AlwaysScrollableScrollPhysics(),
+                itemCount: reservations.length,
+                separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                itemBuilder: (context, index) {
+                  final reservation = reservations[index];
 
-                return ReservationPatientCard(
-                  reservation: reservation ?? ReservationModel(),
-                  controller: controller,
-                  index: index,
-                  from_home: false,
-                );
-              },
-            ),
+                  return ReservationPatientCard(
+                    reservation: reservation ?? ReservationModel(),
+                    controller: controller,
+                    index: index,
+                    from_home: false,
+                  );
+                },
+              ),
     );
   }
 }

@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyBrh-3txRF_pQ6cT6RVrzkJPnqNsW-e7gc</string>
+	<string>AIzaSyCRGEEmimrsU8JlhxotoCipuik5Ir9pd3c</string>
 	<key>GCM_SENDER_ID</key>
-	<string>404866464749</string>
+	<string>77166144895</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
 	<string>com.elsheikh.whatscamp</string>
 	<key>PROJECT_ID</key>
-	<string>pos-app-c2ced</string>
+	<string>link-b47c8</string>
 	<key>STORAGE_BUCKET</key>
-	<string>pos-app-c2ced.appspot.com</string>
+	<string>link-b47c8.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,8 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:404866464749:ios:746edc6c15a499e38a85e4</string>
-	<key>DATABASE_URL</key>
-	<string>https://pos-app-c2ced-default-rtdb.firebaseio.com</string>
+	<string>1:77166144895:ios:0080ee1c7a99fed4a53e4a</string>
 </dict>
 </plist>

@@ -11,11 +11,10 @@ class HomePatientController extends GetxController {
   StreamSubscription<DatabaseEvent>? _changeSub;
   StreamSubscription<DatabaseEvent>? _removeSub;
 
-  // 🧠 Other data
-  final reservationVM = initController(() => ReservationPatientViewModel());
+  // 🧠 Shared ViewModel (IMPORTANT)
+  late final ReservationPatientViewModel reservationVM;
 
   List<CategoryEntity?>? listCategories;
-  List<ReservationModel?>? listReservation;
 
   bool isLoading = false;
 
@@ -28,6 +27,10 @@ class HomePatientController extends GetxController {
     "c09e07c9-ced7-4c1d-8e2b-47834e205d39",
     "c27f91dd-0b5f-4b6d-9c55-0b1cd8e01409",
   ];
+
+  // ============================================================
+  // 📊 DATA GETTERS
+  // ============================================================
 
   List<ReservationModel?> get activeReservations {
     return reservationVM.otherReservations;
@@ -45,36 +48,36 @@ class HomePatientController extends GetxController {
         .toList();
   }
 
-  // ------------------------------------------------------------------
-  // INIT
-  // ------------------------------------------------------------------
+  // ============================================================
+  // 🚀 INIT
+  // ============================================================
+
   @override
   void onInit() {
     super.onInit();
+
+    // 🔥 IMPORTANT: نفس الـ instance مش جديد
+    reservationVM = Get.find<ReservationPatientViewModel>();
+
     _loadInitialData();
   }
 
-  // ------------------------------------------------------------------
+  // ============================================================
   Future<void> _loadInitialData() async {
     isLoading = true;
     update();
 
-    // reservations (not realtime yet)
-    listReservation = await reservationVM.loadMyReservations();
-
-    // 🔥 realtime orders
     fetchOrders();
-
-    // categories
     getSpecializationData();
 
     isLoading = false;
     update();
   }
 
-  // ------------------------------------------------------------------
-  // 📥 FETCH ORDERS (REALTIME – same name)
-  // ------------------------------------------------------------------
+  // ============================================================
+  // 📥 FETCH ORDERS (REALTIME)
+  // ============================================================
+
   Future<void> fetchOrders() async {
     final patientKey = Get.find<UserSession>().user?.uid;
 
@@ -82,7 +85,6 @@ class HomePatientController extends GetxController {
 
     final ref = FirebaseDatabase.instance.ref("orders");
 
-    // 🟢 ADD
     _addSub = ref.onChildAdded.listen((event) {
       if (event.snapshot.value == null) return;
 
@@ -95,7 +97,6 @@ class HomePatientController extends GetxController {
       update();
     });
 
-    // 🔄 UPDATE
     _changeSub = ref.onChildChanged.listen((event) {
       if (event.snapshot.value == null) return;
 
@@ -108,7 +109,6 @@ class HomePatientController extends GetxController {
       update();
     });
 
-    // ❌ REMOVE
     _removeSub = ref.onChildRemoved.listen((event) {
       if (event.snapshot.value == null) return;
 
@@ -120,9 +120,10 @@ class HomePatientController extends GetxController {
     });
   }
 
-  // ------------------------------------------------------------------
-  // 🔁 ADD / UPDATE IN MEMORY
-  // ------------------------------------------------------------------
+  // ============================================================
+  // 🔁 ADD / UPDATE ORDER
+  // ============================================================
+
   void _upsertOrder(OrderModel order) {
     final index = orders.indexWhere((o) => o.key == order.key);
 
@@ -135,6 +136,7 @@ class HomePatientController extends GetxController {
     orders.sort((a, b) => (b.createdAt ?? 0).compareTo(a.createdAt ?? 0));
   }
 
+  // ============================================================
   Future<void> updateOrderStatus({
     required OrderModel order,
     required String newStatus,
@@ -143,7 +145,6 @@ class HomePatientController extends GetxController {
       order: order,
       newStatus: newStatus,
       onSave: (updatedOrder) async {
-        // 🔥 حفظ في Firebase فقط
         await FirebaseDatabase.instance
             .ref("orders/${updatedOrder.key}")
             .update(updatedOrder.toJson());
@@ -151,9 +152,10 @@ class HomePatientController extends GetxController {
     );
   }
 
-  // ------------------------------------------------------------------
-  // CATEGORIES (unchanged)
-  // ------------------------------------------------------------------
+  // ============================================================
+  // 🏷️ CATEGORIES
+  // ============================================================
+
   void getSpecializationData() {
     CategoryService().getAllCategoriesData(
       voidCallBack: (data) {
@@ -176,14 +178,13 @@ class HomePatientController extends GetxController {
     );
   }
 
-  // ------------------------------------------------------------------
-  // 🔄 REFRESH (same name – partial reload)
-  // ------------------------------------------------------------------
+  // ============================================================
+  // 🔄 REFRESH
+  // ============================================================
+
   Future<void> refreshAll() async {
     isLoading = true;
     update();
-
-    reservationVM.getReservations(); // 🔥 دي المهمة
 
     getSpecializationData();
 
@@ -191,9 +192,10 @@ class HomePatientController extends GetxController {
     update();
   }
 
-  // ------------------------------------------------------------------
-  // DISPOSE
-  // ------------------------------------------------------------------
+  // ============================================================
+  // 🛑 DISPOSE
+  // ============================================================
+
   @override
   void onClose() {
     _addSub?.cancel();

@@ -44,7 +44,6 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
     final uid = sessionUser?.uid;
 
     if (uid == null || uid.isEmpty) {
-      print("❌ No UID found, can't listen to notifications");
       return;
     }
 
@@ -57,7 +56,6 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
         .orderByChild("to_key")
         .equalTo(uid);
 
-    print("🎧 Listening on notifications where to_key = $uid");
 
     // ============================================================
     // 🟢 ADDED
@@ -66,7 +64,6 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
     final addedSub = query.onChildAdded.listen((event) {
       final model = _parseNotification(event.snapshot);
       if (model != null) {
-        print("🔔 Notification Added → ${model.key}");
         _addedController.add(model);
       }
     });
@@ -78,7 +75,6 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
     final changedSub = query.onChildChanged.listen((event) {
       final model = _parseNotification(event.snapshot);
       if (model != null) {
-        print("🔄 Notification Updated → ${model.key}");
         _changedController.add(model);
       }
     });
@@ -91,7 +87,6 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
           (event) {
         final key = event.snapshot.key;
         if (key != null) {
-          print("❌ Notification Removed → $key");
           _removedController.add(key);
         }
       },
@@ -116,7 +111,6 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
       );
 
       if (response == null || response is! Map) {
-        print("⚠️ No notifications found");
         return [];
       }
 
@@ -132,10 +126,8 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
         }
       });
 
-      print("☁️ Notifications fetched → ${list.length}");
       return list;
     } catch (e) {
-      print("🔥 Fetch Notifications Error → $e");
       return [];
     }
   }
@@ -158,7 +150,6 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
 
       return NotificationModel.fromJson(json);
     } catch (e) {
-      print("🔥 Notification parse error → $e");
       return null;
     }
   }
@@ -170,7 +161,6 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
   @override
   Future<void> createNotification(NotificationModel model) async {
     final key = model.key;
-    print("☁️ Create Notification → $key");
 
     await _clientSourceRepo.request(
       HttpMethod.PATCH,
@@ -186,7 +176,6 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
   @override
   Future<void> updateNotification(NotificationModel model) async {
     final key = model.key;
-    print("☁️ Update Notification → $key");
 
     await _clientSourceRepo.request(
       HttpMethod.PATCH,
@@ -201,7 +190,6 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
 
   @override
   Future<void> deleteNotification(String key) async {
-    print("☁️ Delete Notification → $key");
 
     await _clientSourceRepo.request(
       HttpMethod.DELETE,
@@ -222,6 +210,5 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
     _subscriptions.clear();
     _rootRef = null;
 
-    print("🛑 Notification listeners stopped");
   }
 }

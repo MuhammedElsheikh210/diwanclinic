@@ -56,10 +56,6 @@ void main() {
       // 🔔 Notification Core
       await NotificationService().initCore();
 
-      final apns = await FirebaseMessaging.instance.getAPNSToken();
-      log("APNS: $apns");
-      log("BUNDLE: ${await PackageInfo.fromPlatform()}");
-
       // 🔥 Remote Config
       await FirebaseRemoteConfigService().checkForceUpdate();
 

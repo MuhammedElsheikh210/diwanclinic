@@ -57,7 +57,7 @@ class ParentSyncService extends GetxController {
 
       final double incrementValue = 1 / totalSteps;
 
-      final today = DateFormat('dd/MM/yyyy').format(DateTime.now());
+      final today = DateFormat('dd-MM-yyyy').format(DateTime.now());
 
       // ============================================================
       // 👨‍⚕️ DOCTOR SYNC

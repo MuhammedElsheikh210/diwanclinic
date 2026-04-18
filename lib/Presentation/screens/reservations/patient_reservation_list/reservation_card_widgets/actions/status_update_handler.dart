@@ -117,7 +117,7 @@ class NotificationHandler {
     if (titleBody == null) return;
 
     await _sendAndSave(
-      toKey: userKey,
+      toKey: toToken,
       userType: UserType.patient,
       title: titleBody.$1,
       body: titleBody.$2,

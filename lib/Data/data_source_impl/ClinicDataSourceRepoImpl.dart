@@ -59,7 +59,6 @@ class ClinicDataSourceRepoImpl extends ClinicDataSourceRepo {
     try {
       final path = _clinicsPath(doctorKey);
 
-      print("🌍 CLINICS API PATH: $path");
 
       final response = await _clientSourceRepo.request(
         HttpMethod.GET,
@@ -68,7 +67,6 @@ class ClinicDataSourceRepoImpl extends ClinicDataSourceRepo {
       );
 
       if (response == null || response.isEmpty) {
-        print("⚠️ No clinics found");
         return [];
       }
 
@@ -77,7 +75,6 @@ class ClinicDataSourceRepoImpl extends ClinicDataSourceRepo {
         (json) => ClinicModel.fromJson(json),
       );
     } catch (e) {
-      print("❌ getClinics error: $e");
       return [];
     }
   }
@@ -94,7 +91,6 @@ class ClinicDataSourceRepoImpl extends ClinicDataSourceRepo {
     try {
       final path = _patientClinicsPath(doctorKey);
 
-      print("🌍 PATIENT CLINICS API PATH: $path");
 
       final response = await _clientSourceRepo.request(
         HttpMethod.GET,
@@ -103,7 +99,6 @@ class ClinicDataSourceRepoImpl extends ClinicDataSourceRepo {
       );
 
       if (response == null || response.isEmpty) {
-        print("⚠️ No patient clinics found");
         return [];
       }
 
@@ -112,7 +107,6 @@ class ClinicDataSourceRepoImpl extends ClinicDataSourceRepo {
         (json) => ClinicModel.fromJson(json),
       );
     } catch (e) {
-      print("❌ getClinicsFromPatient error: $e");
       return [];
     }
   }
@@ -130,7 +124,6 @@ class ClinicDataSourceRepoImpl extends ClinicDataSourceRepo {
     try {
       final path = _clinicItemPath(doctorKey, key);
 
-      print("➕ ADD CLINIC PATH: $path");
 
       final response = await _clientSourceRepo.request(
         HttpMethod.PATCH,
@@ -140,7 +133,6 @@ class ClinicDataSourceRepoImpl extends ClinicDataSourceRepo {
 
       return SuccessModel.fromJson(response);
     } catch (e) {
-      print("❌ addClinic error: $e");
       return SuccessModel(message: "حدث خطأ أثناء إضافة العيادة");
     }
   }
@@ -158,7 +150,6 @@ class ClinicDataSourceRepoImpl extends ClinicDataSourceRepo {
     try {
       final path = _clinicItemPath(doctorKey, key);
 
-      print("❌ DELETE CLINIC PATH: $path");
 
       final response = await _clientSourceRepo.request(
         HttpMethod.DELETE,
@@ -168,7 +159,6 @@ class ClinicDataSourceRepoImpl extends ClinicDataSourceRepo {
 
       return SuccessModel.fromJson(response ?? {"message": "تم الحذف بنجاح"});
     } catch (e) {
-      print("❌ deleteClinic error: $e");
       return SuccessModel(message: "فشل حذف العيادة");
     }
   }
@@ -186,7 +176,6 @@ class ClinicDataSourceRepoImpl extends ClinicDataSourceRepo {
     try {
       final path = _clinicItemPath(doctorKey, key);
 
-      print("✏️ UPDATE CLINIC PATH: $path");
 
       final response = await _clientSourceRepo.request(
         HttpMethod.PATCH,
@@ -196,7 +185,6 @@ class ClinicDataSourceRepoImpl extends ClinicDataSourceRepo {
 
       return SuccessModel.fromJson(response);
     } catch (e) {
-      print("❌ updateClinic error: $e");
       return SuccessModel(message: "فشل تحديث العيادة");
     }
   }

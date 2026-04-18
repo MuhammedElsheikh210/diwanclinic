@@ -1,3 +1,4 @@
+import 'package:firebase_database/firebase_database.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../../../index/index_main.dart';
@@ -9,7 +10,6 @@ class ReservationViewModel extends GetxController {
   late final ReservationActionManager actionManager;
   late final ReservationQueryManager queryManager;
   bool hideShiftSelector = false;
-  bool _isListening = false;
   bool _isProcessingStatus = false;
   List<ReservationModel> _cachedReservations = [];
 
@@ -59,12 +59,7 @@ class ReservationViewModel extends GetxController {
   List<ReservationNewStatus>? selectedStatusesList;
   String? selectedType;
 
-  final List<String> reservationTypeFilters = [
-    "كشف جديد",
-    "كشف مستعجل",
-    "إعادة",
-    "متابعة",
-  ];
+  final List<String> reservationTypeFilters = ["جديد", "مستعجل", "إعادة"];
 
   @override
   Future<void> onInit() async {
@@ -186,8 +181,6 @@ class ReservationViewModel extends GetxController {
             orElse: () => clinics.first,
           );
 
-          print("selectedClinic is ${selectedClinic?.toJson()}");
-
           await getShiftList();
         }
 
@@ -282,6 +275,7 @@ class ReservationViewModel extends GetxController {
     );
   }
 
+
   Future<void> changeReservationStatus({
     required ReservationModel reservation,
     required ReservationStatus newStatus,
@@ -293,18 +287,36 @@ class ReservationViewModel extends GetxController {
     Loader.show();
 
     try {
+      /// ✅ Optimistic UI
       reservation.status = newStatus.value;
       fromUpdate = true;
 
-      await actionManager.updateReservation(reservation);
+      /// ✅ PATH
+      final path =
+          "doctors/${reservation.doctorUid}"
+          "/reservations/${reservation.appointmentDateTime}"
+          "/${reservation.key}";
 
+      final ref = FirebaseDatabase.instance.ref(path);
+
+      /// ✅ DATA
+      final updateData = {
+        "status": newStatus.value,
+        if (cancelReason != null) "cancelReason": cancelReason,
+      };
+
+      /// 🔥 TRIGGER Firebase Function
+      await ref.update(updateData);
+
+      /// ✅ UI Update
       _updateListInMemory(reservation);
 
+      /// ✅ Side Effects (Queue only)
       _runSideEffectsInBackground(reservation, newStatus, cancelReason);
 
       Loader.showSuccess("تم تحديث الحالة إلى ${newStatus.label}");
     } catch (e, stack) {
-      debugPrint("❌ changeReservationStatus Error: $e");
+      debugPrint("❌ changeReservationStatus ERROR: $e");
       debugPrintStack(stackTrace: stack);
 
       Loader.showError("حدث خطأ أثناء تحديث الحالة");
@@ -328,12 +340,10 @@ class ReservationViewModel extends GetxController {
     String? cancelReason,
   ) async {
     try {
-      // 1️⃣ Send Status Notification
-      if (_shouldSendStatusNotification(newStatus)) {
-        await _sendStatusNotification(reservation, newStatus, cancelReason);
-      }
+      // ❌ لا notification
+      // ❌ لا WhatsApp
 
-      // 2️⃣ Queue Update ONLY if completed
+      // ✅ Queue فقط
       if (newStatus == ReservationStatus.completed) {
         await _handleQueueUpdate();
       }
@@ -358,12 +368,26 @@ class ReservationViewModel extends GetxController {
     ReservationStatus newStatus,
     String? cancelReason,
   ) async {
-    await NotificationHandler().sendStatusNotification(
-      newStatus: newStatus,
-      reservation: reservation,
-      toToken: reservation.patientFcm ?? "",
-      cancelReason: cancelReason,
-    );
+    try {
+      await NotificationHandler().sendStatusNotification(
+        newStatus: newStatus,
+        reservation: reservation,
+        toToken: reservation.patientFcm!,
+        cancelReason: cancelReason,
+      );
+
+      if (newStatus == ReservationStatus.completed ||
+          newStatus == ReservationStatus.approved) {
+        await WhatsAppStatusMessageService.sendStatusWhatsAppMessage(
+          reservation: reservation,
+          clinic: selectedClinic,
+          newStatus: newStatus,
+        );
+      }
+    } catch (e, s) {
+      debugPrint("❌ Notification Error: $e");
+      debugPrintStack(stackTrace: s);
+    }
 
     if (newStatus == ReservationStatus.completed ||
         newStatus == ReservationStatus.approved) {
@@ -451,7 +475,12 @@ extension ReservationData on ReservationViewModel {
       return;
     }
 
-    // 1️⃣ حدث قائمة اليوم
+    /// 🔥 لو القائمة فاضية → اعمل reload
+    if (completeDayReservations.isEmpty) {
+      getReservations();
+      return;
+    }
+
     final index = completeDayReservations.indexWhere(
       (e) => e?.key == model.key,
     );
@@ -459,17 +488,11 @@ extension ReservationData on ReservationViewModel {
     if (index != -1) {
       completeDayReservations[index] = model;
     } else {
-      completeDayReservations.insert(0, model);
+      completeDayReservations.add(model);
     }
 
-    // 2️⃣ 👈 أعد تطبيق الفلاتر
-    final rebuilt = queueManager.buildFinalList(
-      completeDayReservations.whereType<ReservationModel>().toList(),
-    );
+    listReservations = List.from(completeDayReservations);
 
-    listReservations = rebuilt;
-
-    // 3️⃣ حدث الشاشة
     update();
   }
 
@@ -511,8 +534,6 @@ extension ReservationData on ReservationViewModel {
 
       await getTotalTodayReservations();
 
-      debugPrint("✅ All reservation queries finished");
-
       update();
     } catch (e, stack) {
       debugPrint("❌ getReservations ERROR: $e");
@@ -545,9 +566,6 @@ extension ReservationData on ReservationViewModel {
     _cachedReservations = all;
 
     completeDayReservations = all;
-    print(
-      "completeDayReservations to get data is ${completeDayReservations.length}",
-    );
     update();
   }
 

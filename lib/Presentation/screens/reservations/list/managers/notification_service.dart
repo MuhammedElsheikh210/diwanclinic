@@ -13,7 +13,7 @@ class ReservationNotificationService {
       final notificationManager = NotificationManager();
       await notificationManager.init();
 
-      final today = DateFormat('dd/MM/yyyy').format(DateTime.now());
+      final today = DateFormat('dd-MM-yyyy').format(DateTime.now());
 
       // 🔥 Fetch today's reservations from LOCAL SQLite
       List<ReservationModel> todayReservations = [];

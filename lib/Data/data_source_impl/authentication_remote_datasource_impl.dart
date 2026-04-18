@@ -44,12 +44,10 @@ class AuthenticationRemoteDataSourceImpl
     const path = "clients";
     _rootRef = _database.ref(path);
 
-    print("🎧 Listening on → $path");
 
     final addedSub = _rootRef!.onChildAdded.listen((event) {
       final json = _parse(event.snapshot);
       if (json != null) {
-        print("➕ Client Added → ${json['uid']}");
         _addedController.add(json);
       }
     });
@@ -57,7 +55,6 @@ class AuthenticationRemoteDataSourceImpl
     final changedSub = _rootRef!.onChildChanged.listen((event) {
       final json = _parse(event.snapshot);
       if (json != null) {
-        print("🔄 Client Updated → ${json['uid']}");
         _changedController.add(json);
       }
     });
@@ -65,7 +62,6 @@ class AuthenticationRemoteDataSourceImpl
     final removedSub = _rootRef!.onChildRemoved.listen((event) {
       final key = event.snapshot.key;
       if (key != null) {
-        print("❌ Client Removed → $key");
         _removedController.add(key);
       }
     });
@@ -74,7 +70,7 @@ class AuthenticationRemoteDataSourceImpl
   }
 
   // ============================================================
-  // 🌐 FETCH CLIENTS
+  // 🌐 FETCH CLIENTS (BULK)
   // ============================================================
 
   @override
@@ -88,7 +84,6 @@ class AuthenticationRemoteDataSourceImpl
       );
 
       if (response == null || response is! Map) {
-        print("⚠️ No clients found");
         return [];
       }
 
@@ -100,16 +95,44 @@ class AuthenticationRemoteDataSourceImpl
             value.map((k, v) => MapEntry(k.toString(), v)),
           );
 
-          json['uid'] = key; // 🔥 مهم جدًا
+          json['uid'] = key;
           users.add(json);
         }
       });
 
-      print("☁️ Clients fetched → ${users.length}");
       return users;
     } catch (e) {
-      print("🔥 Fetch Clients Error → $e");
       return [];
+    }
+  }
+
+  // ============================================================
+  // ✅ NEW: FETCH SINGLE CLIENT (LOGIN / CRITICAL)
+  // ============================================================
+
+  @override
+  Future<Map<String, dynamic>?> fetchClientByUid(String uid) async {
+    try {
+
+      final response = await _clientSourceRepo.request(
+        HttpMethod.GET,
+        "/${ApiConstatns.clients}/$uid.json",
+        params: {},
+      );
+
+      if (response == null || response is! Map) {
+        return null;
+      }
+
+      final json = Map<String, dynamic>.from(
+        response.map((k, v) => MapEntry(k.toString(), v)),
+      );
+
+      json['uid'] = uid;
+
+      return json;
+    } catch (e) {
+      return null;
     }
   }
 
@@ -131,7 +154,6 @@ class AuthenticationRemoteDataSourceImpl
 
       return json;
     } catch (e) {
-      print("🔥 Client parse error → $e");
       return null;
     }
   }
@@ -145,7 +167,6 @@ class AuthenticationRemoteDataSourceImpl
     final key = user['uid'];
     if (key == null) return;
 
-    print("☁️ Create Client → $key");
 
     await _clientSourceRepo.request(
       HttpMethod.PATCH,
@@ -163,7 +184,6 @@ class AuthenticationRemoteDataSourceImpl
     final key = user['uid'];
     if (key == null) return;
 
-    print("☁️ Update Client → $key");
 
     await _clientSourceRepo.request(
       HttpMethod.PATCH,
@@ -178,7 +198,6 @@ class AuthenticationRemoteDataSourceImpl
 
   @override
   Future<void> deleteClient(String key) async {
-    print("☁️ Delete Client → $key");
 
     await _clientSourceRepo.request(
       HttpMethod.DELETE,
@@ -199,6 +218,5 @@ class AuthenticationRemoteDataSourceImpl
     _subscriptions.clear();
     _rootRef = null;
 
-    print("🛑 Client listeners stopped");
   }
 }

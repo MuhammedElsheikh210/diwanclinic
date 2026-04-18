@@ -47,13 +47,23 @@ class AuthenticationUseCases {
   }
 
   // ============================================================
-  // 🌐 CLIENTS (ONLINE ONLY)
+  // 🌐 CLIENTS (ONLINE ONLY - BULK)
   // ============================================================
 
   Future<Either<AppError, List<LocalUser>>> getClientsOnline(
       Map<String, dynamic> firebaseFilter,
       ) {
     return _repository.getClientsOnlineDomain(firebaseFilter);
+  }
+
+  // ============================================================
+  // ✅ NEW: CLIENT (ONLINE ONLY - SINGLE / LOGIN)
+  // ============================================================
+
+  Future<Either<AppError, LocalUser?>> getClientByUidOnline(
+      String uid,
+      ) {
+    return _repository.getClientByUidOnlineDomain(uid);
   }
 
   // ============================================================

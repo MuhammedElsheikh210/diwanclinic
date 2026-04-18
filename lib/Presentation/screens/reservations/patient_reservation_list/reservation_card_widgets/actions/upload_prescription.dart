@@ -135,9 +135,10 @@ class _PrescriptionPatientBottomSheetWidgetState
       Loader.show();
 
       final storage = FirebaseStorage.instance;
-      String? urlToDelete = slot == 1
-          ? widget.reservation.prescriptionUrl1
-          : widget.reservation.prescriptionUrl2;
+      String? urlToDelete =
+          slot == 1
+              ? widget.reservation.prescriptionUrl1
+              : widget.reservation.prescriptionUrl2;
 
       // delete from storage
       if (urlToDelete != null && urlToDelete.isNotEmpty) {
@@ -151,10 +152,17 @@ class _PrescriptionPatientBottomSheetWidgetState
         widget.reservation.prescriptionUrl2 = null;
       }
 
-      // 🔥✨ UPDATE USING: updatePatientReservationData
-      await ReservationService().updatePatientReservationData(
-        data: widget.reservation,
-        key: widget.reservation.key ?? "",
+      final updated = widget.reservation;
+
+      // 🧑‍⚕️ Update Doctor (source of truth)
+      await ReservationService().updateReservationData(
+        reservation: updated,
+        voidCallBack: (_) {},
+      );
+
+      // 👤 Update Patient (copy)
+      await PatientReservationService().updateReservationData(
+        reservation: updated,
         voidCallBack: (_) => widget.onUpdated(),
       );
 
@@ -220,10 +228,17 @@ class _PrescriptionPatientBottomSheetWidgetState
         widget.reservation.prescriptionUrl2 = await ref.getDownloadURL();
       }
 
-      // 🔥✨ UPDATE USING: updatePatientReservationData
-      await ReservationService().updatePatientReservationData(
-        data: widget.reservation,
-        key: widget.reservation.key ?? "",
+      final updated = widget.reservation;
+
+      // 🧑‍⚕️ Update Doctor (source of truth)
+      await ReservationService().updateReservationData(
+        reservation: updated,
+        voidCallBack: (_) {},
+      );
+
+      // 👤 Update Patient (copy)
+      await PatientReservationService().updateReservationData(
+        reservation: updated,
         voidCallBack: (_) => widget.onUpdated(),
       );
 
@@ -276,30 +291,31 @@ class _PrescriptionPatientBottomSheetWidgetState
                 height: 160,
                 width: double.infinity,
                 color: AppColors.background_neutral_100,
-                child: hasImage
-                    ? localFile != null
-                          ? Image.file(localFile!, fit: BoxFit.cover)
-                          : CachedNetworkImage(
+                child:
+                    hasImage
+                        ? localFile != null
+                            ? Image.file(localFile!, fit: BoxFit.cover)
+                            : CachedNetworkImage(
                               imageUrl: networkUrl!,
                               fit: BoxFit.cover,
                             )
-                    : Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.cloud_upload_outlined,
-                            size: 36,
-                            color: AppColors.primary,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            "اضغط لاختيار الصورة",
-                            style: context.typography.mdMedium.copyWith(
+                        : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.cloud_upload_outlined,
+                              size: 36,
                               color: AppColors.primary,
                             ),
-                          ),
-                        ],
-                      ),
+                            const SizedBox(height: 8),
+                            Text(
+                              "اضغط لاختيار الصورة",
+                              style: context.typography.mdMedium.copyWith(
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
               ),
             ),
           ),

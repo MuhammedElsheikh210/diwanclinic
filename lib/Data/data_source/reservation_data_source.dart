@@ -34,18 +34,18 @@ abstract class ReservationDataSourceRepo {
   // ⭐ PATIENT META (Remote Direct - Separate Firebase Path)
   // ============================================================
 
-  /// Add patient reservation meta (Remote Only)
-  Future<SuccessModel> addPatientReservationMeta(
-    ReservationModel meta,
-    String patientKey,
-  );
-
-  /// Update patient reservation meta (Remote Only)
-  Future<SuccessModel> updatePatientReservation(
-    ReservationModel meta,
-    String key,
-  );
-
-  /// Get patient reservation meta list (Remote Only)
-  Future<List<ReservationModel>> getPatientReservationsMeta(String patientKey);
+  // /// Add patient reservation meta (Remote Only)
+  // Future<SuccessModel> addPatientReservationMeta(
+  //   ReservationModel meta,
+  //   String patientKey,
+  // );
+  //
+  // /// Update patient reservation meta (Remote Only)
+  // Future<SuccessModel> updatePatientReservation(
+  //   ReservationModel meta,
+  //   String key,
+  // );
+  //
+  // /// Get patient reservation meta list (Remote Only)
+  // Future<List<ReservationModel>> getPatientReservationsMeta(String patientKey);
 }

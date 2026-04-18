@@ -32,8 +32,6 @@ class NotificationService {
   Future<void> initCore() async {
     if (_initialized) return;
 
-    log("🚀 Initializing Notification Core...");
-
     await _requestPermission();
     await _setupLocalNotifications();
     await _configureForegroundPresentation();
@@ -42,8 +40,6 @@ class NotificationService {
     _setupMessageListeners();
 
     _initialized = true;
-
-    log("✅ Notification core ready");
   }
 
   // ─────────────────────────────────────────────
@@ -55,8 +51,6 @@ class NotificationService {
       badge: true,
       sound: true,
     );
-
-    log("🔔 Permission: ${settings.authorizationStatus}");
   }
 
   // ─────────────────────────────────────────────
@@ -64,7 +58,6 @@ class NotificationService {
   // ─────────────────────────────────────────────
   Future<void> _initTokenListener() async {
     _messaging.onTokenRefresh.listen((newToken) async {
-      log("🔥 TOKEN READY/REFRESHED: $newToken");
       _fcmToken = newToken;
 
       // لو كان في subscribe pending
@@ -77,10 +70,7 @@ class NotificationService {
     try {
       final token = await _messaging.getToken();
       _fcmToken = token;
-      log("🔥 FCM TOKEN: $token");
-    } catch (_) {
-      log("⚠️ Token not ready yet (Debug timing)");
-    }
+    } catch (_) {}
   }
 
   // ─────────────────────────────────────────────
@@ -148,7 +138,6 @@ class NotificationService {
 
     // لو التوكن مش جاهز → خليه pending
     if (_fcmToken == null) {
-      log("⏳ Token not ready → delaying subscription...");
       _pendingTopic = topic;
       return;
     }
@@ -160,7 +149,6 @@ class NotificationService {
     try {
       await _messaging.subscribeToTopic(topic);
       _currentTopic = topic;
-      log("✅ Subscribed to $topic");
     } catch (e) {
       log("⚠️ Subscribe failed: $e");
     }

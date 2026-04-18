@@ -25,6 +25,7 @@ class CreateReservationViewModel extends GetxController {
   bool isCalculatingOrder = false;
   List<ReservationModel?> patientReservations = [];
   bool isTimelineExpanded = false;
+  bool isAutoApplied = false;
 
   // Delegate fields
   final TextEditingController delegateNameController = TextEditingController();
@@ -65,12 +66,7 @@ class CreateReservationViewModel extends GetxController {
   int _autoRevisitCount = 0;
   String _autoParentKey = "";
 
-  final List<String> typeOptions = [
-    "كشف جديد",
-    "كشف مستعجل",
-    "إعادة",
-    "متابعة",
-  ];
+  final List<String> typeOptions = ["كشف جديد", "كشف مستعجل", "إعادة"];
 
   // 🔹 Prices from Clinic
   String? consultationPrice;
@@ -157,13 +153,15 @@ class CreateReservationViewModel extends GetxController {
 
   Future<void> onPatientSelected(LocalUser user) async {
     clientUser = user;
-
+    isAutoApplied = false; // 🔥
     await loadReservationsForPatient(); // 🔥 أهم سطر
 
     update();
   }
 
   void applyAutoTypeLogic() {
+    selectedType = null;
+
     final result = ReservationTypeService.determine(
       lastReservation: lastReservation,
       maxRevisitCount: maxRevisitePerClinic,
@@ -176,8 +174,12 @@ class CreateReservationViewModel extends GetxController {
     _autoRevisitCount = result.revisitCount;
     _autoParentKey = result.parentKey;
 
-    /// 🔥 أهم سطر (fix السعر)
-    setReservationType(selectedType);
+    /// ✅ APPLY AUTO ONLY FIRST TIME
+    if (!isAutoApplied) {
+      selectedType = result.type;
+      setReservationType(result.type);
+      isAutoApplied = true;
+    }
 
     update();
   }
@@ -197,6 +199,8 @@ class CreateReservationViewModel extends GetxController {
 
     _autoRevisitCount = 0;
     _autoParentKey = "";
+
+    isAutoApplied = false; // 🔥🔥🔥 أهم سطر
 
     update();
   }
@@ -979,18 +983,13 @@ class CreateReservationViewModel extends GetxController {
 
         patientReservations = list; // 🔥 أهم سطر
 
-
         /// ✅ 1. آخر حجز خالص (لـ UI)
         final latestAny = list.first;
 
+        lastReservation = latestAny;
         lastReservationHumanText = _humanizeDate(latestAny?.createdAt);
 
-        final lastCompleted =
-            list
-                .where((r) => r?.status == ReservationStatus.completed.value)
-                .toList();
-
-        lastReservation = lastCompleted.isNotEmpty ? lastCompleted.first : null;
+        isAutoApplied = false;
 
         /// ✅ 3. apply logic
         Future.microtask(() => applyAutoTypeLogic());
@@ -1151,10 +1150,10 @@ class CreateReservationViewModel extends GetxController {
     }
   }
 
-  void createPatientReservation(ReservationModel reservation) {
-    ReservationService().addPatientReservationMeta(
-      patientKey: reservation.patientUid ?? "",
-      meta: reservation,
+  void createPatientReservation(ReservationModel reservation) async {
+    // 👤 Create عند المريض (copy)
+    await PatientReservationService().addReservationData(
+      reservation: reservation,
       voidCallBack: (_) async {
         _decreaseLegacyQueue();
 
@@ -1164,7 +1163,7 @@ class CreateReservationViewModel extends GetxController {
           from_assist: true,
           newStatus: ReservationStatus.approved,
         );
-        //  refreshListView();
+        //   refreshListView();
         Get.back();
         Loader.showSuccess("تم إضافة الحجز بنجاح");
       },
@@ -1184,12 +1183,17 @@ class CreateReservationViewModel extends GetxController {
     updatePatientReservation(reservation);
   }
 
-  void updatePatientReservation(ReservationModel reservation) {
-    ReservationService().updatePatientReservationData(
-      key: reservation.patientUid ?? "",
-      data: reservation,
+  void updatePatientReservation(ReservationModel reservation) async {
+    // 🧑‍⚕️ Update Doctor (source of truth)
+    await ReservationService().updateReservationData(
+      reservation: reservation,
+      voidCallBack: (_) {},
+    );
+
+    // 👤 Update Patient (copy)
+    await PatientReservationService().updateReservationData(
+      reservation: reservation,
       voidCallBack: (_) async {
-        //  refreshListView();
         Get.back();
         Loader.showSuccess("تم تحديث الحجز بنجاح");
       },

@@ -1,3 +1,5 @@
+import 'package:diwanclinic/Global/Utils/logger.dart';
+
 import '../../index/index_main.dart';
 import 'package:http/http.dart' as http;
 
@@ -8,12 +10,11 @@ enum HttpMethod {
   PUT,
   DELETE;
 
-  /// **Executes the HTTP Request based on the method**
   Future<http.Response> execute(
-    Uri uri, {
-    Map<String, String>? headers,
-    Object? body,
-  }) async {
+      Uri uri, {
+        Map<String, String>? headers,
+        Object? body,
+      }) async {
     switch (this) {
       case HttpMethod.GET:
         return await http.get(uri, headers: headers);
@@ -30,70 +31,109 @@ enum HttpMethod {
 }
 
 class ClientSourceRepo {
-  static const int timeoutDuration = 10; // Timeout duration in seconds
+  static const int timeoutDuration = 10;
   static const String baseUrl =
       "https://pointofsales-aee83-default-rtdb.firebaseio.com";
 
-  /// **Handles all Firebase API Requests**
+  /// 🔥 Main Request Handler
   Future<dynamic> request(
-    HttpMethod method,
-    String path, {
-    Map<String, dynamic>? params,
-    Map<String, String>? headers,
-  }) async {
+      HttpMethod method,
+      String path, {
+        Map<String, dynamic>? params,
+        Map<String, String>? headers,
+      }) async {
     final uri = _buildUri(path, method, param: params);
     headers ??= _getHeaders();
 
+    final cleanedParams = _cleanData(params);
+    final stopwatch = AppLogger.startTimer();
+
     try {
-      // ✅ Remove null & empty values from params
-      final cleanedParams = _cleanData(params);
+      // 🟢 Log Request
+      AppLogger.logRequest(
+        url: uri.toString(),
+        method: method.name,
+        params: cleanedParams,
+        headers: headers,
+      );
 
-      // ✅ Convert to JSON (for POST, PATCH, PUT)
+      // ✅ Prepare Body
       final requestBody =
-          (method == HttpMethod.DELETE) ? null : jsonEncode(cleanedParams);
+      (method == HttpMethod.GET || method == HttpMethod.DELETE)
+          ? null
+          : jsonEncode(cleanedParams);
 
+      // 🚀 Execute Request
       final response = await method
           .execute(uri, headers: headers, body: requestBody)
           .timeout(const Duration(seconds: timeoutDuration));
 
-      _debugRequest(uri, cleanedParams, response);
-      // ✅ 1. Handle empty response `{}` or `""`
+      final duration = stopwatch.elapsed;
+
+      // 🟢 Log Response
+      AppLogger.logResponse(
+        url: uri.toString(),
+        statusCode: response.statusCode,
+        body: response.body,
+        duration: duration,
+      );
+
+      // ⚠️ Handle Empty Response
       if (response.body.isEmpty || response.body == "{}") {
-        print("⚠️ Response is empty or `{}` → Returning empty list `[]`");
+        AppLogger.warning(
+          "API_RESPONSE",
+          "Empty response → returning empty result",
+        );
         return response.body;
-      } else {
-        return _handleResponse(response);
       }
-    } catch (e) {
+
+      return _handleResponse(response);
+    } catch (e, stackTrace) {
+      // 🔴 Log Error
+      AppLogger.logApiError(
+        url: uri.toString(),
+        error: e,
+        stackTrace: stackTrace,
+      );
+
       throw ErrorHandler.handle(e);
     }
   }
 
-  /// **Builds URI with `.json` format for Firebase**
-  Uri _buildUri(String path, HttpMethod method, {Map<String, dynamic>? param}) {
-    if (param == null) {
+  /// 🔗 Build Firebase URL
+  Uri _buildUri(String path, HttpMethod method,
+      {Map<String, dynamic>? param}) {
+    if (param == null || param.isEmpty) {
       return Uri.parse('${ApiConstatns.Base_Url}$path');
     } else {
-      var queryString = param.entries
+      final queryString = param.entries
           .map((e) => '${e.key}=${e.value}')
           .join('&');
+
       return Uri.parse('${ApiConstatns.Base_Url}$path?$queryString');
     }
   }
 
-  /// **Default Headers for Firebase Requests**
+  /// 📜 Default Headers
   Map<String, String> _getHeaders() {
-    return {'Content-Type': 'application/json', 'Accept': 'application/json'};
+    return {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
   }
 
-  /// **Cleans Data by Removing Null/Empty Values**
+  /// 🧹 Clean Params
   Map<String, dynamic> _cleanData(Map<String, dynamic>? data) {
     if (data == null) return {};
-    return data
-      ..removeWhere((key, value) => value == null || value.toString().isEmpty);
+
+    final cleaned = Map<String, dynamic>.from(data);
+    cleaned.removeWhere(
+            (key, value) => value == null || value.toString().isEmpty);
+
+    return cleaned;
   }
 
-  /// **Handles Firebase API Responses**
+  /// 📦 Handle Response
   dynamic _handleResponse(http.Response response) {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return json.decode(response.body);
@@ -104,19 +144,5 @@ class ClientSourceRepo {
         statusCode: response.statusCode,
       );
     }
-  }
-
-  /// **Debugging Helper for API Requests**
-  void _debugRequest(
-    Uri uri,
-    Map<String, dynamic>? params,
-    http.Response response,
-  ) {
-    print("🔗 **URL:** $uri");
-    print("📡 **Method:** ${response.request?.method}");
-    print("📜 **Headers:** ${response.request?.headers}");
-    print("📝 **Params:** ${jsonEncode(params)}");
-    print("📦 **Response Body:** ${response.body}");
-    print("⚠️ **Status Code:** ${response.statusCode}");
   }
 }

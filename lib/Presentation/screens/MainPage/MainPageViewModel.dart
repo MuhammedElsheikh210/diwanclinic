@@ -1,6 +1,8 @@
 // ignore_for_file: depend_on_referenced_packages
 
 import 'dart:async';
+import 'package:diwanclinic/Presentation/parentControllers/patientReservationService.dart';
+
 import '../../../index/index_main.dart';
 
 class MainPageViewModel extends GetxController {
@@ -33,6 +35,9 @@ class MainPageViewModel extends GetxController {
   // ============================================================
 
   final ReservationService _reservationService = ReservationService();
+  final PatientReservationService _patientReservationService =
+      PatientReservationService();
+
   final AuthenticationService _authService = AuthenticationService();
   final NotificationPatentService _notificationService =
       NotificationPatentService();
@@ -45,32 +50,27 @@ class MainPageViewModel extends GetxController {
   Future<void> onInit() async {
     super.onInit();
 
-    await _loadCurrentUserFromOnline();
+    if (!isPatient) {
+      await _loadCurrentUserFromOnline();
+      await _startClientsRealtime();
+    }
 
-    debugPrint("👤 user type is $userType");
-
-    // 🔥 Start realtime listeners
-    await _startClientsRealtime();
     await startReservationsRealtime();
     await _startNotificationsRealtime();
 
     await debugRawClientsTable();
   }
 
+  // ============================================================
+  // 🧪 DEBUG
+  // ============================================================
+
   Future<void> debugRawClientsTable() async {
     final db = await DatabaseService().database;
 
     final result = await db.rawQuery("SELECT * FROM clients");
 
-    print("🧪 ===============================");
-    print("🧪 RAW CLIENTS TABLE");
-
-    for (var row in result) {
-      print("----------");
-      print(row); // 🔥 كل الأعمدة
-    }
-
-    print("🧪 ===============================");
+    for (var row in result) {}
   }
 
   // ============================================================
@@ -86,8 +86,6 @@ class MainPageViewModel extends GetxController {
         return;
       }
 
-      debugPrint("🌐 Loading current user from ONLINE...");
-
       await _authService.getClientsOnlineData(
         firebaseFilter: FirebaseFilter(orderBy: "uid", equalTo: uid),
         voidCallBack: (users) {
@@ -97,13 +95,9 @@ class MainPageViewModel extends GetxController {
           }
 
           final user = users.first;
-
           if (user == null) return;
 
-          // 🔥 update session (important)
           Get.find<UserSession>().setUser(user);
-
-          debugPrint("✅ User loaded ONLINE → ${user.user.userType}");
         },
       );
     } catch (e) {
@@ -116,23 +110,38 @@ class MainPageViewModel extends GetxController {
   // ============================================================
 
   Future<void> _startClientsRealtime() async {
-    debugPrint("🚀 GLOBAL Clients Realtime START");
-
     await _authService.startListening();
-
-    debugPrint("✅ GLOBAL Clients Realtime RUNNING");
   }
 
   // ============================================================
-  // 📅 RESERVATIONS REALTIME
+  // 📅 RESERVATIONS REALTIME (🔥 UPDATED)
   // ============================================================
 
   Future<void> startReservationsRealtime({String? doctorKey}) async {
     final user = _user;
 
+    // ============================================================
+    // 👤 PATIENT FLOW
+    // ============================================================
+    if (isPatient) {
+      final patientUid = user?.uid;
+
+      if (patientUid == null || patientUid.isEmpty) {
+        debugPrint("⚠️ No patientUid → skip patient reservations");
+        return;
+      }
+
+      await _patientReservationService.startListening(patientUid: patientUid);
+
+      return;
+    }
+
+    // ============================================================
+    // 🧑‍⚕️ DOCTOR / ASSISTANT FLOW
+    // ============================================================
+
     String? resolvedDoctorKey = doctorKey;
 
-    // resolve if null
     if (resolvedDoctorKey == null || resolvedDoctorKey.isEmpty) {
       if (user is DoctorUser) {
         resolvedDoctorKey = user.uid;
@@ -146,11 +155,7 @@ class MainPageViewModel extends GetxController {
       return;
     }
 
-    debugPrint("🚀 GLOBAL Reservations Realtime START → $resolvedDoctorKey");
-
     await _reservationService.startListening(doctorKey: resolvedDoctorKey);
-
-    debugPrint("✅ GLOBAL Reservations Realtime RUNNING → $resolvedDoctorKey");
   }
 
   // ============================================================
@@ -171,11 +176,7 @@ class MainPageViewModel extends GetxController {
       return;
     }
 
-    debugPrint("🔔 GLOBAL Notifications Realtime START");
-
     await _notificationService.startListening();
-
-    debugPrint("✅ GLOBAL Notifications Realtime RUNNING");
   }
 
   // ============================================================
@@ -185,6 +186,7 @@ class MainPageViewModel extends GetxController {
   @override
   void onClose() {
     _reservationService.dispose();
+    _patientReservationService.dispose(); // 🔥 مهم جدًا
     _authService.dispose();
     _notificationService.dispose();
     super.onClose();

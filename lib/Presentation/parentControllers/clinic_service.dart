@@ -72,31 +72,51 @@ class ClinicService {
     );
   }
 
-  /// 👩‍⚕️ Get clinics for a specific doctor (for patient view)
   Future<void> getClinicsFromPatientData({
     required Map<String, dynamic> data,
     required String doctorKey,
-    required Function(List<ClinicModel?>) voidCallBack,
+    required Function(List<ClinicModel>) voidCallBack, // 🔥 non-nullable
   }) async {
     try {
       Loader.show();
-      final result = await useCase.getClinicsFromPatient(data, doctorKey);
-      Loader.dismiss();
+
+      final safeDoctorKey = doctorKey.trim().replaceAll("/", "");
+
+      final result = await useCase.getClinicsFromPatient(data, safeDoctorKey);
+
       result.fold(
-        (l) {
+            (l) {
+          Loader.dismiss();
+
           print(
             "❌ [ClinicService] Error fetching clinics for doctor: ${l.messege}",
           );
+
           Loader.showError("حدث خطأ أثناء جلب العيادات");
+
+          voidCallBack([]); // ✅ always return safe empty list
         },
-        (r) {
-          print("✅ [ClinicService] Clinics fetched for doctor: ${r.length}");
-          voidCallBack(r);
+            (r) {
+          Loader.dismiss();
+
+          // 🔥 أهم سطر
+          final safeList = r.whereType<ClinicModel>().toList();
+
+          print(
+            "✅ [ClinicService] Clinics fetched for doctor: ${safeList.length}",
+          );
+
+          voidCallBack(safeList);
         },
       );
     } catch (e) {
-      Loader.showError("حدث خطأ غير متوقع أثناء تحميل البيانات");
+      Loader.dismiss(); // 🔥 مهم جدًا
+
       print("❌ [ClinicService] Exception: $e");
+
+      Loader.showError("حدث خطأ غير متوقع أثناء تحميل البيانات");
+
+      voidCallBack([]); // ✅ fallback
     }
   }
 }

@@ -3,69 +3,93 @@ import 'dart:developer';
 import 'package:dartz/dartz.dart';
 import '../../index/index_main.dart';
 
-class NotificationRepositoryImpl implements NotificationRepository {
-  final NotificationRemoteDataSource _remote;
+class PatientReservationRepositoryImpl
+    implements PatientReservationRepository {
+  final PatientReservationRemoteDataSource _remote;
 
-  NotificationRepositoryImpl(this._remote);
+  PatientReservationRepositoryImpl(this._remote);
 
   StreamSubscription? _addedSub;
   StreamSubscription? _changedSub;
   StreamSubscription? _removedSub;
 
+  bool _isListening = false;
+
   // ============================================================
-  // 🌊 STREAM CONTROLLERS (Expose to ViewModel)
+  // 🌊 STREAM CONTROLLERS
   // ============================================================
 
-  final _addedController = StreamController<NotificationModel>.broadcast();
-  final _changedController = StreamController<NotificationModel>.broadcast();
+  final _addedController = StreamController<ReservationModel>.broadcast();
+  final _changedController = StreamController<ReservationModel>.broadcast();
   final _removedController = StreamController<String>.broadcast();
 
   @override
-  Stream<NotificationModel> get onAdded => _addedController.stream;
+  Stream<ReservationModel> get onAdded => _addedController.stream;
 
   @override
-  Stream<NotificationModel> get onChanged => _changedController.stream;
+  Stream<ReservationModel> get onChanged => _changedController.stream;
 
   @override
   Stream<String> get onRemoved => _removedController.stream;
 
   // ============================================================
-  // 🎧 REALTIME (Firebase → Streams Only)
+  // 🎧 REALTIME LISTEN
   // ============================================================
 
   @override
-  Future<void> startListening() async {
+  Future<void> startListening({required String patientUid}) async {
+    if (_isListening) {
+      return;
+    }
 
-    await _remote.startListening();
 
-    _addedSub?.cancel();
-    _changedSub?.cancel();
-    _removedSub?.cancel();
+    await _remote.startListening(patientUid: patientUid);
+
+    await _addedSub?.cancel();
+    await _changedSub?.cancel();
+    await _removedSub?.cancel();
 
     _addedSub = _remote.onAdded.listen((model) {
+      final key = model.key;
+      if (key == null) return;
+
       _addedController.add(model);
     });
 
     _changedSub = _remote.onChanged.listen((model) {
+      final key = model.key;
+      if (key == null) return;
+
       _changedController.add(model);
     });
 
     _removedSub = _remote.onRemoved.listen((key) {
       _removedController.add(key);
     });
+
+    _isListening = true;
   }
 
   // ============================================================
-  // 🛑 STOP REALTIME
+  // 🛑 STOP
   // ============================================================
 
   @override
-  Future<void> dispose() async {
+  Future<void> stopListening() async {
+
+    _isListening = false;
+
     await _addedSub?.cancel();
     await _changedSub?.cancel();
     await _removedSub?.cancel();
 
     await _remote.stopListening();
+  }
+
+  @override
+  Future<void> dispose() async {
+
+    await stopListening();
 
     if (!_addedController.isClosed) await _addedController.close();
     if (!_changedController.isClosed) await _changedController.close();
@@ -73,31 +97,15 @@ class NotificationRepositoryImpl implements NotificationRepository {
   }
 
   // ============================================================
-  // 🌐 FETCH NOTIFICATIONS (ONLINE ONLY)
+  // ➕ CREATE
   // ============================================================
 
   @override
-  Future<Either<AppError, List<NotificationModel>>> fetchNotificationsDomain(
-    Map<String, dynamic> firebaseFilter,
-  ) async {
+  Future<Either<AppError, Unit>> addReservationDomain(
+      ReservationModel model,
+      ) async {
     try {
-      final list = await _remote.fetchNotifications(firebaseFilter);
-      return Right(list);
-    } catch (e) {
-      return Left(AppError(e.toString()));
-    }
-  }
-
-  // ============================================================
-  // ➕ CREATE NOTIFICATION
-  // ============================================================
-
-  @override
-  Future<Either<AppError, Unit>> createNotificationDomain(
-    NotificationModel model,
-  ) async {
-    try {
-      await _remote.createNotification(model);
+      await _remote.createReservation(model);
       return const Right(unit);
     } catch (e) {
       return Left(AppError(e.toString()));
@@ -105,15 +113,15 @@ class NotificationRepositoryImpl implements NotificationRepository {
   }
 
   // ============================================================
-  // 🔄 UPDATE NOTIFICATION
+  // 🔄 UPDATE
   // ============================================================
 
   @override
-  Future<Either<AppError, Unit>> updateNotificationDomain(
-    NotificationModel model,
-  ) async {
+  Future<Either<AppError, Unit>> updateReservationDomain(
+      ReservationModel model,
+      ) async {
     try {
-      await _remote.updateNotification(model);
+      await _remote.updateReservation(model);
       return const Right(unit);
     } catch (e) {
       return Left(AppError(e.toString()));
@@ -121,13 +129,15 @@ class NotificationRepositoryImpl implements NotificationRepository {
   }
 
   // ============================================================
-  // ❌ DELETE NOTIFICATION
+  // ❌ DELETE
   // ============================================================
 
   @override
-  Future<Either<AppError, Unit>> deleteNotificationDomain(String key) async {
+  Future<Either<AppError, Unit>> deleteReservationDomain(
+      ReservationModel model,
+      ) async {
     try {
-      await _remote.deleteNotification(key);
+      await _remote.deleteReservation(model);
       return const Right(unit);
     } catch (e) {
       return Left(AppError(e.toString()));

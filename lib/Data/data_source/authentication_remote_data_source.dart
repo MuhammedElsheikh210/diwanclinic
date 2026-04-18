@@ -21,6 +21,10 @@ abstract class AuthenticationRemoteDataSource {
       Map<String, dynamic> filters,
       );
 
+  /// ✅ NEW: Fetch single client by UID (ONLINE ONLY)
+  /// Used for: Login / critical reads (no cache)
+  Future<Map<String, dynamic>?> fetchClientByUid(String uid);
+
   // ============================================================
   // 🎧 REALTIME CONTROL
   // ============================================================

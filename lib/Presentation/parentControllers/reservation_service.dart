@@ -46,39 +46,32 @@ class ReservationService {
 
     // 🟡 لو نفس الدكتور متغيرش
     if (_currentDoctorKey == doctorKey && _isListening) {
-      print("🟡 ReservationService already listening for this doctor");
       return;
     }
 
     // 🔄 لو فيه listener قديم
     if (_isListening) {
-      print("🔄 Switching doctor → restarting listener");
       await stopListening();
     }
 
-    print("🎧 ReservationService START listening → $doctorKey");
 
     await useCase.startListening(doctorKey: doctorKey);
 
     _addedSub = useCase.onAdded.listen((reservation) {
-      print("📡 Service Event → ADDED ${reservation.key}");
       onReservationAdded?.call(reservation);
     });
 
     _changedSub = useCase.onChanged.listen((reservation) {
-      print("📡 Service Event → CHANGED ${reservation.key}");
       onReservationUpdated?.call(reservation);
     });
 
     _removedSub = useCase.onRemoved.listen((key) {
-      print("📡 Service Event → REMOVED $key");
       onReservationRemoved?.call(key);
     });
 
     _currentDoctorKey = doctorKey;
     _isListening = true;
 
-    print("✅ ReservationService listening ACTIVE");
   }
 
   // ============================================================
@@ -86,7 +79,6 @@ class ReservationService {
   // ============================================================
 
   Future<void> stopListening() async {
-    print("🛑 ReservationService stopListening");
 
     await _addedSub?.cancel();
     await _changedSub?.cancel();
@@ -167,51 +159,75 @@ class ReservationService {
   }
 
   // ============================================================
+  // 📥 GET RESERVATIONS (REMOTE - PATIENT)
+  // ============================================================
+
+  Future<void> fetchReservationsOnce({
+    required String doctorKey,
+    required String date, // yyyy-MM-dd
+    required Function(List<ReservationModel>) voidCallBack,
+  }) async {
+    final result = await useCase.fetchReservationsOnce(
+      doctorKey: doctorKey,
+      date: date,
+    );
+
+    result.fold(
+      (l) {
+        Loader.showError("حدث خطأ أثناء جلب الحجوزات");
+      },
+      (r) {
+        voidCallBack(r);
+      },
+    );
+  }
+
+  // ============================================================
   // ⭐ PATIENT META
   // ============================================================
 
-  Future<void> addPatientReservationMeta({
-    required ReservationModel meta,
-    required String patientKey,
-    required Function(ResponseStatus) voidCallBack,
-  }) async {
-    final result = await useCase.addPatientReservationMeta(meta, patientKey);
-
-    result.fold(
-      (l) => voidCallBack(ResponseStatus.error),
-      (r) => voidCallBack(ResponseStatus.success),
-    );
-  }
-
-  Future<void> updatePatientReservationData({
-    required ReservationModel data,
-    required String key,
-    required Function(ResponseStatus) voidCallBack,
-  }) async {
-    final result = await useCase.updatePatientReservation(data, key);
-
-    result.fold(
-      (l) => voidCallBack(ResponseStatus.error),
-      (r) => voidCallBack(ResponseStatus.success),
-    );
-  }
-
-  Future<void> getPatientReservationsMeta({
-    required String patientKey,
-    required Function(List<ReservationModel>) voidCallBack,
-  }) async {
-    final result = await useCase.getPatientReservationsMeta(patientKey);
-
-    result.fold(
-      (l) => Loader.showError("فشل تحميل حجوزات المريض"),
-      (r) => voidCallBack(r),
-    );
-  }
-
-  Future<List<ReservationModel>> getPatientMetaAsync(String patientKey) async {
-    final result = await useCase.getPatientReservationsMeta(patientKey);
-    return result.fold((l) => <ReservationModel>[], (r) => r);
-  }
+  // Future<void> addPatientReservationMeta({
+  //   required ReservationModel meta,
+  //   required String patientKey,
+  //   required Function(ResponseStatus) voidCallBack,
+  // }) async {
+  //   final result = await useCase.addPatientReservationMeta(meta, patientKey);
+  //
+  //   result.fold(
+  //     (l) => voidCallBack(ResponseStatus.error),
+  //     (r) => voidCallBack(ResponseStatus.success),
+  //   );
+  // }
+  //
+  // Future<void> updatePatientReservationData({
+  //   required ReservationModel data,
+  //   required String key,
+  //   required Function(ResponseStatus) voidCallBack,
+  // }) async {
+  //   final result = await useCase.updatePatientReservation(data, key);
+  //
+  //   result.fold(
+  //     (l) => voidCallBack(ResponseStatus.error),
+  //     (r) => voidCallBack(ResponseStatus.success),
+  //   );
+  // }
+  //
+  // Future<void> getPatientReservationsMeta({
+  //   required String patientKey,
+  //   required Function(List<ReservationModel>) voidCallBack,
+  // }) async {
+  //   final result = await useCase.getPatientReservationsMeta(patientKey);
+  //
+  //   result.fold(
+  //     (l) => Loader.showError("فشل تحميل حجوزات المريض"),
+  //     (r) => voidCallBack(r),
+  //   );
+  // }
+  //
+  // Future<List<ReservationModel>> getPatientMetaAsync(String patientKey) async {
+  //   final result = await useCase.getPatientReservationsMeta(patientKey);
+  //   return result.fold((l) => <ReservationModel>[], (r) => r);
+  // }
 
   // ============================================================
   // 🔹 CLEAR LOCAL
@@ -227,7 +243,6 @@ class ReservationService {
   // ============================================================
 
   Future<void> dispose() async {
-    print("🛑 ReservationService dispose");
 
     await stopListening();
 

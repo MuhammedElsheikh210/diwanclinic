@@ -43,7 +43,7 @@ class ReservationModel {
 
   /// 🔢 order
   int? orderNum;
-  final int? orderReserved;
+   int? orderReserved;
 
   /// 🧾 medical
   final String? allergies;

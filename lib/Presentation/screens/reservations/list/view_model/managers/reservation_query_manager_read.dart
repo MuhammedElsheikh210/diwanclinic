@@ -21,7 +21,7 @@ class ReservationQueryManager {
   }
 
   // ============================================================
-  // 🔥 Unified Query
+  // 🔥 Unified Query (FIXED + DEBUGGED)
   // ============================================================
 
   Future<List<ReservationModel>> getByFilters({
@@ -30,51 +30,54 @@ class ReservationQueryManager {
     ClinicModel? selectedClinic,
     String? medicalCenterKey,
   }) async {
-    print("📅 appointmentDate: $appointmentDate");
-    print("⏰ shiftKey: $shiftKey");
-    print("🏥 clinicKey: ${selectedClinic?.key}");
-    print("🏢 medicalCenterKey: $medicalCenterKey");
 
     if (appointmentDate == null || shiftKey == null) {
-      print("❌ Missing filters");
       return [];
     }
 
-    /// 🔥 1) شوف كل الداتا الأول (بدون فلترة)
+    /// ✅ 🔥 أهم سطر في الكلاس كله
+    final normalizedDate = AppDateFormatter.normalize(appointmentDate);
+
+
+    // ============================================================
+    // 🔍 DEBUG STEP 1: Fetch All Data
+    // ============================================================
+
     final allData = await getReservations(
       query: SQLiteQueryParams(where: "1=1"),
     );
 
-    print("📦 ALL DATA COUNT: ${allData.length}");
 
     for (var r in allData.take(5)) {
-      print("👉 RAW ITEM:");
-      print("   date: ${r.appointmentDateTime}");
-      print("   shift: ${r.shiftKey}");
-      print("   clinic: ${r.clinicKey}");
-      print("----------------------");
     }
 
-    /// 🔥 2) جرب فلترة بالـ shift بس
+    // ============================================================
+    // 🔍 DEBUG STEP 2: Shift Only
+    // ============================================================
+
     final shiftOnly = await getReservations(
       query: SQLiteQueryParams(where: "shift_key = ?", whereArgs: [shiftKey]),
     );
 
-    print("🧪 SHIFT ONLY COUNT: ${shiftOnly.length}");
 
-    /// 🔥 3) جرب فلترة بالـ date بس (LIKE)
+    // ============================================================
+    // 🔍 DEBUG STEP 3: Date Only
+    // ============================================================
+
     final dateOnly = await getReservations(
       query: SQLiteQueryParams(
         where: "appointment_date_time LIKE ?",
-        whereArgs: ["%$appointmentDate%"],
+        whereArgs: ["%$normalizedDate%"],
       ),
     );
 
-    print("🧪 DATE ONLY COUNT: ${dateOnly.length}");
 
-    /// 🔥 4) الفلتر الحالي
+    // ============================================================
+    // 🔥 FINAL QUERY
+    // ============================================================
+
     String where = "appointment_date_time = ? AND shift_key = ?";
-    final whereArgs = <Object?>[appointmentDate, shiftKey];
+    final whereArgs = <Object?>[normalizedDate, shiftKey];
 
     if (selectedClinic?.key != null && selectedClinic!.key!.isNotEmpty) {
       where += " AND clinic_key = ?";
@@ -86,9 +89,6 @@ class ReservationQueryManager {
       whereArgs.add(medicalCenterKey);
     }
 
-    print("🧠 FINAL QUERY:");
-    print("WHERE: $where");
-    print("ARGS: $whereArgs");
 
     final result = await getReservations(
       query: SQLiteQueryParams(
@@ -98,13 +98,24 @@ class ReservationQueryManager {
       ),
     );
 
-    print("✅ FINAL RESULT COUNT: ${result.length}");
+
+    // ============================================================
+    // 🔥 EXTRA DEBUG (Manual Filter Check)
+    // ============================================================
+
+    final manualCheck =
+        allData.where((r) {
+          return r.appointmentDateTime == normalizedDate &&
+              r.shiftKey == shiftKey &&
+              r.clinicKey == selectedClinic?.key;
+        }).toList();
+
 
     return result;
   }
 
   // ============================================================
-  // 🔹 Last Completed Reservation For Patient (نسيبها زي ما هي)
+  // 🔹 Last Completed Reservation For Patient
   // ============================================================
 
   Future<ReservationModel?> getLastCompletedForPatient(
@@ -123,7 +134,7 @@ class ReservationQueryManager {
   }
 
   // ============================================================
-  // 🔹 Get Patient By Key (دي مختلفة فسيبها)
+  // 🔹 Get Patient By Key
   // ============================================================
 
   Future<LocalUser?> getPatientByKey(String patientKey) async {

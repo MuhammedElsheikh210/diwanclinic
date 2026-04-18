@@ -151,7 +151,7 @@ class _ChatListViewState extends State<ChatListView> {
     if (dt.isAfter(today)) {
       return DateFormat("hh:mm a").format(dt);
     } else {
-      return DateFormat("dd/MM/yyyy").format(dt);
+      return DateFormat("dd-MM-yyyy").format(dt);
     }
   }
 }

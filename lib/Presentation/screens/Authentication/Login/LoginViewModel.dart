@@ -162,18 +162,19 @@ class LoginViewModel extends GetxController {
   // ============================================================
 
   Future<void> getUserData(String uid) async {
-    await AuthenticationService().getClientsData(
-      query: SQLiteQueryParams(where: "uid = ?", whereArgs: [uid], limit: 1),
-      voidCallBack: (users) async {
+    await AuthenticationService().getClientByUidOnline(
+      uid: uid,
+      voidCallBack: (user) async {
         Loader.dismiss();
 
-        if (users.isEmpty) {
+        if (user == null) {
+          // 🔥 user مش موجود على السيرفر
           await saveUserToFirebaseRealtime(uid);
           return;
         }
 
-        final user = users.first;
         print("user is in login is ${user.toJson()}");
+
         await _finalizeLogin(user);
         await _updateFcmToken(NotificationService().token);
       },

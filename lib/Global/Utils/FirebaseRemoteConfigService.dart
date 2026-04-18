@@ -75,7 +75,6 @@ class FirebaseRemoteConfigService {
     final info = await PackageInfo.fromPlatform();
     _localBuild = int.tryParse(info.buildNumber) ?? 0;
 
-    _log("📱 LOCAL build=$_localBuild");
   }
 
   void _loadRemoteValues() {
@@ -90,9 +89,7 @@ class FirebaseRemoteConfigService {
             .where((e) => e.isNotEmpty)
             .toList();
 
-    _log(
-      "☁️ REMOTE build=$_remoteBuild | force=$_forceEnabled | roles=$_forceRoles",
-    );
+
   }
 
   // ─────────────────────────────────────────────
@@ -137,12 +134,8 @@ class FirebaseRemoteConfigService {
   // Save result locally
   // ─────────────────────────────────────────────
   Future<void> _save(bool force) async {
-    _log(force ? "🚨 FORCE UPDATE" : "✅ NO FORCE UPDATE");
     await ForceUdpate(forceUpdate: force).saveOnBoardLocal();
   }
 
-  void _log(String msg) {
-    // ignore: avoid_print
-    print(msg);
-  }
+
 }

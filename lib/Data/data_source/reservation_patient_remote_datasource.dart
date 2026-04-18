@@ -1,6 +1,6 @@
 import '../../index/index_main.dart';
 
-abstract class ReservationRemoteDataSource {
+abstract class PatientReservationRemoteDataSource {
   Future<void> createReservation(ReservationModel model);
 
   Future<void> updateReservation(ReservationModel model);
@@ -11,8 +11,8 @@ abstract class ReservationRemoteDataSource {
   // 🎧 REALTIME CONTROL
   // ============================================================
 
-  /// Start realtime listening to doctor's reservations
-  Future<void> startListening({required String doctorKey});
+  /// Start realtime listening to patient's reservations
+  Future<void> startListening({required String patientUid});
 
   /// Stop all active listeners
   Future<void> stopListening();
@@ -29,14 +29,4 @@ abstract class ReservationRemoteDataSource {
 
   /// Emits when a reservation is deleted
   Stream<String> get onRemoved;
-
-  // ============================================================
-  // 📥 ONE-TIME FETCH (PATIENT USE)
-  // ============================================================
-
-  /// Fetch reservations once for a specific doctor & date
-  Future<List<ReservationModel>> fetchReservationsOnce({
-    required String doctorKey,
-    required String date, // format: yyyy-MM-dd
-  });
 }

@@ -35,7 +35,7 @@ class IncomeViewModel extends GetxController {
     selectedDayFormatted = formattedDay;
 
     final date = DateFormat(
-      'dd/MM/yyyy',
+      'dd-MM-yyyy',
     ).format(DateTime.fromMillisecondsSinceEpoch(dayTimestamp));
 
     _loadByDate(date);
@@ -46,7 +46,7 @@ class IncomeViewModel extends GetxController {
   // =====================================================
   void _loadTodayData() {
     final now = DateTime.now();
-    todayDate = DateFormat('dd/MM/yyyy').format(now);
+    todayDate = DateFormat('dd-MM-yyyy').format(now);
     _loadByDate(todayDate);
   }
 

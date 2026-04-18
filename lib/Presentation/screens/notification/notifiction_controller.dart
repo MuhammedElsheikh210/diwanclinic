@@ -240,14 +240,17 @@ extension NotificationFeature on NotificationController {
   }
 
   Future<void> _afterApprove(
-    ReservationModel reservation,
-    String notificationKey,
-  ) async {
-    await ReservationService().updatePatientReservationData(
-      key: reservation.key ?? "",
-      data: reservation.copyWith(status: ReservationStatus.approved.value),
+      ReservationModel reservation,
+      String notificationKey,
+      ) async {
+    final updated = reservation.copyWith(
+      status: ReservationStatus.approved.value,
+    );
+
+    await PatientReservationService().updateReservationData(
+      reservation: updated,
       voidCallBack: (_) async {
-        // ✅ تحديث الإشعار نفسه
+        // ✅ تحديث الإشعار
         await _updateNotificationAfterAction(
           notificationKey: notificationKey,
           newStatus: ReservationStatus.approved.value,
@@ -329,16 +332,24 @@ extension NotificationFeature on NotificationController {
   }
 
   Future<void> _afterReject(
-    ReservationModel reservation,
-    String notificationKey,
-  ) async {
-    await ReservationService().updatePatientReservationData(
-      key: reservation.key ?? "",
-      data: reservation.copyWith(
-        status: ReservationStatus.cancelledByAssistant.value,
-      ),
+      ReservationModel reservation,
+      String notificationKey,
+      ) async {
+    final updated = reservation.copyWith(
+      status: ReservationStatus.cancelledByAssistant.value,
+    );
+
+    // 🧑‍⚕️ Update Doctor (source of truth)
+    await ReservationService().updateReservationData(
+      reservation: updated,
+      voidCallBack: (_) {},
+    );
+
+    // 👤 Update Patient (copy)
+    await PatientReservationService().updateReservationData(
+      reservation: updated,
       voidCallBack: (_) async {
-        // ✅ تحديث الإشعار نفسه
+        // ✅ تحديث الإشعار
         await _updateNotificationAfterAction(
           notificationKey: notificationKey,
           newStatus: ReservationStatus.cancelledByAssistant.value,
