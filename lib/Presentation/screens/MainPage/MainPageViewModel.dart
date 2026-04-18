@@ -58,20 +58,12 @@ class MainPageViewModel extends GetxController {
     await startReservationsRealtime();
     await _startNotificationsRealtime();
 
-    await debugRawClientsTable();
   }
 
   // ============================================================
   // 🧪 DEBUG
   // ============================================================
 
-  Future<void> debugRawClientsTable() async {
-    final db = await DatabaseService().database;
-
-    final result = await db.rawQuery("SELECT * FROM clients");
-
-    for (var row in result) {}
-  }
 
   // ============================================================
   // 👤 LOAD CURRENT USER (ONLINE FIRST)
@@ -119,6 +111,7 @@ class MainPageViewModel extends GetxController {
 
   Future<void> startReservationsRealtime({String? doctorKey}) async {
     final user = _user;
+    AppLogger.info("user info", user?.userType?.name ?? "");
 
     // ============================================================
     // 👤 PATIENT FLOW
@@ -165,16 +158,16 @@ class MainPageViewModel extends GetxController {
   Future<void> _startNotificationsRealtime() async {
     final user = _user;
 
-    String? clinicKey;
-
-    if (user is AssistantUser) {
-      clinicKey = user.clinicKey;
-    }
-
-    if (clinicKey == null || clinicKey.isEmpty) {
-      debugPrint("⚠️ No clinicKey → skip notifications realtime");
-      return;
-    }
+    // String? clinicKey;
+    //
+    // if (user is AssistantUser) {
+    //   clinicKey = user.clinicKey;
+    // }
+    //
+    // if (clinicKey == null || clinicKey.isEmpty) {
+    //   debugPrint("⚠️ No clinicKey → skip notifications realtime");
+    //   return;
+    // }
 
     await _notificationService.startListening();
   }
@@ -188,7 +181,6 @@ class MainPageViewModel extends GetxController {
     _reservationService.dispose();
     _patientReservationService.dispose(); // 🔥 مهم جدًا
     _authService.dispose();
-    _notificationService.dispose();
     super.onClose();
   }
 }

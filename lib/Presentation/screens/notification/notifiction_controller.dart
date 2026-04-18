@@ -27,6 +27,7 @@ class NotificationController extends GetxController {
 
     for (final notif in unread) {
       final updated = notif!.copyWith(isRead: true);
+      print("updated model is ${updated.toJson()}");
 
       await _service.updateNotificationData(
         notification: updated,
@@ -214,19 +215,13 @@ extension NotificationFeature on NotificationController {
     final updated = reservation.copyWith(
       status: ReservationStatus.approved.value,
     );
-    updated.assistantUid = Get.find<UserSession>().user?.fcmToken;
+    updated.assistantUid = Get.find<UserSession>().user?.uid;
 
     await ReservationService().updateReservationData(
       reservation: updated,
       voidCallBack: (_) async {
         await _afterApprove(updated, notificationKey);
 
-        // 🔔 Push Notification
-        await NotificationHandler().sendStatusNotification(
-          newStatus: ReservationStatus.approved,
-          reservation: updated,
-          toToken: updated.patientFcm ?? "",
-        );
 
         // 📱 WhatsApp
         await WhatsAppStatusMessageService.sendStatusWhatsAppMessage(
@@ -240,9 +235,9 @@ extension NotificationFeature on NotificationController {
   }
 
   Future<void> _afterApprove(
-      ReservationModel reservation,
-      String notificationKey,
-      ) async {
+    ReservationModel reservation,
+    String notificationKey,
+  ) async {
     final updated = reservation.copyWith(
       status: ReservationStatus.approved.value,
     );
@@ -307,18 +302,21 @@ extension NotificationFeature on NotificationController {
     final updated = reservation.copyWith(
       status: ReservationStatus.cancelledByAssistant.value,
     );
-    updated.assistantUid = Get.find<UserSession>().user?.fcmToken;
+    updated.assistantUid = Get.find<UserSession>().user?.uid;
     await ReservationService().updateReservationData(
       reservation: updated,
       voidCallBack: (_) async {
         await _afterReject(updated, notificationKey);
 
-        // 🔔 Push Notification
-        await NotificationHandler().sendStatusNotification(
-          newStatus: ReservationStatus.cancelledByAssistant,
-          reservation: updated,
-          toToken: updated.patientUid ?? "",
-        );
+        final notificationController = Get.find<NotificationController>();
+
+        // await notificationController.addNotification(
+        //   title: "تم إلغاء الحجز",
+        //   body: "نعتذر، تم إلغاء الحجز.\nيمكنك الحجز مرة أخرى بسهولة 🙏",
+        //   toKey: updated.patientUid ?? "",
+        //   notificationType: ReservationStatus.cancelledByAssistant.value,
+        //   extraData: updated.toJson(),
+        // );
 
         // 📱 WhatsApp
         await WhatsAppStatusMessageService.sendStatusWhatsAppMessage(
@@ -332,17 +330,11 @@ extension NotificationFeature on NotificationController {
   }
 
   Future<void> _afterReject(
-      ReservationModel reservation,
-      String notificationKey,
-      ) async {
+    ReservationModel reservation,
+    String notificationKey,
+  ) async {
     final updated = reservation.copyWith(
       status: ReservationStatus.cancelledByAssistant.value,
-    );
-
-    // 🧑‍⚕️ Update Doctor (source of truth)
-    await ReservationService().updateReservationData(
-      reservation: updated,
-      voidCallBack: (_) {},
     );
 
     // 👤 Update Patient (copy)

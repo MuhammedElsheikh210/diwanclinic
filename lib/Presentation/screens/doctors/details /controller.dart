@@ -12,8 +12,8 @@ class DoctorDetailsViewModel extends GetxController {
   int completedCount = 0;
   LegacyQueueModel? legacyQueueForDay;
   bool isSelectedDayClosed = false;
-  bool get isUrgentReservation =>
-      selectedReservationType == "كشف مستعجل";
+
+  bool get isUrgentReservation => selectedReservationType == "كشف مستعجل";
 
   DoctorDetailsViewModel({required this.doctor});
 

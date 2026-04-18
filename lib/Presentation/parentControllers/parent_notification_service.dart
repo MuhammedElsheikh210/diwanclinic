@@ -1,6 +1,5 @@
-// ignore_for_file: avoid_renaming_method_parameters
-
 import 'dart:async';
+
 import '../../index/index_main.dart';
 
 class NotificationPatentService {
@@ -8,14 +7,15 @@ class NotificationPatentService {
   // 🧠 SINGLETON
   // ============================================================
 
-  static final NotificationPatentService _instance = NotificationPatentService._internal();
+  static final NotificationPatentService _instance =
+  NotificationPatentService._internal();
 
   factory NotificationPatentService() => _instance;
 
   NotificationPatentService._internal();
 
   final NotificationUseCases useCase = initController(
-    () => NotificationUseCases(Get.find()),
+        () => NotificationUseCases(Get.find()),
   );
 
   // ============================================================
@@ -31,33 +31,49 @@ class NotificationPatentService {
   StreamSubscription? _removedSub;
 
   bool _isListening = false;
+  bool _isDisposed = false;
 
   // ============================================================
   // 🔥 REALTIME LISTENING
   // ============================================================
 
   Future<void> startListening() async {
-    if (_isListening) return;
+    /// ✅ لو already listening → متعملش حاجة
+    if (_isListening) {
+      AppLogger.warning("NOTIFICATION", "Already listening → skip");
+      return;
+    }
+
+    /// ❌ لو service اتقفلت → متبدأش تاني
+    if (_isDisposed) {
+      AppLogger.error("NOTIFICATION", "Service already disposed ❌");
+      return;
+    }
 
     await useCase.startListening();
 
     _addedSub = useCase.onAdded.listen((model) {
+      if (_isDisposed) return;
       onNotificationAdded?.call(model);
     });
 
     _changedSub = useCase.onChanged.listen((model) {
+      if (_isDisposed) return;
       onNotificationUpdated?.call(model);
     });
 
     _removedSub = useCase.onRemoved.listen((key) {
+      if (_isDisposed) return;
       onNotificationRemoved?.call(key);
     });
 
     _isListening = true;
+
+    AppLogger.success("NOTIFICATION", "Listening started ✅");
   }
 
   // ============================================================
-  // ➕ ADD NOTIFICATION (OLD NAME KEPT STYLE)
+  // ➕ ADD NOTIFICATION
   // ============================================================
 
   Future<void> addNotificationData({
@@ -67,8 +83,8 @@ class NotificationPatentService {
     final result = await useCase.createNotification(notification);
 
     result.fold(
-      (l) => voidCallBack(ResponseStatus.error),
-      (r) => voidCallBack(ResponseStatus.success),
+          (l) => voidCallBack(ResponseStatus.error),
+          (r) => voidCallBack(ResponseStatus.success),
     );
   }
 
@@ -83,8 +99,8 @@ class NotificationPatentService {
     final result = await useCase.updateNotification(notification);
 
     result.fold(
-      (l) => voidCallBack(ResponseStatus.error),
-      (r) => voidCallBack(ResponseStatus.success),
+          (l) => voidCallBack(ResponseStatus.error),
+          (r) => voidCallBack(ResponseStatus.success),
     );
   }
 
@@ -99,13 +115,13 @@ class NotificationPatentService {
     final result = await useCase.deleteNotification(notificationKey);
 
     result.fold(
-      (l) => voidCallBack(ResponseStatus.error),
-      (r) => voidCallBack(ResponseStatus.success),
+          (l) => voidCallBack(ResponseStatus.error),
+          (r) => voidCallBack(ResponseStatus.success),
     );
   }
 
   // ============================================================
-  // 🌐 GET NOTIFICATIONS (ONLINE ONLY)
+  // 🌐 GET NOTIFICATIONS
   // ============================================================
 
   Future<void> getNotificationsOnlineData({
@@ -115,8 +131,8 @@ class NotificationPatentService {
     final result = await useCase.fetchNotifications(firebaseFilter.toJson());
 
     result.fold(
-      (l) => Loader.showError("Network error while loading notifications"),
-      (r) => voidCallBack(r),
+          (l) => Loader.showError("Network error while loading notifications"),
+          (r) => voidCallBack(r),
     );
   }
 
@@ -125,12 +141,22 @@ class NotificationPatentService {
   // ============================================================
 
   Future<void> dispose() async {
+    /// ✅ لو already disposed → متعملش حاجة
+    if (_isDisposed) return;
+
     _isListening = false;
+    _isDisposed = true;
 
     await _addedSub?.cancel();
     await _changedSub?.cancel();
     await _removedSub?.cancel();
 
+    _addedSub = null;
+    _changedSub = null;
+    _removedSub = null;
+
     await useCase.dispose();
+
+    AppLogger.warning("NOTIFICATION", "Service disposed 🛑");
   }
 }

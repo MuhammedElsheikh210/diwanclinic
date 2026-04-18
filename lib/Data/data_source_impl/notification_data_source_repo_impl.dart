@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:diwanclinic/Global/Utils/logger.dart';
 import 'package:firebase_database/firebase_database.dart';
 import '../../index/index_main.dart';
 
@@ -33,10 +32,13 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
   // 🎧 START LISTENING
   // ============================================================
 
-
   @override
   Future<void> startListening() async {
-    await stopListening();
+    /// ✅ منع التكرار
+    if (_rootRef != null) {
+      AppLogger.warning("NOTIFICATION", "Already listening → skip");
+      return;
+    }
 
     final sessionUser = Get.find<UserSession>().user?.user;
     final uid = sessionUser?.uid;
@@ -46,7 +48,8 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
       return;
     }
 
-    /// 🔥 FIXED PATH
+    print("uid in assis is $uid");
+
     _rootRef = _database.ref("notifications/$uid");
 
     AppLogger.info("NOTIFICATION", "Start listening → notifications/$uid");
@@ -64,16 +67,15 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
       final model = _parseNotification(event.snapshot);
 
       if (model != null) {
-        _addedController.add(model);
+        if (!_addedController.isClosed) {
+          _addedController.add(model);
+        }
         AppLogger.success(
           "NOTIFICATION",
           "Notification added → ${model.title}",
         );
       } else {
-        AppLogger.warning(
-          "NOTIFICATION",
-          "Failed to parse notification",
-        );
+        AppLogger.warning("NOTIFICATION", "Failed to parse notification");
       }
     });
 
@@ -90,7 +92,9 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
       final model = _parseNotification(event.snapshot);
 
       if (model != null) {
-        _changedController.add(model);
+        if (!_changedController.isClosed) {
+          _changedController.add(model);
+        }
       }
     });
 
@@ -101,12 +105,9 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
     final removedSub = _rootRef!.onChildRemoved.listen((event) {
       final key = event.snapshot.key;
 
-      AppLogger.warning(
-        "NOTIFICATION",
-        "❌ Removed → $key",
-      );
+      AppLogger.warning("NOTIFICATION", "❌ Removed → $key");
 
-      if (key != null) {
+      if (key != null && !_removedController.isClosed) {
         _removedController.add(key);
       }
     });
@@ -140,11 +141,14 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
     }
   }
 
+  // ============================================================
+  // 🌐 FETCH
+  // ============================================================
 
   @override
   Future<List<NotificationModel>> fetchNotifications(
-    Map<String, dynamic> filters,
-  ) async {
+      Map<String, dynamic> filters,
+      ) async {
     try {
       final response = await _clientSourceRepo.request(
         HttpMethod.GET,
@@ -174,10 +178,8 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
     }
   }
 
-
-
   // ============================================================
-  // ☁️ CREATE NOTIFICATION
+  // ☁️ CREATE
   // ============================================================
 
   @override
@@ -192,7 +194,7 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
   }
 
   // ============================================================
-  // 🔄 UPDATE NOTIFICATION
+  // 🔄 UPDATE
   // ============================================================
 
   @override
@@ -207,12 +209,11 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
   }
 
   // ============================================================
-  // ❌ DELETE NOTIFICATION
+  // ❌ DELETE
   // ============================================================
 
   @override
   Future<void> deleteNotification(String key) async {
-
     await _clientSourceRepo.request(
       HttpMethod.DELETE,
       "/${ApiConstatns.notifications}/$key.json",
@@ -229,8 +230,10 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
     for (final sub in _subscriptions) {
       await sub.cancel();
     }
+
     _subscriptions.clear();
     _rootRef = null;
 
+    AppLogger.warning("NOTIFICATION", "Stopped listening");
   }
 }

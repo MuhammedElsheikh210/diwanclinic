@@ -596,3 +596,4 @@ export 'package:diwanclinic/Data/RepositoryImpl/patientReservationRepositoryImpl
 export 'package:diwanclinic/Data/data_source_impl/reservation_patient_datasouece_remote_impl.dart';
 export 'package:diwanclinic/Presentation/parentControllers/patientReservationService.dart';
 export 'package:diwanclinic/Presentation/screens/reservations/patient_reservation_list/ReservationSuccessScreen.dart';
+export 'package:diwanclinic/Global/Utils/logger.dart';

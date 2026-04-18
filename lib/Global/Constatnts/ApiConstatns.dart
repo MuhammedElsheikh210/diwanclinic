@@ -41,10 +41,17 @@ class ApiConstatns {
     return sessionUser.uid;
   }
 
+  static String? get uid_user {
+    final sessionUser = Get.find<UserSession>().user?.user;
+    return sessionUser?.uid;
+  }
+
   // ---------- API Endpoints ----------
   static String get register => "doctors/$uid/register";
 
   static String get login => "doctors/$uid/auth/login";
+
+  static String get notifications => "notifications/$uid_user";
 
   static String get clients => "clients";
 
@@ -59,8 +66,6 @@ class ApiConstatns {
   static String get medicalCenters => "medicalCenters";
 
   static String get patients => "patients";
-
-  static String get notifications => "notifications";
 
   static String get assistants => "assistants";
 
