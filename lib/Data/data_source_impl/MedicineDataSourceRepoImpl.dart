@@ -33,7 +33,7 @@ class MedicineDataSourceRepoImpl extends MedicineDataSourceRepo {
       ''',
       ['$q%'],
     );
-    print(" list is ${result.map(MedicineModel.fromJson).toList()}");
+    
     return result.map(MedicineModel.fromJson).toList();
   }
 }

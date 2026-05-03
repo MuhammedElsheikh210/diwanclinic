@@ -22,7 +22,7 @@ class ReservationTypeService {
     required String? selectedType,
     int? manualRevisitCount,
   }) {
-    print("\n🧠 ===== ReservationTypeService.determine START =====");
+    
 
     
     

@@ -24,6 +24,15 @@ class _SelectReservationDateBottomSheetState
   File? _screenshotFile;
   bool _isUploading = false;
 
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.controller.loadLegacyQueueForSelectedDate();
+    });
+  }
+
   // 🟢 Pick image (from gallery)
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -537,60 +546,59 @@ class _SelectReservationDateBottomSheetState
                             ),
                           ],
                         ),
-                        child: Row(
-                          children: [
-                            // 🔵 Icon Circle
-                            Container(
-                              padding: EdgeInsets.all(10.w),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.groups_rounded,
-                                color: AppColors.primary,
-                                size: 22.sp,
-                              ),
-                            ),
+                        child: Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              /// 👥 اللي قبلك (Active)
+                              if (controller.beforeYouCount == 0) ...[
+                                Text(
+                                  "🎉 مفيش حد قبلك دلوقتي",
+                                  style: typography.mdMedium.copyWith(
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ] else ...[
+                                Text(
+                                  "👥 قبلك حالياً ${controller.beforeYouCount} حالة",
+                                  style: typography.lgBold.copyWith(
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ],
 
-                            SizedBox(width: 12.w),
+                              SizedBox(height: 6.h),
 
-                            // 📊 Texts
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              /// 🔢 رقم الحجز (في اليوم كله)
+                              Row(
                                 children: [
-                                  // 👥 قبلّك
+                                  Icon(
+                                    Icons.confirmation_number_outlined,
+                                    size: 16.sp,
+                                    color: AppColors.primary,
+                                  ),
+                                  SizedBox(width: 4.w),
                                   Text(
-                                    "هيكون قبلك ${controller.beforeYouCount} حالة",
+                                    "رقم حجزك: ${controller.expectedOrder}",
+
                                     style: typography.mdMedium.copyWith(
                                       color: AppColors.textDisplay,
                                     ),
                                   ),
-
-                                  SizedBox(height: 4.h),
-
-                                  // 📌 دورك
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.confirmation_number_outlined,
-                                        size: 16.sp,
-                                        color: AppColors.primary,
-                                      ),
-                                      SizedBox(width: 4.w),
-                                      Text(
-                                        "دورك رقم ${controller.expectedOrder}",
-                                        style: typography.lgBold.copyWith(
-                                          color: AppColors.primary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
                                 ],
                               ),
-                            ),
-                          ],
+
+                              SizedBox(height: 4.h),
+
+                              /// 💡 توضيح بسيط (optional بس مهم جداً)
+                              Text(
+                                "📌 الرقم ده ترتيبك في كل الحجوزات، مش عدد اللي قبلك حالياً",
+                                style: typography.smRegular.copyWith(
+                                  color: AppColors.textSecondaryParagraph,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                   ],

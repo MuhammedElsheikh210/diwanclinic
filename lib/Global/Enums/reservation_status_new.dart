@@ -6,6 +6,7 @@ enum ReservationNewStatus {
   pending,
   approved,
   cancelledByAssistant,
+  cancelledByUser, // ✅ جديد
   inProgress,
   completed,
 }
@@ -20,6 +21,8 @@ extension ReservationStatusNewExt on ReservationNewStatus {
         return "approved";
       case ReservationNewStatus.cancelledByAssistant:
         return "cancelled_by_assistant";
+      case ReservationNewStatus.cancelledByUser:
+        return "cancelled_by_user"; // ✅ جديد
       case ReservationNewStatus.inProgress:
         return "in_progress";
       case ReservationNewStatus.completed:
@@ -36,6 +39,8 @@ extension ReservationStatusNewExt on ReservationNewStatus {
         return "في إنتظار الكشف";
       case ReservationNewStatus.cancelledByAssistant:
         return "أُلغي بواسطة المساعد";
+      case ReservationNewStatus.cancelledByUser:
+        return "أُلغي بواسطة المستخدم"; // ✅ جديد
       case ReservationNewStatus.inProgress:
         return "في الكشف";
       case ReservationNewStatus.completed:
@@ -51,6 +56,7 @@ extension ReservationStatusNewExt on ReservationNewStatus {
       case ReservationNewStatus.approved:
         return AppColors.primary;
       case ReservationNewStatus.cancelledByAssistant:
+      case ReservationNewStatus.cancelledByUser: // ✅ نفس اللون
         return Colors.red;
       case ReservationNewStatus.inProgress:
         return Colors.blue;
@@ -77,6 +83,11 @@ extension ReservationStatusNewExt on ReservationNewStatus {
       case "assistant_cancel":
         return ReservationNewStatus.cancelledByAssistant;
 
+      case "cancelled_by_user": // ✅ جديد
+      case "canceled_by_user":
+      case "user_cancel":
+        return ReservationNewStatus.cancelledByUser;
+
       case "in_progress":
       case "inprogress":
       case "in progress":
@@ -88,7 +99,6 @@ extension ReservationStatusNewExt on ReservationNewStatus {
         return ReservationNewStatus.completed;
 
       default:
-        // 🔥 Prevent crash + log once for debugging
         debugPrint(
           "⚠ Unknown ReservationNewStatus '$value' → default: pending",
         );

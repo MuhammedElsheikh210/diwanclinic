@@ -144,7 +144,7 @@ class CreateReservationViewModel extends GetxController {
   //         lastReservation = null; // 🔥 مهم جدًا
   //       }
   //
-  //       print("lastReservation is ${lastReservation?.toJson()}");
+  //       
   //
   //       Future.microtask(() => applyAutoTypeLogic());
   //     },
@@ -232,26 +232,20 @@ class CreateReservationViewModel extends GetxController {
     update();
   }
 
+
   Future<void> calculateOrderNumber() async {
     if (clinic_key == null || shift_key == null) return;
 
     final currentUser = Get.find<UserSession>().user;
-
-    if (currentUser == null) {
-      
-      return;
-    }
+    if (currentUser == null) return;
 
     final baseUser = currentUser.user;
 
     String? doctorUid;
 
-    // ✅ Doctor
     if (baseUser is DoctorUser) {
       doctorUid = baseUser.uid;
-    }
-    // ✅ Assistant
-    else if (baseUser is AssistantUser) {
+    } else if (baseUser is AssistantUser) {
       doctorUid = baseUser.doctorKey;
     }
 
@@ -265,8 +259,6 @@ class CreateReservationViewModel extends GetxController {
     final requestId = ++_calcRequestId;
 
     isCalculatingOrder = true;
-
-    /// 🔥🔥🔥 أهم سطر (الحل)
     legacyQueueCount = 0;
 
     update();
@@ -277,25 +269,21 @@ class CreateReservationViewModel extends GetxController {
 
       if (requestId != _calcRequestId) return;
 
-      /// 2️⃣ last order
-      int lastOrder = 0;
+      /// 🔥 2️⃣ get TOTAL COUNT بدل lastOrder
+      int totalCount = 0;
 
       await ReservationService().getReservationsData(
         query: SQLiteQueryParams(
           where: """
-        appointment_date_time = ?
-        AND clinic_key = ?
-        AND shift_key = ?
-        AND doctor_uid = ?
-      """,
+          appointment_date_time = ?
+          AND clinic_key = ?
+          AND shift_key = ?
+          AND doctor_uid = ?
+        """,
           whereArgs: [formatted, clinic_key, shift_key, doctorUid],
-          orderBy: "order_num DESC",
-          limit: 1,
         ),
         voidCallBack: (list) {
-          if (list.isNotEmpty) {
-            lastOrder = list.first?.orderNum ?? 0;
-          }
+          totalCount = list.length;
         },
       );
 
@@ -304,7 +292,7 @@ class CreateReservationViewModel extends GetxController {
       /// 3️⃣ calculate
       if (!isFromLegacyQueue) {
         final base =
-            lastOrder > legacyQueueCount ? lastOrder : legacyQueueCount;
+        totalCount > legacyQueueCount ? totalCount : legacyQueueCount;
 
         resOrderController.text = (base + 1).toString();
       } else {
@@ -315,6 +303,90 @@ class CreateReservationViewModel extends GetxController {
     isCalculatingOrder = false;
     update();
   }
+
+  // Future<void> calculateOrderNumber() async {
+  //   if (clinic_key == null || shift_key == null) return;
+  //
+  //   final currentUser = Get.find<UserSession>().user;
+  //
+  //   if (currentUser == null) {
+  //
+  //     return;
+  //   }
+  //
+  //   final baseUser = currentUser.user;
+  //
+  //   String? doctorUid;
+  //
+  //   // ✅ Doctor
+  //   if (baseUser is DoctorUser) {
+  //     doctorUid = baseUser.uid;
+  //   }
+  //   // ✅ Assistant
+  //   else if (baseUser is AssistantUser) {
+  //     doctorUid = baseUser.doctorKey;
+  //   }
+  //
+  //   if (doctorUid == null || doctorUid.isEmpty) return;
+  //
+  //   final date = companyNameController.text;
+  //   if (date.isEmpty) return;
+  //
+  //   final formatted = date.contains('/') ? normalizeToDashDate(date) : date;
+  //
+  //   final requestId = ++_calcRequestId;
+  //
+  //   isCalculatingOrder = true;
+  //
+  //   /// 🔥🔥🔥 أهم سطر (الحل)
+  //   legacyQueueCount = 0;
+  //
+  //   update();
+  //
+  //   try {
+  //     /// 1️⃣ load legacy
+  //     await loadLegacyQueueForDate(formatted);
+  //
+  //     if (requestId != _calcRequestId) return;
+  //
+  //     /// 2️⃣ last order
+  //     int lastOrder = 0;
+  //
+  //     await ReservationService().getReservationsData(
+  //       query: SQLiteQueryParams(
+  //         where: """
+  //       appointment_date_time = ?
+  //       AND clinic_key = ?
+  //       AND shift_key = ?
+  //       AND doctor_uid = ?
+  //     """,
+  //         whereArgs: [formatted, clinic_key, shift_key, doctorUid],
+  //         orderBy: "order_num DESC",
+  //         limit: 1,
+  //       ),
+  //       voidCallBack: (list) {
+  //         if (list.isNotEmpty) {
+  //           lastOrder = list.first?.orderNum ?? 0;
+  //         }
+  //       },
+  //     );
+  //
+  //     if (requestId != _calcRequestId) return;
+  //
+  //     /// 3️⃣ calculate
+  //     if (!isFromLegacyQueue) {
+  //       final base =
+  //           lastOrder > legacyQueueCount ? lastOrder : legacyQueueCount;
+  //
+  //       resOrderController.text = (base + 1).toString();
+  //     } else {
+  //       resOrderController.clear();
+  //     }
+  //   } catch (e) {}
+  //
+  //   isCalculatingOrder = false;
+  //   update();
+  // }
 
   Future<void> loadDoctorsOfCenter() async {
     // final centerKey = LocalUser().getUserData().medicalCenterKey;

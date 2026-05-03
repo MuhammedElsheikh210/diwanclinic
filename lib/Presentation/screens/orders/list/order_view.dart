@@ -10,20 +10,19 @@ class OrdersView extends StatefulWidget {
 }
 
 class _OrdersViewState extends State<OrdersView> {
-  late final OrderController controller;
+  late final OrderController orderController;
 
   @override
   void initState() {
-    controller = initController(() => OrderController());
-    controller.getOrders();
+    orderController = initController(() => OrderController());
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     return GetBuilder<OrderController>(
-      init: controller,
-      builder: (_) {
+      init: orderController,
+      builder: (controller) {
         return Scaffold(
           backgroundColor: AppColors.grayLight.withValues(alpha: 0.2),
           appBar: AppBar(
@@ -48,9 +47,6 @@ class _OrdersViewState extends State<OrdersView> {
   }
 
   // ============================================================
-  // 🟢 ملخص اليوم
-  // ============================================================
-
   Widget _buildTodaySummary(OrderController controller, BuildContext context) {
     final completedToday =
         controller.finishedOrders.where((o) {
@@ -119,9 +115,6 @@ class _OrdersViewState extends State<OrdersView> {
   }
 
   // ============================================================
-  // 🟢 ملخص الشهر
-  // ============================================================
-
   Widget _buildMonthlySummary(
     OrderController controller,
     BuildContext context,
@@ -144,9 +137,6 @@ class _OrdersViewState extends State<OrdersView> {
   }
 
   // ============================================================
-  // 🟢 Tabs
-  // ============================================================
-
   Widget _buildTabs(BuildContext context, OrderController controller) {
     return Expanded(
       child: DefaultTabController(
@@ -190,9 +180,6 @@ class _OrdersViewState extends State<OrdersView> {
   }
 
   // ============================================================
-  // 🟢 قائمة الطلبات
-  // ============================================================
-
   Widget _orderList(BuildContext context, List<OrderModel?> orders) {
     final controller = Get.find<OrderController>();
 
@@ -268,9 +255,6 @@ class _OrdersViewState extends State<OrdersView> {
   }
 
   // ============================================================
-  // 🟢 Row Helper
-  // ============================================================
-
   Widget _infoRow(
     String label,
     String value,

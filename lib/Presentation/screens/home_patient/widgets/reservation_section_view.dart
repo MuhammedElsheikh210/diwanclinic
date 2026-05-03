@@ -16,7 +16,9 @@ class ReservationSectionView extends StatelessWidget {
           children: [
             HeaderSectionWidget(
               title: "حجوزاتي",
-              onMore: () => Get.offAll(() => const MainPage(initialIndex: 1)),
+              onMore: () {
+                Get.find<MainPageViewModel>().changeIndex(1);
+              },
             ),
             SizedBox(height: 14.h),
 
@@ -61,8 +63,7 @@ class ReservationSectionView extends StatelessWidget {
                       child: SizedBox(
                         width: MediaQuery.of(context).size.width * 0.88,
                         child: AddNewReservationCard(
-                          onTap: () =>
-                              Get.to(() => const SpecializationView()),
+                          onTap: () => Get.to(() => const SpecializationView()),
                         ),
                       ),
                     ),

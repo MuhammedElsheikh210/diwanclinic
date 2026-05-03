@@ -1,3 +1,4 @@
+import 'package:diwanclinic/Presentation/screens/pharmacy_orders/list/bottom_sheets/cancel_with_reason_dialog.dart';
 import 'package:diwanclinic/Presentation/screens/reservations/list/view/reservation_card/bottom_sheets/reservation_cancel_reason_sheet.dart';
 
 import '../../../../../../index/index_main.dart';
@@ -107,10 +108,8 @@ class ReservationCardActions extends StatelessWidget {
             context,
             "إلغاء",
             AppColors.errorForeground,
-            () => controller.changeReservationStatus(
-              reservation: reservation,
-              newStatus: ReservationStatus.cancelledByAssistant,
-            ),
+                () => _showCancelDialog(context), // ✅ هنا التعديل
+
           ),
         ];
 
@@ -161,6 +160,35 @@ class ReservationCardActions extends StatelessWidget {
       default:
         return [];
     }
+
+
+  }
+
+  // ------------------------------------------------------------------
+  // ❌ CANCEL DIALOG (🔥 الجديد)
+  // ------------------------------------------------------------------
+  void _showCancelDialog(BuildContext context) {
+    CancelWithReasonDialog.show(
+      context: context,
+      title: "تأكيد إلغاء الحجز",
+      confirmText: "تأكيد الإلغاء",
+      confirmColor: AppColors.errorForeground,
+      reasons: const [
+        "المريض لم يحضر",
+        "تم الحجز بالخطأ",
+        "تأخر الموعد",
+        "سبب آخر",
+      ],
+      onConfirm: (reason) {
+        // 👇 تقدر تبعت السبب هنا لو عايز
+        controller.changeReservationStatus(
+          reservation: reservation,
+          newStatus: ReservationStatus.cancelledByAssistant,
+          cancelReason: reason, // 🔥 لو عندك في الميثود
+        );
+
+      },
+    );
   }
 
   Widget _actionButton(

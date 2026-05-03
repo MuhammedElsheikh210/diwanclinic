@@ -597,3 +597,9 @@ export 'package:diwanclinic/Data/data_source_impl/reservation_patient_datasouece
 export 'package:diwanclinic/Presentation/parentControllers/patientReservationService.dart';
 export 'package:diwanclinic/Presentation/screens/reservations/patient_reservation_list/ReservationSuccessScreen.dart';
 export 'package:diwanclinic/Global/Utils/logger.dart';
+export 'package:diwanclinic/Data/data_source/patient_order_remote_data_source.dart';
+export 'package:diwanclinic/Domain/Repositories/patient_order_repository.dart';
+export 'package:diwanclinic/Data/RepositoryImpl/patient_order_repo_impl.dart';
+export 'package:diwanclinic/Data/data_source_impl/patient_order_remote_data_source_impl.dart';
+export 'package:diwanclinic/Domain/UseCases/patient_order_use_cases.dart';
+export 'package:diwanclinic/Presentation/parentControllers/patient_order_service.dart';

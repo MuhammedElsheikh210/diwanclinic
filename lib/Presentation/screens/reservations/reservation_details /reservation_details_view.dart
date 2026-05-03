@@ -1,3 +1,5 @@
+import 'package:diwanclinic/Presentation/screens/pharmacy_orders/list/bottom_sheets/cancel_with_reason_dialog.dart';
+
 import '../../../../../../index/index_main.dart';
 
 class ReservationAssistantDetailsView extends StatelessWidget {
@@ -327,7 +329,6 @@ class ReservationAssistantDetailsView extends StatelessWidget {
                                     true)
                                   reservation.prescriptionUrl2!,
                               ];
-                              
 
                               // ✅ If no images → show upload button
                               // ✅ If no images
@@ -336,13 +337,10 @@ class ReservationAssistantDetailsView extends StatelessWidget {
                                     reservation.status ==
                                     ReservationNewStatus.completed.value;
 
-                                
-
                                 if (isCompleted) {
                                   // 🔹 Allow upload after finish
                                   return GestureDetector(
                                     onTap: () {
-                                      
                                       controller.prescriptionService
                                           .openBottomSheet(
                                             context: context,
@@ -515,7 +513,7 @@ class ReservationAssistantDetailsView extends StatelessWidget {
   Widget _buildButtons(BuildContext context, ReservationNewStatus status) {
     List<Widget> buttons = [];
 
-    // // Always show details
+    // 🔹 Order button
     if (reservation.isOrdered != true &&
         ReservationNewStatus.completed == status) {
       buttons.add(
@@ -540,35 +538,9 @@ class ReservationAssistantDetailsView extends StatelessWidget {
 
     buttons.add(SizedBox(width: 5.w));
 
-    // Status based logic
+    // 🔥 STATUS LOGIC
     switch (status) {
       case ReservationNewStatus.pending:
-        final reservations =
-            controller.listReservations
-                ?.where(
-                  (r) =>
-                      r != null &&
-                      r.orderNum != null &&
-                      r.orderNum.toString().isNotEmpty &&
-                      (r.status == ReservationStatus.approved.value ||
-                          r.status == ReservationStatus.inProgress.value),
-                )
-                .toList() ??
-            [];
-
-        // لو مفيش ولا حجز
-        int lastOrderNum = 0;
-
-        // if (reservations.isNotEmpty) {
-        //   lastOrderNum = reservations
-        //       .map((r) => int.tryParse(r!.order_num.toString()) ?? 0)
-        //       .reduce((a, b) => a > b ? a : b);
-        // }
-
-        // الجديد = آخر رقم + 1
-        //   reservation.order_num = lastOrderNum + 1;
-
-        // Show Approve + Cancel
         buttons.addAll([
           Expanded(
             child: Padding(
@@ -576,7 +548,7 @@ class ReservationAssistantDetailsView extends StatelessWidget {
               child: PrimaryTextButton(
                 onTap: () => _updateStatus(ReservationStatus.approved),
                 appButtonSize: AppButtonSize.large,
-                customBackgroundColor: AppColors.successBackground, // green
+                customBackgroundColor: AppColors.successBackground,
                 label: AppText(
                   text: "موافقة",
                   textStyle: context.typography.mdMedium.copyWith(
@@ -587,12 +559,13 @@ class ReservationAssistantDetailsView extends StatelessWidget {
             ),
           ),
           SizedBox(width: 5.w),
+
+          /// ❌ Cancel with dialog
           Expanded(
             child: PrimaryTextButton(
-              onTap:
-                  () => _updateStatus(ReservationStatus.cancelledByAssistant),
+              onTap: () => _showCancelDialog(context), // ✅ هنا التعديل
               appButtonSize: AppButtonSize.large,
-              customBackgroundColor: AppColors.errorForeground, // red
+              customBackgroundColor: AppColors.errorForeground,
               label: AppText(
                 text: "إلغاء",
                 textStyle: context.typography.mdMedium.copyWith(
@@ -605,13 +578,12 @@ class ReservationAssistantDetailsView extends StatelessWidget {
         break;
 
       case ReservationNewStatus.approved:
-        // Show Go Doctor + Cancel
         buttons.addAll([
           Expanded(
             child: PrimaryTextButton(
               onTap: () => _updateStatus(ReservationStatus.inProgress),
               appButtonSize: AppButtonSize.large,
-              customBackgroundColor: AppColors.primary, // blue
+              customBackgroundColor: AppColors.primary,
               label: AppText(
                 text: "إبدأ الكشف",
                 textStyle: context.typography.mdMedium.copyWith(
@@ -622,12 +594,12 @@ class ReservationAssistantDetailsView extends StatelessWidget {
           ),
           SizedBox(width: 5.w),
 
+          /// ❌ Cancel with dialog
           Expanded(
             child: PrimaryTextButton(
-              onTap:
-                  () => _updateStatus(ReservationStatus.cancelledByAssistant),
+              onTap: () => _showCancelDialog(context), // ✅ هنا التعديل
               appButtonSize: AppButtonSize.large,
-              customBackgroundColor: AppColors.errorForeground, // red
+              customBackgroundColor: AppColors.errorForeground,
               label: AppText(
                 text: "إلغاء",
                 textStyle: context.typography.mdMedium.copyWith(
@@ -640,7 +612,6 @@ class ReservationAssistantDetailsView extends StatelessWidget {
         break;
 
       case ReservationNewStatus.inProgress:
-        // Show Complete + Cancel
         buttons.addAll([
           Expanded(
             child: PrimaryTextButton(
@@ -659,11 +630,33 @@ class ReservationAssistantDetailsView extends StatelessWidget {
         break;
 
       default:
-        // Completed / Cancelled → no actions
         break;
     }
 
     return Row(children: buttons);
+  }
+
+  void _showCancelDialog(BuildContext context) {
+    CancelWithReasonDialog.show(
+      context: context,
+      title: "تأكيد إلغاء الحجز",
+      confirmText: "تأكيد الإلغاء",
+      confirmColor: AppColors.errorForeground,
+      reasons: const [
+        "المريض لم يحضر",
+        "تم الحجز بالخطأ",
+        "تأخر الموعد",
+        "سبب آخر",
+      ],
+      onConfirm: (reason) {
+        _updateStatus(
+          ReservationStatus.cancelledByAssistant,
+          // 🔥 مهم
+        );
+
+        Loader.showSuccess("تم إلغاء الحجز");
+      },
+    );
   }
 
   void _makeOrder() {
@@ -847,11 +840,8 @@ class ReservationAssistantDetailsView extends StatelessWidget {
       case ReservationStatus.cancelledByAssistant:
       case ReservationStatus.cancelledByDoctor:
       case ReservationStatus.cancelledByUser:
-        await NotificationHandler().sendStatusNotification(
-          newStatus: newStatus,
-          reservation: reservation,
-          toToken: reservation.patientFcm ?? "",
-        );
+        Get.back();
+
         break;
 
       // ---------------------------

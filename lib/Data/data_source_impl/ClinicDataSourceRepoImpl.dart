@@ -59,7 +59,6 @@ class ClinicDataSourceRepoImpl extends ClinicDataSourceRepo {
     try {
       final path = _clinicsPath(doctorKey);
 
-
       final response = await _clientSourceRepo.request(
         HttpMethod.GET,
         path,

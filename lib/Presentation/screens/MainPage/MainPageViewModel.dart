@@ -1,14 +1,11 @@
-// ignore_for_file: depend_on_referenced_packages
-
-import 'dart:async';
-import 'package:diwanclinic/Presentation/parentControllers/patientReservationService.dart';
-
 import '../../../index/index_main.dart';
 
 class MainPageViewModel extends GetxController {
   // ============================================================
   // 🧠 CURRENT USER
   // ============================================================
+
+  int currentIndex = 0;
 
   BaseUser? get _user => Get.find<UserSession>().user?.user;
 
@@ -35,8 +32,12 @@ class MainPageViewModel extends GetxController {
   // ============================================================
 
   final ReservationService _reservationService = ReservationService();
+
   final PatientReservationService _patientReservationService =
       PatientReservationService();
+
+  // 🔥 NEW
+  final PatientOrderService _patientOrderService = PatientOrderService();
 
   final AuthenticationService _authService = AuthenticationService();
   final NotificationPatentService _notificationService =
@@ -55,44 +56,42 @@ class MainPageViewModel extends GetxController {
       await _startClientsRealtime();
     }
 
-    await startReservationsRealtime();
-    await _startNotificationsRealtime();
-
+    await startRealtime(); // 🔥 بدل القديمة
   }
 
   // ============================================================
-  // 🧪 DEBUG
+  // 🔄 INDEX
   // ============================================================
 
+  void changeIndex(int index) {
+    currentIndex = index;
+    update();
+  }
 
   // ============================================================
-  // 👤 LOAD CURRENT USER (ONLINE FIRST)
+  // 👤 LOAD CURRENT USER
   // ============================================================
 
   Future<void> _loadCurrentUserFromOnline() async {
     try {
       final uid = _user?.uid;
 
-      if (uid == null || uid.isEmpty) {
-        return;
-      }
+      if (uid == null || uid.isEmpty) return;
 
       await _authService.getClientsOnlineData(
         firebaseFilter: FirebaseFilter(orderBy: "uid", equalTo: uid),
-        voidCallBack: (users) {
-          if (users.isEmpty) {
-            return;
-          }
+        voidCallBack: (users) async {
+          if (users.isEmpty) return;
 
           final user = users.first;
           if (user == null) return;
 
           Get.find<UserSession>().setUser(user);
+
+          await _startNotificationsRealtime();
         },
       );
-    } catch (e) {
-      
-    }
+    } catch (e) {}
   }
 
   // ============================================================
@@ -104,16 +103,16 @@ class MainPageViewModel extends GetxController {
   }
 
   // ============================================================
-  // 📅 RESERVATIONS REALTIME (🔥 UPDATED)
+  // 🔥 ALL REALTIME (Reservation + Orders)
   // ============================================================
 
-  Future<void> startReservationsRealtime({String? doctorKey}) async {
+  Future<void> startRealtime({String? doctorKey}) async {
     final user = _user;
-    AppLogger.info("user info", user?.userType?.name ?? "");
 
     // ============================================================
     // 👤 PATIENT FLOW
     // ============================================================
+
     if (isPatient) {
       final patientUid = user?.uid;
 
@@ -121,7 +120,67 @@ class MainPageViewModel extends GetxController {
         return;
       }
 
+      // =======================
+      // 📅 RESERVATIONS
+      // =======================
+
+      _patientReservationService.onReservationAdded = (reservation) {
+        final reservationVM = Get.find<ReservationPatientViewModel>();
+        reservationVM.updateList(reservation);
+      };
+
+      _patientReservationService.onReservationUpdated = (reservation) {
+        final reservationVM = Get.find<ReservationPatientViewModel>();
+        reservationVM.updateList(reservation);
+      };
+
+      _patientReservationService.onReservationRemoved = (key) {
+        final reservationVM = Get.find<ReservationPatientViewModel>();
+        reservationVM.listReservations?.removeWhere((e) => e?.key == key);
+        reservationVM.update();
+      };
+
       await _patientReservationService.startListening(patientUid: patientUid);
+
+      // =======================
+      // 🛒 ORDERS (🔥 FIXED FINAL)
+      // =======================
+
+      _patientOrderService.onOrderAdded = (order) {
+        // 🔥 Home
+        final home = Get.find<HomePatientController>();
+        home.upsertOrder(order);
+
+        // 🔥 Orders List Screen
+        if (Get.isRegistered<OrdersListViewModel>()) {
+          Get.find<OrdersListViewModel>().upsertOrder(order);
+        } else {
+        }
+      };
+
+      _patientOrderService.onOrderUpdated = (order) {
+        final home = Get.find<HomePatientController>();
+        home.upsertOrder(order);
+
+        if (Get.isRegistered<OrdersListViewModel>()) {
+          Get.find<OrdersListViewModel>().upsertOrder(order);
+        }
+      };
+
+      _patientOrderService.onOrderRemoved = (key) {
+        // 🔥 Home
+        final home = Get.find<HomePatientController>();
+        home.orders.removeWhere((o) => o.key == key);
+        home.orders.refresh();
+        home.update();
+
+        // 🔥 Orders List Screen
+        if (Get.isRegistered<OrdersListViewModel>()) {
+          Get.find<OrdersListViewModel>().removeOrder(key);
+        }
+      };
+
+      await _patientOrderService.startListening(patientUid: patientUid);
 
       return;
     }
@@ -145,26 +204,11 @@ class MainPageViewModel extends GetxController {
     }
 
     await _reservationService.startListening(doctorKey: resolvedDoctorKey);
-  }
-
-  // ============================================================
+  } // ============================================================
   // 🔔 NOTIFICATIONS REALTIME
   // ============================================================
 
   Future<void> _startNotificationsRealtime() async {
-    final user = _user;
-
-    // String? clinicKey;
-    //
-    // if (user is AssistantUser) {
-    //   clinicKey = user.clinicKey;
-    // }
-    //
-    // if (clinicKey == null || clinicKey.isEmpty) {
-    //   
-    //   return;
-    // }
-
     await _notificationService.startListening();
   }
 
@@ -175,8 +219,13 @@ class MainPageViewModel extends GetxController {
   @override
   void onClose() {
     _reservationService.dispose();
-    _patientReservationService.dispose(); // 🔥 مهم جدًا
+    _patientReservationService.dispose();
+
+    // 🔥 مهم جدًا
+    _patientOrderService.dispose();
+
     _authService.dispose();
+
     super.onClose();
   }
 }

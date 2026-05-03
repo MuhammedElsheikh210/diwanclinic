@@ -82,7 +82,10 @@ class ReservationSuccessScreen extends StatelessWidget {
                 height: 50.h,
                 child: ElevatedButton(
                   onPressed: () {
-                    Get.offAllNamed(mainpage);
+                    Get.to(
+                      () => const MainPage(initialIndex: 0),
+                      binding: Binding(),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
@@ -106,10 +109,17 @@ class ReservationSuccessScreen extends StatelessWidget {
                 height: 50.h,
                 child: OutlinedButton(
                   onPressed: () {
-                    Get.offAll(
+                    // Get.offAll(
+                    //   () => const MainPage(initialIndex: 1),
+                    //   binding: Binding(),
+                    // );
+
+                    Get.to(
                       () => const MainPage(initialIndex: 1),
                       binding: Binding(),
                     );
+
+
                   },
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: AppColors.primary),

@@ -15,7 +15,6 @@ class SpecializeCard extends StatelessWidget {
   /// ✅ Return FontAwesome icon based on `icon_name` string
   IconData _getIconFromName(String? iconName) {
     if (iconName == null || iconName.isEmpty) {
-      
       return FontAwesomeIcons.userDoctor;
     }
 
@@ -70,7 +69,6 @@ class SpecializeCard extends StatelessWidget {
         return FontAwesomeIcons.handDots; // 🖐️ Skin dermatology
 
       default:
-        
         return FontAwesomeIcons.userDoctor;
     }
   }
@@ -96,18 +94,19 @@ class SpecializeCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // 🏥 Specialization Icon
-          Container(
-            height: 60.h,
-            width: 60.w,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.07),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Icon(
-                _getIconFromName(categoryEntity.icon_name),
-                color: AppColors.primary,
-                size: 26.h,
+          Expanded(
+            child: Container(
+
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.07),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Icon(
+                  _getIconFromName(categoryEntity.icon_name),
+                  color: AppColors.primary,
+                  size: 26.h,
+                ),
               ),
             ),
           ),
@@ -179,7 +178,7 @@ class SpecializeCard extends StatelessWidget {
           confirmText: "حذف",
           cancelText: "إلغاء",
           onConfirm: () {
-         //   controller.deleteCategory(categoryEntity);
+            //   controller.deleteCategory(categoryEntity);
             Loader.showSuccess("تم حذف التخصص بنجاح");
           },
         );

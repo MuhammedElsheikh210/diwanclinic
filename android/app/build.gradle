@@ -26,7 +26,7 @@ def flutterVersionName = localProperties.getProperty('flutter.versionName') ?: '
 android {
     namespace "com.elsheikh.marketingwhats"
     compileSdkVersion 36     // ✅ REQUIRED: target latest API
-    ndkVersion "27.0.12077973"
+    ndkVersion "28.2.13676358"
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17

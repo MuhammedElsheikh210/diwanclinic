@@ -28,7 +28,7 @@ void main() {
 
       // 🔹 Local DB (خفيف ومهم)
       final dbService = DatabaseService();
-    //  dbService.deleteDatabaseFile();
+      //  dbService.deleteDatabaseFile();
       await dbService.database;
 
       // 🔹 Storage (خفيف)
@@ -47,14 +47,15 @@ void main() {
         fenix: true,
       );
 
-      // 🔥 UserSession (NO BLOCKING)
-      Get.lazyPut<UserSession>(() => UserSession(Get.find()), fenix: true);
-
       // 🔹 باقي الـ dependencies
       Binding().dependencies();
 
       // 🎨 ThemeScope (مهم)
       final app = await ThemeScopeWidget.initialize(const MyApp());
+
+      final userSession = UserSession(Get.find());
+      await userSession.init();
+      Get.put<UserSession>(userSession, permanent: true);
 
       // 🚀 run app بسرعة
       runApp(
@@ -76,18 +77,8 @@ void main() {
 
       // 🔥 Remote Config (background)
       FirebaseRemoteConfigService().checkForceUpdate();
-
-      // 🔥 UserSession init (مهم جدًا)
-      Future.microtask(() async {
-        try {
-          await Get.find<UserSession>().init();
-        } catch (e) {
-          log("❌ UserSession init error: $e");
-        }
-      });
     },
     (e, s) {
-      
       debugPrintStack(stackTrace: s);
     },
   );

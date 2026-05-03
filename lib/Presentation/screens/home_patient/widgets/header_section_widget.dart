@@ -27,7 +27,11 @@ class HeaderSectionWidget extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text("عرض المزيد", style: context.typography.smMedium),
+                Text(
+                  "عرض الكل ",
+                  style: context.typography.mdMedium,
+                  textAlign: TextAlign.center,
+                ),
                 const Icon(Icons.arrow_forward_ios, size: 17),
               ],
             ),

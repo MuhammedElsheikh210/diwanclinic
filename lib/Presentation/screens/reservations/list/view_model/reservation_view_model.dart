@@ -143,14 +143,12 @@ class ReservationViewModel extends GetxController {
     final currentUser = Get.find<UserSession>().user;
 
     if (currentUser == null || !currentUser.isAssistant) {
-      
       return;
     }
 
     final assistant = currentUser.asAssistant;
 
     if (assistant == null) {
-      
       return;
     }
     final clinicKey = assistant.clinicKey ?? "";
@@ -217,7 +215,6 @@ class ReservationViewModel extends GetxController {
     final currentUser = Get.find<UserSession>().user;
 
     if (currentUser == null) {
-      
       return;
     }
 
@@ -321,7 +318,6 @@ class ReservationViewModel extends GetxController {
 
       Loader.showSuccess("تم تحديث الحالة إلى ${newStatus.label}");
     } catch (e, stack) {
-      
       debugPrintStack(stackTrace: stack);
 
       Loader.showError("حدث خطأ أثناء تحديث الحالة");
@@ -371,7 +367,7 @@ class ReservationViewModel extends GetxController {
       //       extraData: reservation.toJson(),
       //     ),
       //     voidCallBack: (status) {
-      //       
+      //
       //     },
       //   );
       // }
@@ -381,7 +377,6 @@ class ReservationViewModel extends GetxController {
         await _handleQueueUpdate();
       }
     } catch (e, stack) {
-      
       debugPrintStack(stackTrace: stack);
     }
   }
@@ -487,14 +482,12 @@ extension ReservationData on ReservationViewModel {
     final currentUser = Get.find<UserSession>().user;
 
     if (currentUser == null || !currentUser.isAssistant) {
-      
       return;
     }
 
     final assistant = currentUser.asAssistant;
 
     if (assistant == null) {
-      
       return;
     }
 
@@ -525,7 +518,6 @@ extension ReservationData on ReservationViewModel {
 
       update();
     } catch (e, stack) {
-      
       debugPrintStack(stackTrace: stack);
     }
   }
@@ -552,8 +544,6 @@ extension ReservationData on ReservationViewModel {
       selectedClinic: selectedClinic,
     );
 
-
-
     _cachedReservations = all;
 
     completeDayReservations = all;
@@ -567,8 +557,10 @@ extension ReservationData on ReservationViewModel {
         _cachedReservations
             .where((e) => e.status == ReservationStatus.completed.value)
             .toList();
-    AppLogger.info("total list in repots", completedForReport.length.toString());
-
+    AppLogger.info(
+      "total list in repots",
+      completedForReport.length.toString(),
+    );
   }
 
   Future<int> getTotalTodayReservations() async {

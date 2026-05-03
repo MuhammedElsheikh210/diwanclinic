@@ -23,133 +23,140 @@ class ReservationDateAppBar extends StatelessWidget
 
   @override
   Widget build(BuildContext context) {
-    final bool showShift =
-        (controller.shiftDropdownItems?.length ?? 0) > 1 &&
-        controller.selectedShift != null;
+    final hasShift = (controller.shiftDropdownItems?.isNotEmpty ?? false);
+    final showShift = hasShift && (controller.shiftDropdownItems!.length > 1);
 
     return AppBar(
-      backgroundColor: AppColors.background,
-      elevation: 0,
-      toolbarHeight: 110.h,
-      automaticallyImplyLeading: false,
+      backgroundColor: Colors.white,
+      // ✅ نظيف
+      elevation: 1,
       titleSpacing: 0,
-      title: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            /// 🔝 Top Row
-            Row(
-              children: [
-                Expanded(child: _DatePill(controller: controller)),
-                const SizedBox(width: 10),
+      title: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              /// 🔝 DATE ROW
+              Expanded(child: _DateCard(controller: controller)),
+              const SizedBox(width: 7),
 
-                if (onFilterTap != null)
-                  _IconButton(
-                    icon:
-                        isGrid
-                            ? Icons.grid_view_rounded
-                            : Icons.view_list_rounded,
-                    onTap: onFilterTap!,
+              /// ⏰ SHIFT (🔥 New Design)
+              if (hasShift)
+                Align(
+                  alignment: Alignment.center,
+                  child: _ShiftSection(
+                    controller: controller,
+                    showDropdown: showShift,
                   ),
-              ],
-            ),
+                ),
+              const SizedBox(width: 7),
 
-            const SizedBox(height: 10),
-
-            /// ⏰ Shift
-            if (showShift)
-              Align(
-                alignment: Alignment.centerLeft,
-                child: _ShiftPill(controller: controller),
-              ),
-          ],
+              if (onFilterTap != null)
+                _IconButton(
+                  icon:
+                      isGrid
+                          ? Icons.grid_view_rounded
+                          : Icons.view_list_rounded,
+                  onTap: onFilterTap!,
+                ),
+            ],
+          ),
         ),
       ),
 
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
-        child: Divider(
-          height: 1,
-          color: AppColors.borderNeutralPrimary.withValues(alpha: .3),
-        ),
+        child: Divider(height: 1, color: Colors.grey.withValues(alpha: .2)),
       ),
     );
   }
 
   @override
-  Size get preferredSize => Size.fromHeight(110.h);
+  Size get preferredSize => Size.fromHeight(75.h);
 }
 
-class _BasePill extends StatelessWidget {
-  final Widget child;
-  final VoidCallback? onTap;
-  final EdgeInsets padding;
-  final double height;
-
-  const _BasePill({
-    required this.child,
-    this.onTap,
-    this.padding = const EdgeInsets.symmetric(horizontal: 14),
-    this.height = 48,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.background,
-      borderRadius: BorderRadius.circular(24),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(24),
-        child: Container(height: height, padding: padding, child: child),
-      ),
-    );
-  }
-}
-
-class _DatePill extends StatelessWidget {
+class _DateCard extends StatelessWidget {
   final ReservationViewModel controller;
 
-  const _DatePill({required this.controller});
+  const _DateCard({required this.controller});
 
   @override
   Widget build(BuildContext context) {
-    return _BasePill(
-      height: 52.h,
-      child: Row(
-        children: [
-          Icon(
-            Icons.calendar_today_rounded,
-            size: 18,
-            color: AppColors.primary,
-          ),
+    return CalendarDropdown(
+      controller: controller,
+      initialTimestamp:
+          controller.create_at ?? DateTime.now().millisecondsSinceEpoch,
+      onDateSelected: (timestamp, _) {
+        final date = timestamp.toDate();
 
-          const SizedBox(width: 10),
+        controller.create_at = date.millisecondsSinceEpoch;
+        controller.appointmentDate = DateFormat('dd-MM-yyyy').format(date);
 
-          Expanded(
-            child: CalendarDropdown(
-              controller: controller,
-              initialTimestamp:
-                  controller.create_at ?? DateTime.now().millisecondsSinceEpoch,
-              onDateSelected: (timestamp, _) {
-                final date = timestamp.toDate();
+        controller.getReservations();
+        controller.update();
+      },
+    );
+  }
+}
 
-                controller.create_at = date.millisecondsSinceEpoch;
+class _ShiftSection extends StatelessWidget {
+  final ReservationViewModel controller;
+  final bool showDropdown;
 
-                // ✅ FIX
-                controller.appointmentDate = DateFormat(
-                  'dd-MM-yyyy',
-                ).format(date);
+  const _ShiftSection({required this.controller, required this.showDropdown});
 
-                
+  @override
+  Widget build(BuildContext context) {
+    final shiftName = controller.selectedShift?.name ?? "غير محدد";
 
-                controller.getReservations();
-                controller.update();
-              },
+    return GestureDetector(
+      onTap: showDropdown ? controller.showMandatoryShiftDialog : null,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 14.h),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.primary.withValues(alpha: .15)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            /// ⏰ icon
+            Container(
+              padding: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.schedule,
+                size: 13,
+                color: AppColors.primary,
+              ),
             ),
-          ),
-        ],
+
+            const SizedBox(width: 6),
+
+            /// 📝 text
+            Text(
+              shiftName,
+              style: context.typography.smMedium.copyWith(
+                color: AppColors.textDefault,
+              ),
+            ),
+
+            if (showDropdown) ...[
+              const SizedBox(width: 4),
+              const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 16,
+                color: AppColors.textSecondaryParagraph,
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -164,54 +171,16 @@ class _IconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.primary.withValues(alpha: .08),
-      borderRadius: BorderRadius.circular(14),
+      color: AppColors.white,
+      borderRadius: BorderRadius.circular(8),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(8),
         child: SizedBox(
-          height: 48,
-          width: 48,
+          height: 50,
+          width: 50,
           child: Icon(icon, color: AppColors.primary),
         ),
-      ),
-    );
-  }
-}
-
-class _ShiftPill extends StatelessWidget {
-  final ReservationViewModel controller;
-
-  const _ShiftPill({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    return _BasePill(
-      onTap: controller.showMandatoryShiftDialog,
-      height: 40,
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.schedule, size: 16, color: AppColors.primary),
-
-          const SizedBox(width: 6),
-
-          Text(
-            controller.selectedShift?.name ?? "",
-            style: context.typography.smMedium.copyWith(
-              color: AppColors.background_black,
-            ),
-          ),
-
-          const SizedBox(width: 4),
-
-          Icon(
-            Icons.keyboard_arrow_down_rounded,
-            size: 18,
-            color: AppColors.textSecondaryParagraph,
-          ),
-        ],
       ),
     );
   }

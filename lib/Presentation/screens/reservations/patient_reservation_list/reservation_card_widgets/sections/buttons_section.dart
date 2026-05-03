@@ -51,7 +51,7 @@ class ButtonsSection extends StatelessWidget {
         ),
       );
     }
-    //
+
     // 🔴 إلغاء
     if (![
       ReservationStatus.completed,
@@ -63,14 +63,12 @@ class ButtonsSection extends StatelessWidget {
         Expanded(
           child: PrimaryTextButton(
             onTap: () async {
+              final confirmed = await _showCancelDialog(context);
+
+              if (confirmed != true) return;
+
               await _updateStatus(ReservationStatus.cancelledByUser);
 
-              
-              NotificationHandler().sendStatusNotification(
-                newStatus: ReservationStatus.cancelledByUser,
-                reservation: reservation,
-                toToken: reservation.assistantFcm ?? "",
-              );
             },
             appButtonSize: AppButtonSize.large,
             customBackgroundColor: AppColors.errorForeground,
@@ -112,6 +110,88 @@ class ButtonsSection extends StatelessWidget {
   }
 
   // ---------------------------------------------------------------------------
+  // ❗ Confirmation Dialog
+  // ---------------------------------------------------------------------------
+  Future<bool?> _showCancelDialog(BuildContext context) {
+    return Get.dialog<bool>(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: EdgeInsets.all(20.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.warning_amber_rounded,
+                size: 50.sp,
+                color: AppColors.errorForeground,
+              ),
+
+              SizedBox(height: 10.h),
+
+              Text("تأكيد الإلغاء", style: context.typography.lgBold),
+
+              SizedBox(height: 10.h),
+
+              Text(
+                "هل أنت متأكد أنك تريد إلغاء هذا الحجز؟",
+                textAlign: TextAlign.center,
+                style: context.typography.mdMedium.copyWith(height: 1.5),
+              ),
+
+              SizedBox(height: 20.h),
+
+              Row(
+                children: [
+                  /// ❌ إلغاء
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Get.back(result: false),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: AppColors.primary),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30.r),
+                        ),
+                      ),
+                      child: Text(
+                        "رجوع",
+                        style: context.typography.mdMedium.copyWith(
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(width: 10.w),
+
+                  /// ✅ تأكيد
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Get.back(result: true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.errorForeground,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30.r),
+                        ),
+                      ),
+                      child: Text(
+                        "تأكيد",
+                        style: context.typography.mdMedium.copyWith(
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
   // ⭐ show feedback sheet
   // ---------------------------------------------------------------------------
   void _showFeedbackBottomSheet(BuildContext context) {
@@ -128,13 +208,15 @@ class ButtonsSection extends StatelessWidget {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // 🔄 update status
+  // ---------------------------------------------------------------------------
   Future<void> _updateStatus(ReservationStatus newStatus) async {
     if (newStatus == ReservationStatus.completed) {
       try {
         final phone = reservation.patientPhone ?? "";
         if (phone.isNotEmpty) {
           final formatted = WhatsAppManager.formatNumber(phone);
-          //  const formatted = "01551061194";
 
           final patient = reservation.patientName ?? "المريض";
           final doctor = reservation.doctorName ?? "العيادة";

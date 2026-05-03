@@ -1,4 +1,3 @@
-import 'package:diwanclinic/Data/data_source/patient_data_source.dart';
 
 import '../../index/index_main.dart';
 
@@ -55,7 +54,7 @@ class PatientDataSourceRepoImpl extends PatientDataSourceRepo {
   @override
   Future<SuccessModel> addPatient(Map<String, dynamic> data, String key) async {
     final patient = PatientModel.fromJson(data);
-    print("patiemt is ${patient.toJson()}");
+    
     await _sqliteRepo.addItem(patient);
     final response = await _clientSourceRepo.request(
       HttpMethod.PATCH,

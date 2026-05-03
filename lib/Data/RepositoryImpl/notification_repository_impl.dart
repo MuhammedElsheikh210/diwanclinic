@@ -59,6 +59,18 @@ class NotificationRepositoryImpl implements NotificationRepository {
   // 🛑 STOP REALTIME
   // ============================================================
 
+
+  @override
+  Future<Either<AppError, List<NotificationModel>>>
+  fetchAllNotificationsDomain() async {
+    try {
+      final list = await _remote.fetchAllNotifications();
+      return Right(list);
+    } catch (e) {
+      return Left(AppError(e.toString()));
+    }
+  }
+
   @override
   Future<void> dispose() async {
     await _addedSub?.cancel();

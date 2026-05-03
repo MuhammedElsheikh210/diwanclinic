@@ -1,11 +1,10 @@
 import 'package:dartz/dartz.dart';
 import '../../../index/index_main.dart';
 
-class PatientReservationUseCases {
-  final PatientReservationRepository _repository;
+class PatientOrderUseCases {
+  final PatientOrderRepository _repository;
 
-  PatientReservationUseCases(this._repository) {
-  }
+  PatientOrderUseCases(this._repository);
 
   // ============================================================
   // 🔥 START REALTIME
@@ -23,37 +22,26 @@ class PatientReservationUseCases {
   // 🔥 REALTIME STREAMS
   // ============================================================
 
-  Stream<ReservationModel> get onAdded {
-    return _repository.onAdded;
-  }
+  Stream<OrderModel> get onAdded => _repository.onAdded;
 
-  Stream<ReservationModel> get onChanged {
-    return _repository.onChanged;
-  }
+  Stream<OrderModel> get onChanged => _repository.onChanged;
 
-  Stream<String> get onRemoved {
-    return _repository.onRemoved;
-  }
+  Stream<String> get onRemoved => _repository.onRemoved;
 
   // ============================================================
-  // ☁️ REMOTE OPERATIONS
+  // ☁️ REMOTE OPERATIONS (Realtime Only)
   // ============================================================
 
-  Future<Either<AppError, Unit>> addReservation(
-      ReservationModel reservation) {
-    return _repository.addReservationDomain(reservation);
+  Future<Either<AppError, Unit>> addOrder(OrderModel order) {
+    return _repository.addOrder(order);
   }
 
-  Future<Either<AppError, Unit>> updateReservation(
-      ReservationModel reservation,
-      ) {
-    return _repository.updateReservationDomain(reservation);
+  Future<Either<AppError, Unit>> updateOrder(OrderModel order) {
+    return _repository.updateOrder(order);
   }
 
-  Future<Either<AppError, Unit>> deleteReservation(
-      ReservationModel reservation,
-      ) {
-    return _repository.deleteReservationDomain(reservation);
+  Future<Either<AppError, Unit>> deleteOrder(OrderModel order) {
+    return _repository.deleteOrder(order);
   }
 
   // ============================================================

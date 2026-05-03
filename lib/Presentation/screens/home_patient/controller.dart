@@ -1,17 +1,19 @@
 import 'dart:async';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:diwanclinic/index/index_main.dart';
 
 class HomePatientController extends GetxController {
-  // 🔥 ORDERS (Realtime)
+  // ============================================================
+  // 🔥 ORDERS (Controlled from MainPageViewModel 🔥)
+  // ============================================================
+
   RxList<OrderModel> orders = <OrderModel>[].obs;
 
-  // 🔄 Firebase listeners
-  StreamSubscription<DatabaseEvent>? _addSub;
-  StreamSubscription<DatabaseEvent>? _changeSub;
-  StreamSubscription<DatabaseEvent>? _removeSub;
+  // ❌ شيلنا الـ service والـ subscriptions من هنا
 
-  // 🧠 Shared ViewModel (IMPORTANT)
+  // ============================================================
+  // 🧠 RESERVATIONS
+  // ============================================================
+
   late final ReservationPatientViewModel reservationVM;
 
   List<CategoryEntity?>? listCategories;
@@ -29,24 +31,21 @@ class HomePatientController extends GetxController {
   ];
 
   // ============================================================
-  // 📊 DATA GETTERS
+  // 📊 GETTERS
   // ============================================================
 
-  List<ReservationModel?> get activeReservations {
-    return reservationVM.otherReservations;
-  }
+  List<ReservationModel?> get activeReservations =>
+      reservationVM.otherReservations;
 
-  List<OrderModel> get activeOrders {
-    return orders
-        .where((o) => o.status != "delivered" && o.status != "cancelled")
-        .toList();
-  }
+  List<OrderModel> get activeOrders =>
+      orders
+          .where((o) => o.status != "delivered" && o.status != "cancelled")
+          .toList();
 
-  List<OrderModel> get finishedOrders {
-    return orders
-        .where((o) => o.status == "delivered" || o.status == "cancelled")
-        .toList();
-  }
+  List<OrderModel> get finishedOrders =>
+      orders
+          .where((o) => o.status == "delivered" || o.status == "cancelled")
+          .toList();
 
   // ============================================================
   // 🚀 INIT
@@ -56,18 +55,22 @@ class HomePatientController extends GetxController {
   void onInit() {
     super.onInit();
 
-    // 🔥 IMPORTANT: نفس الـ instance مش جديد
     reservationVM = Get.find<ReservationPatientViewModel>();
 
     _loadInitialData();
   }
 
   // ============================================================
-  Future<void> _loadInitialData() async {
+  // 🔄 REFRESH
+  // ============================================================
+
+  Future<void> refreshAll() async {
     isLoading = true;
     update();
 
-    fetchOrders();
+    orders.clear();
+    orders.refresh();
+
     getSpecializationData();
 
     isLoading = false;
@@ -75,56 +78,21 @@ class HomePatientController extends GetxController {
   }
 
   // ============================================================
-  // 📥 FETCH ORDERS (REALTIME)
-  // ============================================================
+  Future<void> _loadInitialData() async {
+    isLoading = true;
+    update();
 
-  Future<void> fetchOrders() async {
-    final patientKey = Get.find<UserSession>().user?.uid;
+    getSpecializationData();
 
-    if (patientKey == null || patientKey.isEmpty) return;
-
-    final ref = FirebaseDatabase.instance.ref("orders");
-
-    _addSub = ref.onChildAdded.listen((event) {
-      if (event.snapshot.value == null) return;
-
-      final data = Map<String, dynamic>.from(event.snapshot.value as Map);
-
-      if (data["patient_key"] != patientKey) return;
-
-      final order = OrderModel.fromJson(data);
-      _upsertOrder(order);
-      update();
-    });
-
-    _changeSub = ref.onChildChanged.listen((event) {
-      if (event.snapshot.value == null) return;
-
-      final data = Map<String, dynamic>.from(event.snapshot.value as Map);
-
-      if (data["patient_key"] != patientKey) return;
-
-      final order = OrderModel.fromJson(data);
-      _upsertOrder(order);
-      update();
-    });
-
-    _removeSub = ref.onChildRemoved.listen((event) {
-      if (event.snapshot.value == null) return;
-
-      final data = Map<String, dynamic>.from(event.snapshot.value as Map);
-
-      final removedKey = data["key"];
-      orders.removeWhere((o) => o.key == removedKey);
-      update();
-    });
+    isLoading = false;
+    update();
   }
 
   // ============================================================
-  // 🔁 ADD / UPDATE ORDER
+  // 🔁 UPSERT (🔥 أهم فانكشن)
   // ============================================================
 
-  void _upsertOrder(OrderModel order) {
+  void upsertOrder(OrderModel order) {
     final index = orders.indexWhere((o) => o.key == order.key);
 
     if (index == -1) {
@@ -134,21 +102,22 @@ class HomePatientController extends GetxController {
     }
 
     orders.sort((a, b) => (b.createdAt ?? 0).compareTo(a.createdAt ?? 0));
+    orders.refresh();
+    update();
   }
 
   // ============================================================
+  // 🔄 UPDATE STATUS
+  // ============================================================
+
   Future<void> updateOrderStatus({
     required OrderModel order,
     required String newStatus,
   }) async {
-    await OrderStatusService.updateOrderStatus(
-      order: order,
-      newStatus: newStatus,
-      onSave: (updatedOrder) async {
-        await FirebaseDatabase.instance
-            .ref("orders/${updatedOrder.key}")
-            .update(updatedOrder.toJson());
-      },
+    final service = initController(()=> PatientOrderService());
+    await service.updateOrderData(
+      order: order.copyWith(status: newStatus),
+      voidCallBack: (_) {},
     );
   }
 
@@ -179,28 +148,11 @@ class HomePatientController extends GetxController {
   }
 
   // ============================================================
-  // 🔄 REFRESH
-  // ============================================================
-
-  Future<void> refreshAll() async {
-    isLoading = true;
-    update();
-
-    getSpecializationData();
-
-    isLoading = false;
-    update();
-  }
-
-  // ============================================================
   // 🛑 DISPOSE
   // ============================================================
 
   @override
   void onClose() {
-    _addSub?.cancel();
-    _changeSub?.cancel();
-    _removeSub?.cancel();
     super.onClose();
   }
 }

@@ -27,7 +27,7 @@ class NotificationController extends GetxController {
 
     for (final notif in unread) {
       final updated = notif!.copyWith(isRead: true);
-      print("updated model is ${updated.toJson()}");
+      
 
       await _service.updateNotificationData(
         notification: updated,
@@ -42,6 +42,24 @@ class NotificationController extends GetxController {
   }
 
   void _initRealtime() async {
+    final user = Get.find<UserSession>().user;
+
+    if (user == null) return;
+
+    final bool isPatient = user.user.userType == UserType.patient;
+
+    /// 🟢 1. لو Patient → هات الداتا مرة واحدة الأول
+    if (isPatient) {
+      await _service.getAllNotificationsOnlineData(
+        voidCallBack: (list) {
+          notifications = list;
+          _sort();
+          update();
+        },
+      );
+    }
+
+    /// 🔥 2. بعد كدا شغل realtime
     await _service.startListening();
 
     _service.onNotificationAdded = (model) {
@@ -62,7 +80,9 @@ class NotificationController extends GetxController {
   // ─────────────────────────────────────────────
 
   void onRealtimeAdd(NotificationModel model) {
+    
     final exists = notifications.any((n) => n?.key == model.key);
+
     if (exists) return;
 
     notifications.insert(0, model);

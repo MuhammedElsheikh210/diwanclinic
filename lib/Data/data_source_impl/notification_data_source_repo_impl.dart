@@ -42,6 +42,7 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
 
     final sessionUser = Get.find<UserSession>().user?.user;
     final uid = sessionUser?.uid;
+    
 
     if (uid == null || uid.isEmpty) {
       AppLogger.warning("NOTIFICATION", "UID is null → skip listening");
@@ -219,6 +220,57 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
       "/${ApiConstatns.notifications}/$key.json",
       params: {},
     );
+  }
+
+
+  @override
+  Future<List<NotificationModel>> fetchAllNotifications() async {
+    try {
+      final sessionUser = Get.find<UserSession>().user?.user;
+      final uid = sessionUser?.uid;
+
+      if (uid == null || uid.isEmpty) {
+        AppLogger.warning("NOTIFICATION", "UID is null → fetchAll skip");
+        return [];
+      }
+
+      final snapshot = await _database.ref("notifications/$uid").get();
+
+      if (!snapshot.exists || snapshot.value == null) {
+        AppLogger.info("NOTIFICATION", "No notifications found");
+        return [];
+      }
+
+      final data = Map<String, dynamic>.from(snapshot.value as Map);
+
+      final List<NotificationModel> list = [];
+
+      data.forEach((key, value) {
+        if (value is Map) {
+          final json = Map<String, dynamic>.from(
+            value.map((k, v) => MapEntry(k.toString(), v)),
+          );
+
+          json['key'] = key;
+
+          final model = NotificationModel.fromJson(json);
+          list.add(model);
+        }
+      });
+
+      /// 🔥 ترتيب الأحدث أولاً
+      list.sort((a, b) => (b.createAt ?? 0).compareTo(a.createAt ?? 0));
+
+      AppLogger.success(
+        "NOTIFICATION",
+        "Fetched all notifications → ${list.length}",
+      );
+
+      return list;
+    } catch (e, stack) {
+      AppLogger.error("NOTIFICATION", "fetchAll error", e, stack);
+      return [];
+    }
   }
 
   // ============================================================

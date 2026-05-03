@@ -107,13 +107,13 @@ class Routes {
         binding: Binding(),
         transition: Transition.cupertino,
       ),
-      GetPage(
-        name: reservationSuccessView,
-        page: () => const ReservationSuccessView(),
-        transitionDuration: const Duration(milliseconds: 500),
-        binding: Binding(),
-        transition: Transition.cupertino,
-      ),
+      // GetPage(
+      //   name: reservationSuccessView,
+      //   page: () => const ReservationSuccessView(),
+      //   transitionDuration: const Duration(milliseconds: 500),
+      //   binding: Binding(),
+      //   transition: Transition.cupertino,
+      // ),
       GetPage(
         name: whatsAppGroupView,
         page: () => const WhatsAppGroupView(),

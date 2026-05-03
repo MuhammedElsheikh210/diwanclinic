@@ -47,7 +47,9 @@ class OrdersSectionView extends StatelessWidget {
       children: [
         HeaderSectionWidget(
           title: "طلباتي",
-          onMore: () => Get.offAll(() => const MainPage(initialIndex: 2)),
+          onMore: () {
+            Get.find<MainPageViewModel>().changeIndex(2);
+          },
         ),
         SizedBox(height: 15.h),
         SingleChildScrollView(

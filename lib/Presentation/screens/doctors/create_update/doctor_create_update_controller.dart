@@ -140,6 +140,8 @@ class CreateDoctorViewModel extends GetxController {
       coverUrl = await _uploadImage(coverImageFile!, "cover");
     }
 
+   
+
     if (isUpdate && existingDoctor != null) {
       _updateDoctor(existingDoctor!, profileUrl, coverUrl);
     } else {
@@ -202,6 +204,28 @@ class CreateDoctorViewModel extends GetxController {
     final email = "${phoneController.text}@link.com";
     final password = phoneController.text;
 
+    final doctorUser = DoctorUser(
+      uid: "uid",
+      phone: phoneController.text,
+      name: nameController.text,
+      identifier: email,
+      password: password,
+      userType: UserType.doctor,
+
+      doctorQualifications: qualificationsController.text,
+      specializationName: selectedSpecialization?.name,
+      specializeKey: selectedSpecialization?.key,
+
+      facebookLink: facebookController.text,
+      instagramLink: instagramController.text,
+      tiktokLink: tiktokController.text,
+
+      profileImage: profileUrl,
+    );
+
+    final doctor = LocalUser(doctorUser);
+    
+
     try {
       final userCred = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(email: email, password: password);
@@ -228,7 +252,7 @@ class CreateDoctorViewModel extends GetxController {
       );
 
       final doctor = LocalUser(doctorUser);
-      print("doctor is ${doctor.toJson()}");
+      
 
       AuthenticationService().addClientsData(
         userclient: doctor,

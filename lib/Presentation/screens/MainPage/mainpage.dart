@@ -1,4 +1,3 @@
-
 import '../../../index/index_main.dart';
 import 'package:flutter/cupertino.dart';
 
@@ -14,14 +13,12 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  int currentIndex = 0;
   int backPressCount = 0;
   static const int backThreshold = 2;
 
   @override
   void initState() {
     super.initState();
-    currentIndex = widget.initialIndex;
   }
 
   @override
@@ -44,7 +41,7 @@ class _MainPageState extends State<MainPage> {
                   controller.userType == null
                       ? const ProLoadingScreen()
                       : _buildBody(
-                        currentIndex,
+                        controller.currentIndex,
                         controller.userType ?? UserType.patient,
                       ),
 
@@ -114,24 +111,31 @@ class _MainPageState extends State<MainPage> {
               notifController: notifController,
               userType: controller.userType ?? UserType.patient,
             ),
+            controller,
           );
         },
       );
     }
 
     // others → original behavior
-    return _buildNavContainer(_bottomItems(userType: controller.userType));
+    return _buildNavContainer(
+      _bottomItems(userType: controller.userType),
+      controller,
+    );
   }
 
-  Widget _buildNavContainer(List<BottomNavigationBarItem> items) {
+  Widget _buildNavContainer(
+    List<BottomNavigationBarItem> items,
+    MainPageViewModel controller,
+  ) {
     // 🛑 CupertinoTabBar مينفعش أقل من 2
     if (items.length < 2) {
       items = [...items, _item(IconsConstants.home, "الرئيسية")];
     }
 
     // 🛑 حماية إضافية للـ currentIndex
-    if (currentIndex >= items.length) {
-      currentIndex = 0;
+    if (controller.currentIndex >= items.length) {
+     controller.currentIndex = 0;
     }
 
     return CupertinoTheme(
@@ -147,9 +151,9 @@ class _MainPageState extends State<MainPage> {
         inactiveColor: CupertinoColors.white.withValues(alpha: 0.6),
         iconSize: 28,
         height: 60.h,
-        currentIndex: currentIndex,
+        currentIndex: controller.currentIndex,
         onTap: (index) {
-          setState(() => currentIndex = index);
+          controller.changeIndex(index);
         },
         items: items,
       ),
@@ -297,7 +301,7 @@ class _MainPageState extends State<MainPage> {
       case UserType.admin:
         return [
           const SpecializationView(),
-          const  MedicalCentersView(),
+          const MedicalCentersView(),
           const SalesView(),
           const PharmacyView(),
           const AccountView(),

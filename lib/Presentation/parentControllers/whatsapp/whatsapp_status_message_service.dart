@@ -36,7 +36,6 @@ class WhatsAppStatusMessageService {
         doctorName: doctorName,
         patientName: patientName,
         phone: rawPhone,
-        from_assist: from_assist,
         androidLink: androidLink,
         iosLink: iosLink,
         reservation: reservation,
@@ -45,9 +44,7 @@ class WhatsAppStatusMessageService {
       if (message == null) return;
 
       await WhatsAppManager.sendMessage(to: phone, body: message);
-    } catch (e) {
-      
-    }
+    } catch (e) {}
   }
 
   static String? _buildMessageByStatus({
@@ -56,7 +53,6 @@ class WhatsAppStatusMessageService {
     required String doctorName,
     required String patientName,
     required String phone,
-    bool? from_assist,
     required String androidLink,
     required String iosLink,
     required ReservationModel reservation,
@@ -64,25 +60,26 @@ class WhatsAppStatusMessageService {
     final hasApp = _hasApp(reservation);
 
     switch (status) {
-
-    // ============================================================
-    // ✅ COMPLETED
-    // ============================================================
+      // ============================================================
+      // ✅ COMPLETED (After كشف - أهم رسالة)
+      // ============================================================
       case ReservationStatus.completed:
         final baseMessage = """
-🎉 *ألف سلامة عليك يا $patientName!*
+🎉 ألف سلامة عليك يا $patientName 💙  
 
 👨‍⚕️ من عيادة *د. $doctorName*  
-تم الانتهاء من الكشف بنجاح ✅
+تم الانتهاء من الكشف بنجاح ✅  
 
-💊 *هنبعتلك علاجك بسهولة لحد البيت 👇*
+💊 علاجك ممكن يوصلك لحد باب البيت  
+*بنفس سعر الصيدلية + توصيل مجاني* 🚚  
 
-📱 اضغط *اطلب علاجك* من التطبيق  
-📸 صوّر الروشتة وارفعها  
-💰 وهنبعتلك السعر في ثواني  
-✔️ وافق على الطلب  
-🚚 ويوصلك لحد باب البيت بخصم يصل الي 10%*
-✨ كل ده وانت في مكانك 💙
+📱 ابعتلنا الروشتة دلوقتي 📸  
+وهنبعتلك السعر فورًا 💰  
+
+✔️ وافق والتوصيل لحد عندك  
+
+🎁 كود: *DR-${doctorName.replaceAll(" ", "").toUpperCase()}*  
+علشان التوصيل يفضل مجاني  
 """;
 
         if (hasApp) return baseMessage;
@@ -94,54 +91,26 @@ class WhatsAppStatusMessageService {
               iosLink: iosLink,
             );
 
-    // ============================================================
-    // ✅ APPROVED
-    // ============================================================
+      // ============================================================
+      // ✅ APPROVED (حجز)
+      // ============================================================
       case ReservationStatus.approved:
         final orderNum = reservation.orderNum ?? "-";
-        final isFromPending =
-            previousStatus == ReservationStatus.pending;
 
-        final baseMessage =
-        isFromPending
-            ? """
-✅ *تم تأكيد حجزك يا $patientName!*
+        final baseMessage = """
+📌 حجزك اتسجل بنجاح يا $patientName 💙  
 
 👨‍⚕️ عند *د. $doctorName*  
-🔢 رقم الحجز: *$orderNum*
-
-⏳ تابع دورك لحظة بلحظة من تطبيق *لينك*  
-وخليك جاهز… دورك قرب 😉
-
-💊 *بعد الكشف هنبعتلك علاجك بسهولة لحد البيت 👇*
-
-📱 اضغط *اطلب علاجك* من التطبيق  
-📸 صوّر الروشتة وارفعها  
-💰 وهنبعتلك السعر في ثواني  
-✔️ وافق على الطلب  
-🚚 ويوصلك لحد باب البيت بخصم يصل الي 10%*
-
-📲 حمل التطبيق وابدأ:
-"""
-            : """
-📌 *حجزك اتسجل بنجاح يا $patientName!*
-
-👨‍⚕️ عند *د. $doctorName*  
-🔢 رقمك في الكشف: *$orderNum*
+🔢 رقمك: *$orderNum*  
 
 ⏳ تابع دورك بسهولة من تطبيق *لينك*  
-📡 التحديث بيتم لحظيًا
+📡 التحديث بيتم لحظيًا  
 
-💊 *بعد الكشف هنبعتلك علاجك بسهولة لحد البيت 👇*
+💊 بعد الكشف  
+ممكن تبعتلنا الروشتة  
+ونوصلك العلاج لحد البيت 🚚  
 
-📱 اضغط *اطلب علاجك* من التطبيق  
-📸 صوّر الروشتة وارفعها  
-💰 وهنبعتلك السعر في ثواني  
-
-✔️ وافق على الطلب  
-🚚 ويوصلك لحد باب البيت  
-
-💸 *بخصم 10%*
+✨ بدون تعب أو انتظار  
 """;
 
         if (hasApp) return baseMessage;
@@ -170,7 +139,7 @@ class WhatsAppStatusMessageService {
   }) {
     return """
 
-📱 *ادخل على التطبيق بسهولة:*
+📱 ادخل على التطبيق بسهولة:
 👤 اسم المستخدم: *رقم موبايلك*  
 🔐 كلمة السر: *نفس الرقم*
 
@@ -180,10 +149,13 @@ class WhatsAppStatusMessageService {
 🍎 آيفون: $iosLink
 """;
   }
-}// 📦 ORDERS WHATSAPP
+}
+
 // ============================================================================
+// 📦 ORDERS WHATSAPP
+// ============================================================================
+
 class WhatsAppOrderMessageService {
-  /// 🔧 Format phone
   static String _formatPhone(String phone) {
     var p = phone.trim();
     if (p.startsWith("+")) return p;
@@ -192,7 +164,6 @@ class WhatsAppOrderMessageService {
     return "+2$p";
   }
 
-  /// 💬 Send WhatsApp message based on order status
   static Future<void> sendNewOrderMessage({required OrderModel order}) async {
     try {
       final isPharmacy =
@@ -204,80 +175,53 @@ class WhatsAppOrderMessageService {
 
       final phone = _formatPhone(rawPhone);
       final message = _buildMessageByStatus(order);
-      
 
       if (message.isEmpty) return;
 
       await WhatsAppManager.sendMessage(to: phone, body: message);
-    } catch (e) {
-      
-    }
+    } catch (e) {}
   }
 
-  // ===========================================================================
-  // 🧠 MESSAGE BUILDER
-  // ===========================================================================
   static String _buildMessageByStatus(OrderModel order) {
     final status = order.status;
     final total = order.totalOrder;
 
     switch (status) {
       case "pending":
-        return """
-🛒 *تم استلام طلب جديد*
-⏳ الطلب قيد المراجعة حالياً.
-""";
+        return "🛒 تم استلام طلبك وجاري المراجعة.";
 
       case "processing":
-        return """
-💰 *جاري تسعير الروشتة*
-⏳ يتم الآن تسعير الأدوية.
-🔔 هيوصلك إشعار فور الانتهاء.
-""";
+        return "💰 جاري تسعير الروشتة… هيجيلك السعر خلال لحظات.";
 
       case "calculated":
         return """
-🧾 *تم تسعير الروشتة*
+🧾 تم تسعير الروشتة  
 
-💵 *الإجمالي:* ${total?.toStringAsFixed(2) ?? "-"} جنيه
-⏳ في انتظار الموافقة.
+💵 الإجمالي: ${total?.toStringAsFixed(2) ?? "-"} جنيه  
+
+✔️ وافق لبدء التجهيز فورًا
 """;
 
       case "confirmed":
-        return """
-✅ *تمت الموافقة على السعر*
-📦 جاري تجهيز الطلب.
-""";
+        return "✅ تم تأكيد الطلب وجاري التجهيز.";
 
       case "approved":
-        return """
-🚚 *الطلب قيد التجهيز*
-
-📦 الصيدلية استلمت طلبك وبدأت تسعيره.
-🔔 هيجيلك إشعار فور الانتهاء.
-⚡ برجاء التأكيد بسرعة لبدء التوصيل.
-""";
-
-      case "delivered":
-        return """
-📦 *تم توصيل الطلب بنجاح*
-نتمنى لك الشفاء العاجل 🌸
-""";
+        return "📦 طلبك تحت التجهيز الآن.";
 
       case "completed":
         return """
-🚚 *طلبك خرج للتوصيل*
-الأوردر في الطريق وهيوصلك خلال
-⏱️ من *15* إلى *45 دقيقة*
+🚚 طلبك خرج للتوصيل  
 
-شكراً لاستخدامك *لينك* 💙
+⏱️ هيوصلك خلال 15 – 45 دقيقة  
+
+شكراً لاستخدامك لينك 💙
 """;
+
+      case "delivered":
+        return "🌸 تم التوصيل بنجاح، ألف سلامة عليك.";
 
       case "cancelled":
-        return """
-❌ *تم إلغاء الطلب*
-لو في أي مشكلة تواصل معنا.
-""";
+        return "❌ تم إلغاء الطلب، لأي استفسار تواصل معنا.";
 
       default:
         return "";

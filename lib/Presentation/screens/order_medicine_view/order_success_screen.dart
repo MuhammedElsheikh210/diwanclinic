@@ -1,6 +1,5 @@
-import 'package:diwanclinic/Global/Constatnts/animations.dart';
+import 'dart:async';
 import 'package:diwanclinic/Presentation/design_systems/animation/generic_animation_widget.dart';
-
 import '../../../../index/index_main.dart';
 
 class OrderSuccessView extends StatefulWidget {
@@ -11,14 +10,27 @@ class OrderSuccessView extends StatefulWidget {
 }
 
 class _OrderSuccessViewState extends State<OrderSuccessView> {
+  Timer? _timer;
+
   @override
   void initState() {
     super.initState();
 
-    // 🔁 Auto navigate after 6 seconds
-    Future.delayed(const Duration(seconds: 6), () {
-      Get.offAllNamed(mainpage);
+    // 🔁 Auto navigate safely (🔥 FIXED)
+    _timer = Timer(const Duration(seconds: 6), () {
+      if (mounted) {
+        Get.to(
+          () => const MainPage(initialIndex: 2), // 🔥 orders tab
+          binding: Binding(), // 💣 أهم حاجة (تشغل realtime)
+        );
+      }
     });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel(); // ✅ يمنع memory leak
+    super.dispose();
   }
 
   @override
@@ -63,7 +75,7 @@ class _OrderSuccessViewState extends State<OrderSuccessView> {
 
                   SizedBox(height: 100.h),
 
-                  /// 🔘 Optional Button (لو عايز تخليه يظهر)
+                  /// 🔘 زر عرض الطلبات (🔥 FIXED)
                   SizedBox(
                     width: double.infinity,
                     height: 55.h,
@@ -74,10 +86,12 @@ class _OrderSuccessViewState extends State<OrderSuccessView> {
                           color: AppColors.white,
                         ),
                       ),
-                      onTap: () => Get.offAll(
-                        () => const MainPage(initialIndex: 2),
-                        binding: Binding(),
-                      ),
+                      onTap: () {
+                        Get.to(
+                          () => const MainPage(initialIndex: 2),
+                          binding: Binding(),
+                        );
+                      },
                     ),
                   ),
                 ],

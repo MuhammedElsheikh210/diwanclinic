@@ -1,5 +1,4 @@
 import 'package:diwanclinic/Presentation/parentControllers/doctor_suggestion_service.dart';
-
 import '../../../../../index/index_main.dart';
 
 class CreateDoctorSuggestionView extends StatefulWidget {
@@ -12,12 +11,36 @@ class CreateDoctorSuggestionView extends StatefulWidget {
 
 class _CreateDoctorSuggestionViewState
     extends State<CreateDoctorSuggestionView> {
+
   final _formKey = GlobalKey<FormState>();
   final doctorNameController = TextEditingController();
   final specializationController = TextEditingController();
   final addressController = TextEditingController();
 
-  final DoctorSuggestionService _service = DoctorSuggestionService();
+  late final DoctorSuggestionService _service;
+
+  @override
+  void initState() {
+    super.initState();
+
+    /// 🔥 1. Register repo الأول (المهم)
+    initController(
+          () => DoctorSuggestionRepositoryImpl(Get.find()),
+    );
+
+    /// 🔥 2. بعده service
+    _service = initController(
+          () => DoctorSuggestionService(),
+    );
+  }
+
+  @override
+  void dispose() {
+    doctorNameController.dispose();
+    specializationController.dispose();
+    addressController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,11 +112,11 @@ class _CreateDoctorSuggestionViewState
                             patientkey: user?.uid,
                             doctorName: doctorNameController.text.trim(),
                             specializeName:
-                                specializationController.text.trim(),
+                            specializationController.text.trim(),
                             address:
-                                addressController.text.trim().isEmpty
-                                    ? null
-                                    : addressController.text.trim(),
+                            addressController.text.trim().isEmpty
+                                ? null
+                                : addressController.text.trim(),
                           );
 
                           _service.addDoctorSuggestionData(

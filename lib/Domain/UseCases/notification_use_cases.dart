@@ -29,6 +29,12 @@ class NotificationUseCases {
   // 🌐 FETCH (ONLINE)
   // ============================================================
 
+
+  Future<Either<AppError, List<NotificationModel>>>
+  fetchAllNotifications() {
+    return _repository.fetchAllNotificationsDomain();
+  }
+
   Future<Either<AppError, List<NotificationModel>>> fetchNotifications(
     Map<String, dynamic> firebaseFilter,
   ) {

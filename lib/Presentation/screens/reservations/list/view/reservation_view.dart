@@ -58,7 +58,7 @@ class _ReservationViewState extends State<ReservationView> {
                       : StatsSection(controller: controller),
 
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 10.0),
+                    padding: EdgeInsets.symmetric(vertical: 15.0.h),
                     child: _buildTabs(controller),
                   ),
 
@@ -175,7 +175,8 @@ class _ReservationViewState extends State<ReservationView> {
 
         final bool isFinished =
             status == ReservationNewStatus.completed ||
-            status == ReservationNewStatus.cancelledByAssistant;
+            status == ReservationNewStatus.cancelledByAssistant ||
+            status == ReservationNewStatus.cancelledByUser;
 
         final bool isActive =
             status == ReservationNewStatus.inProgress || ahead <= 0;
@@ -420,9 +421,7 @@ class _ReservationViewState extends State<ReservationView> {
           newStatus: newStatus,
           cancelReason: cancelReason,
         );
-      } catch (e) {
-        
-      }
+      } catch (e) {}
     }
 
     switch (status) {

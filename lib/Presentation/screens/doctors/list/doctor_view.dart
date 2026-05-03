@@ -94,6 +94,7 @@ class _DoctorViewState extends State<DoctorView> {
                 } else {
                   showCustomBottomSheet(
                     context: context,
+                    heightFactor: 0.5,
                     child: const CreateDoctorSuggestionView(),
                   );
                 }
@@ -160,7 +161,7 @@ class _DoctorViewState extends State<DoctorView> {
                             return InkWell(
                               onTap: () {
                                 final user = Get.find<UserSession>().user;
-                                
+
                                 if (user?.user.userType == UserType.admin) {
                                   print(
                                     "user doctor is ${user?.user.toJson()}",

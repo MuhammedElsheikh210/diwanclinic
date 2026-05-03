@@ -55,6 +55,7 @@ class _SpecializationViewState extends State<SpecializationView> {
                 } else {
                   showCustomBottomSheet(
                     context: context,
+                    heightFactor: 0.5,
                     child: const CreateDoctorSuggestionView(),
                   );
                 }

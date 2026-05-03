@@ -72,6 +72,18 @@ class NotificationPatentService {
     AppLogger.success("NOTIFICATION", "Listening started ✅");
   }
 
+
+  Future<void> getAllNotificationsOnlineData({
+    required Function(List<NotificationModel>) voidCallBack,
+  }) async {
+    final result = await useCase.fetchAllNotifications();
+
+    result.fold(
+          (l) => Loader.showError("Network error while loading notifications"),
+          (r) => voidCallBack(r),
+    );
+  }
+
   // ============================================================
   // ➕ ADD NOTIFICATION
   // ============================================================

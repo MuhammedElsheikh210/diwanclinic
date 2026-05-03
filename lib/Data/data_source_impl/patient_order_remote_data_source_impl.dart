@@ -2,51 +2,41 @@ import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
 import '../../index/index_main.dart';
 
-class PatientReservationRemoteDataSourceImpl
-    implements PatientReservationRemoteDataSource {
+class PatientOrderRemoteDataSourceImpl implements PatientOrderRemoteDataSource {
   final FirebaseDatabase _database;
 
-  PatientReservationRemoteDataSourceImpl(this._database) {
-    
-  }
+  PatientOrderRemoteDataSourceImpl(this._database);
 
   DatabaseReference? _ref;
   final List<StreamSubscription> _subscriptions = [];
 
-  final _addedController = StreamController<ReservationModel>.broadcast();
-  final _changedController = StreamController<ReservationModel>.broadcast();
+  // ✅ مهم
+  String? _currentPatientUid;
+
+  final _addedController = StreamController<OrderModel>.broadcast();
+  final _changedController = StreamController<OrderModel>.broadcast();
   final _removedController = StreamController<String>.broadcast();
 
   @override
-  Stream<ReservationModel> get onAdded {
-    
-    return _addedController.stream;
-  }
+  Stream<OrderModel> get onAdded => _addedController.stream;
 
   @override
-  Stream<ReservationModel> get onChanged {
-    
-    return _changedController.stream;
-  }
+  Stream<OrderModel> get onChanged => _changedController.stream;
 
   @override
-  Stream<String> get onRemoved {
-    
-    return _removedController.stream;
-  }
+  Stream<String> get onRemoved => _removedController.stream;
 
   // ============================================================
-  // 🚀 START LISTEN
+  // 🚀 START LISTENING
   // ============================================================
+
   @override
   Future<void> startListening({required String patientUid}) async {
-    
-
     await stopListening();
 
-    final path = "patients/$patientUid/reservationsMeta";
-    
+    _currentPatientUid = patientUid;
 
+    const path = "orders/";
     _ref = _database.ref(path);
 
     final addedSub = _ref!.onChildAdded.listen(_onAdded);
@@ -54,89 +44,49 @@ class PatientReservationRemoteDataSourceImpl
     final removedSub = _ref!.onChildRemoved.listen(_onRemoved);
 
     _subscriptions.addAll([addedSub, changedSub, removedSub]);
-
-    
   }
 
   // ============================================================
-  // 🔥 LISTENERS HANDLERS
+  // 🔥 HANDLERS
   // ============================================================
 
   void _onAdded(DatabaseEvent event) {
-    
-    
+    final model = _parseOrder(event.snapshot);
 
-    final key = event.snapshot.key;
-    
+    if (model == null) return;
 
-    if (key == null) {
-      
-      return;
-    }
+    if (model.patientuid != _currentPatientUid) return;
 
-    final model = _parseReservation(event.snapshot);
-
-    if (model != null) {
-      
-      _addedController.add(model);
-    } else {
-      
-    }
+    _addedController.add(model);
   }
 
   void _onChanged(DatabaseEvent event) {
-    
-    
+    final model = _parseOrder(event.snapshot);
 
-    final key = event.snapshot.key;
-    
+    if (model == null) return;
 
-    if (key == null) {
-      
-      return;
-    }
+    // ✅ نفس الفلترة (مهم جدًا)
+    if (model.patientuid != _currentPatientUid) return;
 
-    final model = _parseReservation(event.snapshot);
-
-    if (model != null) {
-      
-      _changedController.add(model);
-    } else {
-      
-    }
+    _changedController.add(model);
   }
 
   void _onRemoved(DatabaseEvent event) {
-    
-
     final key = event.snapshot.key;
-    
 
-    if (key == null) {
-      
-      return;
+    if (key != null) {
+      _removedController.add(key);
     }
-
-    _removedController.add(key);
   }
 
   // ============================================================
   // 🧩 PARSE
   // ============================================================
-  ReservationModel? _parseReservation(DataSnapshot snapshot) {
-    
 
+  OrderModel? _parseOrder(DataSnapshot snapshot) {
     final data = snapshot.value;
 
-    if (data == null) {
-      
-      return null;
-    }
-
-    if (data is! Map) {
-      
-      return null;
-    }
+    if (data == null || data is! Map) return null;
 
     try {
       final json = Map<String, dynamic>.from(
@@ -145,15 +95,8 @@ class PatientReservationRemoteDataSourceImpl
 
       json['key'] = snapshot.key;
 
-      
-
-      final model = ReservationModel.fromJson(json);
-
-      
-
-      return model;
-    } catch (e) {
-      
+      return OrderModel.fromJson(json);
+    } catch (_) {
       return null;
     }
   }
@@ -161,105 +104,69 @@ class PatientReservationRemoteDataSourceImpl
   // ============================================================
   // ☁️ CREATE
   // ============================================================
+
   @override
-  Future<void> createReservation(ReservationModel reservation) async {
-    
-
-    final path = _buildPath(reservation);
-    
-
-    final json = reservation.toJson();
-    
-
-    await _database.ref(path).set(json);
-
-    
+  Future<void> createOrder(OrderModel order) async {
+    final path = _buildPath(order);
+    await _database.ref(path).set(order.toJson());
   }
 
   // ============================================================
   // ☁️ UPDATE
   // ============================================================
+
   @override
-  Future<void> updateReservation(ReservationModel reservation) async {
-    
-
-    final path = _buildPath(reservation);
-    
-
-    final json = reservation.toJson();
-    
-
-    await _database.ref(path).update(json);
-
-    
+  Future<void> updateOrder(OrderModel order) async {
+    final path = _buildPath(order);
+    await _database.ref(path).update(order.toJson());
   }
 
   // ============================================================
   // ☁️ DELETE
   // ============================================================
+
   @override
-  Future<void> deleteReservation(ReservationModel reservation) async {
-    
-
-    final path = _buildPath(reservation);
-    
-
+  Future<void> deleteOrder(OrderModel order) async {
+    final path = _buildPath(order);
     await _database.ref(path).remove();
-
-    
   }
 
   // ============================================================
-  // 📍 PATH
+  // 📍 PATH (🔥 FIXED)
   // ============================================================
-  String _buildPath(ReservationModel reservation) {
-    
 
-    final patientUid = reservation.patientUid;
-    final key = reservation.key;
+  String _buildPath(OrderModel order) {
+    final key = order.key;
 
-    
-    
-
-    if (patientUid == null || key == null) {
-      
-      throw Exception("❌ Missing patientUid or reservation key");
+    if (key == null) {
+      throw Exception("❌ Missing order key");
     }
 
-    final path = "patients/$patientUid/reservationsMeta/$key";
-
-    
-
-    return path;
+    return "orders/$key";
   }
 
   // ============================================================
   // 🛑 STOP
   // ============================================================
+
   @override
   Future<void> stopListening() async {
-    
-
     for (final sub in _subscriptions) {
       await sub.cancel();
     }
 
     _subscriptions.clear();
     _ref = null;
-
-    
+    _currentPatientUid = null;
   }
 
   // ============================================================
   // 🧹 DISPOSE
   // ============================================================
-  void dispose() {
-    
 
+  void dispose() {
     _addedController.close();
     _changedController.close();
     _removedController.close();
-
-    
   }
 }

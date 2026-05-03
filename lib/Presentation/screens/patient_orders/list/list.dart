@@ -17,7 +17,7 @@ class _OrdersListScreenState extends State<OrdersListScreen>
   @override
   void initState() {
     super.initState();
-    vm = Get.put(OrdersListViewModel());
+    vm = initController(()=> OrdersListViewModel());
     tabController = TabController(length: 2, vsync: this);
   }
 

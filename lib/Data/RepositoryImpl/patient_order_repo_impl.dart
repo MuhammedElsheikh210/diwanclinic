@@ -1,49 +1,37 @@
-import 'dart:async';
-import 'dart:developer';
 import 'package:dartz/dartz.dart';
 import '../../index/index_main.dart';
 
-class PatientReservationRepositoryImpl implements PatientReservationRepository {
-  final PatientReservationRemoteDataSource _remote;
+class PatientOrderRepositoryImpl implements PatientOrderRepository {
+  final PatientOrderRemoteDataSource _remote;
 
-  PatientReservationRepositoryImpl(this._remote) {
-  }
+  PatientOrderRepositoryImpl(this._remote);
 
   StreamSubscription? _addedSub;
   StreamSubscription? _changedSub;
   StreamSubscription? _removedSub;
 
-  bool _isListening = false;
-
-  final _addedController = StreamController<ReservationModel>.broadcast();
-  final _changedController = StreamController<ReservationModel>.broadcast();
+  final _addedController = StreamController<OrderModel>.broadcast();
+  final _changedController = StreamController<OrderModel>.broadcast();
   final _removedController = StreamController<String>.broadcast();
 
-  @override
-  Stream<ReservationModel> get onAdded {
-    return _addedController.stream;
-  }
+  bool _isListening = false;
 
   @override
-  Stream<ReservationModel> get onChanged {
-    return _changedController.stream;
-  }
+  Stream<OrderModel> get onAdded => _addedController.stream;
 
   @override
-  Stream<String> get onRemoved {
-    return _removedController.stream;
-  }
+  Stream<OrderModel> get onChanged => _changedController.stream;
+
+  @override
+  Stream<String> get onRemoved => _removedController.stream;
 
   // ============================================================
-  // 🎧 REALTIME LISTEN
+  // 🎧 START LISTENING
   // ============================================================
 
   @override
   Future<void> startListening({required String patientUid}) async {
-
-    if (_isListening) {
-      return;
-    }
+    if (_isListening) return;
 
     await _remote.startListening(patientUid: patientUid);
 
@@ -52,32 +40,20 @@ class PatientReservationRepositoryImpl implements PatientReservationRepository {
     await _removedSub?.cancel();
 
     _addedSub = _remote.onAdded.listen((model) {
-
-      final key = model.key;
-      if (key == null) {
-        return;
-      }
-
+      if (model.key == null) return;
       _addedController.add(model);
     });
 
     _changedSub = _remote.onChanged.listen((model) {
-
-      final key = model.key;
-      if (key == null) {
-        return;
-      }
-
+      if (model.key == null) return;
       _changedController.add(model);
     });
 
     _removedSub = _remote.onRemoved.listen((key) {
-
       _removedController.add(key);
     });
 
     _isListening = true;
-
   }
 
   // ============================================================
@@ -86,7 +62,6 @@ class PatientReservationRepositoryImpl implements PatientReservationRepository {
 
   @override
   Future<void> stopListening() async {
-
     _isListening = false;
 
     await _addedSub?.cancel();
@@ -94,39 +69,29 @@ class PatientReservationRepositoryImpl implements PatientReservationRepository {
     await _removedSub?.cancel();
 
     await _remote.stopListening();
-
   }
+
+  // ============================================================
+  // 🧹 DISPOSE
+  // ============================================================
 
   @override
   Future<void> dispose() async {
-
     await stopListening();
 
-    if (!_addedController.isClosed) {
-      await _addedController.close();
-    }
-
-    if (!_changedController.isClosed) {
-      await _changedController.close();
-    }
-
-    if (!_removedController.isClosed) {
-      await _removedController.close();
-    }
-
+    if (!_addedController.isClosed) await _addedController.close();
+    if (!_changedController.isClosed) await _changedController.close();
+    if (!_removedController.isClosed) await _removedController.close();
   }
 
   // ============================================================
-  // ➕ CREATE
+  // ➕ ADD
   // ============================================================
 
   @override
-  Future<Either<AppError, Unit>> addReservationDomain(
-    ReservationModel model,
-  ) async {
-
+  Future<Either<AppError, Unit>> addOrder(OrderModel model) async {
     try {
-      await _remote.createReservation(model);
+      await _remote.createOrder(model);
       return const Right(unit);
     } catch (e) {
       return Left(AppError(e.toString()));
@@ -138,12 +103,9 @@ class PatientReservationRepositoryImpl implements PatientReservationRepository {
   // ============================================================
 
   @override
-  Future<Either<AppError, Unit>> updateReservationDomain(
-    ReservationModel model,
-  ) async {
-
+  Future<Either<AppError, Unit>> updateOrder(OrderModel model) async {
     try {
-      await _remote.updateReservation(model);
+      await _remote.updateOrder(model);
       return const Right(unit);
     } catch (e) {
       return Left(AppError(e.toString()));
@@ -155,12 +117,9 @@ class PatientReservationRepositoryImpl implements PatientReservationRepository {
   // ============================================================
 
   @override
-  Future<Either<AppError, Unit>> deleteReservationDomain(
-    ReservationModel model,
-  ) async {
-
+  Future<Either<AppError, Unit>> deleteOrder(OrderModel model) async {
     try {
-      await _remote.deleteReservation(model);
+      await _remote.deleteOrder(model);
       return const Right(unit);
     } catch (e) {
       return Left(AppError(e.toString()));

@@ -11,7 +11,7 @@ class OrderModel {
   final String? doctorKey;
   final String? clinicKey;
   final String? fcmToken;
-   String? cancel_reason;
+  String? cancel_reason;
 
   // 🧑‍⚕️ Names
   final String? patientName;
@@ -171,15 +171,16 @@ class OrderModel {
       doctorKey: json['doctor_key'],
       clinicKey: json['clinic_key'],
 
-      medicines: json['medicines'] != null
-          ? (json['medicines'] as List)
-                .map(
-                  (e) => MedicineItemModel.fromJson(
-                    Map<String, dynamic>.from(e as Map),
-                  ),
-                )
-                .toList()
-          : null,
+      medicines:
+          json['medicines'] != null
+              ? (json['medicines'] as List)
+                  .map(
+                    (e) => MedicineItemModel.fromJson(
+                      Map<String, dynamic>.from(e as Map),
+                    ),
+                  )
+                  .toList()
+              : null,
 
       patientName: json['patient_name'],
       doctorName: json['doctor_name'],

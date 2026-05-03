@@ -1,30 +1,29 @@
 import 'dart:async';
+
 import '../../index/index_main.dart';
 
-class PatientReservationService {
+class PatientOrderService {
   // ============================================================
   // 🧠 SINGLETON
   // ============================================================
 
-  static final PatientReservationService _instance =
-      PatientReservationService._internal();
+  static final PatientOrderService _instance = PatientOrderService._internal();
 
-  factory PatientReservationService() => _instance;
+  factory PatientOrderService() => _instance;
 
-  PatientReservationService._internal() {
-  }
+  PatientOrderService._internal();
 
-  final PatientReservationUseCases useCase = initController(() {
-    return PatientReservationUseCases(Get.find());
-  });
+  final PatientOrderUseCases useCase = initController(
+    () => PatientOrderUseCases(Get.find()),
+  );
 
   // ============================================================
   // 🎧 REALTIME CALLBACKS
   // ============================================================
 
-  Function(ReservationModel reservation)? onReservationAdded;
-  Function(ReservationModel reservation)? onReservationUpdated;
-  Function(String key)? onReservationRemoved;
+  Function(OrderModel order)? onOrderAdded;
+  Function(OrderModel order)? onOrderUpdated;
+  Function(String key)? onOrderRemoved;
 
   StreamSubscription? _addedSub;
   StreamSubscription? _changedSub;
@@ -38,11 +37,9 @@ class PatientReservationService {
   // ============================================================
 
   Future<void> startListening({required String patientUid}) async {
+    if (patientUid.isEmpty) return;
 
-    if (patientUid.isEmpty) {
-      return;
-    }
-
+    // 🧠 نفس منطق reservations
     if (_isListening) {
       await useCase.stopListening();
     }
@@ -57,53 +54,26 @@ class PatientReservationService {
 
     await useCase.startListening(patientUid: patientUid);
 
-    // ============================================================
-    // 🎧 ADDED
-    // ============================================================
-
-    _addedSub = useCase.onAdded.listen((reservation) {
-
-      if (onReservationAdded == null) {
-      } else {
-        onReservationAdded!.call(reservation);
-      }
+    _addedSub = useCase.onAdded.listen((order) {
+      
+      onOrderAdded?.call(order);
     });
 
-    // ============================================================
-    // 🎧 CHANGED
-    // ============================================================
-
-    _changedSub = useCase.onChanged.listen((reservation) {
-
-      if (onReservationUpdated == null) {
-      } else {
-        onReservationUpdated!.call(reservation);
-      }
+    _changedSub = useCase.onChanged.listen((order) {
+      onOrderUpdated?.call(order);
     });
-
-    // ============================================================
-    // 🎧 REMOVED
-    // ============================================================
 
     _removedSub = useCase.onRemoved.listen((key) {
-
-      if (onReservationRemoved == null) {
-      } else {
-        onReservationRemoved!.call(key);
-      }
+      onOrderRemoved?.call(key);
     });
 
     _currentPatientUid = patientUid;
     _isListening = true;
-
-  }
-
-  // ============================================================
+  } // ============================================================
   // 🛑 STOP
   // ============================================================
 
   Future<void> stopListening() async {
-
     await _addedSub?.cancel();
     await _changedSub?.cancel();
     await _removedSub?.cancel();
@@ -116,27 +86,21 @@ class PatientReservationService {
     _currentPatientUid = null;
 
     await useCase.stopListening();
-
   }
 
   // ============================================================
   // ➕ ADD
   // ============================================================
 
-  Future<void> addReservationData({
-    required ReservationModel reservation,
+  Future<void> addOrderData({
+    required OrderModel order,
     required Function(ResponseStatus) voidCallBack,
   }) async {
-
-    final result = await useCase.addReservation(reservation);
+    final result = await useCase.addOrder(order);
 
     result.fold(
-      (l) {
-        voidCallBack(ResponseStatus.error);
-      },
-      (r) {
-        voidCallBack(ResponseStatus.success);
-      },
+      (l) => voidCallBack(ResponseStatus.error),
+      (r) => voidCallBack(ResponseStatus.success),
     );
   }
 
@@ -144,20 +108,15 @@ class PatientReservationService {
   // 🔄 UPDATE
   // ============================================================
 
-  Future<void> updateReservationData({
-    required ReservationModel reservation,
+  Future<void> updateOrderData({
+    required OrderModel order,
     required Function(ResponseStatus) voidCallBack,
   }) async {
-
-    final result = await useCase.updateReservation(reservation);
+    final result = await useCase.updateOrder(order);
 
     result.fold(
-      (l) {
-        voidCallBack(ResponseStatus.error);
-      },
-      (r) {
-        voidCallBack(ResponseStatus.success);
-      },
+      (l) => voidCallBack(ResponseStatus.error),
+      (r) => voidCallBack(ResponseStatus.success),
     );
   }
 
@@ -165,20 +124,15 @@ class PatientReservationService {
   // ❌ DELETE
   // ============================================================
 
-  Future<void> deleteReservationData({
-    required ReservationModel reservation,
+  Future<void> deleteOrderData({
+    required OrderModel order,
     required Function(ResponseStatus) voidCallBack,
   }) async {
-
-    final result = await useCase.deleteReservation(reservation);
+    final result = await useCase.deleteOrder(order);
 
     result.fold(
-      (l) {
-        voidCallBack(ResponseStatus.error);
-      },
-      (r) {
-        voidCallBack(ResponseStatus.success);
-      },
+      (l) => voidCallBack(ResponseStatus.error),
+      (r) => voidCallBack(ResponseStatus.success),
     );
   }
 
@@ -187,9 +141,7 @@ class PatientReservationService {
   // ============================================================
 
   Future<void> dispose() async {
-
     await stopListening();
     await useCase.dispose();
-
   }
 }

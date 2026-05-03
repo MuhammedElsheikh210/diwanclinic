@@ -1,4 +1,3 @@
-import 'package:diwanclinic/Data/data_source/order_data_source.dart';
 import '../../index/index_main.dart';
 
 class OrderDataSourceRepoImpl extends OrderDataSourceRepo {
@@ -11,10 +10,10 @@ class OrderDataSourceRepoImpl extends OrderDataSourceRepo {
   // ─────────────────────────────────────────────
   @override
   Future<List<OrderModel?>> getOrders(
-      Map<String, dynamic> data,
-      SQLiteQueryParams query,
-      bool? isFiltered,
-      ) async {
+    Map<String, dynamic> data,
+    SQLiteQueryParams query,
+    bool? isFiltered,
+  ) async {
     try {
       // 🔹 Fetch all orders directly from Firebase (no cache)
       final response = await _clientSourceRepo.request(
@@ -25,12 +24,11 @@ class OrderDataSourceRepoImpl extends OrderDataSourceRepo {
 
       List<OrderModel?> orderList = handleResponse<OrderModel>(
         response,
-            (json) => OrderModel.fromJson(json),
+        (json) => OrderModel.fromJson(json),
       );
 
       return orderList;
     } catch (e) {
-      
       return [];
     }
   }
@@ -47,10 +45,8 @@ class OrderDataSourceRepoImpl extends OrderDataSourceRepo {
         params: data,
       );
 
-      
       return SuccessModel.fromJson(response);
     } catch (e) {
-      
       return SuccessModel(message: "فشل إضافة الطلب أونلاين");
     }
   }
@@ -59,7 +55,10 @@ class OrderDataSourceRepoImpl extends OrderDataSourceRepo {
   // 🔁 Update Existing Order (Online Only)
   // ─────────────────────────────────────────────
   @override
-  Future<SuccessModel> updateOrder(Map<String, dynamic> data, String key) async {
+  Future<SuccessModel> updateOrder(
+    Map<String, dynamic> data,
+    String key,
+  ) async {
     try {
       final response = await _clientSourceRepo.request(
         HttpMethod.PATCH,
@@ -67,10 +66,8 @@ class OrderDataSourceRepoImpl extends OrderDataSourceRepo {
         params: data,
       );
 
-      
       return SuccessModel.fromJson(response);
     } catch (e) {
-      
       return SuccessModel(message: "فشل تحديث الطلب أونلاين");
     }
   }
@@ -79,7 +76,10 @@ class OrderDataSourceRepoImpl extends OrderDataSourceRepo {
   // 🗑️ Delete Order (Online Only)
   // ─────────────────────────────────────────────
   @override
-  Future<SuccessModel> deleteOrder(Map<String, dynamic> data, String key) async {
+  Future<SuccessModel> deleteOrder(
+    Map<String, dynamic> data,
+    String key,
+  ) async {
     try {
       final response = await _clientSourceRepo.request(
         HttpMethod.DELETE,
@@ -87,10 +87,8 @@ class OrderDataSourceRepoImpl extends OrderDataSourceRepo {
         params: data,
       );
 
-      
       return SuccessModel.fromJson(response ?? {"message": "تم الحذف بنجاح"});
     } catch (e) {
-      
       return SuccessModel(message: "فشل حذف الطلب أونلاين");
     }
   }

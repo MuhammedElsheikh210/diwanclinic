@@ -24,9 +24,14 @@ abstract class NotificationRepository {
   // 🌐 ONLINE NOTIFICATIONS (Firebase Direct)
   // ============================================================
 
+  /// Existing (with filters)
   Future<Either<AppError, List<NotificationModel>>> fetchNotificationsDomain(
       Map<String, dynamic> firebaseFilter,
       );
+
+  /// 🔥 NEW: Fetch ALL notifications (no filters)
+  Future<Either<AppError, List<NotificationModel>>>
+  fetchAllNotificationsDomain();
 
   Future<Either<AppError, Unit>> createNotificationDomain(
       NotificationModel model,

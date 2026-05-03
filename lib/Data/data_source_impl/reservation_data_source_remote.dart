@@ -28,13 +28,12 @@ class ReservationRemoteDataSourceImpl implements ReservationRemoteDataSource {
     await stopListening();
 
     final path = "doctors/$doctorKey/reservations";
+    
     _rootRef = _database.ref(path);
-
 
     final dateSub = _rootRef!.onChildAdded.listen((dateEvent) {
       final dateKey = dateEvent.snapshot.key;
       if (dateKey == null) return;
-
 
       // ✅ Build correct reference manually
       final dateRef = _rootRef!.child(dateKey);
@@ -46,12 +45,10 @@ class ReservationRemoteDataSourceImpl implements ReservationRemoteDataSource {
   }
 
   void _listenInsideDate(DatabaseReference dateRef) {
-
     // ➕ Reservation Added
     final addedSub = dateRef.onChildAdded.listen((event) {
       final key = event.snapshot.key;
       if (key == null) return;
-
 
       final model = _parseReservation(event.snapshot);
       if (model != null) _addedController.add(model);
@@ -61,7 +58,6 @@ class ReservationRemoteDataSourceImpl implements ReservationRemoteDataSource {
     final changedSub = dateRef.onChildChanged.listen((event) {
       final key = event.snapshot.key;
       if (key == null) return;
-
 
       final model = _parseReservation(event.snapshot);
       if (model != null) _changedController.add(model);
@@ -131,36 +127,78 @@ class ReservationRemoteDataSourceImpl implements ReservationRemoteDataSource {
     }
     _subscriptions.clear();
     _rootRef = null;
-
   }
 
   @override
   Future<List<ReservationModel>> fetchReservationsOnce({
     required String doctorKey,
-    required String date, // yyyy-MM-dd
+    required String date,
   }) async {
     try {
-      final ref = _database.ref("doctors/$doctorKey/reservations/$date");
+      final path = "doctors/$doctorKey/reservations/$date";
+      
 
-
+      final ref = _database.ref(path);
       final snapshot = await ref.get();
 
-      // ❗ مفيش داتا
+      
+      
+
       if (!snapshot.exists || snapshot.value == null) {
+        
         return [];
       }
 
       final data = snapshot.value;
 
+      
+
       if (data is! Map) {
+        
         return [];
       }
 
+      Map<String, dynamic> finalMap = {};
+
+      // 🔥 FIX: handle nested structure
+      if (data.containsKey(date)) {
+        
+
+        final inner = data[date];
+
+        if (inner is Map) {
+          finalMap = Map<String, dynamic>.from(
+            inner.map((k, v) => MapEntry(k.toString(), v)),
+          );
+        } else {
+          
+          return [];
+        }
+      } else {
+        
+
+        finalMap = Map<String, dynamic>.from(
+          data.map((k, v) => MapEntry(k.toString(), v)),
+        );
+      }
+
+      
+
       final List<ReservationModel> list = [];
 
-      data.forEach((key, value) {
+      finalMap.forEach((key, value) {
         try {
-          if (value == null || value is! Map) return;
+          
+
+          if (value == null) {
+            
+            return;
+          }
+
+          if (value is! Map) {
+            
+            return;
+          }
 
           final json = Map<String, dynamic>.from(
             value.map((k, v) => MapEntry(k.toString(), v)),
@@ -168,16 +206,21 @@ class ReservationRemoteDataSourceImpl implements ReservationRemoteDataSource {
 
           json['key'] = key;
 
+          
+
           final model = ReservationModel.fromJson(json);
 
           list.add(model);
         } catch (e) {
+          
         }
       });
 
+      
 
       return list;
     } catch (e) {
+      
       return [];
     }
   }

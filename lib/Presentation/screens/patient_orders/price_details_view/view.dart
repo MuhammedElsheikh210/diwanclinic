@@ -346,7 +346,7 @@ class _PriceDetailsScreenState extends State<PriceDetailsScreen> {
                             OrdersListViewModel controller = initController(
                               () => OrdersListViewModel(),
                             );
-                            controller.fetchOrders();
+                          //  controller.fetchOrders();
                             controller.update();
                             Get.back();
                             Get.back();

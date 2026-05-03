@@ -119,7 +119,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                       );
 
                       Navigator.pop(context);
-                      print("model is ${review.toJson()}");
+                      
                       widget.controller.addFeedBack(review, widget.reservation);
                     },
                   ),

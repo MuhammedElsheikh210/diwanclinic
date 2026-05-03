@@ -59,6 +59,7 @@ class ShiftCard extends StatelessWidget {
                   Get.delete<CreateShiftViewModel>();
                   showCustomBottomSheet(
                     context: context,
+                    heightFactor: 0.6,
                     child: CreateShiftView(
                       shift: shift,
                       doctor_key: doctor_key,

@@ -93,41 +93,41 @@ class ReservationPatientViewModel extends GetxController {
   }
 
   Future<void> startRealtimeReservations() async {
-    final service = PatientReservationService(); // ✅ FIX (مش new)
+    final service = PatientReservationService();
 
-    final patientUid = Get.find<UserSession>().user?.uid;
+    final currentUser = Get.find<UserSession>().user;
 
+    final patientUid = currentUser?.uid;
+
+    // ✅ مهم جدًا علشان متكراش
     if (patientUid == null || patientUid.isEmpty) {
-      
       return;
     }
-
 
     listReservations = [];
 
     // ➕ ADDED
     service.onReservationAdded = (reservation) {
-      
-      _updateList(reservation);
+      updateList(reservation);
     };
 
     // 🔄 UPDATED
     service.onReservationUpdated = (reservation) {
-      
-      _updateList(reservation);
+      updateList(reservation);
     };
 
     // ❌ REMOVED
     service.onReservationRemoved = (key) {
-      
-
       listReservations?.removeWhere((e) => e?.key == key);
 
       update();
     };
+
+    // 💣 أهم سطر كان ناقصك
+    await service.startListening(patientUid: patientUid);
   }
 
-  void _updateList(ReservationModel model) {
+  void updateList(ReservationModel model) {
     listReservations ??= [];
 
     final index = listReservations!.indexWhere((e) => e?.key == model.key);
@@ -138,10 +138,16 @@ class ReservationPatientViewModel extends GetxController {
       listReservations!.insert(0, model);
     }
 
-    // 🔥 مهم جدًا علشان ترتيب الريل تايم
+    // قبل الترتيب
+    for (var e in listReservations!) {}
+
+    // 🔥 sort
     listReservations!.sort(
       (a, b) => (b?.createdAt ?? 0).compareTo(a?.createdAt ?? 0),
     );
+
+    // بعد الترتيب
+    for (var e in listReservations!) {}
 
     update();
   }
@@ -182,20 +188,12 @@ class ReservationPatientViewModel extends GetxController {
     final String? myToken = user?.fcmToken;
 
     if (myUid == null || myUid.isEmpty) {
-      
       return;
     }
 
     if (myToken == null || myToken.isEmpty) {
-      
       return;
     }
-
-    
-    
-    
-    
-    
 
     final reservations =
         listReservations
@@ -209,16 +207,11 @@ class ReservationPatientViewModel extends GetxController {
         [];
 
     if (reservations.isEmpty) {
-      
       return;
     }
 
-    
-
     for (final r in reservations) {
       final updated = r.copyWith(patientFcm: myToken);
-
-      
 
       // 1️⃣ Update main reservation
       await ReservationService().updateReservationData(
@@ -232,8 +225,6 @@ class ReservationPatientViewModel extends GetxController {
       );
     }
     await _updateClientsSyncStatus();
-    
-    
   }
 
   Future<void> _updateClientsSyncStatus() async {

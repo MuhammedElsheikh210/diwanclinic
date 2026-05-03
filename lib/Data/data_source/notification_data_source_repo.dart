@@ -15,11 +15,14 @@ abstract class NotificationRemoteDataSource {
   // 🌐 FETCH (ONLINE READ)
   // ============================================================
 
-  /// Fetch notifications from Firebase using filters
-  /// Used for: First load / manual refresh
+  /// Fetch notifications with filters (existing)
   Future<List<NotificationModel>> fetchNotifications(
-    Map<String, dynamic> filters,
-  );
+      Map<String, dynamic> filters,
+      );
+
+  /// 🔥 NEW: Fetch ALL notifications (no filters)
+  /// Used for: first load / debugging / admin
+  Future<List<NotificationModel>> fetchAllNotifications();
 
   // ============================================================
   // 🎧 REALTIME CONTROL

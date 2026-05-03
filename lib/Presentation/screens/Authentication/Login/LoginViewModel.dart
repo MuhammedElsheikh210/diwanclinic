@@ -173,8 +173,6 @@ class LoginViewModel extends GetxController {
           return;
         }
 
-        print("user is in login is ${user.toJson()}");
-
         await _finalizeLogin(user);
         await _updateFcmToken(NotificationService().token);
       },

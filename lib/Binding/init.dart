@@ -182,6 +182,27 @@ class Binding implements Bindings {
       fenix: true,
     );
 
+    // ───────────── Patient Orders (Realtime Only) ─────────────
+
+    // 🔹 Remote DS
+    Get.lazyPut<PatientOrderRemoteDataSource>(
+      () => PatientOrderRemoteDataSourceImpl(FirebaseDatabase.instance),
+      fenix: true,
+    );
+
+    // 🔹 Repository
+    Get.lazyPut<PatientOrderRepository>(
+      () =>
+          PatientOrderRepositoryImpl(Get.find<PatientOrderRemoteDataSource>()),
+      fenix: true,
+    );
+
+    // 🔹 UseCases
+    Get.lazyPut<PatientOrderUseCases>(
+      () => PatientOrderUseCases(Get.find<PatientOrderRepository>()),
+      fenix: true,
+    );
+
     // ───────────── Reservation (Fixed Clean Architecture) ─────────────
 
     Get.lazyPut<ReservationDataSourceRepo>(
@@ -249,6 +270,13 @@ class Binding implements Bindings {
       () => ClinicRepositoryImpl(Get.find()),
       fenix: true,
     );
+
+    Get.lazyPut<DoctorSuggestionRepository>(
+      () => DoctorSuggestionRepositoryImpl(
+        Get.find<DoctorSuggestionDataSourceRepo>(),
+      ),
+      fenix: true,
+    );
     Get.lazyPut<FilesRepository>(
       () => FilesRepositoryImpl(Get.find()),
       fenix: true,
@@ -299,10 +327,16 @@ class Binding implements Bindings {
 
     // ───────────── ViewModels ─────────────
     Get.lazyPut<LoginViewModel>(() => LoginViewModel());
-    Get.lazyPut<MainPageViewModel>(() => MainPageViewModel());
+    Get.lazyPut(() => MainPageViewModel());
+    Get.lazyPut<NotificationController>(() => NotificationController());
+
     Get.lazyPut<ReservationViewModel>(() => ReservationViewModel());
     Get.lazyPut<ReservationPatientViewModel>(
       () => ReservationPatientViewModel(),
     );
+
+    Get.lazyPut<OrdersListViewModel>(() => OrdersListViewModel());
+
+    Get.put(HomePatientController(), permanent: true);
   }
 }

@@ -63,8 +63,11 @@ class DoctorDetailsViewModel extends GetxController {
     currentUser = user;
 
     selectedDate = DateTime.now();
-    _loadClinics();
 
+    // ✅ دي أهم سطر
+    selectedReservationType = "كشف جديد";
+
+    _loadClinics();
     getDoctorData();
     _initReservationTypes();
   }
@@ -117,7 +120,9 @@ class DoctorDetailsViewModel extends GetxController {
     update();
 
     final formattedDate = DateFormat("dd-MM-yyyy").format(selectedDate!);
+
     int activeCount = 0;
+    int totalCount = 0;
 
     final result = await ReservationService().useCase.fetchReservationsOnce(
       doctorKey: doctor.uid ?? "",
@@ -131,21 +136,29 @@ class DoctorDetailsViewModel extends GetxController {
       },
       (list) {
         for (final r in list) {
-          // 🔥 فلترة أساسية
+          // 🔥 فلترة حسب العيادة والشيفت
           if (r.clinicKey != selectedClinic?.key) continue;
           if (r.shiftKey != selectedShift?.key) continue;
 
-          // 🔥 active فقط
-          if (r.status == ReservationStatus.pending.value ||
-              r.status == ReservationStatus.approved.value ||
-              r.status == ReservationStatus.inProgress.value) {
+          // ✅ كل الحجوزات (حتى completed)
+          totalCount++;
+
+          // ✅ active فقط
+          if (r.status == ReservationNewStatus.pending.value ||
+              r.status == ReservationNewStatus.approved.value ||
+              r.status == ReservationNewStatus.inProgress.value) {
             activeCount++;
           }
         }
 
-        // ✅ الحساب الصح
+        // 🧠 Debug
+        for (final r in list) {}
+
+        // ✅ الحساب النهائي
         beforeYouCount = legacyQueueCount + activeCount;
-        expectedOrder = beforeYouCount! + 1;
+
+        // 🔥 رقمك في كل اليوم (مش active بس)
+        expectedOrder = legacyQueueCount + totalCount + 1;
       },
     );
 
@@ -164,8 +177,9 @@ class DoctorDetailsViewModel extends GetxController {
 
     int count = 0;
 
-    await ReservationService().getReservationsData(
-      query: SQLiteQueryParams(),
+    await ReservationService().fetchReservationsOnce(
+      doctorKey: doctor.uid ?? "",
+      date: formattedDate,
       voidCallBack: (list) {
         count =
             list
@@ -183,11 +197,12 @@ class DoctorDetailsViewModel extends GetxController {
   }
 
   Future<void> getAssistantData() async {
-    await AuthenticationService().getClientsData(
-      query: SQLiteQueryParams(
-        where: "clinic_key = ?",
-        whereArgs: [selectedClinic?.key ?? ""],
+    await AuthenticationService().getClientsOnlineData(
+      firebaseFilter: FirebaseFilter(
+        orderBy: "clinic_key",
+        equalTo: selectedClinic?.key ?? "",
       ),
+
       voidCallBack: (users) async {
         Loader.dismiss();
         assisList = users;
@@ -205,12 +220,14 @@ class DoctorDetailsViewModel extends GetxController {
     try {
       final uid = doctor.uid?.trim() ?? "";
 
-      await ClinicService().getClinicsFromPatientData(
+      await ClinicService().getClinicsData(
+        filrebaseFilter: FirebaseFilter(orderBy: "doctor_key", equalTo: uid),
+        query: SQLiteQueryParams(),
+        fromOnline: true,
         data: {},
         doctorKey: uid,
         voidCallBack: (data) async {
           Loader.dismiss();
-
           // ✅ دايمًا list نظيفة
           listClinics = data.whereType<ClinicModel>().toList();
 
@@ -316,7 +333,7 @@ class DoctorDetailsViewModel extends GetxController {
     } catch (e, stack) {
       Loader.dismiss();
       //  Loader.showError("فشل تحميل الفترات");
-      
+
       debugPrint(stack.toString());
       isLoadingShifts = false;
       update();
@@ -472,7 +489,6 @@ class DoctorDetailsViewModel extends GetxController {
     } catch (e) {
       Loader.dismiss();
       Loader.showError("❌ حدث خطأ أثناء إنشاء الحجز: $e");
-      
     }
   }
 
