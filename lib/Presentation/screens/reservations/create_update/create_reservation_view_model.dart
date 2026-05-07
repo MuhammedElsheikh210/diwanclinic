@@ -866,13 +866,6 @@ class CreateReservationViewModel extends GetxController {
     update();
   }
 
-  Future<void> _updateClientsSyncStatus() async {
-    final ref = FirebaseDatabase.instance.ref("sync_meta/clients");
-
-    await ref.update({
-      "last_add_data_timestamp": DateTime.now().millisecondsSinceEpoch,
-    });
-  }
 
   void saveReservation(
     List<ReservationModel?> activeList,
@@ -1163,7 +1156,6 @@ class CreateReservationViewModel extends GetxController {
 
           clientUser = newClient;
 
-          _updateClientsSyncStatus();
           update();
         },
       );

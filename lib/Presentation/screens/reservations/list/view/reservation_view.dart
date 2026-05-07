@@ -22,6 +22,7 @@ class _ReservationViewState extends State<ReservationView> {
   @override
   Widget build(BuildContext context) {
     return GetBuilder<ReservationViewModel>(
+      init: controller,
       builder: (controller) {
         final reservations = controller.listReservations;
 
@@ -47,28 +48,32 @@ class _ReservationViewState extends State<ReservationView> {
               child: ListView(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 0.h),
                 children: [
-                  isGrid
-                      ? const SizedBox()
-                      : ReservationReportWidget(controller: controller),
-
                   isGrid ? const SizedBox() : const SizedBox(height: 10),
 
                   isGrid
                       ? const SizedBox()
                       : StatsSection(controller: controller),
 
+
+
+                  isGrid
+                      ? const SizedBox()
+                      : ReservationReportWidget(controller: controller),
+
+
+
+
                   Padding(
                     padding: EdgeInsets.symmetric(vertical: 15.0.h),
                     child: _buildTabs(controller),
                   ),
 
-                  isGrid
-                      ? _buildReservationNotebook(reservations, controller)
-                      : _buildReservationList(
-                        reservations,
-                        controller,
-                        context,
-                      ),
+                   _buildReservationNotebook(reservations, controller)
+                      //  _buildReservationList(
+                      //   reservations,
+                      //   controller,
+                      //   context,
+                      // ),
                 ],
               ),
             ),

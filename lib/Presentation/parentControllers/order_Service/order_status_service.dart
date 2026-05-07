@@ -14,7 +14,7 @@ class OrderStatusService {
     );
 
     // 🔔 Push + Save notification
-    await _sendPushAndSave(updated);
+    // await _sendPushAndSave(updated);
 
     // 💬 WhatsApp (ORDER → صيدلية)
     await _sendOrderWhatsApp(updated);
@@ -24,71 +24,6 @@ class OrderStatusService {
 
     Loader.dismiss();
     Loader.showSuccess("تم تحديث حالة الطلب إلى ${_statusLabel(newStatus)}");
-  }
-
-  // ===========================================================================
-  // 🔔 PUSH + SAVE NOTIFICATION
-  // ===========================================================================
-  static Future<void> _sendPushAndSave(OrderModel order) async {
-    // ============================================================
-    // 🧠 CURRENT USER
-    // ============================================================
-
-    final user = Get.find<UserSession>().user?.user;
-
-    final isPharmacy = user?.userType == UserType.pharmacy;
-
-    // ============================================================
-    // 🎯 TARGET DATA
-    // ============================================================
-
-    final toKey = order.patientuid;
-    final pharmacyToken = order.pharmacyFcmToken;
-    final patientToken = order.fcmToken;
-
-    if (toKey == null) return;
-
-    final targetToken = isPharmacy ? patientToken : pharmacyToken;
-
-    if (targetToken == null || targetToken.isEmpty) return;
-
-    // ============================================================
-    // 🔔 SERVICES
-    // ============================================================
-
-    final notificationService = NotificationManagerService();
-    final parentService = NotificationPatentService();
-
-    // ============================================================
-    // 🚀 SEND PUSH
-    // ============================================================
-
-    await notificationService.sendToToken(
-      token: targetToken,
-      title: _notificationTitle(order.status),
-      body: order.cancel_reason ?? _notificationBody(order),
-      voidCallBack: (status) async {
-        if (status != ResponseStatus.success) return;
-
-        // ============================================================
-        // 🧾 SAVE NOTIFICATION
-        // ============================================================
-
-        final notification = NotificationModel.newNotification(
-          title: _notificationTitle(order.status),
-          body: _notificationBody(order),
-          toKey: toKey,
-          userType: user?.userType,
-          notificationType: order.status ?? "order_update",
-          extraData: order.toJson(),
-        );
-
-        await parentService.addNotificationData(
-          notification: notification,
-          voidCallBack: (_) {},
-        );
-      },
-    );
   }
 
   // ===========================================================================
@@ -129,79 +64,6 @@ class OrderStatusService {
 
       default:
         return status ?? "غير معروف";
-    }
-  }
-
-  // ===========================================================================
-  // 🔔 NOTIFICATION TITLES
-  // ===========================================================================
-  static String _notificationTitle(String? status) {
-    switch (status) {
-      case "pending":
-        return "تم استلام الروشتة";
-
-      case "processing":
-        return "جاري حساب سعر الروشتة";
-
-      case "calculated":
-        return "تم تسعير الروشتة";
-
-      case "confirmed":
-        return "تمت موافقة العميل على السعر";
-
-      case "approved":
-        return "جاري تجهيز الطلب";
-
-      case "delivered":
-        return "تم توصيل الطلب";
-
-      case "completed":
-        return "تم إغلاق الطلب";
-
-      case "cancelled":
-        return "تم إلغاء الطلب";
-
-      default:
-        return "تحديث على طلب الروشتة";
-    }
-  }
-
-  static String _notificationBody(OrderModel order) {
-    switch (order.status) {
-      // 🕓 المريض بعت الروشتة
-      case "pending":
-        return "تم استلام الروشتة الخاصة بك، وسيتم مراجعتها من الصيدلية قريبًا.";
-
-      // 💰 الصيدلية بتسعّر
-      case "processing":
-        return "الصيدلية تعمل حاليًا على تسعير الروشتة الخاصة بك.";
-
-      // 🧮 السعر اتحسب
-      case "calculated":
-        return "تم تسعير الروشتة. برجاء مراجعة السعر والموافقة لإكمال الطلب.";
-
-      // ✅ العميل وافق
-      case "confirmed":
-        return "تمت موافقتك على السعر، وجاري تجهيز طلبك الآن.";
-
-      // 🚚 الصيدلية بدأت التنفيذ
-      case "approved":
-        return "جاري تجهيز طلبك وتجهيزه للتوصيل.";
-
-      // 📦 الطلب في الطريق
-      case "delivered":
-        return "تم توصيل طلبك بنجاح، نتمنى لك الشفاء العاجل.";
-
-      // 🔒 تم الإغلاق
-      case "completed":
-        return "تم خروج الطلب بنجاح. شكرًا لاستخدامك تطبيق لينك.";
-
-      // ❌ إلغاء
-      case "cancelled":
-        return "تم إلغاء الطلب. في حالة وجود استفسار يمكنك التواصل معنا.";
-
-      default:
-        return "تم تحديث حالة طلب الروشتة الخاصة بك.";
     }
   }
 }

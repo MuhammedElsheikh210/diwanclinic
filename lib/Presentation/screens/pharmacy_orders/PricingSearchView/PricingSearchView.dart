@@ -270,7 +270,9 @@ class _SelectedMedicineCard extends StatelessWidget {
                 final parsed = double.tryParse(value);
                 if (parsed != null) {
                   item.price = parsed;
-                  Get.find<PricingSearchController>().update();
+                  final controller = Get.find<PricingSearchController>();
+                  controller.refreshDeliveryFee();
+                  controller.update();
                 }
               },
               onFieldSubmitted: (_) {

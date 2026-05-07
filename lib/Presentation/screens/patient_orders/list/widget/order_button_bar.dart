@@ -52,8 +52,8 @@ class OrderButtonBar extends StatelessWidget {
           _detailsBtn(context, t),
           SizedBox(width: 10.w),
           _cancelBtn(context, t),
-          SizedBox(width: 10.w),
-          _confirmBtn(context, t),
+        //  SizedBox(width: 10.w),
+        //  _confirmBtn(context, t),
         ],
       );
     }

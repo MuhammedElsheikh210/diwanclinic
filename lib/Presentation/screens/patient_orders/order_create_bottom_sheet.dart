@@ -236,7 +236,7 @@ class _OrderConfirmationSheetState extends State<OrderConfirmationSheet> {
                       doseDays: int.tryParse(doseController.text.trim()),
                       notes: notesController.text.trim(),
                       createdAt: DateTime.now().millisecondsSinceEpoch,
-                      status: "pending",
+                      status: "approved",
                       prescriptionUrl1: widget.reservation.prescriptionUrl1,
                       prescriptionUrl2: widget.reservation.prescriptionUrl2,
                       prescriptionUrl3: widget.reservation.prescriptionUrl3,
@@ -255,14 +255,21 @@ class _OrderConfirmationSheetState extends State<OrderConfirmationSheet> {
                         Get.back();
                         widget.reservation.isOrdered = true;
                         widget.onConfirmed(widget.reservation);
-                        // 🔔 Notification للصيدلية
-                        await NotificationHandler().sendToClinicAssistants(
-                          title: "💊 طلب روشتة جديد",
-                          body: "طلب جديد من ${order.patientName}",
-                          reservation: widget.reservation,
-                          assistants: [pharmacy],
-                          notificationType: "new_pharmacy_order",
+
+                        await WhatsAppManager.sendMessage(
+                          to: widget.reservation.patientPhone ?? "",
+                          body:
+                              "📥 تم استلام الروشتة 👌\n\n⏳ جاري التسعير خلال 5 دقائق 💙",
                         );
+
+                        // // 🔔 Notification للصيدلية
+                        // await NotificationHandler().sendToClinicAssistants(
+                        //   title: "💊 طلب روشتة جديد",
+                        //   body: "طلب جديد من ${order.patientName}",
+                        //   reservation: widget.reservation,
+                        //   assistants: [pharmacy],
+                        //   notificationType: "new_pharmacy_order",
+                        // );
 
                         Loader.showSuccess("تم إرسال طلب الروشتة بنجاح");
                       },

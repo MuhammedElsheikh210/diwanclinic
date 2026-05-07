@@ -11,7 +11,6 @@ class ReservationPatientViewModel extends GetxController {
   bool showDailyReport = false;
   bool? fromUpdate;
   final syncService = ReservationSyncService();
-  final notifier = ReservationNotificationService();
   final prescriptionService = PrescriptionUploadService();
   int legacyQueueCount = 0;
 
@@ -224,15 +223,6 @@ class ReservationPatientViewModel extends GetxController {
         voidCallBack: (_) {},
       );
     }
-    await _updateClientsSyncStatus();
-  }
-
-  Future<void> _updateClientsSyncStatus() async {
-    final ref = FirebaseDatabase.instance.ref("sync_meta/clients");
-
-    await ref.update({
-      "last_add_data_timestamp": DateTime.now().millisecondsSinceEpoch,
-    });
   }
 
   Future<void> setupDefaultDate() async {

@@ -169,7 +169,9 @@ class LoginViewModel extends GetxController {
 
         if (user == null) {
           // 🔥 user مش موجود على السيرفر
-          await saveUserToFirebaseRealtime(uid);
+          //  await saveUserToFirebaseRealtime(uid);
+          Loader.showError("حدث خطأ في تحميل بيانات المستخدم، حاول مرة أخرى");
+
           return;
         }
 

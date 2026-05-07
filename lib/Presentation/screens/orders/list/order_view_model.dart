@@ -39,29 +39,45 @@ class OrderController extends GetxController {
       isLoading = true;
       update();
 
+      print("🚀 getOrders START");
+
       final currentUser = Get.find<UserSession>().user;
 
+      print("👤 currentUser: $currentUser");
+
       if (currentUser == null) {
-        
+        print("❌ currentUser == null");
         return;
       }
 
       final baseUser = currentUser.user;
+
+      print("📦 baseUser type: ${baseUser.runtimeType}");
 
       String? doctorKey;
 
       // ✅ Doctor
       if (baseUser is DoctorUser) {
         doctorKey = baseUser.uid;
+        print("🩺 Doctor UID: $doctorKey");
       }
       // ✅ Assistant
       else if (baseUser is AssistantUser) {
         doctorKey = baseUser.doctorKey;
+        print("👨‍💼 Assistant doctorKey: $doctorKey");
+      } else {
+        print("❌ Unknown user type");
       }
 
       doctorKey ??= "";
 
+      print("🔑 FINAL doctorKey: '$doctorKey'");
+
       const filterField = "doctor_key";
+
+      print("📡 Request Firebase...");
+      print("📌 filterField: $filterField");
+      print("📌 equalTo: $doctorKey");
 
       await OrderService().getOrdersData(
         data: {"orderBy": "\"$filterField\"", "equalTo": "\"$doctorKey\""},
@@ -70,17 +86,42 @@ class OrderController extends GetxController {
           equalTo: doctorKey,
         ),
         voidCallBack: (data) {
+          print("✅ Firebase returned data");
+
+          print("📦 Orders count: ${data.length}");
+
+          if (data.isEmpty) {
+            print("⚠️ DATA IS EMPTY");
+          } else {
+            for (var item in data) {
+              print(
+                "🧾 Order => id:${item?.key} doctor_key:${item?.doctorKey}",
+              );
+            }
+          }
+
           allOrders = data;
+
           _categorize();
           _calculateMonthlyProfit();
           _calculateTodayProfit();
+
+          print("📊 comingOrders: ${comingOrders.length}");
+          print("📊 finishedOrders: ${finishedOrders.length}");
+          print("💰 todayProfit: $todayProfit");
+          print("💰 totalMonthProfit: $totalMonthProfit");
         },
       );
-    } catch (e) {
+    } catch (e, s) {
+      print("❌ ERROR getOrders: $e");
+      print("📛 STACK: $s");
+
       Loader.showError("⚠️ خطأ أثناء تحميل الطلبات: $e");
     } finally {
       isLoading = false;
       update();
+
+      print("🏁 getOrders END");
     }
   }
 
@@ -95,14 +136,12 @@ class OrderController extends GetxController {
       if (o == null) continue;
 
       final status = o.status?.toLowerCase() ?? "";
-      final transfer = o.isTransfered ?? 0;
 
-      if (status == "completed" || status == "finished") {
-        if (transfer == 0) {
-          comingOrders.add(o);
-        } else {
-          finishedOrders.add(o);
-        }
+      // ✅ أي حالة غير delivered
+      if (status != "completed") {
+        comingOrders.add(o);
+      } else {
+        finishedOrders.add(o);
       }
     }
   }

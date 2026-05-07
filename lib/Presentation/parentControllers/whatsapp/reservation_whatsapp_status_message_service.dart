@@ -68,20 +68,25 @@ class WhatsAppStatusMessageService {
 🎉 ألف سلامة عليك يا $patientName 💙  
 
 👨‍⚕️ من عيادة *د. $doctorName*  
-تم الانتهاء من الكشف بنجاح ✅  
+تم الانتهاء من الكشف ✅  
 
-💊 علاجك ممكن يوصلك لحد باب البيت  
-*بنفس سعر الصيدلية + توصيل مجاني* 🚚  
+💊 عايز علاجك يوصلك لحد باب البيت؟  
+*بنفس سعر الصيدلية* 🚚  
 
-📱 ابعتلنا الروشتة دلوقتي 📸  
-وهنبعتلك السعر فورًا 💰  
+📸 ابعت صورة الروشتة هنا حالًا  
+وهنبعتلك السعر في دقيقة ⏱️  
 
-✔️ وافق والتوصيل لحد عندك  
+✔️ استلم علاجك لحد البيت بدون مشوار أو انتظار  
 
-🎁 كود: *DR-${doctorName.replaceAll(" ", "").toUpperCase()}*  
-علشان التوصيل يفضل مجاني  
+🧾 ولو طلبت من عندنا  
+الروشتة بتتسجل على تطبيق الدكتور  
+وتقدر ترجع لها وتتابع علاجك بسهولة  
+
+📍 التوصيل متاح حاليًا داخل *طنطا*  
+وجاري التوسع لباقي المناطق قريبًا  
+
+🚚 التوصيل مجاني حسب قيمة الطلب 💙  
 """;
-
         if (hasApp) return baseMessage;
 
         return baseMessage +
@@ -98,19 +103,28 @@ class WhatsAppStatusMessageService {
         final orderNum = reservation.orderNum ?? "-";
 
         final baseMessage = """
-📌 حجزك اتسجل بنجاح يا $patientName 💙  
+📌 تم تسجيل حجزك يا $patientName 💙  
 
 👨‍⚕️ عند *د. $doctorName*  
 🔢 رقمك: *$orderNum*  
 
-⏳ تابع دورك بسهولة من تطبيق *لينك*  
-📡 التحديث بيتم لحظيًا  
+📱 تقدر تتابع دورك من خلال تطبيق *لينك*  
+وتشوف فاضلك قد إيه على دخولك بدل ما تستنى كتير 👌  
+
+🔔 هيجيلك إشعار من التطبيق يقولك دورك وصل لفين  
+عشان تيجي في الوقت المناسب  
+
+🏠 المرة الجاية تقدر تحجز من بيتك  
+وتيجي على دورك على طول  
 
 💊 بعد الكشف  
-ممكن تبعتلنا الروشتة  
-ونوصلك العلاج لحد البيت 🚚  
+تقدر تبعت الروشتة من التطبيق أو واتساب  
+ونوصل لك العلاج لحد البيت 🚚  
+(غالبًا التوصيل مجاني)
 
-✨ بدون تعب أو انتظار  
+🧾 ولو طلبت من عندنا  
+الروشتة بتتسجل على تطبيق الدكتور  
+📊 وتقدر تتابع علاجك وتشوف أخدت إيه وفاضل إيه بسهولة  
 """;
 
         if (hasApp) return baseMessage;
@@ -139,92 +153,21 @@ class WhatsAppStatusMessageService {
   }) {
     return """
 
-📱 ادخل على التطبيق بسهولة:
-👤 اسم المستخدم: *رقم موبايلك*  
-🔐 كلمة السر: *نفس الرقم*
+📱 حمّل تطبيق لينك وابدأ بسهولة:
 
-📞 رقمك: $phone
+👤 اسم المستخدم: *رقم موبايلك*  
+🔐 كلمة السر: *نفس الرقم*  
+
+📞 رقمك: $phone  
 
 📲 أندرويد: $androidLink  
-🍎 آيفون: $iosLink
+🍎 آيفون: $iosLink  
+
+📌 من التطبيق تقدر:
+• تتابع دورك أول بأول  
+• تحجز من بيتك  
+• تبعت الروشتة وتستلم العلاج لحد البيت  
+
 """;
-  }
-}
-
-// ============================================================================
-// 📦 ORDERS WHATSAPP
-// ============================================================================
-
-class WhatsAppOrderMessageService {
-  static String _formatPhone(String phone) {
-    var p = phone.trim();
-    if (p.startsWith("+")) return p;
-    if (p.startsWith("20")) return "+$p";
-    if (p.startsWith("0")) return "+2$p";
-    return "+2$p";
-  }
-
-  static Future<void> sendNewOrderMessage({required OrderModel order}) async {
-    try {
-      final isPharmacy =
-          Get.find<UserSession>().user?.user.userType == UserType.pharmacy;
-      final rawPhone =
-          isPharmacy ? order.phone ?? "" : order.pharmacyPhone ?? "";
-
-      if (rawPhone.isEmpty) return;
-
-      final phone = _formatPhone(rawPhone);
-      final message = _buildMessageByStatus(order);
-
-      if (message.isEmpty) return;
-
-      await WhatsAppManager.sendMessage(to: phone, body: message);
-    } catch (e) {}
-  }
-
-  static String _buildMessageByStatus(OrderModel order) {
-    final status = order.status;
-    final total = order.totalOrder;
-
-    switch (status) {
-      case "pending":
-        return "🛒 تم استلام طلبك وجاري المراجعة.";
-
-      case "processing":
-        return "💰 جاري تسعير الروشتة… هيجيلك السعر خلال لحظات.";
-
-      case "calculated":
-        return """
-🧾 تم تسعير الروشتة  
-
-💵 الإجمالي: ${total?.toStringAsFixed(2) ?? "-"} جنيه  
-
-✔️ وافق لبدء التجهيز فورًا
-""";
-
-      case "confirmed":
-        return "✅ تم تأكيد الطلب وجاري التجهيز.";
-
-      case "approved":
-        return "📦 طلبك تحت التجهيز الآن.";
-
-      case "completed":
-        return """
-🚚 طلبك خرج للتوصيل  
-
-⏱️ هيوصلك خلال 15 – 45 دقيقة  
-
-شكراً لاستخدامك لينك 💙
-""";
-
-      case "delivered":
-        return "🌸 تم التوصيل بنجاح، ألف سلامة عليك.";
-
-      case "cancelled":
-        return "❌ تم إلغاء الطلب، لأي استفسار تواصل معنا.";
-
-      default:
-        return "";
-    }
   }
 }

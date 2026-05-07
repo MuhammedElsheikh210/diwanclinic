@@ -113,49 +113,48 @@ class _PriceDetailsScreenState extends State<PriceDetailsScreen> {
                   // SummaryRow(label: "إجمالي الأدوية", value: "$subtotal ج.م"),
                   //
                   // SummaryRow(label: "التوصيل", value: "$delivery ج.م"),
-                  SummaryRow(
-                    label: "الإجمالي ",
-                    value: "${delivery + subtotal} ج.م",
-                  ),
+                  SummaryRow(label: "الإجمالي ", value: "${subtotal} ج.م"),
 
-                  SummaryRow(
-                    label: "الخصم",
-                    value:
-                        "-$discount ج.م (${discountPercent.toStringAsFixed(0)}%)",
-                    valueColor: AppColors.errorForeground,
-                  ),
+                  SummaryRow(label: "التوصيل ", value: "${delivery} ج.م"),
 
-                  SizedBox(height: 6.h),
-
-                  Container(
-                    padding: EdgeInsets.all(12.w),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: .08),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(
-                          Icons.local_offer_outlined,
-                          size: 18,
-                          color: AppColors.primary,
-                        ),
-                        SizedBox(width: 8.w),
-                        Expanded(
-                          child: AppText(
-                            text:
-                                "عند طلب العلاج مباشرة بدون حجز كشف تحصل على خصم 10٪ على إجمالي الأدوية.",
-                            textStyle: context.typography.xsRegular.copyWith(
-                              color: AppColors.primary,
-                              height: 1.4,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  // SummaryRow(
+                  //   label: "الخصم",
+                  //   value:
+                  //       "-$discount ج.م (${discountPercent.toStringAsFixed(0)}%)",
+                  //   valueColor: AppColors.errorForeground,
+                  // ),
+                  //
+                  // SizedBox(height: 6.h),
+                  //
+                  // Container(
+                  //   padding: EdgeInsets.all(12.w),
+                  //   decoration: BoxDecoration(
+                  //     color: AppColors.primary.withValues(alpha: .08),
+                  //     borderRadius: BorderRadius.circular(12),
+                  //   ),
+                  //   child: Row(
+                  //     mainAxisAlignment: MainAxisAlignment.start,
+                  //     crossAxisAlignment: CrossAxisAlignment.start,
+                  //     children: [
+                  //       const Icon(
+                  //         Icons.local_offer_outlined,
+                  //         size: 18,
+                  //         color: AppColors.primary,
+                  //       ),
+                  //       SizedBox(width: 8.w),
+                  //       Expanded(
+                  //         child: AppText(
+                  //           text:
+                  //               "عند طلب العلاج مباشرة بدون حجز كشف تحصل على خصم 10٪ على إجمالي الأدوية.",
+                  //           textStyle: context.typography.xsRegular.copyWith(
+                  //             color: AppColors.primary,
+                  //             height: 1.4,
+                  //           ),
+                  //         ),
+                  //       ),
+                  //     ],
+                  //   ),
+                  // ),
                   const Divider(color: AppColors.grayLight),
 
                   SummaryRow(
@@ -328,7 +327,7 @@ class _PriceDetailsScreenState extends State<PriceDetailsScreen> {
                       finalAmount: finalTotal,
                       updatedAt: DateTime.now().millisecondsSinceEpoch,
                     ),
-                    newStatus: "confirmed",
+                    newStatus: "completed",
                     onSave: (updatedOrder) async {
                       await OrderService().updateOrderData(
                         order: updatedOrder,
@@ -346,7 +345,7 @@ class _PriceDetailsScreenState extends State<PriceDetailsScreen> {
                             OrdersListViewModel controller = initController(
                               () => OrdersListViewModel(),
                             );
-                          //  controller.fetchOrders();
+                            //  controller.fetchOrders();
                             controller.update();
                             Get.back();
                             Get.back();

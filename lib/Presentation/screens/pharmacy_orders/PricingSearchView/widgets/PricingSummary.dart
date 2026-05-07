@@ -40,34 +40,34 @@ class PricingSummary extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            _row(context, label: "قبل الخصم", value: controller.subtotalInt),
-            const SizedBox(height: 6),
-            _row(
-              context,
-              label: "الخصم",
-              value: -controller.discountValueInt,
-              negative: true,
-            ),
+            _row(context, label: "قبل التوصيل", value: controller.subtotalInt),
+            // const SizedBox(height: 6),
+            // _row(
+            //   context,
+            //   label: "الخصم",
+            //   value: -controller.discountValueInt,
+            //   negative: true,
+            // ),
 
             const SizedBox(height: 12),
 
-            _sectionTitle(context, "نسبة الخصم"),
-            const SizedBox(height: 6),
-            _options<double>(
-              context,
-              values: const [0.05, 0.10],
-              selected: controller.discountPercent,
-              onSelect: controller.setDiscount,
-              formatter: (v) => "${(v * 100).toInt()}%",
-            ),
-
-            const SizedBox(height: 12),
+            // _sectionTitle(context, "نسبة الخصم"),
+            // const SizedBox(height: 6),
+            // _options<double>(
+            //   context,
+            //   values: const [0.05, 0.10],
+            //   selected: controller.discountPercent,
+            //   onSelect: controller.setDiscount,
+            //   formatter: (v) => "${(v * 100).toInt()}%",
+            // ),
+            //
+            // const SizedBox(height: 12),
 
             _sectionTitle(context, "التوصيل"),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             _options<double>(
               context,
-              values: const [15, 20, 25],
+              values: controller.availableDeliveryFees,
               selected: controller.deliveryFee,
               onSelect: controller.setDelivery,
               formatter: (v) => "${v.toStringAsFixed(0)} ج",
@@ -157,25 +157,26 @@ class PricingSummary extends StatelessWidget {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: values.map((e) {
-        final isActive = e == selected;
+      children:
+          values.map((e) {
+            final isActive = e == selected;
 
-        return ChoiceChip(
-          label: Text(
-            formatter(e),
-            style: context.typography.lgBold.copyWith(
-              color: isActive ? AppColors.white : AppColors.textDisplay,
-            ),
-          ),
-          selected: isActive,
-          selectedColor: AppColors.primary,
-          backgroundColor: AppColors.background_neutral_25,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          onSelected: (_) => onSelect(e),
-        );
-      }).toList(),
+            return ChoiceChip(
+              label: Text(
+                formatter(e),
+                style: context.typography.lgBold.copyWith(
+                  color: isActive ? AppColors.white : AppColors.textDisplay,
+                ),
+              ),
+              selected: isActive,
+              selectedColor: AppColors.primary,
+              backgroundColor: AppColors.background_neutral_25,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              onSelected: (_) => onSelect(e),
+            );
+          }).toList(),
     );
   }
 }

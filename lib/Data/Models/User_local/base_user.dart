@@ -78,7 +78,7 @@ class BaseUser {
       appVersion: json['app_version'],
       identifier: json['identifier'],
       profileImage: json['profile_image'] ?? json['profileImage'],
-      phone: json['phone'],
+      phone: json['phone']?.toString(),
       name: json['name'] ?? json['client_name'],
       address: json['address'],
       password: json['password'],

@@ -84,13 +84,13 @@ class OrderMedicineWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          Text(
-            "بعد انتهاء الكشف، ارفع الروشتة واطلب العلاج بسهولة، وإحنا نوصّلهولك بأفضل سعر.",
-
-            style: t.smRegular.copyWith(
-              color: AppColors.textSecondaryParagraph,
-            ),
-          ),
+          // Text(
+          //   "بعد انتهاء الكشف، ارفع الروشتة واطلب العلاج بسهولة، وإحنا نوصّلهولك بأفضل سعر.",
+          //
+          //   style: t.smRegular.copyWith(
+          //     color: AppColors.textSecondaryParagraph,
+          //   ),
+          // ),
         ],
       ),
     );

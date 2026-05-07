@@ -15,6 +15,7 @@ class _OrdersViewState extends State<OrdersView> {
   @override
   void initState() {
     orderController = initController(() => OrderController());
+    orderController.getOrders();
     super.initState();
   }
 
@@ -225,9 +226,11 @@ class _OrdersViewState extends State<OrdersView> {
 
               _infoRow(
                 activated ? "عمولتك من هذا الطلب" : "العمولة",
-                activated
-                    ? "${profit.toStringAsFixed(2)} ج.م"
-                    : "لم يتحقق التارجت",
+
+                // activated
+                //     ? "${profit.toStringAsFixed(2)} ج.م"
+                //     : "لم يتحقق التارجت",
+                "${profit.toStringAsFixed(2)} ج.م",
                 context,
                 isHighlight: activated,
               ),

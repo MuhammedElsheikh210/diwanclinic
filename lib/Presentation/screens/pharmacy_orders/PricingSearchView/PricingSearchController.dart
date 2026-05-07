@@ -17,7 +17,7 @@ class PricingSearchController extends GetxController {
 
   // ───────────── Pricing ─────────────
   double discountPercent = 0.0;
-  double deliveryFee = 15;
+  double deliveryFee = 20;
 
   // ───────────── Calculations ─────────────
 
@@ -28,7 +28,9 @@ class PricingSearchController extends GetxController {
 
   int get deliveryFeeInt => deliveryFee.round();
 
-  int get totalInt => subtotalInt - discountValueInt + deliveryFeeInt;
+  // int get totalInt => subtotalInt - discountValueInt + deliveryFeeInt;
+
+  int get totalInt => subtotalInt + deliveryFeeInt;
 
   void initWithOrder(OrderModel order) {
     if (order.reservationKey != null && order.reservationKey!.isNotEmpty) {
@@ -38,6 +40,26 @@ class PricingSearchController extends GetxController {
     }
 
     update();
+  }
+
+  List<double> get availableDeliveryFees {
+    if (subtotalInt <= 150) {
+      return [15, 20];
+    }
+
+    if (subtotalInt <= 300) {
+      return [10, 15];
+    }
+
+    return [0];
+  }
+
+  void refreshDeliveryFee() {
+    final options = availableDeliveryFees;
+
+    if (!options.contains(deliveryFee)) {
+      deliveryFee = options.first;
+    }
   }
 
   // ───────────── Search Logic ─────────────
@@ -102,12 +124,16 @@ class PricingSearchController extends GetxController {
 
   void increaseQty(SelectedMedicine item) {
     item.quantity++;
+    refreshDeliveryFee();
+
     update();
   }
 
   void decreaseQty(SelectedMedicine item, BuildContext context) {
     if (item.quantity > 1) {
       item.quantity--;
+      refreshDeliveryFee();
+
       update();
       return;
     }
@@ -129,7 +155,7 @@ class PricingSearchController extends GetxController {
   // ───────────── Add Medicine ─────────────
   void addMedicine(MedicineModel medicine) {
     final index = selectedMedicines.indexWhere(
-          (e) => e.medicine.id == medicine.id,
+      (e) => e.medicine.id == medicine.id,
     );
 
     searchResults.clear();
@@ -141,7 +167,7 @@ class PricingSearchController extends GetxController {
     } else {
       selectedMedicines[index].quantity++;
     }
-
+    refreshDeliveryFee();
     update();
   }
 
@@ -156,9 +182,17 @@ class PricingSearchController extends GetxController {
         await OrderService().updateOrderData(
           order: savedOrder,
           voidCallBack: (_) async {
-            final controller = Get.isRegistered<PharmacyOrdersListViewModel>()
-                ? Get.find<PharmacyOrdersListViewModel>()
-                : initController(() => PharmacyOrdersListViewModel());
+            final controller =
+                Get.isRegistered<PharmacyOrdersListViewModel>()
+                    ? Get.find<PharmacyOrdersListViewModel>()
+                    : initController(() => PharmacyOrdersListViewModel());
+
+            // if (order.createdBy == "whatsapp") {
+            //   await WhatsAppSessionService.markCalculated(
+            //     phone: order.whatsApp ?? "",
+            //     orderId: order.key ?? "",
+            //   );
+            // }
 
             await controller.fetchOrders();
             controller.update();
@@ -194,10 +228,8 @@ class SelectedMedicine {
   int quantity;
   double price;
 
-  SelectedMedicine({
-    required this.medicine,
-    this.quantity = 1,
-  }) : price = (medicine.price ?? 0).toDouble();
+  SelectedMedicine({required this.medicine, this.quantity = 1})
+    : price = (medicine.price ?? 0).toDouble();
 
   double get total => price * quantity;
 }

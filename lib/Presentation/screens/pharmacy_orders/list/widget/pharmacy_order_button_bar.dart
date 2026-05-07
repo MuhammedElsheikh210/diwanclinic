@@ -34,8 +34,8 @@ class PharmacyOrderButtonBar extends StatelessWidget {
     }
 
     // الصيدلي يقدر يلغي في أي وقت (غير cancelled)
-    final bool canCancel = status != "cancelled";
-
+    final bool canCancel =
+        status != "cancelled" && status != "completed" && status != "delivered";
     Widget? mainButton;
 
     // ------------------------------------------------

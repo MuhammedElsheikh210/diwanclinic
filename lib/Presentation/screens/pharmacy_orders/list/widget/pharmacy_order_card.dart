@@ -108,6 +108,41 @@ class PharmacyOrderCard extends StatelessWidget {
             icon: Icons.phone,
             label: "رقم المريض",
             value: order.phone ?? "لا يوجد",
+
+            trailing: InkWell(
+              onTap: () async {
+
+                final phone = order.phone;
+
+                if (phone == null || phone.isEmpty) {
+                  return;
+                }
+
+                final uri = Uri(
+                  scheme: 'tel',
+                  path: phone,
+                );
+
+                await launchUrl(uri);
+              },
+
+              borderRadius: BorderRadius.circular(100),
+
+              child: Container(
+                padding: EdgeInsets.all(8.w),
+
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.12),
+                  shape: BoxShape.circle,
+                ),
+
+                child: Icon(
+                  Icons.call,
+                  color: Colors.green,
+                  size: 18.w,
+                ),
+              ),
+            ),
           ),
 
           SizedBox(height: 10.h),
@@ -243,43 +278,76 @@ class PharmacyOrderCard extends StatelessWidget {
     );
   }
 
-  // ---------------------------------------------------------
   Widget _richInfoRow({
     required IconData icon,
     required String label,
     required String value,
     Color? color,
+    Widget? trailing,
   }) {
+
     return Row(
       children: [
+
         Container(
           padding: EdgeInsets.all(6.w),
+
           decoration: BoxDecoration(
-            color: (color ?? AppColors.primary).withOpacity(0.08),
+            color: (color ?? AppColors.primary)
+                .withOpacity(0.08),
+
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, size: 16.w, color: color ?? AppColors.primary),
+
+          child: Icon(
+            icon,
+            size: 16.w,
+            color: color ?? AppColors.primary,
+          ),
         ),
+
         SizedBox(width: 10.w),
+
         Expanded(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment:
+            CrossAxisAlignment.start,
+
             children: [
+
               AppText(
                 text: label,
-                textStyle: Get.context!.typography.xsRegular.copyWith(
-                  color: AppColors.textSecondaryParagraph,
+
+                textStyle:
+                Get.context!
+                    .typography
+                    .xsRegular
+                    .copyWith(
+                  color: AppColors
+                      .textSecondaryParagraph,
                 ),
               ),
+
               AppText(
                 text: value,
-                textStyle: Get.context!.typography.smMedium.copyWith(
-                  color: AppColors.textDisplay,
+
+                textStyle:
+                Get.context!
+                    .typography
+                    .smMedium
+                    .copyWith(
+                  color:
+                  AppColors.textDisplay,
                 ),
               ),
             ],
           ),
         ),
+
+        if (trailing != null) ...[
+          SizedBox(width: 10.w),
+          trailing,
+        ],
       ],
     );
   }

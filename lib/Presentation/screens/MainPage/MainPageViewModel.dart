@@ -154,8 +154,7 @@ class MainPageViewModel extends GetxController {
         // 🔥 Orders List Screen
         if (Get.isRegistered<OrdersListViewModel>()) {
           Get.find<OrdersListViewModel>().upsertOrder(order);
-        } else {
-        }
+        } else {}
       };
 
       _patientOrderService.onOrderUpdated = (order) {

@@ -150,20 +150,23 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
       String uid,
       ) async {
     try {
-      if (!await _connectivity.isOnline()) {
-        return Left(AppError("No internet connection"));
-      }
+      // if (!await _connectivity.isOnline()) {
+      //   return Left(AppError("No internet connection"));
+      // }
 
       final json = await _remote.fetchClientByUid(uid);
 
       if (json == null) {
         return const Right(null); // user not found
       }
+      print("user before is ${json}");
 
       final user = LocalUser.fromMap(json);
 
+      print("user is ${user.toJson()}");
       // 🔥 optional but مهم: cache بعد login
       await _local.upsertFromServer(user);
+      print("json is ${json}");
 
       return Right(user);
     } catch (e) {

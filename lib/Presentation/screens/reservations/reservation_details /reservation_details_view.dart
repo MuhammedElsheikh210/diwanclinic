@@ -1,4 +1,5 @@
 import 'package:diwanclinic/Presentation/screens/pharmacy_orders/list/bottom_sheets/cancel_with_reason_dialog.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 import '../../../../../../index/index_main.dart';
 
@@ -281,6 +282,34 @@ class ReservationAssistantDetailsView extends StatelessWidget {
               ],
             ),
 
+            Row(
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 5,
+                      horizontal: 10,
+                    ),
+                    child: AppLisTile(
+                      leading: const Svgicon(icon: IconsConstants.avatar),
+                      title: AppText(
+                        text: "رقم الهاتف",
+                        textStyle: context.typography.mdRegular.copyWith(
+                          color: ColorMappingImpl().textSecondaryParagraph,
+                        ),
+                      ),
+                      subtitle: AppText(
+                        text: reservation.patientPhone ?? "",
+                        textStyle: context.typography.lgBold.copyWith(
+                          color: ColorMappingImpl().textDisplay,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
             /// 🔹 Type + Amounts
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -513,28 +542,28 @@ class ReservationAssistantDetailsView extends StatelessWidget {
   Widget _buildButtons(BuildContext context, ReservationNewStatus status) {
     List<Widget> buttons = [];
 
-    // 🔹 Order button
-    if (reservation.isOrdered != true &&
-        ReservationNewStatus.completed == status) {
-      buttons.add(
-        Expanded(
-          child: PrimaryTextButton(
-            onTap: () => _makeOrder(),
-            appButtonSize: AppButtonSize.large,
-            customBackgroundColor: ColorMappingImpl().white,
-            customBorder: BorderSide(
-              color: ColorMappingImpl().borderNeutralPrimary,
-            ),
-            label: AppText(
-              text: "طلب الروشتة",
-              textStyle: context.typography.mdMedium.copyWith(
-                color: ColorMappingImpl().textDefault,
-              ),
-            ),
-          ),
-        ),
-      );
-    }
+    // // 🔹 Order button
+    // if (reservation.isOrdered != true &&
+    //     ReservationNewStatus.completed == status) {
+    //   buttons.add(
+    //     Expanded(
+    //       child: PrimaryTextButton(
+    //         onTap: () => _makeOrder(),
+    //         appButtonSize: AppButtonSize.large,
+    //         customBackgroundColor: ColorMappingImpl().white,
+    //         customBorder: BorderSide(
+    //           color: ColorMappingImpl().borderNeutralPrimary,
+    //         ),
+    //         label: AppText(
+    //           text: "طلب الروشتة",
+    //           textStyle: context.typography.mdMedium.copyWith(
+    //             color: ColorMappingImpl().textDefault,
+    //           ),
+    //         ),
+    //       ),
+    //     ),
+    //   );
+    // }
 
     buttons.add(SizedBox(width: 5.w));
 
@@ -784,8 +813,8 @@ class ReservationAssistantDetailsView extends StatelessWidget {
     controller.fromUpdate = true;
 
     await controller.actionManager.updateReservation(reservation);
-    await controller.getReservations();
-    controller.update();
+    // await controller.getReservations();
+    // controller.update();
 
     // =================================================
     // 🔔 2) SIDE EFFECTS BY STATUS
@@ -795,12 +824,6 @@ class ReservationAssistantDetailsView extends StatelessWidget {
       // APPROVED
       // ---------------------------
       case ReservationStatus.approved:
-        await NotificationHandler().sendStatusNotification(
-          newStatus: ReservationStatus.approved,
-          reservation: reservation,
-          toToken: reservation.patientFcm ?? "",
-        );
-
         await WhatsAppStatusMessageService.sendStatusWhatsAppMessage(
           reservation: reservation,
           clinic: controller.selectedClinic,
@@ -811,17 +834,19 @@ class ReservationAssistantDetailsView extends StatelessWidget {
       // ---------------------------
       // COMPLETED
       // ---------------------------
+
       case ReservationStatus.completed:
-        await NotificationHandler().sendStatusNotification(
-          newStatus: ReservationStatus.completed,
-          reservation: reservation,
-          toToken: reservation.patientFcm ?? "",
-        );
+
 
         await WhatsAppStatusMessageService.sendStatusWhatsAppMessage(
           reservation: reservation,
           clinic: controller.selectedClinic,
           newStatus: newStatus,
+        );
+
+        await WhatsAppSessionService.startPrescriptionSession(
+          phone: reservation.patientPhone ?? "",
+          reservationId: reservation.key ?? "",
         );
 
         await controller.queueManager.notifyApprovedQueueUpdate(
@@ -850,6 +875,8 @@ class ReservationAssistantDetailsView extends StatelessWidget {
       default:
         break;
     }
+
+    Get.back();
 
     Loader.showSuccess("تم تحديث الحالة إلى ${newStatus.label}");
   }

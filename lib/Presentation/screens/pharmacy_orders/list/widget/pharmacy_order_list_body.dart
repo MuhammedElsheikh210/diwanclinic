@@ -34,14 +34,16 @@ class PharmacyOrdersListBody extends StatelessWidget {
             onCancel: () => _showCancelDialog(context, order),
             onApprovedOrder: () => _showApprovedDialog(context, order),
 
-            onOrderDetails: () =>
-                Get.to(() => OrderDetailsScreen(order: order)),
-            onFollowTreatment: () =>
-                Get.to(() => const TreatmentTrackingListScreen()),
-            onPriceDetails: () =>
-                Get.to(() => PricingSearchView(orderModel: order)),
-            onShowPriceDetails: () =>
-                Get.to(() => PriceDetailsScreen(order: order, fromHome: false)),
+            onOrderDetails:
+                () => Get.to(() => OrderDetailsScreen(order: order)),
+            onFollowTreatment:
+                () => Get.to(() => const TreatmentTrackingListScreen()),
+            onPriceDetails:
+                () => Get.to(() => PricingSearchView(orderModel: order)),
+            onShowPriceDetails:
+                () => Get.to(
+                  () => PriceDetailsScreen(order: order, fromHome: false),
+                ),
           );
         },
       );
@@ -55,8 +57,12 @@ class PharmacyOrdersListBody extends StatelessWidget {
       message: "هل تريد تأكيد هذا الطلب وإرسال إشعار ورسالة واتساب؟",
       confirmText: "تأكيد",
       confirmColor: AppColors.primary,
-      onConfirm: () {
+      onConfirm: () async {
         vm.updateOrderStatus(order: order, newStatus: "completed");
+        // 🧹 Clear WhatsApp Session
+        if (order.createdBy == "whatsapp") {
+          await WhatsAppSessionService.markConfirmed(order.whatsApp ?? "");
+        }
       },
     );
   }
@@ -72,9 +78,16 @@ class PharmacyOrdersListBody extends StatelessWidget {
         "خطأ في بيانات الطلب",
         "سبب آخر",
       ],
-      onConfirm: (reason) {
-        order.copyWith(cancel_reason: reason);
-        vm.updateOrderStatus(order: order, newStatus: "cancelled");
+
+      onConfirm: (reason) async {
+        final updatedOrder = order.copyWith(cancel_reason: reason);
+
+        await vm.updateOrderStatus(order: updatedOrder, newStatus: "cancelled");
+
+        // 🧹 Clear WhatsApp Session
+        if (order.createdBy == "whatsapp") {
+          await WhatsAppSessionService.markCancelled(order.whatsApp ?? "");
+        }
       },
     );
   }

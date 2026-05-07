@@ -12,7 +12,6 @@ class ReservationDoctorViewModel extends GetxController {
   bool isSyncing = false;
   bool showDailyReport = false;
 
-  final notifier = ReservationNotificationService();
   final prescriptionService = PrescriptionUploadService();
 
   bool get hasActiveFilters =>

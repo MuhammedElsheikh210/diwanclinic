@@ -20,7 +20,7 @@ class ReservationViewModel extends GetxController {
       PrescriptionUploadService();
 
   // UI State
-  bool showDailyReport = false;
+  bool showDailyReport = true;
   bool? fromUpdate;
   bool isSyncing = false;
 
@@ -374,6 +374,14 @@ class ReservationViewModel extends GetxController {
 
       /// ✅ Queue
       if (newStatus == ReservationStatus.completed) {
+
+
+        await WhatsAppSessionService.startPrescriptionSession(
+          phone: reservation.patientPhone ?? "",
+          reservationId: reservation.key ?? "",
+        );
+
+
         await _handleQueueUpdate();
       }
     } catch (e, stack) {

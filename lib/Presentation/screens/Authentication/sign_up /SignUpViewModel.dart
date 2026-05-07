@@ -92,7 +92,6 @@ class SignUpViewModel extends GetxController {
 
           await _finalizeSignUp(localUser);
           await _updateFcmToken(token);
-          await _updateClientsSyncStatus();
         },
       );
 
@@ -143,12 +142,4 @@ class SignUpViewModel extends GetxController {
   // ============================================================
   // SYNC META
   // ============================================================
-
-  Future<void> _updateClientsSyncStatus() async {
-    final ref = FirebaseDatabase.instance.ref("sync_meta/clients");
-
-    await ref.update({
-      "last_add_data_timestamp": DateTime.now().millisecondsSinceEpoch,
-    });
-  }
 }

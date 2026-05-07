@@ -1,22 +1,54 @@
-
 import '../../index/index_main.dart';
 
-/// 🧾 Abstract Repository Contract for Order Data
-/// Defines all CRUD operations for Firebase + SQLite layers
 abstract class OrderDataSourceRepo {
-  /// 🔹 Fetch list of orders (supports filtering via SQLiteQueryParams)
+
+  // ============================================================
+  // 🔥 REALTIME CONTROL
+  // ============================================================
+
+  Future<void> startListening();
+
+  Future<void> stopListening();
+
+  // ============================================================
+  // 🔥 REALTIME STREAMS
+  // ============================================================
+
+  Stream<OrderModel> get onAdded;
+
+  Stream<OrderModel> get onChanged;
+
+  Stream<String> get onRemoved;
+
+  // ============================================================
+  // 🌐 FETCH
+  // ============================================================
+
   Future<List<OrderModel?>> getOrders(
       Map<String, dynamic> data,
       SQLiteQueryParams query,
       bool? isFiltered,
       );
 
-  /// 🔹 Add new order (to Firebase + local SQLite)
-  Future<SuccessModel> addOrder(Map<String, dynamic> data, String key);
+  /// 🔥 NEW
+  Future<List<OrderModel>> fetchAllOrders();
 
-  /// 🔹 Update existing order (to Firebase + local SQLite)
-  Future<SuccessModel> updateOrder(Map<String, dynamic> data, String key);
+  // ============================================================
+  // CRUD
+  // ============================================================
 
-  /// 🔹 Delete order (by key)
-  Future<SuccessModel> deleteOrder(Map<String, dynamic> data, String key);
+  Future<SuccessModel> addOrder(
+      Map<String, dynamic> data,
+      String key,
+      );
+
+  Future<SuccessModel> updateOrder(
+      Map<String, dynamic> data,
+      String key,
+      );
+
+  Future<SuccessModel> deleteOrder(
+      Map<String, dynamic> data,
+      String key,
+      );
 }

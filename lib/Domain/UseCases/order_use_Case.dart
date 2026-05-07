@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+
 import '../../../index/index_main.dart';
 
 class OrderUseCases {
@@ -6,26 +7,77 @@ class OrderUseCases {
 
   OrderUseCases(this._repository);
 
-  /// ➕ Add new order
-  Future<Either<AppError, SuccessModel>> addOrder(OrderModel order) {
-    return _repository.addOrderDomain(order.toJson(), order.key ?? "");
+  // ============================================================
+  // 🔥 REALTIME CONTROL
+  // ============================================================
+
+  Future<void> startListening() {
+    return _repository.startListening();
   }
 
-  /// 🔁 Update existing order
-  Future<Either<AppError, SuccessModel>> updateOrder(OrderModel order) {
-    return _repository.updateOrderDomain(order.toJson(), order.key ?? "");
+  Future<void> dispose() {
+    return _repository.dispose();
   }
 
-  /// 🗑️ Delete order by key
-  Future<Either<AppError, SuccessModel>> deleteOrder(String key) {
-    return _repository.deleteOrderDomain({}, key);
+  Stream<OrderModel> get onAdded => _repository.onAdded;
+
+  Stream<OrderModel> get onChanged => _repository.onChanged;
+
+  Stream<String> get onRemoved => _repository.onRemoved;
+
+  // ============================================================
+  // 🌐 FETCH
+  // ============================================================
+
+  Future<Either<AppError, List<OrderModel>>>
+  fetchAllOrders() {
+    return _repository.fetchAllOrdersDomain();
   }
 
-  /// 📥 Get list of orders (with filters)
   Future<Either<AppError, List<OrderModel?>>> getOrders(
-    Map<String, dynamic> data,
-    bool? isFiltered,
-  ) {
-    return _repository.getOrdersDomain(data, SQLiteQueryParams(), isFiltered);
+      Map<String, dynamic> data,
+      bool? isFiltered,
+      ) {
+    return _repository.getOrdersDomain(
+      data,
+      SQLiteQueryParams(),
+      isFiltered,
+    );
+  }
+
+  // ============================================================
+  // ➕ ADD
+  // ============================================================
+
+  Future<Either<AppError, SuccessModel>> addOrder(
+      OrderModel order,
+      ) {
+    return _repository.addOrderDomain(
+      order.toJson(),
+      order.key ?? "",
+    );
+  }
+
+  // ============================================================
+  // 🔄 UPDATE
+  // ============================================================
+
+  Future<Either<AppError, SuccessModel>> updateOrder(
+      OrderModel order,
+      ) {
+    return _repository.updateOrderDomain(
+      order.toJson(),
+      order.key ?? "",
+    );
+  }
+
+  // ============================================================
+  // ❌ DELETE
+  // ============================================================
+
+  Future<Either<AppError, SuccessModel>> deleteOrder(
+      String key,
+      ) {
+    return _repository.deleteOrderDomain({}, key);
   }
 }

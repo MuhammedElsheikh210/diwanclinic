@@ -209,7 +209,7 @@ class OrderMedicineScreen extends StatelessWidget {
       padding: EdgeInsets.all(20.w),
       child: Column(
         children: [
-          _uploadBanner(context),
+          //   _uploadBanner(context),
           SizedBox(height: 20.h),
           _uploadArea(context, vm),
           const Spacer(),

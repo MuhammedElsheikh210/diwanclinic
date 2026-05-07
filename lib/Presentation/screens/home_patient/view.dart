@@ -74,9 +74,9 @@ class _PatientHomeViewState extends State<PatientHomeView> {
 
                                   Expanded(
                                     child: HomeFeatureTile(
-                                      title: "اطلب علاج بخصم",
+                                      title: "اطلب علاجك",
                                       subtitle:
-                                          "خصم يصل إلى 10٪ وتوصيل العلاج لحد باب البيت",
+                                          "توصيل العلاج لحد باب البيت مجاني علي حسب قيمة الطلب",
                                       icon: Icons.medical_services,
                                       color: AppColors.successForeground,
                                       onTap: () {

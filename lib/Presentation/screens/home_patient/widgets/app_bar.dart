@@ -104,8 +104,8 @@ class HomePatientAppBar extends StatelessWidget implements PreferredSizeWidget {
       borderRadius: BorderRadius.circular(50),
       onTap: onTap,
       child: Container(
-        width: 40.w,
-        height: 40.w,
+        width: 50.w,
+        height: 50.w,
         margin: EdgeInsets.only(right: 4.w),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
@@ -113,13 +113,13 @@ class HomePatientAppBar extends StatelessWidget implements PreferredSizeWidget {
           border: Border.all(color: AppColors.borderNeutralPrimary, width: 1),
           boxShadow: [
             BoxShadow(
-              color: AppColors.background_black.withOpacity(0.05),
+              color: AppColors.background_black.withValues(alpha: 0.05),
               blurRadius: 6,
               offset: const Offset(0, 3),
             ),
           ],
         ),
-        child: Center(child: SvgPicture.asset(icon, width: 20.w, height: 20.h)),
+        child: Center(child: SvgPicture.asset(icon, width: 25.w, height: 25.h)),
       ),
     );
   }

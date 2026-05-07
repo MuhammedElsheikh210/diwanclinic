@@ -122,7 +122,6 @@ class OrderMedicineViewModel extends GetxController {
   // ===========================================================================
   Future<void> uploadImagesAndNext() async {
     if (selectedImages.isEmpty) {
-      
       return;
     }
 
@@ -134,8 +133,6 @@ class OrderMedicineViewModel extends GetxController {
     Loader.show();
 
     final uploadStart = DateTime.now();
-    
-    
 
     try {
       for (int i = 0; i < selectedImages.length; i++) {
@@ -146,8 +143,6 @@ class OrderMedicineViewModel extends GetxController {
 
         final originalSize = (await originalFile.length()) / (1024 * 1024);
 
-        
-        
         debugPrint(
           "   ├─ Original size: ${originalSize.toStringAsFixed(2)} MB",
         );
@@ -171,8 +166,6 @@ class OrderMedicineViewModel extends GetxController {
           "prescriptions/${reservation.key}_${i}_${DateTime.now().millisecondsSinceEpoch}.jpg",
         );
 
-        
-
         final uploadTask = ref.putFile(finalFile);
 
         uploadTask.snapshotEvents.listen((event) {
@@ -195,8 +188,6 @@ class OrderMedicineViewModel extends GetxController {
 
         final url = await ref.getDownloadURL();
         uploadedUrls.add(url);
-
-        
       }
 
       currentStep = 1;
@@ -207,8 +198,6 @@ class OrderMedicineViewModel extends GetxController {
         "✅ All uploads finished in ${uploadEnd.difference(uploadStart).inSeconds} seconds",
       );
     } catch (e, s) {
-      
-      
       Loader.showError("فشل رفع الصور، حاول مرة أخرى");
     } finally {
       isUploading.value = false;
@@ -247,11 +236,9 @@ class OrderMedicineViewModel extends GetxController {
     );
 
     if (result == null) {
-      
       return file;
     }
 
-    
     return File(result.path);
   }
 
@@ -275,11 +262,9 @@ class OrderMedicineViewModel extends GetxController {
     );
 
     if (result == null) {
-      
       return File(path);
     }
 
-    
     return File(result.path);
   }
 
@@ -335,7 +320,7 @@ class OrderMedicineViewModel extends GetxController {
       doseDays: int.tryParse(doseController.text.trim()),
       notes: notesController.text.trim(),
       createdAt: DateTime.now().millisecondsSinceEpoch,
-      status: "pending",
+      status: "approved",
       // 📸 Uploaded images
       prescriptionUrl1: uploadedUrls.isNotEmpty ? uploadedUrls[0] : null,
       prescriptionUrl2: uploadedUrls.length > 1 ? uploadedUrls[1] : null,
@@ -355,13 +340,18 @@ class OrderMedicineViewModel extends GetxController {
         reservation.isOrdered = true;
         onConfirmed(reservation);
 
-        await NotificationHandler().sendToClinicAssistants(
-          title: "💊 طلب روشتة جديد",
-          body: "طلب جديد من ${order.patientName}",
-          reservation: reservation,
-          assistants: [pharmacy],
-          notificationType: "new_pharmacy_order",
+        await WhatsAppManager.sendMessage(
+          to: reservation.patientPhone ?? "",
+          body: "📥 تم استلام الروشتة 👌\n\n⏳ جاري التسعير خلال 5 دقائق 💙",
         );
+
+        // await NotificationHandler().sendToClinicAssistants(
+        //   title: "💊 طلب روشتة جديد",
+        //   body: "طلب جديد من ${order.patientName}",
+        //   reservation: reservation,
+        //   assistants: [pharmacy],
+        //   notificationType: "new_pharmacy_order",
+        // );
 
         Loader.showSuccess("تم إرسال طلب الروشتة بنجاح");
       },
