@@ -60,7 +60,7 @@ class IncomeViewModel extends GetxController {
       where: """
         appointment_date_time = ?
         AND status = ?
-        AND doctor_key = ?
+        AND doctor_uid = ?
       """,
       whereArgs: [
         date,

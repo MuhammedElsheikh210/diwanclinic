@@ -7,7 +7,8 @@ class AppLogger {
   // 🔧 Config
   // ─────────────────────────────────────────────
 
-  static const bool enableLogs = kDebugMode;
+  //  static const bool enableLogs = kDebugMode;
+  static const bool enableLogs = true;
 
   static final Logger _prettyLogger = Logger(
     printer: PrettyPrinter(

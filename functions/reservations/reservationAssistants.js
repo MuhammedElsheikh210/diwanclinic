@@ -306,9 +306,10 @@ async function syncAssistantNotifications({
 
         child.ref.update({
 
-          notification_type: status,
-
           extra_data: reservation,
+
+          reservation_status:
+            status,
         });
       });
     }

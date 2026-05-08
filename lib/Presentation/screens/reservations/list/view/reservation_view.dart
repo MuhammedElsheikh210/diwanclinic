@@ -54,26 +54,21 @@ class _ReservationViewState extends State<ReservationView> {
                       ? const SizedBox()
                       : StatsSection(controller: controller),
 
-
-
                   isGrid
                       ? const SizedBox()
                       : ReservationReportWidget(controller: controller),
-
-
-
 
                   Padding(
                     padding: EdgeInsets.symmetric(vertical: 15.0.h),
                     child: _buildTabs(controller),
                   ),
 
-                   _buildReservationNotebook(reservations, controller)
-                      //  _buildReservationList(
-                      //   reservations,
-                      //   controller,
-                      //   context,
-                      // ),
+                  _buildReservationNotebook(reservations, controller),
+                  //  _buildReservationList(
+                  //   reservations,
+                  //   controller,
+                  //   context,
+                  // ),
                 ],
               ),
             ),

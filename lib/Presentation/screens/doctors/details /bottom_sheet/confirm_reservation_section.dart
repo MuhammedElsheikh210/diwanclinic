@@ -546,59 +546,57 @@ class _SelectReservationDateBottomSheetState
                             ),
                           ],
                         ),
-                        child: Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              /// 👥 اللي قبلك (Active)
-                              if (controller.beforeYouCount == 0) ...[
-                                Text(
-                                  "🎉 مفيش حد قبلك دلوقتي",
-                                  style: typography.mdMedium.copyWith(
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                              ] else ...[
-                                Text(
-                                  "👥 قبلك حالياً ${controller.beforeYouCount} حالة",
-                                  style: typography.lgBold.copyWith(
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                              ],
-
-                              SizedBox(height: 6.h),
-
-                              /// 🔢 رقم الحجز (في اليوم كله)
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.confirmation_number_outlined,
-                                    size: 16.sp,
-                                    color: AppColors.primary,
-                                  ),
-                                  SizedBox(width: 4.w),
-                                  Text(
-                                    "رقم حجزك: ${controller.expectedOrder}",
-
-                                    style: typography.mdMedium.copyWith(
-                                      color: AppColors.textDisplay,
-                                    ),
-                                  ),
-                                ],
-                              ),
-
-                              SizedBox(height: 4.h),
-
-                              /// 💡 توضيح بسيط (optional بس مهم جداً)
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            /// 👥 اللي قبلك (Active)
+                            if (controller.beforeYouCount == 0) ...[
                               Text(
-                                "📌 الرقم ده ترتيبك في كل الحجوزات، مش عدد اللي قبلك حالياً",
-                                style: typography.smRegular.copyWith(
-                                  color: AppColors.textSecondaryParagraph,
+                                "🎉 مفيش حد قبلك دلوقتي",
+                                style: typography.mdMedium.copyWith(
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ] else ...[
+                              Text(
+                                "👥 قبلك حالياً ${controller.beforeYouCount} حالة",
+                                style: typography.lgBold.copyWith(
+                                  color: AppColors.primary,
                                 ),
                               ),
                             ],
-                          ),
+
+                            SizedBox(height: 6.h),
+
+                            /// 🔢 رقم الحجز (في اليوم كله)
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.confirmation_number_outlined,
+                                  size: 16.sp,
+                                  color: AppColors.primary,
+                                ),
+                                SizedBox(width: 4.w),
+                                Text(
+                                  "رقم حجزك: ${controller.expectedOrder}",
+
+                                  style: typography.mdMedium.copyWith(
+                                    color: AppColors.textDisplay,
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            SizedBox(height: 4.h),
+
+                            /// 💡 توضيح بسيط (optional بس مهم جداً)
+                            Text(
+                              "📌 الرقم ده ترتيبك في كل الحجوزات، مش عدد اللي قبلك حالياً",
+                              style: typography.smRegular.copyWith(
+                                color: AppColors.textSecondaryParagraph,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                   ],

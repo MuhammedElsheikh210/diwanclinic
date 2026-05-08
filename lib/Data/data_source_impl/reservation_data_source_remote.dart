@@ -8,10 +8,17 @@ class ReservationRemoteDataSourceImpl implements ReservationRemoteDataSource {
   ReservationRemoteDataSourceImpl(this._database);
 
   DatabaseReference? _rootRef;
+
   final List<StreamSubscription> _subscriptions = [];
 
+  // ============================================================
+  // 🌊 STREAM CONTROLLERS
+  // ============================================================
+
   final _addedController = StreamController<ReservationModel>.broadcast();
+
   final _changedController = StreamController<ReservationModel>.broadcast();
+
   final _removedController = StreamController<String>.broadcast();
 
   @override
@@ -23,61 +30,132 @@ class ReservationRemoteDataSourceImpl implements ReservationRemoteDataSource {
   @override
   Stream<String> get onRemoved => _removedController.stream;
 
+  // ============================================================
+  // 🎧 START LISTENING
+  // ============================================================
+
   @override
   Future<void> startListening({required String doctorKey}) async {
     await stopListening();
 
     final path = "doctors/$doctorKey/reservations";
-    
+
+    AppLogger.info("RESERVATION_RT", "🎧 Start listening → $path");
+
     _rootRef = _database.ref(path);
+
+    // ============================================================
+    // 📅 DATE NODES
+    // ============================================================
 
     final dateSub = _rootRef!.onChildAdded.listen((dateEvent) {
       final dateKey = dateEvent.snapshot.key;
-      if (dateKey == null) return;
 
-      // ✅ Build correct reference manually
+      AppLogger.debug("RESERVATION_RT", "📅 Date node added → $dateKey");
+
+      if (dateKey == null) {
+        AppLogger.warning("RESERVATION_RT", "Date key null");
+
+        return;
+      }
+
       final dateRef = _rootRef!.child(dateKey);
 
       _listenInsideDate(dateRef);
     });
 
     _subscriptions.add(dateSub);
+
+    AppLogger.success("RESERVATION_RT", "Realtime initialized ✅");
   }
 
+  // ============================================================
+  // 🎧 LISTEN INSIDE DATE
+  // ============================================================
+
   void _listenInsideDate(DatabaseReference dateRef) {
-    // ➕ Reservation Added
+    AppLogger.info("RESERVATION_RT", "👂 Listening inside → ${dateRef.path}");
+
+    // ============================================================
+    // ➕ ADDED
+    // ============================================================
+
     final addedSub = dateRef.onChildAdded.listen((event) {
       final key = event.snapshot.key;
-      if (key == null) return;
+
+      AppLogger.debug("RESERVATION_RT", "➕ Reservation Added → $key");
+
+      if (key == null) {
+        return;
+      }
 
       final model = _parseReservation(event.snapshot);
-      if (model != null) _addedController.add(model);
+
+      if (model != null) {
+        AppLogger.success(
+          "RESERVATION_RT",
+          "Reservation parsed → ${model.patientName}",
+        );
+
+        if (!_addedController.isClosed) {
+          _addedController.add(model);
+        }
+      } else {
+        AppLogger.warning("RESERVATION_RT", "Failed to parse reservation");
+      }
     });
 
-    // 🔄 Reservation Updated
+    // ============================================================
+    // 🔄 UPDATED
+    // ============================================================
+
     final changedSub = dateRef.onChildChanged.listen((event) {
       final key = event.snapshot.key;
-      if (key == null) return;
+
+      AppLogger.debug("RESERVATION_RT", "🔄 Reservation Changed → $key");
+
+      if (key == null) {
+        return;
+      }
 
       final model = _parseReservation(event.snapshot);
-      if (model != null) _changedController.add(model);
+
+      if (model != null) {
+        if (!_changedController.isClosed) {
+          _changedController.add(model);
+        }
+      }
     });
 
-    // ❌ Reservation Removed
+    // ============================================================
+    // ❌ REMOVED
+    // ============================================================
+
     final removedSub = dateRef.onChildRemoved.listen((event) {
       final key = event.snapshot.key;
-      if (key == null) return;
 
-      _removedController.add(key);
+      AppLogger.warning("RESERVATION_RT", "❌ Reservation Removed → $key");
+
+      if (key != null && !_removedController.isClosed) {
+        _removedController.add(key);
+      }
     });
 
     _subscriptions.addAll([addedSub, changedSub, removedSub]);
   }
 
+  // ============================================================
+  // 🧠 PARSE
+  // ============================================================
+
   ReservationModel? _parseReservation(DataSnapshot snapshot) {
     final data = snapshot.value;
 
-    if (data == null || data is! Map) return null;
+    if (data == null || data is! Map) {
+      AppLogger.warning("RESERVATION_RT", "Invalid snapshot data");
+
+      return null;
+    }
 
     try {
       final json = Map<String, dynamic>.from(
@@ -87,28 +165,55 @@ class ReservationRemoteDataSourceImpl implements ReservationRemoteDataSource {
       json['key'] = snapshot.key;
 
       return ReservationModel.fromJson(json);
-    } catch (e) {
+    } catch (e, stack) {
+      AppLogger.error("RESERVATION_RT", "Parse error", e, stack);
+
       return null;
     }
   }
 
+  // ============================================================
+  // ☁️ CREATE
+  // ============================================================
+
   @override
   Future<void> createReservation(ReservationModel reservation) async {
     final path = _buildPath(reservation);
+
+    AppLogger.info("RESERVATION_RT", "CREATE → $path");
+
     await _database.ref(path).set(reservation.toJson());
   }
+
+  // ============================================================
+  // 🔄 UPDATE
+  // ============================================================
 
   @override
   Future<void> updateReservation(ReservationModel reservation) async {
     final path = _buildPath(reservation);
+
+    AppLogger.info("RESERVATION_RT", "UPDATE → $path");
+
     await _database.ref(path).update(reservation.toJson());
   }
+
+  // ============================================================
+  // ❌ DELETE
+  // ============================================================
 
   @override
   Future<void> deleteReservation(ReservationModel reservation) async {
     final path = _buildPath(reservation);
+
+    AppLogger.warning("RESERVATION_RT", "DELETE → $path");
+
     await _database.ref(path).remove();
   }
+
+  // ============================================================
+  // 🔗 BUILD PATH
+  // ============================================================
 
   String _buildPath(ReservationModel reservation) {
     final normalizedDate = AppDateFormatter.toDash(
@@ -120,14 +225,26 @@ class ReservationRemoteDataSourceImpl implements ReservationRemoteDataSource {
         "/${reservation.key}";
   }
 
+  // ============================================================
+  // 🛑 STOP LISTENING
+  // ============================================================
+
   @override
   Future<void> stopListening() async {
     for (final sub in _subscriptions) {
       await sub.cancel();
     }
+
     _subscriptions.clear();
+
     _rootRef = null;
+
+    AppLogger.warning("RESERVATION_RT", "Stopped listening");
   }
+
+  // ============================================================
+  // 📥 FETCH ONCE
+  // ============================================================
 
   @override
   Future<List<ReservationModel>> fetchReservationsOnce({
@@ -136,33 +253,33 @@ class ReservationRemoteDataSourceImpl implements ReservationRemoteDataSource {
   }) async {
     try {
       final path = "doctors/$doctorKey/reservations/$date";
-      
+
+      AppLogger.info("RESERVATION_RT", "📥 Fetch once → $path");
 
       final ref = _database.ref(path);
+
       final snapshot = await ref.get();
 
-      
-      
-
       if (!snapshot.exists || snapshot.value == null) {
-        
+        AppLogger.warning("RESERVATION_RT", "No reservations found");
+
         return [];
       }
 
       final data = snapshot.value;
 
-      
-
       if (data is! Map) {
-        
+        AppLogger.warning("RESERVATION_RT", "Snapshot is not Map");
+
         return [];
       }
 
       Map<String, dynamic> finalMap = {};
 
-      // 🔥 FIX: handle nested structure
+      // 🔥 FIX nested structure
+
       if (data.containsKey(date)) {
-        
+        AppLogger.debug("RESERVATION_RT", "Nested date structure detected");
 
         final inner = data[date];
 
@@ -171,32 +288,25 @@ class ReservationRemoteDataSourceImpl implements ReservationRemoteDataSource {
             inner.map((k, v) => MapEntry(k.toString(), v)),
           );
         } else {
-          
+          AppLogger.warning("RESERVATION_RT", "Inner date is not Map");
+
           return [];
         }
       } else {
-        
-
         finalMap = Map<String, dynamic>.from(
           data.map((k, v) => MapEntry(k.toString(), v)),
         );
       }
 
-      
-
       final List<ReservationModel> list = [];
 
       finalMap.forEach((key, value) {
         try {
-          
-
           if (value == null) {
-            
             return;
           }
 
           if (value is! Map) {
-            
             return;
           }
 
@@ -206,21 +316,28 @@ class ReservationRemoteDataSourceImpl implements ReservationRemoteDataSource {
 
           json['key'] = key;
 
-          
-
           final model = ReservationModel.fromJson(json);
 
           list.add(model);
-        } catch (e) {
-          
+        } catch (e, stack) {
+          AppLogger.error("RESERVATION_RT", "Fetch parse error", e, stack);
         }
       });
 
-      
+      AppLogger.success(
+        "RESERVATION_RT",
+        "Fetched reservations → ${list.length}",
+      );
 
       return list;
-    } catch (e) {
-      
+    } catch (e, stack) {
+      AppLogger.error(
+        "RESERVATION_RT",
+        "fetchReservationsOnce error",
+        e,
+        stack,
+      );
+
       return [];
     }
   }

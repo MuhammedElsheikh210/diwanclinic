@@ -37,7 +37,6 @@ class ReservationDoctorAppBar extends StatelessWidget
                   controller.appointment_date_time = formattedDate;
 
                   controller.getReservations(is_filter: true);
-                  controller.getSyncReservations();
                   controller.update();
                 },
               ),

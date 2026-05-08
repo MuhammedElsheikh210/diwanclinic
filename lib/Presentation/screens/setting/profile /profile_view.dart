@@ -7,48 +7,65 @@ class ProfileView extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetBuilder<ProfileViewModel>(
       init: ProfileViewModel(),
+
       builder: (controller) {
-        final isPatient =
-            Get.find<UserSession>().user?.user.userType == UserType.patient;
+        final userType = Get.find<UserSession>().user?.user.userType;
+
+        final isPatient = userType == UserType.patient;
+
+        final isAssistant = userType == UserType.assistant;
 
         final currentUser = Get.find<UserSession>().user;
+
         final profileImage = currentUser?.user.profileImage;
 
         return Scaffold(
           backgroundColor: AppColors.white,
+
           appBar: AppBar(
             elevation: 0,
             backgroundColor: AppColors.white,
             centerTitle: true,
+
             title: Text(
               "تحديث الحساب",
+
               style: context.typography.lgBold.copyWith(
                 color: AppColors.text_primary_paragraph,
               ),
             ),
+
             iconTheme: const IconThemeData(color: AppColors.primary),
           ),
+
           bottomNavigationBar: SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
+
               child: ElevatedButton(
                 onPressed:
                     controller.isLoading
                         ? null
                         : () => controller.updateProfile(),
+
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
+
                   padding: const EdgeInsets.symmetric(vertical: 16),
+
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
+
                   elevation: 3,
                 ),
+
                 child:
                     controller.isLoading
                         ? const SizedBox(
                           width: 24,
                           height: 24,
+
                           child: CircularProgressIndicator(
                             color: AppColors.white,
                             strokeWidth: 2,
@@ -56,6 +73,7 @@ class ProfileView extends StatelessWidget {
                         )
                         : Text(
                           "حفظ التغييرات",
+
                           style: context.typography.mdBold.copyWith(
                             color: AppColors.white,
                           ),
@@ -63,12 +81,16 @@ class ProfileView extends StatelessWidget {
               ),
             ),
           ),
+
           body: Form(
             key: controller.formKey,
+
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
+
                 children: [
                   // -----------------------------------------------------------
                   // 🔹 PROFILE IMAGE → HIDDEN FOR PATIENT
@@ -76,9 +98,11 @@ class ProfileView extends StatelessWidget {
                   if (!isPatient) ...[
                     Stack(
                       alignment: Alignment.bottomRight,
+
                       children: [
                         CircleAvatar(
                           radius: 55,
+
                           backgroundColor: AppColors.primary_light,
 
                           backgroundImage:
@@ -104,11 +128,15 @@ class ProfileView extends StatelessWidget {
                         Positioned(
                           bottom: 0,
                           right: 6,
+
                           child: InkWell(
                             onTap: controller.pickImage,
+
                             child: const CircleAvatar(
                               radius: 18,
+
                               backgroundColor: AppColors.primary,
+
                               child: Icon(
                                 Icons.edit,
                                 color: AppColors.white,
@@ -119,6 +147,7 @@ class ProfileView extends StatelessWidget {
                         ),
                       ],
                     ),
+
                     const SizedBox(height: 32),
                   ],
 
@@ -127,14 +156,20 @@ class ProfileView extends StatelessWidget {
                   // -----------------------------------------------------------
                   _buildEditableInput(
                     context,
+
                     controller: controller.nameController,
+
                     label: "الإسم",
+
                     hint: "أدخل الإسم",
+
                     icon: Icons.person,
+
                     validator:
                         (val) =>
                             val == null || val.isEmpty ? "أدخل الإسم" : null,
                   ),
+
                   const SizedBox(height: 20),
 
                   // -----------------------------------------------------------
@@ -142,17 +177,24 @@ class ProfileView extends StatelessWidget {
                   // -----------------------------------------------------------
                   _buildEditableInput(
                     context,
+
                     controller: controller.phoneController,
+
                     label: "رقم الهاتف",
+
                     hint: "أدخل رقم الهاتف",
+
                     icon: Icons.phone,
+
                     keyboardType: TextInputType.phone,
+
                     validator:
                         (val) =>
                             val == null || val.isEmpty
                                 ? "أدخل رقم الهاتف"
                                 : null,
                   ),
+
                   const SizedBox(height: 20),
 
                   // -----------------------------------------------------------
@@ -161,45 +203,58 @@ class ProfileView extends StatelessWidget {
                   if (isPatient) ...[
                     _buildEditableInput(
                       context,
+
                       controller: controller.addressController,
+
                       label: "العنوان",
+
                       hint: "أدخل العنوان",
+
                       icon: Icons.location_on,
+
                       validator:
                           (val) =>
                               val == null || val.isEmpty
                                   ? "العنوان مطلوب"
                                   : null,
                     ),
+
                     const SizedBox(height: 20),
                   ],
 
                   // -----------------------------------------------------------
-                  // 🔹 TRANSFER NUMBER → HIDE FOR PATIENT
+                  // 🔹 TRANSFER NUMBER + WALLET
+                  // 🔥 ONLY FOR ASSISTANT
                   // -----------------------------------------------------------
-                  if (!isPatient) ...[
+                  if (isAssistant) ...[
                     _buildEditableInput(
                       context,
+
                       controller: controller.transferNumberController,
+
                       label: "رقم التحويل",
+
                       hint: "أدخل رقم التحويل الذي سيتم تحويل الأرباح عليه",
+
                       icon: Icons.account_balance_wallet_outlined,
+
                       keyboardType: TextInputType.phone,
                     ),
+
                     const SizedBox(height: 20),
 
-                    // -----------------------------------------------------------
-                    // 🔹 WALLET TYPES → HIDE FOR PATIENT
-                    // -----------------------------------------------------------
                     Align(
                       alignment: Alignment.centerRight,
+
                       child: Text(
                         "نوع المحفظة",
+
                         style: context.typography.mdBold.copyWith(
                           color: AppColors.text_primary_paragraph,
                         ),
                       ),
                     ),
+
                     const SizedBox(height: 8),
 
                     Row(
@@ -207,26 +262,35 @@ class ProfileView extends StatelessWidget {
                         Expanded(
                           child: CheckboxListTile(
                             value: controller.isInstaPay == 1,
+
                             onChanged: (v) {
                               controller.setWalletType(
                                 isInstaPay: v == true ? 1 : 0,
                               );
                             },
+
                             title: const Text("إنستا باي"),
+
                             activeColor: AppColors.primary,
+
                             controlAffinity: ListTileControlAffinity.leading,
                           ),
                         ),
+
                         Expanded(
                           child: CheckboxListTile(
                             value: controller.isElectronicWallet == 1,
+
                             onChanged: (v) {
                               controller.setWalletType(
                                 isElectronicWallet: v == true ? 1 : 0,
                               );
                             },
+
                             title: const Text("محفظة إلكترونية"),
+
                             activeColor: AppColors.primary,
+
                             controlAffinity: ListTileControlAffinity.leading,
                           ),
                         ),
@@ -242,7 +306,10 @@ class ProfileView extends StatelessWidget {
     );
   }
 
-  /// 🔹 Modern Editable Input Field
+  // ============================================================
+  // 🔹 Modern Editable Input
+  // ============================================================
+
   Widget _buildEditableInput(
     BuildContext context, {
     required TextEditingController controller,
@@ -256,34 +323,50 @@ class ProfileView extends StatelessWidget {
       controller: controller,
       keyboardType: keyboardType,
       validator: validator,
+
       style: context.typography.mdMedium.copyWith(
         color: AppColors.text_primary_paragraph,
       ),
+
       decoration: InputDecoration(
         prefixIcon: Icon(icon, color: AppColors.primary),
+
         labelText: label,
+
         hintText: hint,
+
         labelStyle: context.typography.smRegular.copyWith(
           color: AppColors.textSecondaryParagraph,
         ),
+
         filled: true,
+
         fillColor: AppColors.primary_light.withOpacity(0.15),
+
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
+
           borderSide: BorderSide(color: AppColors.primary.withOpacity(0.4)),
         ),
+
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
+
           borderSide: const BorderSide(color: AppColors.primary, width: 1.8),
         ),
+
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
+
           borderSide: const BorderSide(color: AppColors.errorForeground),
         ),
+
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
+
           borderSide: const BorderSide(color: AppColors.errorForeground),
         ),
+
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 14,

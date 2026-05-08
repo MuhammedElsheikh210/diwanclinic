@@ -1,32 +1,33 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:diwanclinic/Presentation/screens/reservations/reservation_doctor/reservatiob_sync_doctor.dart';
+
 import 'package:intl/intl.dart';
+
 import '../../../../../index/index_main.dart';
 
 class ReservationDoctorViewModel extends GetxController {
   // ─────────────────────────────────────────────
-  // 🔹 Realtime Sync
+  // 🔹 Services
   // ─────────────────────────────────────────────
-  late final ReservationDocTorSyncService syncService;
+  final ReservationService _reservationService = ReservationService();
+
+  final PrescriptionUploadService prescriptionService =
+      PrescriptionUploadService();
+
+  // ─────────────────────────────────────────────
+  // 🔹 UI State
+  // ─────────────────────────────────────────────
   bool isSyncing = false;
   bool showDailyReport = false;
-
-  final prescriptionService = PrescriptionUploadService();
-
-  bool get hasActiveFilters =>
-      selectedClinic != null ||
-      selectedShift != null ||
-      selectedStatus != null ||
-      selectedStatusesList != null && selectedStatusesList!.isNotEmpty ||
-      selectedType != null ||
-      create_at != null;
+  bool? fromUpdate;
 
   // ─────────────────────────────────────────────
   // 🔹 Reservation Data
   // ─────────────────────────────────────────────
   List<ReservationModel?>? listReservations;
+
   List<ReservationModel> dayReservations = [];
+
   List<ClinicModel?>? list_clinic;
 
   // ─────────────────────────────────────────────
@@ -39,6 +40,7 @@ class ReservationDoctorViewModel extends GetxController {
   // 🔹 Controllers
   // ─────────────────────────────────────────────
   final TextEditingController doseDaysController = TextEditingController();
+
   final TextEditingController notesController = TextEditingController();
 
   // ─────────────────────────────────────────────
@@ -49,12 +51,14 @@ class ReservationDoctorViewModel extends GetxController {
 
   ClinicModel? selectedClinic;
   GenericListModel? selectedShift;
+
   String? selectedType;
 
   ReservationNewStatus? selectedStatus;
   List<ReservationNewStatus>? selectedStatusesList;
 
   num? create_at;
+
   String? appointment_date_time;
 
   // ─────────────────────────────────────────────
@@ -62,8 +66,17 @@ class ReservationDoctorViewModel extends GetxController {
   // ─────────────────────────────────────────────
   String? get _doctorKey {
     final user = Get.find<UserSession>().user;
+
     return user?.uid ?? user?.doctorKey;
   }
+
+  bool get hasActiveFilters =>
+      selectedClinic != null ||
+      selectedShift != null ||
+      selectedStatus != null ||
+      selectedStatusesList != null && selectedStatusesList!.isNotEmpty ||
+      selectedType != null ||
+      create_at != null;
 
   final List<String> reservationTypeFilters = [
     "كشف جديد",
@@ -72,6 +85,9 @@ class ReservationDoctorViewModel extends GetxController {
     "متابعة",
   ];
 
+  // ─────────────────────────────────────────────
+  // 🔹 Stats
+  // ─────────────────────────────────────────────
   int get completedCount =>
       dayReservations
           .where((r) => r.status == ReservationStatus.completed.value)
@@ -89,21 +105,50 @@ class ReservationDoctorViewModel extends GetxController {
   int get totalCount => completedCount + pendingCount;
 
   // ─────────────────────────────────────────────
-  // INIT
+  // 🔹 INIT
   // ─────────────────────────────────────────────
   @override
   Future<void> onInit() async {
     super.onInit();
 
-    syncService = ReservationDocTorSyncService(controller: this);
-
     _setupDefaultDate();
+
     await getClinicList();
+
+    _listenToGlobalReservationEvents();
+  }
+
+  void showMandatoryShiftDialog() {
+    if (shiftDropdownItems == null || shiftDropdownItems!.isEmpty) {
+      return;
+    }
+
+    Get.dialog(
+      ShiftSelectionDialog(
+        shifts: shiftDropdownItems!,
+        initialSelected: selectedShift,
+
+        onSelect: (shift) async {
+          selectedShift = shift;
+
+          appointment_date_time ??= DateFormat(
+            "dd-MM-yyyy",
+          ).format(DateTime.now());
+
+          getReservations();
+
+          update();
+        },
+      ),
+
+      barrierDismissible: false,
+    );
   }
 
   @override
   void onClose() {
-    syncService.dispose();
+    _reservationService.dispose();
+
     super.onClose();
   }
 
@@ -125,15 +170,11 @@ class ReservationDoctorViewModel extends GetxController {
 
         shiftDropdownItems =
             filtered
-                .map(
-                  (s) => GenericListModel(
-                    key: s.key,
-                    name: "${s.name ?? ""} (${s.dayOfWeek ?? ""})",
-                  ),
-                )
+                .map((s) => GenericListModel(key: s.key, name: s.name ?? ""))
                 .toList();
 
         update();
+
         completer.complete();
       },
     );
@@ -142,56 +183,35 @@ class ReservationDoctorViewModel extends GetxController {
   }
 
   // ─────────────────────────────────────────────
-  // DEFAULT DATE
+  // 🔹 Default Date
   // ─────────────────────────────────────────────
   void _setupDefaultDate() {
     final now = DateTime.now();
+
     appointment_date_time = DateFormat('dd-MM-yyyy').format(now);
   }
 
   // ─────────────────────────────────────────────
-  // DAY STATS
+  // 🔹 Day Stats
   // ─────────────────────────────────────────────
   void loadDayStats() {
     ReservationService().getReservationsData(
       query: SQLiteQueryParams(
         is_filtered: true,
-        where: "appointment_date_time = ? AND doctor_key = ?",
+        where: "appointment_date_time = ? AND doctor_uid = ?",
         whereArgs: [appointment_date_time, _doctorKey],
       ),
       voidCallBack: (list) {
         dayReservations = list.whereType<ReservationModel>().toList();
+
         update();
       },
     );
   }
 
   // ─────────────────────────────────────────────
-  // 🔁 SYNC (Firebase → SQLite → UI)
+  // 🔹 Active Filters
   // ─────────────────────────────────────────────
-  void getSyncReservations() {
-    syncService.listen(
-      selectedClinic: selectedClinic,
-      appointmentDate: appointment_date_time,
-      // ⚠️ SAME FORMAT dd/MM/yyyy
-      onAddLocal: (model) async {
-        isSyncing = true;
-        await addReservation(model, localOnly: true);
-        isSyncing = false;
-      },
-      onUpdatedLocal: (model) async {
-        isSyncing = true;
-        await updateReservation(model, localOnly: true);
-        isSyncing = false;
-      },
-      onReloadLocal: () {
-        if (!isSyncing) {
-          getReservations();
-        }
-      },
-    );
-  }
-
   List<Map<String, dynamic>> get activeFilters {
     final filters = <Map<String, dynamic>>[];
 
@@ -270,7 +290,7 @@ class ReservationDoctorViewModel extends GetxController {
   }
 
   // ─────────────────────────────────────────────
-  // ADD / UPDATE LOCAL
+  // 🔹 Add / Update Local
   // ─────────────────────────────────────────────
   Future<void> addReservation(
     ReservationModel reservation, {
@@ -295,14 +315,36 @@ class ReservationDoctorViewModel extends GetxController {
   }
 
   // ─────────────────────────────────────────────
-  // FETCH RESERVATIONS (SOURCE OF TRUTH)
+  // 🔹 Fetch Reservations
   // ─────────────────────────────────────────────
-  void getReservations({bool? is_filter}) {
-    if (appointment_date_time == null) return;
+  void getReservations({bool? is_filter}) async {
+    AppLogger.info("DOCTOR_DEBUG", "==============================");
+
+    AppLogger.info(
+      "DOCTOR_DEBUG",
+      "appointment_date_time => $appointment_date_time",
+    );
+
+    AppLogger.info("DOCTOR_DEBUG", "selectedShift => ${selectedShift?.key}");
+
+    AppLogger.info("DOCTOR_DEBUG", "selectedClinic => ${selectedClinic?.key}");
+
+    AppLogger.info("DOCTOR_DEBUG", "doctorKey => $_doctorKey");
+
+    if (appointment_date_time == null) {
+      AppLogger.error("DOCTOR_DEBUG", "❌ appointment_date_time NULL");
+      return;
+    }
+
+    if (selectedShift == null) {
+      AppLogger.error("DOCTOR_DEBUG", "❌ selectedShift NULL");
+      return;
+    }
 
     listReservations = [];
 
     String where = "";
+
     final whereArgs = <Object?>[];
 
     if (selectedClinic?.key != null) {
@@ -324,12 +366,17 @@ class ReservationDoctorViewModel extends GetxController {
 
     where += where.isEmpty ? "" : " AND ";
     where += "appointment_date_time = ?";
+
     whereArgs.add(appointment_date_time);
 
     if (_doctorKey != null && _doctorKey!.isNotEmpty) {
-      where += " AND doctor_key = ?";
+      where += " AND doctor_uid = ?";
       whereArgs.add(_doctorKey);
     }
+
+    AppLogger.info("DOCTOR_DEBUG", "FINAL WHERE => $where");
+
+    AppLogger.info("DOCTOR_DEBUG", "WHERE ARGS => $whereArgs");
 
     final query = SQLiteQueryParams(
       is_filtered: false,
@@ -341,8 +388,26 @@ class ReservationDoctorViewModel extends GetxController {
     ReservationService().getReservationsData(
       query: query,
       voidCallBack: (list) {
+        AppLogger.info("DOCTOR_DEBUG", "SQL RESULT COUNT => ${list.length}");
+
+        for (final item in list.take(10)) {
+          final r = item as ReservationModel;
+
+          AppLogger.info("DOCTOR_DEBUG", """
+PATIENT => ${r.patientName}
+DATE => ${r.appointmentDateTime}
+SHIFT => ${r.shiftKey}
+CLINIC => ${r.clinicKey}
+STATUS => ${r.status}
+ORDER => ${r.orderNum}
+""");
+        }
+
         Loader.dismiss();
+
         final all = list.whereType<ReservationModel>().toList();
+
+        AppLogger.info("DOCTOR_DEBUG", "AFTER CAST => ${all.length}");
 
         final inProgress =
             all
@@ -379,14 +444,20 @@ class ReservationDoctorViewModel extends GetxController {
           ...cancelled,
         ];
 
+        AppLogger.info(
+          "DOCTOR_DEBUG",
+          "FINAL UI LIST => ${listReservations?.length}",
+        );
+
         loadDayStats();
+
         update();
       },
     );
   }
 
   // ─────────────────────────────────────────────
-  // QUEUE HELPERS
+  // 🔹 Queue Helpers
   // ─────────────────────────────────────────────
   List<ReservationModel> reorderedQueue(List<ReservationModel> list) {
     final waiting =
@@ -404,13 +475,17 @@ class ReservationDoctorViewModel extends GetxController {
   }
 
   int aheadInQueue(ReservationModel r) {
-    if (listReservations == null) return 0;
+    if (listReservations == null) {
+      return 0;
+    }
+
     final index = listReservations!.indexOf(r);
+
     return index <= 0 ? 0 : index;
   }
 
   // ─────────────────────────────────────────────
-  // CLINICS
+  // 🔹 Clinics
   // ─────────────────────────────────────────────
   Future<void> getClinicList() async {
     final doctorKey = _doctorKey ?? "";
@@ -418,7 +493,6 @@ class ReservationDoctorViewModel extends GetxController {
     ClinicService().getClinicsData(
       data: {},
       doctorKey: doctorKey,
-
       filrebaseFilter: FirebaseFilter(
         orderBy: "doctor_key",
         equalTo: doctorKey,
@@ -442,27 +516,110 @@ class ReservationDoctorViewModel extends GetxController {
 
             await loadShiftsForClinic(selectedClinic!.key!);
 
-            // 🔥 لو عنده شيفت واحد
+            // 🔥 لو شيفت واحد اختاره تلقائي
             if (shiftDropdownItems != null && shiftDropdownItems!.length == 1) {
               selectedShift = shiftDropdownItems!.first;
+
+              getReservations();
+            }
+            // 🔥 لو أكتر من شيفت لازم يختار
+            else if (shiftDropdownItems != null &&
+                shiftDropdownItems!.isNotEmpty) {
+              Future.microtask(() {
+                showMandatoryShiftDialog();
+              });
             }
           }
-
-          getSyncReservations();
-          getReservations();
         }
+
         update();
       },
     );
   }
 
   // ─────────────────────────────────────────────
-  // DELETE
+  // 🔹 Delete
   // ─────────────────────────────────────────────
   void deleteReservation(ReservationModel reservation) {
     ReservationService().deleteReservationData(
       reservationKey: reservation.key ?? "",
       voidCallBack: (_) => getReservations(),
     );
+  }
+}
+
+extension ReservationDoctorData on ReservationDoctorViewModel {
+  void _listenToGlobalReservationEvents() {
+    final service = ReservationService();
+
+    service.onReservationAdded = (reservation) {
+      if (!_belongsToCurrentFilters(reservation)) {
+        return;
+      }
+
+      _updateListInMemory(reservation);
+    };
+
+    service.onReservationUpdated = (reservation) async {
+      if (!_belongsToCurrentFilters(reservation)) {
+        return;
+      }
+
+      await Future.microtask(() => getReservations());
+    };
+
+    service.onReservationRemoved = (key) {
+      dayReservations.removeWhere((e) => e.key == key);
+
+      listReservations = List.from(dayReservations);
+
+      update();
+    };
+  }
+
+  bool _belongsToCurrentFilters(ReservationModel r) {
+    if (appointment_date_time == null) {
+      return false;
+    }
+
+    if (selectedShift == null) {
+      return false;
+    }
+
+    if (selectedClinic == null) {
+      return false;
+    }
+
+    final reservationDate = AppDateFormatter.toDash(r.appointmentDateTime);
+
+    final screenDate = AppDateFormatter.toDash(appointment_date_time);
+
+    return reservationDate == screenDate &&
+        r.shiftKey == selectedShift!.key &&
+        r.clinicKey == selectedClinic!.key;
+  }
+
+  void _updateListInMemory(ReservationModel model) {
+    if (fromUpdate == true) {
+      fromUpdate = false;
+      return;
+    }
+
+    if (dayReservations.isEmpty) {
+      getReservations();
+      return;
+    }
+
+    final index = dayReservations.indexWhere((e) => e.key == model.key);
+
+    if (index != -1) {
+      dayReservations[index] = model;
+    } else {
+      dayReservations.add(model);
+    }
+
+    listReservations = List.from(dayReservations);
+
+    update();
   }
 }

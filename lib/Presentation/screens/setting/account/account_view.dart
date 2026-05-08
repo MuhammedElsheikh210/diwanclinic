@@ -134,13 +134,13 @@ class AccountView extends StatelessWidget {
                       onTap: () => Get.toNamed(assistantView),
                     ),
 
-                    _menuItemWithStatus(
-                      context,
-                      icon: Icons.event_busy_outlined,
-                      label: "إدارة أيام العمل",
-                      isEnabled: true, // 👈 هنا الحالة (On / Off)
-                      onTap: () => Get.toNamed(openclosereservationView),
-                    ),
+                    // _menuItemWithStatus(
+                    //   context,
+                    //   icon: Icons.event_busy_outlined,
+                    //   label: "إدارة أيام العمل",
+                    //   isEnabled: true, // 👈 هنا الحالة (On / Off)
+                    //   onTap: () => Get.toNamed(openclosereservationView),
+                    // ),
                   ]),
                 ],
 
@@ -344,7 +344,6 @@ class AccountView extends StatelessWidget {
         }
       }
     } catch (e) {
-      
       Loader.showError("تعذر فتح صفحة التقييم");
     }
   }

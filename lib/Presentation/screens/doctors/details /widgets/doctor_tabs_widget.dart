@@ -43,35 +43,41 @@ class DoctorTabsWidget extends StatelessWidget {
                 padding: EdgeInsets.symmetric(vertical: 10.h),
                 margin: EdgeInsets.symmetric(horizontal: 4.w),
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppColors
-                            .primary // main active color
-                      : AppColors.background_neutral_default,
+                  color:
+                      isSelected
+                          ? AppColors
+                              .primary // main active color
+                          : AppColors.background_neutral_default,
                   borderRadius: BorderRadius.circular(12.r),
                   border: Border.all(
-                    color: isSelected
-                        ? AppColors.primary60
-                        : AppColors.borderNeutralPrimary,
+                    color:
+                        isSelected
+                            ? AppColors.primary60
+                            : AppColors.borderNeutralPrimary,
                     width: 1,
                   ),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: AppColors.primary.withOpacity(0.25),
-                            blurRadius: 6,
-                            offset: const Offset(0, 3),
-                          ),
-                        ]
-                      : [],
+                  boxShadow:
+                      isSelected
+                          ? [
+                            BoxShadow(
+                              color: AppColors.primary.withOpacity(0.25),
+                              blurRadius: 6,
+                              offset: const Offset(0, 3),
+                            ),
+                          ]
+                          : [],
                 ),
-                child: Center(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
                   child: Text(
                     tabs[index],
-                    style: isSelected
-                        ? typography.mdBold.copyWith(color: AppColors.white)
-                        : typography.mdMedium.copyWith(
-                            color: AppColors.text_primary_paragraph,
-                          ),
+                    maxLines: 1,
+                    style:
+                        isSelected
+                            ? typography.mdBold.copyWith(color: AppColors.white)
+                            : typography.mdMedium.copyWith(
+                              color: AppColors.text_primary_paragraph,
+                            ),
                   ),
                 ),
               ),

@@ -78,7 +78,7 @@ class _AppBarTypeDropdownDoctorState extends State<AppBarTypeDropdownDoctor> {
           widget.controller.selectedType = item.key;
         }
 
-        widget.controller.getSyncReservations();
+       // widget.controller.getSyncReservations();
         widget.controller.update();
         _close();
       },

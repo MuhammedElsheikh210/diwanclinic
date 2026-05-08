@@ -83,10 +83,14 @@ class DoctorDetailsView extends StatelessWidget {
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 4),
                         image: DecorationImage(
-                          image: CachedNetworkImageProvider(
-                            doctor.profileImage ??
-                                "https://via.placeholder.com/150x150?text=Profile",
-                          ),
+                          image:
+                          (doctor.profileImage != null &&
+                              doctor.profileImage!.isNotEmpty)
+                              ? CachedNetworkImageProvider(doctor.profileImage!)
+                              : const AssetImage(
+                            "assets/images/splash.png",
+                          )
+                          as ImageProvider,
                           fit: BoxFit.contain,
                         ),
                       ),
@@ -111,20 +115,24 @@ class DoctorDetailsView extends StatelessWidget {
                   DoctorTabsWidget(controller: controller),
 
                   // ================= CONTENT =================
-                  if (controller.selectedTabIndex == 0)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10.0,
-                      ),
-                      child: ClinicAndShiftSection(
-                        controller: controller,
-                        showFromHome: false,
-                      ),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    child: controller.selectedTabIndex == 0
+                        ? ClinicAndShiftSection(
+                      key: const ValueKey(0),
+                      controller: controller,
+                      showFromHome: false,
                     )
-                  else if (controller.selectedTabIndex == 1)
-                    DoctorReviewsWidget(controller: controller)
-                  else if (controller.selectedTabIndex == 2)
-                      DoctorContactWidget(doctor: doctor),
+                        : controller.selectedTabIndex == 1
+                        ? DoctorReviewsWidget(
+                      key: const ValueKey(1),
+                      controller: controller,
+                    )
+                        : DoctorContactWidget(
+                      key: const ValueKey(2),
+                      doctor: doctor,
+                    ),
+                  ),
                 ],
               ),
             ),

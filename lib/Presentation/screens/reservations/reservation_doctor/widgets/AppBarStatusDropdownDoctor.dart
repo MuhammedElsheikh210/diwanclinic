@@ -17,8 +17,10 @@ class _AppBarStatusDropdownDoctorState
   final key = GlobalKey();
   OverlayEntry? _overlay;
 
-  GenericListModel? selected =
-  GenericListModel(key: "all", name: "في الكشف + انتظار");
+  GenericListModel? selected = GenericListModel(
+    key: "all",
+    name: "في الكشف + انتظار",
+  );
 
   @override
   void initState() {
@@ -43,34 +45,35 @@ class _AppBarStatusDropdownDoctorState
       GenericListModel(key: "all_statuses", name: "الكــــل"),
       GenericListModel(key: "all", name: "في الكشف + انتظار"),
       ...ReservationNewStatus.values.map(
-            (s) => GenericListModel(key: s.value, name: s.label),
+        (s) => GenericListModel(key: s.value, name: s.label),
       ),
     ];
 
     _overlay = OverlayEntry(
-      builder: (_) => Stack(
-        children: [
-          GestureDetector(
-            onTap: _close,
-            child: Container(color: Colors.transparent),
-          ),
-          Positioned(
-            top: offset.dy + size.height + 8,
-            left: offset.dx,
-            width: size.width,
-            child: Material(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              elevation: 3,
-              child: ListView(
-                padding: EdgeInsets.zero,
-                shrinkWrap: true,
-                children: items.map(_buildItem).toList(),
+      builder:
+          (_) => Stack(
+            children: [
+              GestureDetector(
+                onTap: _close,
+                child: Container(color: Colors.transparent),
               ),
-            ),
+              Positioned(
+                top: offset.dy + size.height + 8,
+                left: offset.dx,
+                width: size.width,
+                child: Material(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  elevation: 3,
+                  child: ListView(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    children: items.map(_buildItem).toList(),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
 
     Overlay.of(context).insert(_overlay!);
@@ -79,9 +82,10 @@ class _AppBarStatusDropdownDoctorState
   Widget _buildItem(GenericListModel item) {
     return ListTile(
       title: Text(item.name!, style: context.typography.smMedium),
-      trailing: selected?.key == item.key
-          ? const Icon(Icons.check, color: AppColors.primary)
-          : null,
+      trailing:
+          selected?.key == item.key
+              ? const Icon(Icons.check, color: AppColors.primary)
+              : null,
       onTap: () {
         setState(() => selected = item);
 
@@ -97,8 +101,9 @@ class _AppBarStatusDropdownDoctorState
           ];
         } else {
           widget.controller.selectedStatusesList = null;
-          widget.controller.selectedStatus =
-              ReservationStatusNewExt.fromValue(item.key!);
+          widget.controller.selectedStatus = ReservationStatusNewExt.fromValue(
+            item.key!,
+          );
         }
 
         widget.controller.getReservations(is_filter: false);
@@ -132,8 +137,7 @@ class _AppBarStatusDropdownDoctorState
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(selected?.name ?? "الحالة",
-                style: context.typography.mdBold),
+            Text(selected?.name ?? "الحالة", style: context.typography.mdBold),
             const Icon(Icons.expand_more, color: AppColors.primary),
           ],
         ),

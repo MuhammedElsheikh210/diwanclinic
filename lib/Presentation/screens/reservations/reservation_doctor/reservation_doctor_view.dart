@@ -88,21 +88,22 @@ class _ReservationDoctorViewState extends State<ReservationDoctorView> {
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
-          children: controller.activeFilters.map((filter) {
-            // 🚫 Hide clinic filter if doctor has only one clinic
-            if (filter["label"].toString().contains("العيادة") &&
-                clinicsCount <= 1) {
-              return const SizedBox.shrink();
-            }
+          children:
+              controller.activeFilters.map((filter) {
+                // 🚫 Hide clinic filter if doctor has only one clinic
+                if (filter["label"].toString().contains("العيادة") &&
+                    clinicsCount <= 1) {
+                  return const SizedBox.shrink();
+                }
 
-            return Padding(
-              padding: EdgeInsets.only(right: 6.w),
-              child: FilterChipWidget(
-                label: filter["label"],
-                onRemove: filter["onRemove"],
-              ),
-            );
-          }).toList(),
+                return Padding(
+                  padding: EdgeInsets.only(right: 6.w),
+                  child: FilterChipWidget(
+                    label: filter["label"],
+                    onRemove: filter["onRemove"],
+                  ),
+                );
+              }).toList(),
         ),
       ),
     );

@@ -347,40 +347,14 @@ class ReservationDoctorCard extends StatelessWidget {
   // ---------------------------------------------------------
   Future<void> _updateStatus(ReservationStatus newStatus) async {
     if (newStatus == ReservationStatus.completed) {
-      try {
-        final phone = reservation.patientPhone ?? "";
-        if (phone.isNotEmpty) {
-             final formatted = WhatsAppManager.formatNumber(phone);
-        //  const formatted = "01551061194";
-
-          final patient = reservation.patientName ?? "المريض";
-          final doctor = reservation.doctorName ?? "العيادة";
-          const android = Strings.url_android;
-          const ios = Strings.url_ios;
-
-          final message =
-              """
-من عيادة د. $doctor 👨‍⚕️
-
-الكشف خلص يا $patient 🌿  
-تقدر تطلب العلاج لحد بيتك مع خصم 5٪ - 10٪
-
-سجل دخول على تطبيق لينك باستخدام رقمك:  
-$phone
-
-📱 أندرويد: $android  
-🍎 آيفون: $ios
-""";
-
-          if (controller.selectedClinic?.sendWhatsapp == 1) {
-            await WhatsAppManager.sendMessage(to: formatted, body: message);
-          }
-        }
-      } catch (_) {}
+      reservation.status = newStatus.value;
+      controller.updateReservation(reservation);
+      Loader.showSuccess("تم تحديث الحالة إلى ${newStatus.label}");
+      await WhatsAppStatusMessageService.sendStatusWhatsAppMessage(
+        reservation: reservation,
+        clinic: controller.selectedClinic,
+        newStatus: newStatus,
+      );
     }
-
-    reservation.status = newStatus.value;
-    controller.updateReservation(reservation);
-    Loader.showSuccess("تم تحديث الحالة إلى ${newStatus.label}");
   }
 }

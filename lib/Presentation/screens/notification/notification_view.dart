@@ -82,8 +82,14 @@ class _NotificationsViewState extends State<NotificationsView> {
                     );
                   }
 
+                  final currentStatus =
+                      notif.extraData?["status"] ??
+                          notif.extraData?["reservation_status"] ??
+                          ReservationStatus.pending.value;
+
                   final bool isPending =
-                      reservation?.status == ReservationStatus.pending.value;
+                      currentStatus ==
+                          ReservationStatus.pending.value;
 
                   final bool showActions =
                       isAssistant && isNewReservation && isPending;

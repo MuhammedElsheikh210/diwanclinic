@@ -13,11 +13,10 @@ class PatientProfileAllHistoryViewModel extends GetxController {
   Future<void> getData(String patientKey) async {
     try {
       Loader.show();
-
       // 1️⃣ Fetch Patient Info from LOCAL SQLite
       await AuthenticationService().getClientsData(
         query: SQLiteQueryParams(
-          where: "key = ?",
+          where: "uid = ?",
           whereArgs: [patientKey],
           limit: 1,
         ),
@@ -50,7 +49,7 @@ class PatientProfileAllHistoryViewModel extends GetxController {
     await ReservationService().getReservationsData(
       query: SQLiteQueryParams(
         is_filtered: true,
-        where: "patient_key = ?",
+        where: "patient_uid = ?",
         whereArgs: [patientKey],
         orderBy: "created_at DESC",
       ),
