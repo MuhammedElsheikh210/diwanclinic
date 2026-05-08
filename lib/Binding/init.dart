@@ -1,3 +1,5 @@
+import 'package:diwanclinic/Data/RepositoryImpl/medical_record_repository_impl.dart';
+import 'package:diwanclinic/Data/data_source_impl/medical_record_data_source_repo_impl.dart';
 import 'package:firebase_database/firebase_database.dart';
 import '../index/index_main.dart';
 
@@ -38,6 +40,16 @@ class Binding implements Bindings {
     // ───────────── Data Sources ─────────────
     Get.lazyPut<DoctorListRemoteDataSource>(
       () => DoctorListRemoteDataSourceImpl(Get.find()),
+      fenix: true,
+    );
+
+    Get.lazyPut<
+        MedicalRecordPropertyDataSourceRepo>(
+          () =>
+          MedicalRecordPropertyDataSourceRepoImpl(
+            Get.find(),
+          ),
+
       fenix: true,
     );
 
@@ -118,6 +130,16 @@ class Binding implements Bindings {
 
     Get.lazyPut<ShiftDataSourceRepo>(
       () => ShiftDataSourceRepoImpl(Get.find()),
+      fenix: true,
+    );
+
+    Get.lazyPut<
+        MedicalRecordPropertyRepository>(
+          () =>
+          MedicalRecordPropertyRepositoryImpl(
+            Get.find(),
+          ),
+
       fenix: true,
     );
 

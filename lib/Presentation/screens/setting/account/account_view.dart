@@ -134,6 +134,19 @@ class AccountView extends StatelessWidget {
                       onTap: () => Get.toNamed(assistantView),
                     ),
 
+                    _menuItem(
+                      context,
+                      icon: Icons.group_outlined,
+                      label: "التصنيفات",
+                      onTap: () {
+                        Get.to(
+                          () => CategoryView(
+                            categoryType: ApiConstatns.medicalRecords,
+                          ),
+                        );
+                      },
+                    ),
+
                     // _menuItemWithStatus(
                     //   context,
                     //   icon: Icons.event_busy_outlined,

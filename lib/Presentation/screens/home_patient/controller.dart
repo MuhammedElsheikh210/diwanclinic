@@ -127,6 +127,8 @@ class HomePatientController extends GetxController {
 
   void getSpecializationData() {
     CategoryService().getAllCategoriesData(
+      data: {"categoryType": ApiConstatns.specializations},
+
       voidCallBack: (data) {
         listCategories = data;
 

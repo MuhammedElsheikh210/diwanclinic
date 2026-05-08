@@ -149,4 +149,5 @@ class Strings {
   static const String asc = "ASC";
   static const String AND = "AND";
   static const String file_name = "pos-app-c2ced-11a26831ba47";
+  static const String category_Record = "Category_Record";
 }

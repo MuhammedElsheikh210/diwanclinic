@@ -52,6 +52,8 @@ class CreateExpenseViewModel extends GetxController {
 
   Future<void> getCategoryList() async {
     await CategoryService().getAllCategoriesData(
+      data: {"categoryType": ApiConstatns.specializations},
+
       filterParams: SQLiteQueryParams(),
       voidCallBack: (data) {
         categoryList = CategoryModelAdapterUtil.convertCategoryListToGeneric(

@@ -12,6 +12,8 @@ class CategoryExpenseViewModel extends GetxController {
   /// ✅ Fetch Categories from API
   void getData() {
     CategoryService().getAllCategoriesData(
+      data: {"categoryType": ApiConstatns.specializations},
+
       filterParams: SQLiteQueryParams(),
       voidCallBack: (data) {
         listCategories = data;

@@ -1,10 +1,21 @@
 import '../../../../../index/index_main.dart';
 
-class CreateCategoryViewModel extends GetxController {
+class CreateCategoryViewModel
+    extends GetxController {
+  /// ✅ Dynamic category type
+  final String? categoryType;
+
+  CreateCategoryViewModel({
+    this.categoryType,
+  });
+
   /// Controllers for input fields
-  final TextEditingController nameController = TextEditingController();
+  final TextEditingController
+  nameController =
+  TextEditingController();
 
   bool is_update = false;
+
   CategoryEntity? existingCategory;
 
   @override
@@ -13,67 +24,120 @@ class CreateCategoryViewModel extends GetxController {
   }
 
   /// ✅ Populate fields with existing category data
-  void populateFields(CategoryEntity category) {
-    nameController.text = category.name ?? "";
+  void populateFields(
+      CategoryEntity category,
+      ) {
+    nameController.text =
+        category.name ?? "";
+
     is_update = true;
+
     update();
   }
 
+  /// ✅ Save Category
   void saveCategory() {
-    final user = Get.find<UserSession>().user?.user;
+    final user =
+        Get.find<UserSession>()
+            .user
+            ?.user;
+
     final uid = user?.uid;
+
     if (uid == null || uid.isEmpty) {
-      Loader.showError("❌ User UID is missing");
+      Loader.showError(
+        "❌ User UID is missing",
+      );
+
       return;
     }
+
     final category =
-        existingCategory?.copyWith(name: nameController.text) ??
-        CategoryEntity(
-          key: const Uuid().v4(),
-          uid: uid,
+        existingCategory?.copyWith(
           name: nameController.text,
-        );
-    is_update ? updateCategory(category) : createCategory(category);
+
+          categoryType:
+          categoryType,
+        ) ??
+            CategoryEntity(
+              key: const Uuid().v4(),
+
+              uid: uid,
+
+              name: nameController.text,
+
+              categoryType:
+              categoryType,
+            );
+
+    is_update
+        ? updateCategory(category)
+        : createCategory(category);
   }
 
   /// ✅ Create a new category
-  void createCategory(CategoryEntity category) {
+  void createCategory(
+      CategoryEntity category,
+      ) {
     CategoryService().addCategoryData(
       category: category,
+
       voidCallBack: (_) {
         refreshListView();
-        Loader.showSuccess("تم الإنشاء بنجاح");
+
+        Loader.showSuccess(
+          "تم الإنشاء بنجاح",
+        );
       },
     );
   }
 
   /// ✅ Update an existing category
-  void updateCategory(CategoryEntity category) {
-    CategoryService().updateCategoryData(
+  void updateCategory(
+      CategoryEntity category,
+      ) {
+    CategoryService()
+        .updateCategoryData(
       category: category,
+
       voidCallBack: (_) {
         refreshListView();
-        Loader.showSuccess("تم التحديث بنجاح");
+
+        Loader.showSuccess(
+          "تم التحديث بنجاح",
+        );
       },
     );
   }
 
   /// ✅ Refresh category list after create/update
   void refreshListView() {
-    final categoryVM = initController(() => CategoryViewModel());
+    final categoryVM =
+    initController(
+          () => CategoryViewModel(
+        categoryType:
+        categoryType,
+      ),
+    );
+
     categoryVM.getData();
+
     categoryVM.update();
+
     Get.back();
   }
 
   /// ✅ Validation function
   bool validateStep() {
-    return nameController.text.isNotEmpty;
+    return nameController
+        .text
+        .isNotEmpty;
   }
 
   @override
   void dispose() {
     nameController.dispose();
+
     super.dispose();
   }
 }

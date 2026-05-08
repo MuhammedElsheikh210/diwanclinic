@@ -69,6 +69,9 @@ class CategoryService {
   // Get All Categories
   Future<void> getAllCategoriesData({
     required Function(List<CategoryEntity?>) voidCallBack,
+
+    required Map<String, dynamic> data,
+
     SQLiteQueryParams? filterParams,
   }) async {
     GetAllCategoriesUseCase getAllCategoriesUseCase = initController(
@@ -76,15 +79,22 @@ class CategoryService {
     );
 
     final Either<AppError, List<CategoryEntity?>> result =
-        await getAllCategoriesUseCase.call(filterParams ?? SQLiteQueryParams());
+        await getAllCategoriesUseCase.call({
+          "data": data,
+
+          "query": filterParams ?? SQLiteQueryParams(),
+
+          "isFiltered": filterParams?.is_filtered,
+        });
 
     result.fold(
       (l) {
-        
         return Loader.showError(l.messege);
       },
+
       (r) {
         voidCallBack(r);
+
         Loader.dismiss();
       },
     );

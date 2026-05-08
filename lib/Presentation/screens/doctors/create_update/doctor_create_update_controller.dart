@@ -66,6 +66,8 @@ class CreateDoctorViewModel extends GetxController {
 
   void getSpecializations() {
     CategoryService().getAllCategoriesData(
+      data: {"categoryType": ApiConstatns.specializations},
+
       voidCallBack: (data) {
         specializations = data;
         update();
@@ -107,7 +109,6 @@ class CreateDoctorViewModel extends GetxController {
       await ref.putFile(file);
       return await ref.getDownloadURL();
     } catch (e) {
-      
       return null;
     }
   }
@@ -139,8 +140,6 @@ class CreateDoctorViewModel extends GetxController {
     if (coverImageFile != null) {
       coverUrl = await _uploadImage(coverImageFile!, "cover");
     }
-
-   
 
     if (isUpdate && existingDoctor != null) {
       _updateDoctor(existingDoctor!, profileUrl, coverUrl);
@@ -224,7 +223,6 @@ class CreateDoctorViewModel extends GetxController {
     );
 
     final doctor = LocalUser(doctorUser);
-    
 
     try {
       final userCred = await FirebaseAuth.instance
@@ -252,7 +250,6 @@ class CreateDoctorViewModel extends GetxController {
       );
 
       final doctor = LocalUser(doctorUser);
-      
 
       AuthenticationService().addClientsData(
         userclient: doctor,
@@ -270,12 +267,11 @@ class CreateDoctorViewModel extends GetxController {
   // ================== REFRESH ==================
 
   void refreshListView() {
-
-      final doctorVM = initController(
-        () => DoctorViewModel(specializeKey: specializeKey),
-      );
-      doctorVM.getData();
-      doctorVM.update();
+    final doctorVM = initController(
+      () => DoctorViewModel(specializeKey: specializeKey),
+    );
+    doctorVM.getData();
+    doctorVM.update();
 
     Get.back();
   }

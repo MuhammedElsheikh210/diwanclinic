@@ -99,6 +99,11 @@ class ApiConstatns {
 
   static String get doctor_reviews => "doctors/$uid/doctor_reviews";
 
+  static String get medicalRecords => "doctors/$uid/medicalRecords";
+
+  static String get medicalRecordProperties =>
+      "doctors/$uid/medicalRecordProperties";
+
   static String get archivePatients => "doctors/$uid/archivePatients";
 
   static String get legacy_reservations => "doctors/$uid/legacy_queue";

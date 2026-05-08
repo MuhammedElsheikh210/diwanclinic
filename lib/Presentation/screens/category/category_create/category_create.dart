@@ -1,26 +1,55 @@
 import '../../../../../index/index_main.dart';
 
-class CreateCategoryView extends StatefulWidget {
-  final CategoryEntity? categoryEntity;
+class CreateCategoryView
+    extends StatefulWidget {
+  final CategoryEntity?
+  categoryEntity;
 
-  const CreateCategoryView({Key? key, this.categoryEntity}) : super(key: key);
+  /// ✅ Dynamic category type
+  final String? categoryType;
+
+  const CreateCategoryView({
+    Key? key,
+    this.categoryEntity,
+    this.categoryType,
+  }) : super(key: key);
 
   @override
-  State<CreateCategoryView> createState() => _CreateCategoryViewState();
+  State<CreateCategoryView>
+  createState() =>
+      _CreateCategoryViewState();
 }
 
-class _CreateCategoryViewState extends State<CreateCategoryView> {
-  final HandleKeyboardService keyboardService = HandleKeyboardService();
-  final GlobalKey<FormState> globalKeyCategory = GlobalKey<FormState>();
+class _CreateCategoryViewState
+    extends State<CreateCategoryView> {
+  final HandleKeyboardService
+  keyboardService =
+  HandleKeyboardService();
+
+  final GlobalKey<FormState>
+  globalKeyCategory =
+  GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
-    final createCategoryVM = initController(() => CreateCategoryViewModel());
+
+    final createCategoryVM =
+    initController(
+          () => CreateCategoryViewModel(
+        categoryType:
+        widget.categoryType,
+      ),
+    );
 
     if (widget.categoryEntity != null) {
-      createCategoryVM.existingCategory = widget.categoryEntity;
-      createCategoryVM.populateFields(widget.categoryEntity!);
+      createCategoryVM.existingCategory =
+          widget.categoryEntity;
+
+      createCategoryVM.populateFields(
+        widget.categoryEntity!,
+      );
+
       createCategoryVM.is_update = true;
     }
 
@@ -29,60 +58,126 @@ class _CreateCategoryViewState extends State<CreateCategoryView> {
 
   @override
   Widget build(BuildContext context) {
-    final keys = keyboardService.generateKeys('CreateCategoryView', 1);
+    final keys =
+    keyboardService.generateKeys(
+      'CreateCategoryView',
+      1,
+    );
 
-    return GetBuilder<CreateCategoryViewModel>(
-      init: CreateCategoryViewModel(),
+    return GetBuilder<
+        CreateCategoryViewModel>(
+      init: CreateCategoryViewModel(
+        categoryType:
+        widget.categoryType,
+      ),
+
       builder: (controller) {
         return Container(
           height: 300.h,
-          padding: EdgeInsets.symmetric(horizontal: 15.w),
+
+          padding: EdgeInsets.symmetric(
+            horizontal: 15.w,
+          ),
+
           child: Column(
             children: [
-              // Header row (title + close button)
+              /// Header
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment:
+                MainAxisAlignment
+                    .spaceBetween,
+
                 children: [
                   Text(
-                    controller.is_update ? "تحديث التصنيف" : "إنشاء تصنيف جديد",
-                    style: context.typography.mdBold,
+                    controller.is_update
+                        ? "تحديث التصنيف"
+                        : "إنشاء تصنيف جديد",
+
+                    style:
+                    context
+                        .typography
+                        .mdBold,
                   ),
+
                   IconButton(
-                    icon: const Icon(Icons.close),
+                    icon: const Icon(
+                      Icons.close,
+                    ),
+
                     onPressed: () {
-                      Navigator.of(context).pop();
+                      Navigator.of(
+                        context,
+                      ).pop();
                     },
                   ),
                 ],
               ),
 
-              // Form and scrollable content
+              /// Form
               Expanded(
                 child: KeyboardActions(
-                  config: keyboardService.buildConfig(context, keys),
+                  config: keyboardService
+                      .buildConfig(
+                    context,
+                    keys,
+                  ),
+
                   child: Form(
                     key: globalKeyCategory,
+
                     child: ListView(
-                      physics: const NeverScrollableScrollPhysics(),
+                      physics:
+                      const NeverScrollableScrollPhysics(),
+
                       shrinkWrap: true,
+
                       children: [
-                        // Category Name
+                        /// Category Name
                         Padding(
-                          padding: EdgeInsets.symmetric(vertical: 10.h),
-                          child: CustomInputField(
-                            padding_horizontal: 0,
-                            show_asterisc: false,
-                            label: "اسم التصنيف",
-                            voidCallbackAction: (value) {
-                              controller.update();
+                          padding:
+                          EdgeInsets.symmetric(
+                            vertical:
+                            10.h,
+                          ),
+
+                          child:
+                          CustomInputField(
+                            padding_horizontal:
+                            0,
+
+                            show_asterisc:
+                            false,
+
+                            label:
+                            "اسم التصنيف",
+
+                            voidCallbackAction:
+                                (value) {
+                              controller
+                                  .update();
                             },
-                            hintText: "اسم التصنيف",
-                            controller: controller.nameController,
-                            keyboardType: TextInputType.name,
-                            validator: InputValidators.combine([
+
+                            hintText:
+                            "اسم التصنيف",
+
+                            controller:
+                            controller
+                                .nameController,
+
+                            keyboardType:
+                            TextInputType
+                                .name,
+
+                            validator:
+                            InputValidators.combine([
                               notEmptyValidator,
                             ]),
-                            focusNode: keyboardService.getFocusNode(keys[0]),
+
+                            focusNode:
+                            keyboardService
+                                .getFocusNode(
+                              keys[0],
+                            ),
                           ),
                         ),
                       ],
@@ -91,15 +186,24 @@ class _CreateCategoryViewState extends State<CreateCategoryView> {
                 ),
               ),
 
-              // Bottom Action Button(s)
+              /// Bottom Actions
               Divider(height: 20.h),
+
               SafeArea(
-                child: BottomNavigationActions(
-                  rightTitle: controller.is_update
+                child:
+                BottomNavigationActions(
+                  rightTitle:
+                  controller.is_update
                       ? "تحديث التصنيف"
                       : "إنشاء التصنيف",
-                  rightAction: controller.saveCategory,
-                  isRightEnabled: controller.validateStep(),
+
+                  rightAction:
+                  controller
+                      .saveCategory,
+
+                  isRightEnabled:
+                  controller
+                      .validateStep(),
                 ),
               ),
             ],

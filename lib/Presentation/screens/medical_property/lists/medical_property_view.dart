@@ -1,29 +1,43 @@
 import '../../../../../index/index_main.dart';
 
-class CategoryView extends StatefulWidget {
+class MedicalPropertyView extends StatefulWidget {
   final String? title;
 
   /// ✅ Dynamic category type
   final String? categoryType;
 
-  const CategoryView({super.key, this.title, this.categoryType});
+  /// ✅ Current selected category
+  final CategoryEntity? categoryEntity;
+
+  const MedicalPropertyView({
+    super.key,
+    this.title,
+    this.categoryType,
+    this.categoryEntity,
+  });
 
   @override
-  State<CategoryView> createState() => _CategoryViewState();
+  State<MedicalPropertyView> createState() => _MedicalPropertyViewState();
 }
 
-class _CategoryViewState extends State<CategoryView> {
+class _MedicalPropertyViewState extends State<MedicalPropertyView> {
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.white,
+
         statusBarIconBrightness: Brightness.dark,
+
         statusBarBrightness: Brightness.light,
       ),
 
-      child: GetBuilder<CategoryViewModel>(
-        init: CategoryViewModel(categoryType: widget.categoryType),
+      child: GetBuilder<MedicalPropertyViewModel>(
+        init: MedicalPropertyViewModel(
+          categoryType: widget.categoryType,
+
+          categoryEntity: widget.categoryEntity,
+        ),
 
         builder: (controller) {
           return Scaffold(
@@ -31,7 +45,7 @@ class _CategoryViewState extends State<CategoryView> {
 
             appBar: AppBar(
               title: Text(
-                widget.title ?? "التصنيفات",
+                widget.title ?? "الخصائص",
 
                 style: context.typography.lgBold,
               ),
@@ -43,12 +57,16 @@ class _CategoryViewState extends State<CategoryView> {
 
             floatingActionButton: InkWell(
               onTap: () {
-                Get.delete<CreateCategoryViewModel>();
+                Get.delete<MedicalPropertyCreatsViewmodel>();
 
                 showCustomBottomSheet(
                   context: context,
 
-                  child: CreateCategoryView(categoryType: widget.categoryType),
+                  child: MedicalPropertyCreate(
+                    categoryType: widget.categoryType,
+
+                    categoryEntity: widget.categoryEntity,
+                  ),
                 );
               },
 
@@ -56,13 +74,14 @@ class _CategoryViewState extends State<CategoryView> {
             ),
 
             body:
-                controller.listCategories == null
+                controller.listProperties == null
                     ? const ShimmerLoader()
-                    : controller.listCategories!.isEmpty
+                    : controller.listProperties!.isEmpty
                     ? const NoDataWidget()
                     : ListView.builder(
                       padding: EdgeInsets.symmetric(
                         vertical: 15.h,
+
                         horizontal: 5.w,
                       ),
 
@@ -70,21 +89,22 @@ class _CategoryViewState extends State<CategoryView> {
 
                       physics: const BouncingScrollPhysics(),
 
-                      itemCount: controller.listCategories!.length,
+                      itemCount: controller.listProperties!.length,
 
                       itemBuilder: (BuildContext context, int index) {
-                        final category = controller.listCategories![index];
+                        final property = controller.listProperties![index];
 
                         return Padding(
                           padding: EdgeInsets.only(
                             left: 10.0.w,
+
                             right: 10.0.w,
+
                             bottom: 5.h,
                           ),
 
-                          child: CategoryCard(
-                            categoryEntity: category ?? const CategoryEntity(),
-
+                          child: MedicalPropertyCard(
+                            property: property ?? MedicalRecordPropertyModel(),
                             controller: controller,
                           ),
                         );

@@ -22,6 +22,8 @@ class SpecializationViewModel extends GetxController {
   /// ✅ Fetch Categories from API
   void getData() {
     CategoryService().getAllCategoriesData(
+      data: {"categoryType": ApiConstatns.specializations},
+
       voidCallBack: (data) {
         // ضع القائمة الأصلية
         listCategories = data;

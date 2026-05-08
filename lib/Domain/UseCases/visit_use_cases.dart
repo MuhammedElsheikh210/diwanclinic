@@ -1,5 +1,4 @@
 import 'package:dartz/dartz.dart';
-import 'package:diwanclinic/Domain/Repositories/visit_repository.dart';
 import '../../../index/index_main.dart';
 
 class VisitUseCases {

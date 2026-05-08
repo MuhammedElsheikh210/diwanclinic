@@ -1,65 +1,84 @@
 // ignore_for_file: avoid_renaming_method_parameters
 
-
 import '../../index/index_main.dart';
 
-class VisitService {
-  final VisitUseCases useCase = initController(() => VisitUseCases(Get.find()));
+class MedicalRecordPropertyService {
+  final MedicalRecordPropertyUseCases useCase = initController(
+    () => MedicalRecordPropertyUseCases(Get.find()),
+  );
 
-  /// ➕ Add Visit
-  Future<void> addVisitData({
-    required VisitModel visit,
+  /// ➕ Add Property
+  Future<void> addMedicalRecordPropertyData({
+    required MedicalRecordPropertyModel property,
+
     required Function(ResponseStatus) voidCallBack,
   }) async {
     Loader.show();
-    final result = await useCase.addVisit(visit);
+
+    final result = await useCase.addMedicalRecordProperty(property);
+
     result.fold(
       (l) => voidCallBack(ResponseStatus.error),
+
       (r) => voidCallBack(ResponseStatus.success),
     );
   }
 
-  /// 🔄 Update Visit
-  Future<void> updateVisitData({
-    required VisitModel visit,
+  /// 🔄 Update Property
+  Future<void> updateMedicalRecordPropertyData({
+    required MedicalRecordPropertyModel property,
+
     required Function(ResponseStatus) voidCallBack,
   }) async {
     Loader.show();
-    final result = await useCase.updateVisit(visit);
+
+    final result = await useCase.updateMedicalRecordProperty(property);
+
     result.fold(
       (l) => voidCallBack(ResponseStatus.error),
+
       (r) => voidCallBack(ResponseStatus.success),
     );
   }
 
-  /// 🗑 Delete Visit
-  Future<void> deleteVisitData({
-    required String visitKey,
+  /// 🗑 Delete Property
+  Future<void> deleteMedicalRecordPropertyData({
+    required String propertyKey,
+
     required Function(ResponseStatus) voidCallBack,
   }) async {
     Loader.show();
-    final result = await useCase.deleteVisit(visitKey);
+
+    final result = await useCase.deleteMedicalRecordProperty(propertyKey);
+
     result.fold(
       (l) => voidCallBack(ResponseStatus.error),
+
       (r) => voidCallBack(ResponseStatus.success),
     );
   }
 
-  /// 🔍 Get All Visits
-  Future<void> getVisitsData({
+  /// 🔍 Get All Properties
+  Future<void> getMedicalRecordPropertiesData({
     required Map<String, dynamic> data,
+
     required SQLiteQueryParams query,
+
     required FirebaseFilter firebaseFilter,
+
     bool? isFiltered,
-    required Function(List<VisitModel?>) voidCallBack,
+
+    required Function(List<MedicalRecordPropertyModel?>) voidCallBack,
   }) async {
-    final result = await useCase.getVisits(
+    final result = await useCase.getMedicalRecordProperties(
       firebaseFilter.toJson(),
       query,
       isFiltered,
     );
+
     result.fold(
       (l) => Loader.showError("Something went wrong"),
+
       (r) => voidCallBack(r),
     );
   }

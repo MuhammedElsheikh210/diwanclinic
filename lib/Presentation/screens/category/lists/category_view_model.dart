@@ -1,6 +1,11 @@
 import '../../../../../index/index_main.dart';
 
 class CategoryViewModel extends GetxController {
+  /// ✅ Dynamic category type
+  final String? categoryType;
+
+  CategoryViewModel({this.categoryType});
+
   List<CategoryEntity?>? listCategories;
 
   @override
@@ -12,23 +17,23 @@ class CategoryViewModel extends GetxController {
   /// ✅ Fetch Categories from API
   void getData() {
     CategoryService().getAllCategoriesData(
-      filterParams: SQLiteQueryParams(
-        where: "name = ? AND uid = ?",
-        whereArgs: ["test 3", "c4S7jazfPIWCZZnRToV1hH3IXOD2"],
-        // orderBy: 'create_at ${Strings.desc}',
-        is_filtered: true
-      ),
+      data: {"categoryType": categoryType},
+
+      filterParams: SQLiteQueryParams(),
+
       voidCallBack: (data) {
         listCategories = data;
+
         update();
       },
     );
   }
 
-  /// ✅ Delete a Category
+  /// ✅ Delete Category
   void deleteCategory(CategoryEntity category) {
     CategoryService().deleteCategoryData(
       category_entity: category,
+
       voidCallBack: (_) {
         getData();
       },
