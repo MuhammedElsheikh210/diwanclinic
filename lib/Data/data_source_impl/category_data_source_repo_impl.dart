@@ -5,12 +5,24 @@ class CategoryDataSourceRepoImpl extends CategoryDataSourceRepo {
 
   CategoryDataSourceRepoImpl(this._clientSourceRepo);
 
-  /// ✅ Dynamic category path
   String _getCategoryPath(Map<String, dynamic> data) {
+    print("data is ${data}");
     final categoryType = data['categoryType'];
 
     if (categoryType == null || categoryType.toString().isEmpty) {
       return ApiConstatns.specializations;
+    }
+
+    /// ✅ Medical Records Dynamic Path
+    if (categoryType == Strings.medicalRecords) {
+      final user = Get.find<UserSession>().user?.user;
+
+      final path = "doctors/${user?.uid}/medicalRecords";
+
+      /// ✅ update stored categoryType too
+      //data['categoryType'] = path;
+
+      return path;
     }
 
     return categoryType.toString();
@@ -71,6 +83,8 @@ class CategoryDataSourceRepoImpl extends CategoryDataSourceRepo {
     Map<String, dynamic> data,
     String id,
   ) async {
+    print("_getCategoryPath(data) is ${data}");
+    print("_getCategoryPath(data) is ${id}");
     final response = await _clientSourceRepo.request(
       HttpMethod.DELETE,
       "/${_getCategoryPath(data)}/$id.json",

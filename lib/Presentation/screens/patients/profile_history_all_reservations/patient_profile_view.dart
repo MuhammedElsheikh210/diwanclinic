@@ -1,9 +1,11 @@
+import 'package:diwanclinic/Presentation/screens/patients/profile_history_all_reservations/medical_record_form/embedded_medical_record_form.dart';
+
 import '../../../../index/index_main.dart';
 
 class PatientAllHistoryView extends StatefulWidget {
-  final String patient_key;
+  final String patientKey;
 
-  const PatientAllHistoryView({super.key, required this.patient_key});
+  const PatientAllHistoryView({super.key, required this.patientKey});
 
   @override
   State<PatientAllHistoryView> createState() => _PatientAllHistoryViewState();
@@ -11,285 +13,405 @@ class PatientAllHistoryView extends StatefulWidget {
 
 class _PatientAllHistoryViewState extends State<PatientAllHistoryView> {
   late final PatientProfileAllHistoryViewModel controller;
+
   final HandleKeyboardService keyboardService = HandleKeyboardService();
+
+  int selectedTab = 0;
 
   @override
   void initState() {
     controller = initController(() => PatientProfileAllHistoryViewModel());
-    controller.getData(widget.patient_key);
+
+    controller.getData(widget.patientKey);
+
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    final keys = keyboardService.generateKeys('PatientAllHistoryView', 10);
-
     return GetBuilder<PatientProfileAllHistoryViewModel>(
       init: controller,
+
       builder: (vm) {
         final patient = vm.patientModel;
 
         return Scaffold(
           backgroundColor: AppColors.background_neutral_100,
-          appBar: AppBar(
-            elevation: 0,
-            backgroundColor: AppColors.white,
-            title: Text("الملف الشخصي", style: context.typography.lgBold),
-            centerTitle: true,
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(1),
-              child: Container(
-                height: 1,
-                color: AppColors.grayLight,
+
+          appBar: PreferredSize(
+            preferredSize: Size.fromHeight(75.h),
+
+            child: AppBar(
+              automaticallyImplyLeading: false,
+
+              elevation: 0,
+
+              backgroundColor: AppColors.white,
+
+              surfaceTintColor: AppColors.white,
+
+              flexibleSpace: SafeArea(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 10.h,
+                  ),
+
+                  child: Row(
+                    children: [
+                      /// Back Button
+                      InkWell(
+                        borderRadius: BorderRadius.circular(16.r),
+
+                        onTap: () => Get.back(),
+
+                        child: Container(
+                          width: 48.w,
+                          height: 48.h,
+
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16.r),
+
+                            color: AppColors.background_neutral_100,
+                          ),
+
+                          child: Icon(
+                            Icons.arrow_back_ios,
+
+                            size: 18.sp,
+
+                            color: AppColors.background_black,
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(width: 14.w),
+
+                      /// Avatar
+                      Container(
+                        width: 58.w,
+                        height: 58.h,
+
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+
+                          gradient: LinearGradient(
+                            colors: [
+                              AppColors.primary.withValues(alpha: 0.15),
+
+                              AppColors.primary.withValues(alpha: 0.05),
+                            ],
+
+                            begin: Alignment.topLeft,
+
+                            end: Alignment.bottomRight,
+                          ),
+                        ),
+
+                        child: Icon(
+                          Icons.person_rounded,
+
+                          color: AppColors.primary,
+
+                          size: 30.sp,
+                        ),
+                      ),
+
+                      SizedBox(width: 14.w),
+
+                      /// Patient Info
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+
+                          crossAxisAlignment: CrossAxisAlignment.start,
+
+                          children: [
+                            Text(
+                              patient?.name ?? "-",
+
+                              maxLines: 1,
+
+                              overflow: TextOverflow.ellipsis,
+
+                              style: context.typography.xlBold.copyWith(
+                                color: AppColors.background_black,
+                              ),
+                            ),
+
+                            SizedBox(height: 4.h),
+
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.phone_rounded,
+
+                                  size: 15.sp,
+
+                                  color: AppColors.textSecondaryParagraph,
+                                ),
+
+                                SizedBox(width: 5.w),
+
+                                Text(
+                                  patient?.phone ?? "-",
+
+                                  style: context.typography.smMedium.copyWith(
+                                    color: AppColors.textSecondaryParagraph,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(1),
+
+                child: Container(
+                  height: 1,
+
+                  color: AppColors.borderNeutralPrimary.withValues(alpha: 0.4),
+                ),
               ),
             ),
           ),
+          bottomNavigationBar:
+              vm.canCompleteCurrentReservation
+                  ? Container(
+                    decoration: const BoxDecoration(color: AppColors.primary),
 
-          body: KeyboardActions(
-            config: keyboardService.buildConfig(context, keys),
-            child: vm.reservations.isEmpty
-                ? const Center(child: CircularProgressIndicator())
-                : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                _buildPatientInfoCard(context, patient),
-                const SizedBox(height: 25),
+                    child: SafeArea(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 10.h,
+                        ),
 
-                /// Title Row
-                Row(
-                  children: [
-                    const Icon(Icons.receipt_long,
-                        color: AppColors.primary, size: 22),
-                    const SizedBox(width: 6),
-                    Text(
-                      "سجل الكشوفات",
-                      style: context.typography.lgBold.copyWith(
-                        color: AppColors.text_primary_paragraph,
+                        child: PrimaryTextButton(
+                          onTap: () async {
+                            final reservation = vm.currentReservation;
+
+                            if (reservation == null) {
+                              return;
+                            }
+
+                            await vm.completeReservation(
+                              reservation: reservation,
+                            );
+                          },
+
+                          appButtonSize: AppButtonSize.xxLarge,
+
+                          customBackgroundColor: AppColors.primary,
+
+                          elevation: 0,
+
+                          label: AppText(
+                            text: "تم الكشف",
+
+                            textStyle: context.typography.lgBold.copyWith(
+                              color: AppColors.white,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ],
-                ),
+                  )
+                  : null,
+          body: KeyboardActions(
+            config: vm.keyboardService.buildConfig(context, vm.keyboardKeys),
+            child:
+                vm.reservations.isEmpty
+                    ? const Center(child: CircularProgressIndicator())
+                    : ListView(
 
-                const SizedBox(height: 12),
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.symmetric(horizontal: 15,vertical: 20),
 
-                /// History List
-                ...vm.reservations.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final r = entry.value;
-                  return _buildReservationCard(
-                    context,
-                    r,
-                    isFirst: index == 0,
-                  );
-                }).toList(),
-              ],
-            ),
+                      children: [
+                        /// Tabs
+                        _buildTabs(),
+                        SizedBox(height: 20.h),
+
+                        /// Current Visit
+                        if (selectedTab == 0) EmbeddedMedicalRecordForm(vm: vm),
+
+                        /// History
+                        if (selectedTab == 1) _buildHistory(vm),
+                      ],
+                    ),
           ),
         );
       },
     );
   }
 
-  // ─────────────────────────────────────────────
-  // 🟢 Patient Info Card — Clean Professional Style
-  // ─────────────────────────────────────────────
-  Widget _buildPatientInfoCard(BuildContext context, LocalUser? patient) {
+  // ------------------------------------------------------------
+  // Tabs
+  // ------------------------------------------------------------
+  Widget _buildTabs() {
     return Container(
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.borderNeutralPrimary, width: 1),
-      ),
-      padding: const EdgeInsets.all(18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _sectionHeader(
-            context,
-            icon: Icons.person_outline,
-            title: "بيانات العميل",
-          ),
-          const SizedBox(height: 16),
+      height: 58.h,
 
-          _buildInfoRow(
-            context,
-            icon: Icons.badge_outlined,
-            label: "الاسم",
-            value: patient?.name ?? "-",
-          ),
-          _buildInfoRow(
-            context,
-            icon: Icons.phone,
-            label: "الهاتف",
-            value: patient?.phone ?? "-",
-          ),
-        ],
+      padding: EdgeInsets.all(4.r),
+
+      decoration: BoxDecoration(
+        color: AppColors.background_neutral_100,
+
+        borderRadius: BorderRadius.circular(14.r),
+
+        border: Border.all(color: AppColors.borderNeutralPrimary),
+      ),
+
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final tabWidth = (constraints.maxWidth - 8.w) / 2;
+
+          return Stack(
+            children: [
+              /// Animated Background
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 260),
+
+                curve: Curves.easeInOutCubic,
+
+                right: selectedTab == 0 ? 0 : tabWidth,
+
+                top: 0,
+
+                child: Container(
+                  width: tabWidth,
+
+                  height: 50.h,
+
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+
+                    borderRadius: BorderRadius.circular(12.r),
+
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+
+                        blurRadius: 10,
+
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              /// Tabs
+              Row(
+                children: [
+                  Expanded(
+                    child: _AnimatedTabItem(
+                      label: "الكشف الحالي",
+
+                      isSelected: selectedTab == 0,
+
+                      onTap: () {
+                        setState(() {
+                          selectedTab = 0;
+                        });
+                      },
+                    ),
+                  ),
+
+                  Expanded(
+                    child: _AnimatedTabItem(
+                      label: "سجل الكشوفات",
+
+                      isSelected: selectedTab == 1,
+
+                      onTap: () {
+                        setState(() {
+                          selectedTab = 1;
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _sectionHeader(BuildContext context,
-      {required IconData icon, required String title}) {
-    return Row(
+  // ------------------------------------------------------------
+  // History
+  // ------------------------------------------------------------
+  Widget _buildHistory(PatientProfileAllHistoryViewModel vm) {
+    return Column(
       children: [
-        Icon(icon, color: AppColors.primary, size: 22),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: context.typography.lgBold.copyWith(
-            color: AppColors.primary,
-          ),
-        ),
+        ...vm.reservations.asMap().entries.map((entry) {
+          final index = entry.key;
+
+          final reservation = entry.value;
+
+          return ReservationHistoryCard(
+            reservation: reservation,
+
+            medicalRecord: vm.getMedicalRecordByReservationKey(reservation.key),
+
+            isInitiallyExpanded: index == 0,
+          );
+        }),
       ],
     );
   }
+}
 
-  // ─────────────────────────────────────────────
-  // 🟢 Reservation Card — New Clean Style (No Shadow)
-  // ─────────────────────────────────────────────
-  Widget _buildReservationCard(
-      BuildContext context,
-      ReservationModel res, {
-        bool isFirst = false,
-      }) {
-    final prescriptions = <String>[
-      if (res.prescriptionUrl1?.isNotEmpty == true) res.prescriptionUrl1!,
-      if (res.prescriptionUrl2?.isNotEmpty == true) res.prescriptionUrl2!,
-    ];
+class _AnimatedTabItem extends StatelessWidget {
+  final String label;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.borderNeutralPrimary, width: 1),
-      ),
-      child: ExpansionTile(
-        initiallyExpanded: isFirst,
-        iconColor: AppColors.primary,
-        collapsedIconColor: AppColors.textSecondaryParagraph,
-        tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        childrenPadding: const EdgeInsets.all(16),
-        title: Row(
-          children: [
-            Icon(Icons.calendar_month,
-                color: AppColors.primary, size: 20),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                "${res.appointmentDateTime ?? "-"} • ${res.reservationType ?? ""}",
-                style: context.typography.mdBold.copyWith(
-                  color: AppColors.text_primary_paragraph,
-                ),
-              ),
+  final bool isSelected;
+
+  final VoidCallback onTap;
+
+  const _AnimatedTabItem({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12.r),
+
+      onTap: onTap,
+
+      child: SizedBox(
+        height: 50.h,
+
+        child: Center(
+          child: AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 220),
+
+            curve: Curves.easeInOut,
+
+            style: context.typography.mdBold.copyWith(
+              color:
+                  isSelected
+                      ? AppColors.primary
+                      : AppColors.textSecondaryParagraph,
+
+              fontSize: isSelected ? 15.sp : 14.sp,
             ),
-          ],
+
+            child: Text(label),
+          ),
         ),
-        children: [
-          Text(
-            "الروشتة",
-            style: context.typography.lgBold.copyWith(
-              color: AppColors.text_primary_paragraph,
-            ),
-          ),
-          const SizedBox(height: 10),
-
-          if (prescriptions.isEmpty)
-            _buildEmptyPrescription(context)
-          else
-            SizedBox(
-              height: 90,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: prescriptions.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
-                itemBuilder: (_, i) => _buildPrescriptionImage(
-                  url: prescriptions[i],
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyPrescription(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.background_neutral_100,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.borderNeutralPrimary),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.medical_information_outlined,
-              color: AppColors.textSecondaryParagraph),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              "لا توجد روشتة مرفقة لهذا الكشف",
-              style: context.typography.smRegular.copyWith(
-                color: AppColors.textSecondaryParagraph,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPrescriptionImage({required String url}) {
-    return GestureDetector(
-      onTap: () =>
-          Get.to(() => FullScreenImageView(imageUrl: url)),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: CachedNetworkImage(
-          imageUrl: url,
-          fit: BoxFit.cover,
-          width: 110,
-          height: 90,
-        ),
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────
-  // 🟢 Info Row
-  // ─────────────────────────────────────────────
-  Widget _buildInfoRow(
-      BuildContext context, {
-        required IconData icon,
-        required String label,
-        required String value,
-      }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Icon(icon, color: AppColors.primary, size: 18),
-          const SizedBox(width: 8),
-          Expanded(
-            flex: 2,
-            child: Text(
-              label,
-              style: context.typography.smRegular.copyWith(
-                color: AppColors.textSecondaryParagraph,
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 3,
-            child: Text(
-              value,
-              textAlign: TextAlign.end,
-              style: context.typography.mdBold.copyWith(
-                color: AppColors.textDisplay,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

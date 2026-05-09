@@ -1,5 +1,4 @@
 import 'package:diwanclinic/Data/RepositoryImpl/medical_record_repository_impl.dart';
-import 'package:diwanclinic/Data/data_source_impl/medical_record_data_source_repo_impl.dart';
 import 'package:firebase_database/firebase_database.dart';
 import '../index/index_main.dart';
 
@@ -43,12 +42,14 @@ class Binding implements Bindings {
       fenix: true,
     );
 
-    Get.lazyPut<
-        MedicalRecordPropertyDataSourceRepo>(
-          () =>
-          MedicalRecordPropertyDataSourceRepoImpl(
-            Get.find(),
-          ),
+    Get.lazyPut<MedicalRecordPropertyDataSourceRepo>(
+      () => MedicalRecordPropertyDataSourceRepoImpl(Get.find()),
+
+      fenix: true,
+    );
+
+    Get.lazyPut<MedicalRecordDataSourceRepo>(
+      () => MedicalRecordDataSourceRepoImpl(Get.find()),
 
       fenix: true,
     );
@@ -133,12 +134,8 @@ class Binding implements Bindings {
       fenix: true,
     );
 
-    Get.lazyPut<
-        MedicalRecordPropertyRepository>(
-          () =>
-          MedicalRecordPropertyRepositoryImpl(
-            Get.find(),
-          ),
+    Get.lazyPut<MedicalRecordPropertyRepository>(
+      () => MedicalRecordPropertyRepositoryImpl(Get.find()),
 
       fenix: true,
     );
@@ -173,6 +170,12 @@ class Binding implements Bindings {
 
     Get.lazyPut<VisitDataSourceRepo>(
       () => VisitDataSourceRepoImpl(Get.find()),
+      fenix: true,
+    );
+
+    Get.lazyPut<MedicalRecordRepository>(
+      () => MedicalRecordRepositoryImpl(Get.find()),
+
       fenix: true,
     );
 

@@ -18,7 +18,7 @@ class CategoryCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(10.r),
 
       onTap: () {
-        if (controller.categoryType == ApiConstatns.medicalRecords) {
+        if (controller.categoryType == Strings.medicalRecords) {
           Get.to(
             () => MedicalPropertyView(
               title: categoryEntity.name,
@@ -111,7 +111,8 @@ class CategoryCard extends StatelessWidget {
 
   /// **Delete Category Logic**
   void _deleteCategory(BuildContext context) {
-    controller.deleteCategory(categoryEntity);
-    Loader.showSuccess("تم حذف البند بنجاح");
+    print("category is ${categoryEntity.toJson()}");
+   controller.deleteCategory(categoryEntity);
+   Loader.showSuccess("تم حذف البند بنجاح");
   }
 }

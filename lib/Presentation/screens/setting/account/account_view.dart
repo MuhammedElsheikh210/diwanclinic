@@ -140,8 +140,8 @@ class AccountView extends StatelessWidget {
                       label: "التصنيفات",
                       onTap: () {
                         Get.to(
-                          () => CategoryView(
-                            categoryType: ApiConstatns.medicalRecords,
+                          () => const CategoryView(
+                            categoryType: Strings.medicalRecords,
                           ),
                         );
                       },

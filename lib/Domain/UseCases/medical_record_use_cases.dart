@@ -2,56 +2,49 @@ import 'package:dartz/dartz.dart';
 
 import '../../../index/index_main.dart';
 
-class MedicalRecordPropertyUseCases {
-  final MedicalRecordPropertyRepository _repository;
+class MedicalRecordUseCases {
+  final MedicalRecordRepository _repository;
 
-  MedicalRecordPropertyUseCases(this._repository);
+  MedicalRecordUseCases(this._repository);
 
-  /// ➕ Add property
-  Future<Either<AppError, SuccessModel>> addMedicalRecordProperty(
-    MedicalRecordPropertyModel property,
+  /// ➕ Add medical record
+  Future<Either<AppError, SuccessModel>> addMedicalRecord(
+    MedicalRecordModel medicalRecord,
   ) {
-    return _repository.addMedicalRecordPropertyDomain(
-      property.toJson(),
-      property.key ?? "",
+    return _repository.addMedicalRecordDomain(
+      medicalRecord.toJson(),
+      medicalRecord.key ?? "",
     );
   }
 
-  /// 🔄 Update property
-  Future<Either<AppError, SuccessModel>> updateMedicalRecordProperty(
-    MedicalRecordPropertyModel property,
+  /// 🔄 Update medical record
+  Future<Either<AppError, SuccessModel>> updateMedicalRecord(
+    MedicalRecordModel medicalRecord,
   ) {
-    return _repository.updateMedicalRecordPropertyDomain(
-      property.toJson(),
-      property.key ?? "",
+    return _repository.updateMedicalRecordDomain(
+      medicalRecord.toJson(),
+      medicalRecord.key ?? "",
     );
   }
 
-  /// 🗑 Delete property
-  Future<Either<AppError, SuccessModel>> deleteMedicalRecordProperty(
-    String key,
-  ) {
-    return _repository.deleteMedicalRecordPropertyDomain({}, key);
+  /// 🗑 Delete medical record
+  Future<Either<AppError, SuccessModel>> deleteMedicalRecord(String key) {
+    return _repository.deleteMedicalRecordDomain({}, key);
   }
 
-  /// 🔍 Get all properties
-  Future<Either<AppError, List<MedicalRecordPropertyModel?>>>
-  getMedicalRecordProperties(
+  /// 🔍 Get all medical records
+  Future<Either<AppError, List<MedicalRecordModel?>>> getMedicalRecords(
     Map<String, dynamic> data,
     SQLiteQueryParams query,
     bool? isFiltered,
   ) {
-    return _repository.getMedicalRecordPropertiesDomain(
-      data,
-      query,
-      isFiltered,
-    );
+    return _repository.getMedicalRecordsDomain(data, query, isFiltered);
   }
 
-  /// 📌 Get single property
-  Future<Either<AppError, MedicalRecordPropertyModel>> getMedicalRecordProperty(
+  /// 📌 Get single medical record
+  Future<Either<AppError, MedicalRecordModel>> getMedicalRecord(
     Map<String, dynamic> data,
   ) {
-    return _repository.getMedicalRecordPropertyDomain(data);
+    return _repository.getMedicalRecordDomain(data);
   }
 }

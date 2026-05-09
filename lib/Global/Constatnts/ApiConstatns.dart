@@ -101,6 +101,8 @@ class ApiConstatns {
 
   static String get medicalRecords => "doctors/$uid/medicalRecords";
 
+  static String get reservationRecords => "doctors/$uid/reservationRecords";
+
   static String get medicalRecordProperties =>
       "doctors/$uid/medicalRecordProperties";
 

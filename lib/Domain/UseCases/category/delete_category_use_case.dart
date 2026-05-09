@@ -13,7 +13,7 @@ class DeleteCategoryUseCase
   ) async {
     try {
       final result = await _categoryRepository.deleteCategoryDomain(
-        {},
+        categoryEntity.toJson(),
         categoryEntity.key ?? "",
       );
       return result;

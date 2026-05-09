@@ -21,7 +21,6 @@ class InfoRowWidget extends StatelessWidget {
   }
 }
 
-
 class InfoColumnWidget extends StatelessWidget {
   const InfoColumnWidget({super.key, required this.label, required this.value});
 

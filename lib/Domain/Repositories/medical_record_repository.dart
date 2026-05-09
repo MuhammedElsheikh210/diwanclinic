@@ -2,34 +2,39 @@ import 'package:dartz/dartz.dart';
 
 import '../../index/index_main.dart';
 
-abstract class MedicalRecordPropertyRepository {
-  /// 🔍 Fetch properties list
-  Future<Either<AppError, List<MedicalRecordPropertyModel?>>>
-  getMedicalRecordPropertiesDomain(
-    Map<String, dynamic> data,
-    SQLiteQueryParams query,
-    bool? isFiltered,
-  );
+abstract class MedicalRecordRepository {
+  /// 🔍 Fetch medical records
+  Future<Either<AppError, List<MedicalRecordModel?>>>
+  getMedicalRecordsDomain(
+      Map<String, dynamic> data,
+      SQLiteQueryParams query,
+      bool? isFiltered,
+      );
 
-  /// 📌 Fetch single property
-  Future<Either<AppError, MedicalRecordPropertyModel>>
-  getMedicalRecordPropertyDomain(Map<String, dynamic> data);
+  /// 📌 Fetch single medical record
+  Future<Either<AppError, MedicalRecordModel>>
+  getMedicalRecordDomain(
+      Map<String, dynamic> data,
+      );
 
-  /// ➕ Add property
-  Future<Either<AppError, SuccessModel>> addMedicalRecordPropertyDomain(
-    Map<String, dynamic> data,
-    String id,
-  );
+  /// ➕ Add medical record
+  Future<Either<AppError, SuccessModel>>
+  addMedicalRecordDomain(
+      Map<String, dynamic> data,
+      String id,
+      );
 
-  /// 🗑 Delete property
-  Future<Either<AppError, SuccessModel>> deleteMedicalRecordPropertyDomain(
-    Map<String, dynamic> data,
-    String id,
-  );
+  /// 🗑 Delete medical record
+  Future<Either<AppError, SuccessModel>>
+  deleteMedicalRecordDomain(
+      Map<String, dynamic> data,
+      String id,
+      );
 
-  /// 🔄 Update property
-  Future<Either<AppError, SuccessModel>> updateMedicalRecordPropertyDomain(
-    Map<String, dynamic> data,
-    String id,
-  );
+  /// 🔄 Update medical record
+  Future<Either<AppError, SuccessModel>>
+  updateMedicalRecordDomain(
+      Map<String, dynamic> data,
+      String id,
+      );
 }

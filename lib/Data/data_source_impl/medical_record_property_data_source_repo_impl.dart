@@ -1,14 +1,13 @@
-import 'package:diwanclinic/Data/data_source/medical_record_data_source_repo.dart';
-
 import '../../index/index_main.dart';
 
-class MedicalRecordDataSourceRepoImpl extends MedicalRecordDataSourceRepo {
+class MedicalRecordPropertyDataSourceRepoImpl
+    extends MedicalRecordPropertyDataSourceRepo {
   final ClientSourceRepo _clientSourceRepo;
 
-  MedicalRecordDataSourceRepoImpl(this._clientSourceRepo);
+  MedicalRecordPropertyDataSourceRepoImpl(this._clientSourceRepo);
 
   @override
-  Future<List<MedicalRecordModel?>> getMedicalRecords(
+  Future<List<MedicalRecordPropertyModel?>> getMedicalRecordProperties(
     Map<String, dynamic> data,
     SQLiteQueryParams query,
     bool? isFiltered,
@@ -17,47 +16,49 @@ class MedicalRecordDataSourceRepoImpl extends MedicalRecordDataSourceRepo {
       final response = await _clientSourceRepo.request(
         HttpMethod.GET,
 
-        "/${ApiConstatns.reservationRecords}.json",
+        "/${ApiConstatns.medicalRecordProperties}.json",
 
         params: data,
       );
 
-      List<MedicalRecordModel?> medicalRecords =
-          handleResponse<MedicalRecordModel>(
+      List<MedicalRecordPropertyModel?> properties =
+          handleResponse<MedicalRecordPropertyModel>(
             response,
 
-            (json) => MedicalRecordModel.fromJson(json),
+            (json) => MedicalRecordPropertyModel.fromJson(json),
           );
 
-      return medicalRecords;
+      return properties;
     } catch (e) {
       return [];
     }
   }
 
   @override
-  Future<MedicalRecordModel> getMedicalRecord(Map<String, dynamic> data) async {
+  Future<MedicalRecordPropertyModel> getMedicalRecordProperty(
+    Map<String, dynamic> data,
+  ) async {
     try {
       final response = await _clientSourceRepo.request(
         HttpMethod.GET,
 
-        "/${ApiConstatns.reservationRecords}.json",
+        "/${ApiConstatns.medicalRecordProperties}.json",
 
         params: data,
       );
 
-      final medicalRecordJson = response.values.first as Map<String, dynamic>;
+      final propertyJson = response.values.first as Map<String, dynamic>;
 
-      final medicalRecord = MedicalRecordModel.fromJson(medicalRecordJson);
+      final property = MedicalRecordPropertyModel.fromJson(propertyJson);
 
-      return medicalRecord;
+      return property;
     } catch (e) {
       rethrow;
     }
   }
 
   @override
-  Future<SuccessModel> addMedicalRecord(
+  Future<SuccessModel> addMedicalRecordProperty(
     Map<String, dynamic> data,
     String id,
   ) async {
@@ -65,19 +66,19 @@ class MedicalRecordDataSourceRepoImpl extends MedicalRecordDataSourceRepo {
       final response = await _clientSourceRepo.request(
         HttpMethod.PATCH,
 
-        "/${ApiConstatns.reservationRecords}/$id.json",
+        "/${ApiConstatns.medicalRecordProperties}/$id.json",
 
         params: data,
       );
 
       return SuccessModel.fromJson(response);
     } catch (e) {
-      return SuccessModel(message: "Add Medical Record failed");
+      return SuccessModel(message: "Add Medical Record Property failed");
     }
   }
 
   @override
-  Future<SuccessModel> deleteMedicalRecord(
+  Future<SuccessModel> deleteMedicalRecordProperty(
     Map<String, dynamic> data,
     String id,
   ) async {
@@ -85,7 +86,7 @@ class MedicalRecordDataSourceRepoImpl extends MedicalRecordDataSourceRepo {
       final response = await _clientSourceRepo.request(
         HttpMethod.DELETE,
 
-        "/${ApiConstatns.reservationRecords}/$id.json",
+        "/${ApiConstatns.medicalRecordProperties}/$id.json",
 
         params: data,
       );
@@ -94,12 +95,12 @@ class MedicalRecordDataSourceRepoImpl extends MedicalRecordDataSourceRepo {
           ? SuccessModel(message: "تمت العملية بنجاح")
           : SuccessModel.fromJson(response);
     } catch (e) {
-      return SuccessModel(message: "Delete Medical Record failed");
+      return SuccessModel(message: "Delete Property failed");
     }
   }
 
   @override
-  Future<SuccessModel> updateMedicalRecord(
+  Future<SuccessModel> updateMedicalRecordProperty(
     Map<String, dynamic> data,
     String id,
   ) async {
@@ -107,14 +108,14 @@ class MedicalRecordDataSourceRepoImpl extends MedicalRecordDataSourceRepo {
       final response = await _clientSourceRepo.request(
         HttpMethod.PATCH,
 
-        "/${ApiConstatns.reservationRecords}/$id.json",
+        "/${ApiConstatns.medicalRecordProperties}/$id.json",
 
         params: data,
       );
 
       return SuccessModel.fromJson(response);
     } catch (e) {
-      return SuccessModel(message: "Update Medical Record failed");
+      return SuccessModel(message: "Update Property failed");
     }
   }
 }

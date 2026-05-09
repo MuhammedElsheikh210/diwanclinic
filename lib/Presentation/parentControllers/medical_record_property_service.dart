@@ -1,22 +1,21 @@
 // ignore_for_file: avoid_renaming_method_parameters
 
-
 import '../../index/index_main.dart';
 
-class MedicalRecordService {
-  final MedicalRecordUseCases useCase = initController(
-    () => MedicalRecordUseCases(Get.find()),
+class MedicalRecordPropertyService {
+  final MedicalRecordPropertyUseCases useCase = initController(
+    () => MedicalRecordPropertyUseCases(Get.find()),
   );
 
-  /// ➕ Add Medical Record
-  Future<void> addMedicalRecordData({
-    required MedicalRecordModel medicalRecord,
+  /// ➕ Add Property
+  Future<void> addMedicalRecordPropertyData({
+    required MedicalRecordPropertyModel property,
 
     required Function(ResponseStatus) voidCallBack,
   }) async {
     Loader.show();
 
-    final result = await useCase.addMedicalRecord(medicalRecord);
+    final result = await useCase.addMedicalRecordProperty(property);
 
     result.fold(
       (l) => voidCallBack(ResponseStatus.error),
@@ -25,15 +24,15 @@ class MedicalRecordService {
     );
   }
 
-  /// 🔄 Update Medical Record
-  Future<void> updateMedicalRecordData({
-    required MedicalRecordModel medicalRecord,
+  /// 🔄 Update Property
+  Future<void> updateMedicalRecordPropertyData({
+    required MedicalRecordPropertyModel property,
 
     required Function(ResponseStatus) voidCallBack,
   }) async {
     Loader.show();
 
-    final result = await useCase.updateMedicalRecord(medicalRecord);
+    final result = await useCase.updateMedicalRecordProperty(property);
 
     result.fold(
       (l) => voidCallBack(ResponseStatus.error),
@@ -42,15 +41,15 @@ class MedicalRecordService {
     );
   }
 
-  /// 🗑 Delete Medical Record
-  Future<void> deleteMedicalRecordData({
-    required String medicalRecordKey,
+  /// 🗑 Delete Property
+  Future<void> deleteMedicalRecordPropertyData({
+    required String propertyKey,
 
     required Function(ResponseStatus) voidCallBack,
   }) async {
     Loader.show();
 
-    final result = await useCase.deleteMedicalRecord(medicalRecordKey);
+    final result = await useCase.deleteMedicalRecordProperty(propertyKey);
 
     result.fold(
       (l) => voidCallBack(ResponseStatus.error),
@@ -59,8 +58,8 @@ class MedicalRecordService {
     );
   }
 
-  /// 🔍 Get All Medical Records
-  Future<void> getMedicalRecordsData({
+  /// 🔍 Get All Properties
+  Future<void> getMedicalRecordPropertiesData({
     required Map<String, dynamic> data,
 
     required SQLiteQueryParams query,
@@ -69,9 +68,9 @@ class MedicalRecordService {
 
     bool? isFiltered,
 
-    required Function(List<MedicalRecordModel?>) voidCallBack,
+    required Function(List<MedicalRecordPropertyModel?>) voidCallBack,
   }) async {
-    final result = await useCase.getMedicalRecords(
+    final result = await useCase.getMedicalRecordProperties(
       firebaseFilter.toJson(),
       query,
       isFiltered,

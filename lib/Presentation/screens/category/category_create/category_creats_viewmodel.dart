@@ -70,6 +70,7 @@ class CreateCategoryViewModel
               categoryType,
             );
 
+
     is_update
         ? updateCategory(category)
         : createCategory(category);

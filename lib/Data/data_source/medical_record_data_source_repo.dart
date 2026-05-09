@@ -1,32 +1,27 @@
 import '../../index/index_main.dart';
 
-abstract class MedicalRecordPropertyDataSourceRepo {
-  /// 🔹 Get properties
-  Future<List<MedicalRecordPropertyModel?>> getMedicalRecordProperties(
+abstract class MedicalRecordDataSourceRepo {
+  /// 🔹 Get medical records
+  Future<List<MedicalRecordModel?>> getMedicalRecords(
     Map<String, dynamic> data,
     SQLiteQueryParams query,
     bool? isFiltered,
   );
 
-  /// 🔹 Get single property
-  Future<MedicalRecordPropertyModel> getMedicalRecordProperty(
-    Map<String, dynamic> data,
-  );
+  /// 🔹 Get single medical record
+  Future<MedicalRecordModel> getMedicalRecord(Map<String, dynamic> data);
 
-  /// 🔹 Add property
-  Future<SuccessModel> addMedicalRecordProperty(
-    Map<String, dynamic> data,
-    String id,
-  );
+  /// 🔹 Add medical record
+  Future<SuccessModel> addMedicalRecord(Map<String, dynamic> data, String id);
 
-  /// 🔹 Delete property
-  Future<SuccessModel> deleteMedicalRecordProperty(
+  /// 🔹 Delete medical record
+  Future<SuccessModel> deleteMedicalRecord(
     Map<String, dynamic> data,
     String id,
   );
 
-  /// 🔹 Update property
-  Future<SuccessModel> updateMedicalRecordProperty(
+  /// 🔹 Update medical record
+  Future<SuccessModel> updateMedicalRecord(
     Map<String, dynamic> data,
     String id,
   );

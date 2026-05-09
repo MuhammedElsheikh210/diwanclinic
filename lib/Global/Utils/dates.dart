@@ -9,8 +9,21 @@ class DatesUtilis {
     }
   }
 
-  static T convertTimestamp<T>(int timestamp) {
+  static String formatDateTime(String? date) {
+    if (date == null || date.isEmpty) {
+      return "-";
+    }
 
+    try {
+      final parsedDate = DateTime.parse(date);
+
+      return DateFormat('dd-MM-yyyy • hh:mm a').format(parsedDate);
+    } catch (e) {
+      return date;
+    }
+  }
+
+  static T convertTimestamp<T>(int timestamp) {
     final dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp);
 
     // ✅ لو النوع String
@@ -30,9 +43,7 @@ class DatesUtilis {
     }
 
     // ❌ أي نوع تاني
-    throw UnsupportedError(
-      "convertTimestamp does not support type $T",
-    );
+    throw UnsupportedError("convertTimestamp does not support type $T");
   }
 
   static String todayAsString() {
@@ -54,7 +65,6 @@ class DatesUtilis {
 
     return "منذ ${diff.inDays ~/ 365} سنة";
   }
-
 
   static void checkDateEndBiggerThanStart({
     required String startDateText,

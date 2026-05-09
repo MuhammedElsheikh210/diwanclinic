@@ -405,8 +405,11 @@ ORDER => ${r.orderNum}
 
         Loader.dismiss();
 
-        final all = list.whereType<ReservationModel>().toList();
-
+        final all =
+            list
+                .whereType<ReservationModel>()
+                .where((r) => r.status != ReservationStatus.pending.value)
+                .toList();
         AppLogger.info("DOCTOR_DEBUG", "AFTER CAST => ${all.length}");
 
         final inProgress =

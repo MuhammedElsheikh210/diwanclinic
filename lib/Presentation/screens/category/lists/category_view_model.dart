@@ -11,13 +11,16 @@ class CategoryViewModel extends GetxController {
   @override
   Future<void> onInit() async {
     getData();
+
     super.onInit();
   }
 
   /// ✅ Fetch Categories from API
   void getData() {
     CategoryService().getAllCategoriesData(
-      data: {"categoryType": categoryType},
+      data: {
+        "categoryType": categoryType,
+      },
 
       filterParams: SQLiteQueryParams(),
 
@@ -32,7 +35,9 @@ class CategoryViewModel extends GetxController {
   /// ✅ Delete Category
   void deleteCategory(CategoryEntity category) {
     CategoryService().deleteCategoryData(
-      category_entity: category,
+      category_entity: category.copyWith(
+        categoryType: categoryType,
+      ),
 
       voidCallBack: (_) {
         getData();
