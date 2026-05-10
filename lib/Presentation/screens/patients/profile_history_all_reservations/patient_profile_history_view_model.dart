@@ -267,9 +267,7 @@ class PatientProfileAllHistoryViewModel extends GetxController {
   // ─────────────────────────────────────────────
   Future<void> getMedicalCategories() async {
     await CategoryService().getAllCategoriesData(
-      data: {
-        "categoryType": Strings.medicalRecords,
-      },
+      data: {"categoryType": Strings.medicalRecords},
 
       filterParams: SQLiteQueryParams(),
 
@@ -277,13 +275,9 @@ class PatientProfileAllHistoryViewModel extends GetxController {
         medicalCategories = data;
 
         /// ✅ If categories exist
-        if (medicalCategories.isNotEmpty &&
-            medicalCategories.first != null) {
-          await onSelectCategory(
-            medicalCategories.first,
-          );
+        if (medicalCategories.isNotEmpty && medicalCategories.first != null) {
+          await onSelectCategory(medicalCategories.first);
         }
-
         /// ✅ No categories → load all properties
         else {
           await getAllProperties();
@@ -295,8 +289,7 @@ class PatientProfileAllHistoryViewModel extends GetxController {
   }
 
   Future<void> getAllProperties() async {
-    await MedicalRecordPropertyService()
-        .getMedicalRecordPropertiesData(
+    await MedicalRecordPropertyService().getMedicalRecordPropertiesData(
       data: {},
 
       firebaseFilter: FirebaseFilter(),
@@ -310,15 +303,15 @@ class PatientProfileAllHistoryViewModel extends GetxController {
 
         for (final property in properties) {
           if (property?.key != null) {
-            propertyControllers[property!.key!] =
-                TextEditingController();
+            propertyControllers[property!.key!] = TextEditingController();
           }
         }
 
         update();
       },
     );
-  }  // ─────────────────────────────────────────────
+  } // ─────────────────────────────────────────────
+
   // 🧾 Select Category
   // ─────────────────────────────────────────────
   Future<void> onSelectCategory(CategoryEntity? category) async {
@@ -384,11 +377,11 @@ class PatientProfileAllHistoryViewModel extends GetxController {
   Future<void> saveMedicalRecord({
     required ReservationModel reservation,
   }) async {
-    if (selectedCategory == null) {
-      Loader.showError("من فضلك اختر التصنيف");
-
-      return;
-    }
+    // if (selectedCategory == null) {
+    //   Loader.showError("من فضلك اختر التصنيف");
+    //
+    //   return;
+    // }
 
     final user = Get.find<UserSession>().user?.user;
 

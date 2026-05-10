@@ -50,13 +50,13 @@ class NotificationController extends GetxController {
 
     /// 🟢 1. لو Patient → هات الداتا مرة واحدة الأول
     if (isPatient) {
-      await _service.getAllNotificationsOnlineData(
-        voidCallBack: (list) {
-          notifications = list;
-          _sort();
-          update();
-        },
-      );
+      // await _service.getAllNotificationsOnlineData(
+      //   voidCallBack: (list) {
+      //     notifications = list;
+      //     _sort();
+      //     update();
+      //   },
+      // );
     }
 
     /// 🔥 2. بعد كدا شغل realtime

@@ -9,7 +9,6 @@ class ReservationDoctorViewModel extends GetxController {
   // ─────────────────────────────────────────────
   // 🔹 Services
   // ─────────────────────────────────────────────
-  final ReservationService _reservationService = ReservationService();
 
   final PrescriptionUploadService prescriptionService =
       PrescriptionUploadService();
@@ -19,7 +18,6 @@ class ReservationDoctorViewModel extends GetxController {
   // ─────────────────────────────────────────────
   bool isSyncing = false;
   bool showDailyReport = false;
-  bool? fromUpdate;
 
   // ─────────────────────────────────────────────
   // 🔹 Reservation Data
@@ -147,7 +145,7 @@ class ReservationDoctorViewModel extends GetxController {
 
   @override
   void onClose() {
-    _reservationService.dispose();
+   // _reservationService.dispose();
 
     super.onClose();
   }
@@ -195,11 +193,30 @@ class ReservationDoctorViewModel extends GetxController {
   // 🔹 Day Stats
   // ─────────────────────────────────────────────
   void loadDayStats() {
+    if (selectedShift == null) return;
+
+    String where =
+        "appointment_date_time = ? "
+        "AND doctor_uid = ? "
+        "AND shift_key = ?";
+
+    final whereArgs = [
+      appointment_date_time,
+      _doctorKey,
+      selectedShift!.key,
+    ];
+
+    // ✅ optional clinic filter
+    if (selectedClinic?.key != null) {
+      where += " AND clinic_key = ?";
+      whereArgs.add(selectedClinic!.key);
+    }
+
     ReservationService().getReservationsData(
       query: SQLiteQueryParams(
         is_filtered: true,
-        where: "appointment_date_time = ? AND doctor_uid = ?",
-        whereArgs: [appointment_date_time, _doctorKey],
+        where: where,
+        whereArgs: whereArgs,
       ),
       voidCallBack: (list) {
         dayReservations = list.whereType<ReservationModel>().toList();
@@ -208,7 +225,6 @@ class ReservationDoctorViewModel extends GetxController {
       },
     );
   }
-
   // ─────────────────────────────────────────────
   // 🔹 Active Filters
   // ─────────────────────────────────────────────
@@ -477,6 +493,52 @@ ORDER => ${r.orderNum}
     return waiting;
   }
 
+  void _rebuildReservationsList() {
+    final all = List<ReservationModel>.from(dayReservations);
+
+    final inProgress =
+    all
+        .where(
+          (r) => r.status == ReservationStatus.inProgress.value,
+    )
+        .toList();
+
+    final approved =
+    all
+        .where(
+          (r) => r.status == ReservationStatus.approved.value,
+    )
+        .toList();
+
+    final completed =
+    all
+        .where(
+          (r) => r.status == ReservationStatus.completed.value,
+    )
+        .toList();
+
+    final cancelled =
+    all
+        .where(
+          (r) =>
+      r.status == ReservationStatus.cancelledByUser.value ||
+          r.status == ReservationStatus.cancelledByAssistant.value ||
+          r.status == ReservationStatus.cancelledByDoctor.value,
+    )
+        .toList();
+
+    final queue = reorderedQueue(approved);
+
+    listReservations = [
+      ...inProgress,
+      ...queue,
+      ...completed,
+      ...cancelled,
+    ];
+
+    update();
+  }
+
   int aheadInQueue(ReservationModel r) {
     if (listReservations == null) {
       return 0;
@@ -555,28 +617,29 @@ extension ReservationDoctorData on ReservationDoctorViewModel {
   void _listenToGlobalReservationEvents() {
     final service = ReservationService();
 
-    service.onReservationAdded = (reservation) {
+    service.onReservationAdded = (reservation) async {
       if (!_belongsToCurrentFilters(reservation)) {
         return;
       }
 
       _updateListInMemory(reservation);
+    //  await Future.microtask(() => getReservations());
+
     };
 
     service.onReservationUpdated = (reservation) async {
       if (!_belongsToCurrentFilters(reservation)) {
         return;
       }
+      _updateListInMemory(reservation);
 
-      await Future.microtask(() => getReservations());
+    //  await Future.microtask(() => getReservations());
     };
 
     service.onReservationRemoved = (key) {
       dayReservations.removeWhere((e) => e.key == key);
 
-      listReservations = List.from(dayReservations);
-
-      update();
+      _rebuildReservationsList();
     };
   }
 
@@ -603,17 +666,14 @@ extension ReservationDoctorData on ReservationDoctorViewModel {
   }
 
   void _updateListInMemory(ReservationModel model) {
-    if (fromUpdate == true) {
-      fromUpdate = false;
-      return;
-    }
-
     if (dayReservations.isEmpty) {
       getReservations();
       return;
     }
 
-    final index = dayReservations.indexWhere((e) => e.key == model.key);
+    final index = dayReservations.indexWhere(
+          (e) => e.key == model.key,
+    );
 
     if (index != -1) {
       dayReservations[index] = model;
@@ -621,8 +681,6 @@ extension ReservationDoctorData on ReservationDoctorViewModel {
       dayReservations.add(model);
     }
 
-    listReservations = List.from(dayReservations);
-
-    update();
+    _rebuildReservationsList();
   }
 }

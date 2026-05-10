@@ -285,24 +285,32 @@ class ReservationViewModel extends GetxController {
     try {
       /// ✅ Optimistic UI
       reservation.status = newStatus.value;
-      fromUpdate = true;
 
-      /// ✅ PATH
-      final path =
-          "doctors/${reservation.doctorUid}"
-          "/reservations/${reservation.appointmentDateTime}"
-          "/${reservation.key}";
+      // /// ✅ PATH
+      // final path =
+      //     "doctors/${reservation.doctorUid}"
+      //     "/reservations/${reservation.appointmentDateTime}"
+      //     "/${reservation.key}";
+      //
+      // final ref = FirebaseDatabase.instance.ref(path);
+      //
+      // /// ✅ DATA
+      // final updateData = {
+      //   "status": newStatus.value,
+      //   if (cancelReason != null) "cancelReason": cancelReason,
+      // };
+      //
+      // /// 🔥 UPDATE DOCTOR (trigger function)
+      // await ref.update(updateData);
 
-      final ref = FirebaseDatabase.instance.ref(path);
 
-      /// ✅ DATA
-      final updateData = {
-        "status": newStatus.value,
-        if (cancelReason != null) "cancelReason": cancelReason,
-      };
 
-      /// 🔥 UPDATE DOCTOR (trigger function)
-      await ref.update(updateData);
+      await ReservationService().updateReservationData(
+        reservation: reservation,
+        voidCallBack: (_) {
+          getReservations();
+        },
+      );
 
       /// ✅ 🔥🔥🔥 UPDATE PATIENT COPY
       await PatientReservationService().updateReservationData(
@@ -348,39 +356,13 @@ class ReservationViewModel extends GetxController {
         newStatus: newStatus,
       );
 
-      // /// 🔥 NEW: SAVE NOTIFICATION
-      // final text = _buildNotificationText(
-      //   reservation,
-      //   newStatus,
-      //   cancelReason,
-      // );
-      //
-      // if (text != null && reservation.patientUid != null) {
-      //   await NotificationPatentService().addNotificationData(
-      //     notification: NotificationModel.newNotification(
-      //       title: text.$1,
-      //       body: text.$2,
-      //       reservationKey: reservation.key,
-      //       toKey: reservation.patientUid!, // 🔥 مهم
-      //       userType: UserType.patient,
-      //       notificationType: newStatus.value,
-      //       extraData: reservation.toJson(),
-      //     ),
-      //     voidCallBack: (status) {
-      //
-      //     },
-      //   );
-      // }
 
       /// ✅ Queue
       if (newStatus == ReservationStatus.completed) {
-
-
         await WhatsAppSessionService.startPrescriptionSession(
           phone: reservation.patientPhone ?? "",
           reservationId: reservation.key ?? "",
         );
-
 
         await _handleQueueUpdate();
       }
@@ -412,7 +394,7 @@ class ReservationViewModel extends GetxController {
 
   @override
   void onClose() {
-    _reservationService.dispose();
+    //  _reservationService.dispose();
     super.onClose();
   }
 }
@@ -481,7 +463,11 @@ extension ReservationData on ReservationViewModel {
       completeDayReservations.add(model);
     }
 
-    listReservations = List.from(completeDayReservations);
+    //listReservations = List.from(completeDayReservations);
+
+    listReservations = queueManager.buildFinalList(
+      completeDayReservations.whereType<ReservationModel>().toList(),
+    );
 
     update();
   }

@@ -217,11 +217,11 @@ class MainPageViewModel extends GetxController {
 
   @override
   void onClose() {
-    _reservationService.dispose();
-    _patientReservationService.dispose();
+  //  _reservationService.dispose();
+   // _patientReservationService.dispose();
 
     // 🔥 مهم جدًا
-    _patientOrderService.dispose();
+   // _patientOrderService.dispose();
 
     _authService.dispose();
 
