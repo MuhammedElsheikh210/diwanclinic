@@ -1,27 +1,25 @@
 import '../../index/index_main.dart';
 
 class StorageService {
+  StorageService._internal();
+
   static final StorageService _instance = StorageService._internal();
-  late SharedPreferences _preferences;
 
   factory StorageService() => _instance;
 
-  StorageService._internal();
+  late SharedPreferences _preferences;
 
   Future<void> init() async {
     _preferences = await SharedPreferences.getInstance();
   }
 
-  // ============================================================
-  // SAVE
-  // ============================================================
+
 
   Future<bool> setData(String key, Map<String, dynamic> data) async {
     try {
       final jsonData = json.encode(data);
       return await _preferences.setString(key, jsonData);
     } catch (e) {
-      
       return false;
     }
   }
@@ -36,9 +34,7 @@ class StorageService {
       if (jsonData != null) {
         return json.decode(jsonData) as Map<String, dynamic>;
       }
-    } catch (e) {
-      
-    }
+    } catch (e) {}
     return null;
   }
 
