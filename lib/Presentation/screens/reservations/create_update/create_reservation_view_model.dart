@@ -1263,7 +1263,6 @@ class CreateReservationViewModel extends GetxController {
 
   void refreshListView() {
     final reservationVM = initController(() => ReservationViewModel());
-    reservationVM.fromUpdate = null;
     reservationVM.getReservations();
     reservationVM.update();
     Get.back();

@@ -182,7 +182,7 @@ class ReservationRemoteDataSourceImpl implements ReservationRemoteDataSource {
 
     AppLogger.info("RESERVATION_RT", "CREATE → $path");
 
-    await _database.ref(path).set(reservation.toJson());
+    await _database.ref(path).set(reservation.toFirebaseJson());
   }
 
   // ============================================================
@@ -195,7 +195,7 @@ class ReservationRemoteDataSourceImpl implements ReservationRemoteDataSource {
 
     AppLogger.info("RESERVATION_RT", "UPDATE → $path");
 
-    await _database.ref(path).update(reservation.toJson());
+    await _database.ref(path).update(reservation.toFirebaseJson());
   }
 
   // ============================================================

@@ -40,35 +40,6 @@ class ReservationQueryManager {
     final normalizedDate = AppDateFormatter.toDash(appointmentDate);
 
     // ============================================================
-    // 🔍 DEBUG STEP 1: Fetch All Data
-    // ============================================================
-
-    final allData = await getReservations(
-      query: SQLiteQueryParams(where: "1=1"),
-    );
-
-    for (var r in allData.take(5)) {}
-
-    // ============================================================
-    // 🔍 DEBUG STEP 2: Shift Only
-    // ============================================================
-
-    final shiftOnly = await getReservations(
-      query: SQLiteQueryParams(where: "shift_key = ?", whereArgs: [shiftKey]),
-    );
-
-    // ============================================================
-    // 🔍 DEBUG STEP 3: Date Only
-    // ============================================================
-
-    final dateOnly = await getReservations(
-      query: SQLiteQueryParams(
-        where: "appointment_date_time LIKE ?",
-        whereArgs: ["%$normalizedDate%"],
-      ),
-    );
-
-    // ============================================================
     // 🔥 FINAL QUERY
     // ============================================================
 
@@ -92,17 +63,6 @@ class ReservationQueryManager {
         orderBy: "order_num ASC",
       ),
     );
-
-    // ============================================================
-    // 🔥 EXTRA DEBUG (Manual Filter Check)
-    // ============================================================
-
-    final manualCheck =
-        allData.where((r) {
-          return r.appointmentDateTime == normalizedDate &&
-              r.shiftKey == shiftKey &&
-              r.clinicKey == selectedClinic?.key;
-        }).toList();
 
     return result;
   }
@@ -140,7 +100,7 @@ class ReservationQueryManager {
         limit: 1,
       ),
       voidCallBack: (clients) {
-        if (clients.isNotEmpty && clients.first != null) {
+        if (clients.isNotEmpty) {
           result = clients.first;
         }
       },

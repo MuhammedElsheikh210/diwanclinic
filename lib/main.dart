@@ -47,15 +47,16 @@ void main() {
         fenix: true,
       );
 
+      // 🔹 UserSession (لازم يتسجل قبل Binding عشان controllers تلاقيه)
+      final userSession = UserSession(Get.find());
+      await userSession.init();
+      Get.put<UserSession>(userSession, permanent: true);
+
       // 🔹 باقي الـ dependencies
       Binding().dependencies();
 
       // 🎨 ThemeScope (مهم)
       final app = await ThemeScopeWidget.initialize(const MyApp());
-
-      final userSession = UserSession(Get.find());
-      await userSession.init();
-      Get.put<UserSession>(userSession, permanent: true);
 
       // 🚀 run app بسرعة
       runApp(

@@ -810,7 +810,6 @@ class ReservationAssistantDetailsView extends StatelessWidget {
     // 🔄 1) UPDATE STATUS (ONCE)
     // =================================================
     reservation.status = newStatus.value;
-    controller.fromUpdate = true;
 
     await controller.actionManager.updateReservation(reservation);
     // await controller.getReservations();

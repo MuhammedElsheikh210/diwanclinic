@@ -1,4 +1,3 @@
-import 'package:firebase_database/firebase_database.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../../../index/index_main.dart';
@@ -13,15 +12,12 @@ class ReservationViewModel extends GetxController {
   bool _isProcessingStatus = false;
   List<ReservationModel> _cachedReservations = [];
 
-  final ReservationService _reservationService = ReservationService();
-
   // Services
   final PrescriptionUploadService prescriptionService =
       PrescriptionUploadService();
 
   // UI State
   bool showDailyReport = true;
-  bool? fromUpdate;
   bool isSyncing = false;
 
   int selectedTab = 0;
@@ -244,7 +240,7 @@ class ReservationViewModel extends GetxController {
       doctorKey: doctorKey ?? "",
       query: SQLiteQueryParams(),
       voidCallBack: (data) async {
-        if (data != null && data.isNotEmpty) {
+        if (data.isNotEmpty) {
           shiftDropdownItems = ShiftModelAdapterUtil.convertShiftListToGeneric(
             data,
           );
@@ -409,10 +405,10 @@ extension ReservationData on ReservationViewModel {
       _updateListInMemory(reservation);
     };
 
-    service.onReservationUpdated = (reservation) async {
+    service.onReservationUpdated = (reservation) {
       if (!_belongsToCurrentFilters(reservation)) return;
 
-      await getReservations();
+      _updateListInMemory(reservation);
     };
 
     service.onReservationRemoved = (key) {
@@ -442,11 +438,6 @@ extension ReservationData on ReservationViewModel {
   }
 
   void _updateListInMemory(ReservationModel model) {
-    if (fromUpdate == true) {
-      fromUpdate = false;
-      return;
-    }
-
     /// 🔥 لو القائمة فاضية → اعمل reload
     if (completeDayReservations.isEmpty) {
       getReservations();
@@ -580,33 +571,5 @@ extension ReservationData on ReservationViewModel {
             : DatesUtilis.humanizeTimestamp(reservation.createdAt);
 
     update();
-  }
-}
-
-(String, String)? _buildNotificationText(
-  ReservationModel r,
-  ReservationStatus status,
-  String? cancelReason,
-) {
-  switch (status) {
-    case ReservationStatus.approved:
-      return ("تم تأكيد الحجز ✅", "حجزك رقم ${r.orderNum} تم تأكيده بنجاح 👍");
-
-    case ReservationStatus.completed:
-      return (
-        "تم الانتهاء من الكشف 🎉",
-        "نتمنى لك الشفاء 💙 تقدر تطلب علاجك ويوصلك لحد البيت 🚚",
-      );
-
-    case ReservationStatus.cancelledByAssistant:
-    case ReservationStatus.cancelledByDoctor:
-    case ReservationStatus.cancelledByUser:
-      return (
-        "تم إلغاء الحجز",
-        cancelReason ?? "تم إلغاء الحجز. يمكنك الحجز مرة أخرى في أي وقت 🙏",
-      );
-
-    default:
-      return null;
   }
 }

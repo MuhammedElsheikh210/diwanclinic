@@ -210,6 +210,15 @@ class ReservationModel {
     return data;
   }
 
+  // 🔹 Firebase JSON (excludes SQLite sync metadata)
+  Map<String, dynamic> toFirebaseJson() {
+    final data = toJson();
+    data.remove('is_deleted');
+    data.remove('server_updated_at');
+    data.remove('updated_at');
+    return data;
+  }
+
   // 🔹 From JSON
   factory ReservationModel.fromJson(Map<String, dynamic> json) {
     int? toInt(dynamic v) {

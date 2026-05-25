@@ -40,20 +40,15 @@ class ReservationService {
   Future<void> startListening({required String doctorKey}) async {
     if (doctorKey.isEmpty) return;
 
-    if (_isListening) {
-      await useCase.stopListening();
-    }
-
-    // 🟡 لو نفس الدكتور متغيرش
+    // نفس الدكتور وبيسمع فعلاً - مش محتاج نعمل حاجة
     if (_currentDoctorKey == doctorKey && _isListening) {
       return;
     }
 
-    // 🔄 لو فيه listener قديم
+    // وقّف القديم الأول
     if (_isListening) {
       await stopListening();
     }
-
 
     await useCase.startListening(doctorKey: doctorKey);
 
