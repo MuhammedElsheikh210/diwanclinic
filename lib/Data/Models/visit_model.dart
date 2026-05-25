@@ -15,7 +15,7 @@ class VisitModel {
   final double? doctorLng;
 
   /// Visit Date & Time
-  final String? visitDate; // yyyy-MM-dd
+  final String? visitDate; // yyyy-MM-ddيا
   final String? visitTime; // HH:mm
   final int? visitTimestamp; // sorting only
 

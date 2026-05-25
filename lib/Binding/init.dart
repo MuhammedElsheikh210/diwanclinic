@@ -1,3 +1,4 @@
+import 'package:diwanclinic/Binding/base_binding.dart';
 import 'package:diwanclinic/Data/RepositoryImpl/medical_record_repository_impl.dart';
 import 'package:firebase_database/firebase_database.dart';
 import '../index/index_main.dart';
@@ -363,5 +364,14 @@ class Binding implements Bindings {
     Get.lazyPut<OrdersListViewModel>(() => OrdersListViewModel());
 
     Get.put(HomePatientController(), permanent: true);
+
+
+    BaseBinding.bindCrud<VisitModel>(
+      tag: "visits",
+
+      baseUrl: ApiConstatns.visits,
+
+      fromJson: (json) => VisitModel.fromJson(json),
+    );
   }
 }

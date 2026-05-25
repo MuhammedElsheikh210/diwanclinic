@@ -19,30 +19,30 @@ async function sendWhatsApp(
 
   try {
 
-    const res =
-      await axios.post(
-
-        "https://api.ultramsg.com/instance86174/messages/chat",
-
-        new URLSearchParams({
-
-          token:
-            "zi9hxnjprdgdayfg",
-
-          to: "+" + to,
-
-          body: msg,
-        }),
-
-        {
-
-          headers: {
-
-            "Content-Type":
-              "application/x-www-form-urlencoded",
-          },
-        }
-      );
+//    const res =
+//      await axios.post(
+//
+//        "https://api.ultramsg.com/instance86174/messages/chat",
+//
+//        new URLSearchParams({
+//
+//          token:
+//            "zi9hxnjprdgdayfg",
+//
+//          to: "+" + to,
+//
+//          body: msg,
+//        }),
+//
+//        {
+//
+//          headers: {
+//
+//            "Content-Type":
+//              "application/x-www-form-urlencoded",
+//          },
+//        }
+//      );
 
     console.log(
       "✅ WhatsApp sent:",

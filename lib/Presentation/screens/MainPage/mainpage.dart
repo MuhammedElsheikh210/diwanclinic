@@ -1,3 +1,5 @@
+import 'package:diwanclinic/Presentation/screens/generic_visite/read/view.dart';
+
 import '../../../index/index_main.dart';
 import 'package:flutter/cupertino.dart';
 
@@ -135,7 +137,7 @@ class _MainPageState extends State<MainPage> {
 
     // 🛑 حماية إضافية للـ currentIndex
     if (controller.currentIndex >= items.length) {
-     controller.currentIndex = 0;
+      controller.currentIndex = 0;
     }
 
     return CupertinoTheme(
@@ -285,7 +287,9 @@ class _MainPageState extends State<MainPage> {
       case UserType.assistant:
         return [
           const ReservationView(),
-          const NotificationsView(),
+
+          const VisitGenericView(title: "Generic",),
+          //  const NotificationsView(),
           const OrdersView(),
           const AccountView(),
         ][index];

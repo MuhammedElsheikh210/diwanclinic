@@ -623,3 +623,9 @@ export 'package:diwanclinic/Data/data_source_impl/medical_record_property_data_s
 export 'package:diwanclinic/Presentation/screens/patients/profile_history_all_reservations/medical_record_form/widgets/medical_record_category_dropdown.dart';
 export 'package:diwanclinic/Presentation/screens/patients/profile_history_all_reservations/medical_record_form/widgets/medical_record_dynamic_fields.dart';
 export 'package:diwanclinic/Presentation/screens/patients/profile_history_all_reservations/medical_record_form/widgets/medical_record_static_section.dart';
+export 'package:diwanclinic/Data/RepositoryImpl/base_repository_impl.dart';
+export 'package:diwanclinic/Data/data_source/base_crud_repo.dart';
+export 'package:diwanclinic/Data/data_source_impl/base_crud_repo_impl.dart';
+export 'package:diwanclinic/Domain/Repositories/base_repository.dart';
+export 'package:diwanclinic/Domain/UseCases/base_use_cases.dart';
+export 'package:diwanclinic/Presentation/parentControllers/base_service.dart';

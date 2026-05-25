@@ -11,10 +11,10 @@ enum HttpMethod {
   DELETE;
 
   Future<http.Response> execute(
-      Uri uri, {
-        Map<String, String>? headers,
-        Object? body,
-      }) async {
+    Uri uri, {
+    Map<String, String>? headers,
+    Object? body,
+  }) async {
     switch (this) {
       case HttpMethod.GET:
         return await http.get(uri, headers: headers);
@@ -32,16 +32,14 @@ enum HttpMethod {
 
 class ClientSourceRepo {
   static const int timeoutDuration = 10;
-  static const String baseUrl =
-      "https://pointofsales-aee83-default-rtdb.firebaseio.com";
 
   /// 🔥 Main Request Handler
   Future<dynamic> request(
-      HttpMethod method,
-      String path, {
-        Map<String, dynamic>? params,
-        Map<String, String>? headers,
-      }) async {
+    HttpMethod method,
+    String path, {
+    Map<String, dynamic>? params,
+    Map<String, String>? headers,
+  }) async {
     final uri = _buildUri(path, method, param: params);
     headers ??= _getHeaders();
 
@@ -59,9 +57,9 @@ class ClientSourceRepo {
 
       // ✅ Prepare Body
       final requestBody =
-      (method == HttpMethod.GET || method == HttpMethod.DELETE)
-          ? null
-          : jsonEncode(cleanedParams);
+          (method == HttpMethod.GET || method == HttpMethod.DELETE)
+              ? null
+              : jsonEncode(cleanedParams);
 
       // 🚀 Execute Request
       final response = await method
@@ -101,8 +99,7 @@ class ClientSourceRepo {
   }
 
   /// 🔗 Build Firebase URL
-  Uri _buildUri(String path, HttpMethod method,
-      {Map<String, dynamic>? param}) {
+  Uri _buildUri(String path, HttpMethod method, {Map<String, dynamic>? param}) {
     if (param == null || param.isEmpty) {
       return Uri.parse('${ApiConstatns.Base_Url}$path');
     } else {
@@ -116,10 +113,7 @@ class ClientSourceRepo {
 
   /// 📜 Default Headers
   Map<String, String> _getHeaders() {
-    return {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
+    return {'Content-Type': 'application/json', 'Accept': 'application/json'};
   }
 
   /// 🧹 Clean Params
@@ -128,7 +122,8 @@ class ClientSourceRepo {
 
     final cleaned = Map<String, dynamic>.from(data);
     cleaned.removeWhere(
-            (key, value) => value == null || value.toString().isEmpty);
+      (key, value) => value == null || value.toString().isEmpty,
+    );
 
     return cleaned;
   }
