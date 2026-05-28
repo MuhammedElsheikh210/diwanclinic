@@ -9,8 +9,33 @@ import '../../../../index/index_main.dart';
 
 class OrderMedicineViewModel extends GetxController {
   final ReservationModel reservation;
+  final List<String> preloadedUrls;
+  final List<MedicineItemModel> preloadedMedicines;
 
-  OrderMedicineViewModel(this.reservation);
+  OrderMedicineViewModel(
+    this.reservation, {
+    this.preloadedUrls = const [],
+    this.preloadedMedicines = const [],
+  });
+
+  bool get isReorder => preloadedUrls.isNotEmpty;
+
+  // ── medicine selection (reorder only)
+  final Set<int> selectedMedicineIndices = {};
+
+  List<MedicineItemModel> get selectedMedicines => selectedMedicineIndices
+      .where((i) => i < preloadedMedicines.length)
+      .map((i) => preloadedMedicines[i])
+      .toList();
+
+  void toggleMedicine(int index) {
+    if (selectedMedicineIndices.contains(index)) {
+      selectedMedicineIndices.remove(index);
+    } else {
+      selectedMedicineIndices.add(index);
+    }
+    update();
+  }
 
   // ===============================
   // STEPPER
@@ -52,13 +77,16 @@ class OrderMedicineViewModel extends GetxController {
     notesController = TextEditingController();
 
     // 🔥 اسمع لتغييرات العنوان
-    addressController.addListener(() {
-      update(); // يعيد بناء الزرار تلقائي
-    });
+    addressController.addListener(update);
+    phoneController.addListener(update);
 
-    phoneController.addListener(() {
-      update();
-    });
+    if (isReorder) {
+      uploadedUrls.addAll(preloadedUrls);
+      currentStep = 1;
+      for (int i = 0; i < preloadedMedicines.length; i++) {
+        selectedMedicineIndices.add(i);
+      }
+    }
   }
 
   @override
@@ -319,6 +347,9 @@ class OrderMedicineViewModel extends GetxController {
       address: addressController.text.trim(),
       doseDays: int.tryParse(doseController.text.trim()),
       notes: notesController.text.trim(),
+      medicines: isReorder && selectedMedicines.isNotEmpty
+          ? selectedMedicines
+          : null,
       createdAt: DateTime.now().millisecondsSinceEpoch,
       status: "approved",
       // 📸 Uploaded images

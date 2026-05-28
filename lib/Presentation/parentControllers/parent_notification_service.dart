@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import '../../index/index_main.dart';
 
 class NotificationPatentService {
@@ -8,14 +6,14 @@ class NotificationPatentService {
   // ============================================================
 
   static final NotificationPatentService _instance =
-  NotificationPatentService._internal();
+      NotificationPatentService._internal();
 
   factory NotificationPatentService() => _instance;
 
   NotificationPatentService._internal();
 
   final NotificationUseCases useCase = initController(
-        () => NotificationUseCases(Get.find()),
+    () => NotificationUseCases(Get.find()),
   );
 
   // ============================================================
@@ -31,45 +29,57 @@ class NotificationPatentService {
   StreamSubscription? _removedSub;
 
   bool _isListening = false;
-  bool _isDisposed = false;
+  Timer? _reconnectTimer;
 
   // ============================================================
   // 🔥 REALTIME LISTENING
   // ============================================================
 
   Future<void> startListening() async {
-    /// ✅ لو already listening → متعملش حاجة
     if (_isListening) {
       AppLogger.warning("NOTIFICATION", "Already listening → skip");
       return;
     }
 
-    /// ❌ لو service اتقفلت → متبدأش تاني
-    if (_isDisposed) {
-      AppLogger.error("NOTIFICATION", "Service already disposed ❌");
-      return;
-    }
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
 
     await useCase.startListening();
 
-    _addedSub = useCase.onAdded.listen((model) {
-      if (_isDisposed) return;
-      onNotificationAdded?.call(model);
-    });
+    void onStreamError(Object error, StackTrace stack) {
+      AppLogger.error("NOTIFICATION_SERVICE", "Stream error — scheduling reconnect", error, stack);
+      _scheduleReconnect();
+    }
 
-    _changedSub = useCase.onChanged.listen((model) {
-      if (_isDisposed) return;
-      onNotificationUpdated?.call(model);
-    });
+    _addedSub = useCase.onAdded.listen(
+      (model) => onNotificationAdded?.call(model),
+      onError: onStreamError,
+      cancelOnError: false,
+    );
 
-    _removedSub = useCase.onRemoved.listen((key) {
-      if (_isDisposed) return;
-      onNotificationRemoved?.call(key);
-    });
+    _changedSub = useCase.onChanged.listen(
+      (model) => onNotificationUpdated?.call(model),
+      onError: onStreamError,
+      cancelOnError: false,
+    );
+
+    _removedSub = useCase.onRemoved.listen(
+      (key) => onNotificationRemoved?.call(key),
+      onError: onStreamError,
+      cancelOnError: false,
+    );
 
     _isListening = true;
-
     AppLogger.success("NOTIFICATION", "Listening started ✅");
+  }
+
+  void _scheduleReconnect() {
+    _reconnectTimer?.cancel();
+    _reconnectTimer = Timer(const Duration(seconds: 5), () async {
+      AppLogger.info("NOTIFICATION_SERVICE", "Reconnecting realtime...");
+      _isListening = false;
+      await startListening();
+    });
   }
 
 
@@ -149,15 +159,14 @@ class NotificationPatentService {
   }
 
   // ============================================================
-  // 🛑 DISPOSE
+  // 🛑 STOP LISTENING
   // ============================================================
 
-  Future<void> dispose() async {
-    /// ✅ لو already disposed → متعملش حاجة
-    if (_isDisposed) return;
+  Future<void> stopListening() async {
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
 
     _isListening = false;
-    _isDisposed = true;
 
     await _addedSub?.cancel();
     await _changedSub?.cancel();
@@ -167,8 +176,18 @@ class NotificationPatentService {
     _changedSub = null;
     _removedSub = null;
 
-    await useCase.dispose();
+    await useCase.stopListening();
 
+    AppLogger.warning("NOTIFICATION", "Stopped listening 🛑");
+  }
+
+  // ============================================================
+  // 🛑 DISPOSE (full cleanup — controllers closed)
+  // ============================================================
+
+  Future<void> dispose() async {
+    await stopListening();
+    await useCase.dispose();
     AppLogger.warning("NOTIFICATION", "Service disposed 🛑");
   }
 }

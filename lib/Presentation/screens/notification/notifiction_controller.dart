@@ -41,38 +41,28 @@ class NotificationController extends GetxController {
     update();
   }
 
-  void _initRealtime() async {
+  Future<void> _initRealtime() async {
     final user = Get.find<UserSession>().user;
-
     if (user == null) return;
 
-    final bool isPatient = user.user.userType == UserType.patient;
+    // 1. Load all existing notifications immediately (one-time fetch)
+    await _service.getAllNotificationsOnlineData(
+      voidCallBack: (list) {
+        notifications = list;
+        _sort();
+        update();
+      },
+    );
 
-    /// 🟢 1. لو Patient → هات الداتا مرة واحدة الأول
-    if (isPatient) {
-      // await _service.getAllNotificationsOnlineData(
-      //   voidCallBack: (list) {
-      //     notifications = list;
-      //     _sort();
-      //     update();
-      //   },
-      // );
-    }
+    // 2. Mark all as read right after initial load
+    await markAllAsRead();
 
-    /// 🔥 2. بعد كدا شغل realtime
+    // 3. Start realtime for incoming new notifications
+    _service.onNotificationAdded = (model) => onRealtimeAdd(model);
+    _service.onNotificationUpdated = (model) => onRealtimeUpdate(model);
+    _service.onNotificationRemoved = (key) => onRealtimeDelete(key);
+
     await _service.startListening();
-
-    _service.onNotificationAdded = (model) {
-      onRealtimeAdd(model);
-    };
-
-    _service.onNotificationUpdated = (model) {
-      onRealtimeUpdate(model);
-    };
-
-    _service.onNotificationRemoved = (key) {
-      onRealtimeDelete(key);
-    };
   }
 
   // ─────────────────────────────────────────────
@@ -80,12 +70,19 @@ class NotificationController extends GetxController {
   // ─────────────────────────────────────────────
 
   void onRealtimeAdd(NotificationModel model) {
-    
     final exists = notifications.any((n) => n?.key == model.key);
-
     if (exists) return;
 
-    notifications.insert(0, model);
+    // Auto-mark as read since the screen is open
+    final toAdd = model.isRead == true ? model : model.copyWith(isRead: true);
+    if (model.isRead != true) {
+      unawaited(_service.updateNotificationData(
+        notification: toAdd,
+        voidCallBack: (_) {},
+      ));
+    }
+
+    notifications.insert(0, toAdd);
     _sort();
     update();
   }
@@ -183,7 +180,9 @@ class NotificationController extends GetxController {
   void onClose() {
     titleController.dispose();
     bodyController.dispose();
-    _service.dispose();
+    // stopListening only — don't fully dispose the singleton service
+    // so it can be restarted when the screen is opened again
+    unawaited(_service.stopListening());
     super.onClose();
   }
 }

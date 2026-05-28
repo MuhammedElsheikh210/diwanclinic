@@ -32,41 +32,70 @@ class ReservationService {
 
   bool _isListening = false;
   String? _currentDoctorKey;
+  String? _currentDate;
+  Timer? _reconnectTimer;
 
   // ============================================================
   // 🔥 START REALTIME SYNC
   // ============================================================
 
-  Future<void> startListening({required String doctorKey}) async {
-    if (doctorKey.isEmpty) return;
+  Future<void> startListening({
+    required String doctorKey,
+    required String date,
+  }) async {
+    if (doctorKey.isEmpty || date.isEmpty) return;
 
-    // نفس الدكتور وبيسمع فعلاً - مش محتاج نعمل حاجة
-    if (_currentDoctorKey == doctorKey && _isListening) {
+    // نفس الدكتور ونفس التاريخ وبيسمع فعلاً - مش محتاج نعمل حاجة
+    if (_currentDoctorKey == doctorKey && _currentDate == date && _isListening) {
       return;
     }
 
-    // وقّف القديم الأول
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+
     if (_isListening) {
       await stopListening();
     }
 
-    await useCase.startListening(doctorKey: doctorKey);
+    await useCase.startListening(doctorKey: doctorKey, date: date);
 
-    _addedSub = useCase.onAdded.listen((reservation) {
-      onReservationAdded?.call(reservation);
-    });
+    void onStreamError(Object error, StackTrace stack) {
+      AppLogger.error("RESERVATION_SERVICE", "Stream error — scheduling reconnect", error, stack);
+      _scheduleReconnect(doctorKey: doctorKey, date: date);
+    }
 
-    _changedSub = useCase.onChanged.listen((reservation) {
-      onReservationUpdated?.call(reservation);
-    });
+    _addedSub = useCase.onAdded.listen(
+      (reservation) => onReservationAdded?.call(reservation),
+      onError: onStreamError,
+      cancelOnError: false,
+    );
 
-    _removedSub = useCase.onRemoved.listen((key) {
-      onReservationRemoved?.call(key);
-    });
+    _changedSub = useCase.onChanged.listen(
+      (reservation) => onReservationUpdated?.call(reservation),
+      onError: onStreamError,
+      cancelOnError: false,
+    );
+
+    _removedSub = useCase.onRemoved.listen(
+      (key) => onReservationRemoved?.call(key),
+      onError: onStreamError,
+      cancelOnError: false,
+    );
 
     _currentDoctorKey = doctorKey;
+    _currentDate = date;
     _isListening = true;
+  }
 
+  void _scheduleReconnect({required String doctorKey, required String date}) {
+    _reconnectTimer?.cancel();
+    _reconnectTimer = Timer(const Duration(seconds: 5), () async {
+      AppLogger.info("RESERVATION_SERVICE", "Reconnecting realtime...");
+      _isListening = false;
+      _currentDoctorKey = null;
+      _currentDate = null;
+      await startListening(doctorKey: doctorKey, date: date);
+    });
   }
 
   // ============================================================
@@ -74,6 +103,12 @@ class ReservationService {
   // ============================================================
 
   Future<void> stopListening() async {
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+
+    _isListening = false;
+    _currentDoctorKey = null;
+    _currentDate = null;
 
     await _addedSub?.cancel();
     await _changedSub?.cancel();
@@ -83,10 +118,7 @@ class ReservationService {
     _changedSub = null;
     _removedSub = null;
 
-    _isListening = false;
-    _currentDoctorKey = null;
-
-    await useCase.stopListening(); // مهم لو عندك listeners في datasource
+    await useCase.stopListening();
   }
 
   // ============================================================

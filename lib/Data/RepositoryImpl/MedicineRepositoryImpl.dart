@@ -18,4 +18,14 @@ class MedicineRepositoryImpl extends MedicineRepository {
       return Left(AppError(e.toString()));
     }
   }
+
+  @override
+  Future<Either<AppError, void>> updateMedicinePriceDomain(int id, double price) async {
+    try {
+      await _medicineDataSourceRepo.updateMedicinePrice(id, price);
+      return const Right(null);
+    } catch (e) {
+      return Left(AppError(e.toString()));
+    }
+  }
 }

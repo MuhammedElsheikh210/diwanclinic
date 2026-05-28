@@ -12,6 +12,8 @@ class NotificationRepositoryImpl implements NotificationRepository {
   StreamSubscription? _changedSub;
   StreamSubscription? _removedSub;
 
+  bool _isListening = false;
+
   // ============================================================
   // 🌊 STREAM CONTROLLERS (Expose to ViewModel)
   // ============================================================
@@ -35,29 +37,69 @@ class NotificationRepositoryImpl implements NotificationRepository {
 
   @override
   Future<void> startListening() async {
+    if (_isListening) {
+      await stopListening();
+    }
 
     await _remote.startListening();
 
-    _addedSub?.cancel();
-    _changedSub?.cancel();
-    _removedSub?.cancel();
+    await _addedSub?.cancel();
+    await _changedSub?.cancel();
+    await _removedSub?.cancel();
 
-    _addedSub = _remote.onAdded.listen((model) {
-      _addedController.add(model);
-    });
+    void onStreamError(Object error, StackTrace stack) {
+      // Don't reset _isListening — Firebase reconnects internally (cancelOnError: false)
+      AppLogger.error("NOTIFICATION_REPO", "Stream error", error, stack);
+    }
 
-    _changedSub = _remote.onChanged.listen((model) {
-      _changedController.add(model);
-    });
+    _addedSub = _remote.onAdded.listen(
+      (model) {
+        if (!_addedController.isClosed) _addedController.add(model);
+      },
+      onError: onStreamError,
+      cancelOnError: false,
+    );
 
-    _removedSub = _remote.onRemoved.listen((key) {
-      _removedController.add(key);
-    });
+    _changedSub = _remote.onChanged.listen(
+      (model) {
+        if (!_changedController.isClosed) _changedController.add(model);
+      },
+      onError: onStreamError,
+      cancelOnError: false,
+    );
+
+    _removedSub = _remote.onRemoved.listen(
+      (key) {
+        if (!_removedController.isClosed) _removedController.add(key);
+      },
+      onError: onStreamError,
+      cancelOnError: false,
+    );
+
+    _isListening = true;
+    log("✅ Notification realtime initialized");
   }
 
   // ============================================================
   // 🛑 STOP REALTIME
   // ============================================================
+
+  @override
+  Future<void> stopListening() async {
+    log("🛑 Stop Notification Realtime");
+
+    _isListening = false;
+
+    await _addedSub?.cancel();
+    await _changedSub?.cancel();
+    await _removedSub?.cancel();
+
+    _addedSub = null;
+    _changedSub = null;
+    _removedSub = null;
+
+    await _remote.stopListening();
+  }
 
 
   @override

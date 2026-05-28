@@ -10,7 +10,6 @@ class ReservationRepositoryImpl implements ReservationRepository {
 
   ReservationRepositoryImpl(this._local, this._remote, this._connectivity);
 
-  final Set<String> _processedKeys = {};
   StreamSubscription? _addedSub;
   StreamSubscription? _changedSub;
   StreamSubscription? _removedSub;
@@ -44,193 +43,86 @@ class ReservationRepositoryImpl implements ReservationRepository {
   @override
   Future<void> startListening({
     required String doctorKey,
+    required String date,
   }) async {
-
+    // Always stop first to ensure clean state
     if (_isListening) {
-
-      AppLogger.warning(
-        "SQL_DEBUG",
-        "Already listening → skip",
-      );
-
-      return;
+      await stopListening();
     }
 
-    AppLogger.info(
-      "SQL_DEBUG",
-      "Start listening for doctor → $doctorKey",
-    );
+    AppLogger.info("SQL_DEBUG", "Start listening → doctor:$doctorKey date:$date");
 
-    _processedKeys.clear();
-
-    await _remote.startListening(
-      doctorKey: doctorKey,
-    );
+    await _remote.startListening(doctorKey: doctorKey, date: date);
 
     await _addedSub?.cancel();
     await _changedSub?.cancel();
     await _removedSub?.cancel();
 
-    // ============================================================
+    void onStreamError(Object error, StackTrace stack) {
+      // Don't reset _isListening — Firebase reconnects internally (cancelOnError: false)
+      AppLogger.error("RESERVATION_REPO", "Stream error", error, stack);
+    }
+
     // ➕ ADDED
-    // ============================================================
-
     _addedSub = _remote.onAdded.listen(
-          (model) async {
-
+      (model) async {
         final key = model.key;
-
         if (key == null) {
-
-          AppLogger.warning(
-            "SQL_DEBUG",
-            "Reservation key is null",
-          );
-
+          AppLogger.warning("SQL_DEBUG", "Reservation key is null");
           return;
         }
-
-        if (_processedKeys.contains(key)) {
-
-          AppLogger.warning(
-            "SQL_DEBUG",
-            "Duplicate reservation skipped → $key",
-          );
-
-          return;
-        }
-
-        _processedKeys.add(key);
-
         try {
-
-          AppLogger.info(
-            "SQL_DEBUG",
-            "Saving reservation → ${model.patientName}",
-          );
-
-          AppLogger.info(
-            "SQL_DEBUG",
-            """
-KEY => ${model.key}
-DATE => ${model.appointmentDateTime}
-SHIFT => ${model.shiftKey}
-CLINIC => ${model.clinicKey}
-DOCTOR => ${model.doctorUid}
-STATUS => ${model.status}
-ORDER => ${model.orderNum}
-""",
-          );
-
+          AppLogger.info("SQL_DEBUG", "Saving reservation → ${model.patientName}");
           await _local.upsertFromServer(model);
-
-          AppLogger.success(
-            "SQL_DEBUG",
-            "Saved successfully ✅",
-          );
-
+          AppLogger.success("SQL_DEBUG", "Saved successfully ✅");
         } catch (e, stack) {
-
-          AppLogger.error(
-            "SQL_DEBUG",
-            "SQLite save failed ❌",
-            e,
-            stack,
-          );
+          AppLogger.error("SQL_DEBUG", "SQLite save failed ❌", e, stack);
         }
-
-        _addedController.add(model);
+        if (!_addedController.isClosed) _addedController.add(model);
       },
+      onError: onStreamError,
+      cancelOnError: false,
     );
 
-    // ============================================================
     // 🔄 UPDATED
-    // ============================================================
-
     _changedSub = _remote.onChanged.listen(
-          (model) async {
-
+      (model) async {
         final key = model.key;
-
         if (key == null) {
-
-          AppLogger.warning(
-            "SQL_DEBUG",
-            "Changed reservation key null",
-          );
-
+          AppLogger.warning("SQL_DEBUG", "Changed reservation key null");
           return;
         }
-
         try {
-
-          AppLogger.info(
-            "SQL_DEBUG",
-            "Updating reservation → ${model.patientName}",
-          );
-
+          AppLogger.info("SQL_DEBUG", "Updating reservation → ${model.patientName}");
           await _local.upsertFromServer(model);
-
-          AppLogger.success(
-            "SQL_DEBUG",
-            "Updated successfully ✅",
-          );
-
+          AppLogger.success("SQL_DEBUG", "Updated successfully ✅");
         } catch (e, stack) {
-
-          AppLogger.error(
-            "SQL_DEBUG",
-            "SQLite update failed ❌",
-            e,
-            stack,
-          );
+          AppLogger.error("SQL_DEBUG", "SQLite update failed ❌", e, stack);
         }
-
-        _changedController.add(model);
+        if (!_changedController.isClosed) _changedController.add(model);
       },
+      onError: onStreamError,
+      cancelOnError: false,
     );
 
-    // ============================================================
     // ❌ REMOVED
-    // ============================================================
-
     _removedSub = _remote.onRemoved.listen(
-          (key) async {
-
+      (key) async {
         try {
-
-          AppLogger.warning(
-            "SQL_DEBUG",
-            "Deleting reservation → $key",
-          );
-
+          AppLogger.warning("SQL_DEBUG", "Deleting reservation → $key");
           await _local.deleteReservation(key);
-
-          AppLogger.success(
-            "SQL_DEBUG",
-            "Deleted successfully ✅",
-          );
-
+          AppLogger.success("SQL_DEBUG", "Deleted successfully ✅");
         } catch (e, stack) {
-
-          AppLogger.error(
-            "SQL_DEBUG",
-            "SQLite delete failed ❌",
-            e,
-            stack,
-          );
+          AppLogger.error("SQL_DEBUG", "SQLite delete failed ❌", e, stack);
         }
-
-        _removedController.add(key);
+        if (!_removedController.isClosed) _removedController.add(key);
       },
+      onError: onStreamError,
+      cancelOnError: false,
     );
 
     _isListening = true;
-
-    AppLogger.success(
-      "SQL_DEBUG",
-      "Repository realtime initialized ✅",
-    );
+    AppLogger.success("SQL_DEBUG", "Repository realtime initialized ✅");
   }
   // ============================================================
   // 🛑 STOP REALTIME
@@ -241,11 +133,14 @@ ORDER => ${model.orderNum}
     log("🛑 Stop Reservations Realtime");
 
     _isListening = false;
-    _processedKeys.clear();
 
     await _addedSub?.cancel();
     await _changedSub?.cancel();
     await _removedSub?.cancel();
+
+    _addedSub = null;
+    _changedSub = null;
+    _removedSub = null;
 
     await _remote.stopListening();
   }

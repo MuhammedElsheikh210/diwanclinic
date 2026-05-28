@@ -15,6 +15,8 @@ class WhatsAppSessionService {
 
   static const String completed = "completed";
 
+  static const String orderConfirmed = "order_confirmed";
+
   static const String cancelled = "cancelled";
 
   // =========================================================

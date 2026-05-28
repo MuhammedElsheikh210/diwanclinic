@@ -196,7 +196,7 @@ class _SelectedMedicineCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  "${item.medicine.price ?? 0} ج × ${item.quantity}",
+                  "${item.price.toStringAsFixed(1)} ج × ${item.quantity}",
                   style: context.typography.smRegular.copyWith(
                     color: AppColors.textSecondaryParagraph,
                   ),

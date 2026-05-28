@@ -39,33 +39,41 @@ class PatientOrderService {
   Future<void> startListening({required String patientUid}) async {
     if (patientUid.isEmpty) return;
 
-    // 🧠 نفس منطق reservations
-    if (_isListening) {
-      await useCase.stopListening();
-    }
-
+    // Same patient already listening - nothing to do
     if (_currentPatientUid == patientUid && _isListening) {
       return;
     }
 
+    // Different patient or first call - clean up previous first
     if (_isListening) {
       await stopListening();
     }
 
     await useCase.startListening(patientUid: patientUid);
 
-    _addedSub = useCase.onAdded.listen((order) {
-      
-      onOrderAdded?.call(order);
-    });
+    void onStreamError(Object error, StackTrace stack) {
+      AppLogger.error("ORDER_SERVICE", "Stream error - resetting", error, stack);
+      _isListening = false;
+      _currentPatientUid = null;
+    }
 
-    _changedSub = useCase.onChanged.listen((order) {
-      onOrderUpdated?.call(order);
-    });
+    _addedSub = useCase.onAdded.listen(
+      (order) => onOrderAdded?.call(order),
+      onError: onStreamError,
+      cancelOnError: false,
+    );
 
-    _removedSub = useCase.onRemoved.listen((key) {
-      onOrderRemoved?.call(key);
-    });
+    _changedSub = useCase.onChanged.listen(
+      (order) => onOrderUpdated?.call(order),
+      onError: onStreamError,
+      cancelOnError: false,
+    );
+
+    _removedSub = useCase.onRemoved.listen(
+      (key) => onOrderRemoved?.call(key),
+      onError: onStreamError,
+      cancelOnError: false,
+    );
 
     _currentPatientUid = patientUid;
     _isListening = true;

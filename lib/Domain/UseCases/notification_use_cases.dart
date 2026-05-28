@@ -15,6 +15,10 @@ class NotificationUseCases {
     return _repository.startListening();
   }
 
+  Future<void> stopListening() {
+    return _repository.stopListening();
+  }
+
   Future<void> dispose() {
     return _repository.dispose();
   }

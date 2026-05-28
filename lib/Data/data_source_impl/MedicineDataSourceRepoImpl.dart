@@ -11,7 +11,7 @@ class MedicineDataSourceRepoImpl extends MedicineDataSourceRepo {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, 'medicines.db');
 
-    _db = await openDatabase(path, readOnly: true);
+    _db = await openDatabase(path);
 
     return _db!;
   }
@@ -35,5 +35,16 @@ class MedicineDataSourceRepoImpl extends MedicineDataSourceRepo {
     );
     
     return result.map(MedicineModel.fromJson).toList();
+  }
+
+  @override
+  Future<void> updateMedicinePrice(int id, double price) async {
+    final db = await _getDb();
+    await db.update(
+      'medicines',
+      {'price': price},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 }

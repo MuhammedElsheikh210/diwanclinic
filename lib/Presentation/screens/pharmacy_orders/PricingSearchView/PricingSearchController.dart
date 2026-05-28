@@ -17,7 +17,7 @@ class PricingSearchController extends GetxController {
 
   // ───────────── Pricing ─────────────
   double discountPercent = 0.0;
-  double deliveryFee = 20;
+  double deliveryFee = 5;
 
   // ───────────── Calculations ─────────────
 
@@ -42,17 +42,7 @@ class PricingSearchController extends GetxController {
     update();
   }
 
-  List<double> get availableDeliveryFees {
-    if (subtotalInt <= 150) {
-      return [15, 20];
-    }
-
-    if (subtotalInt <= 300) {
-      return [10, 15];
-    }
-
-    return [0];
-  }
+  List<double> get availableDeliveryFees => [5, 10];
 
   void refreshDeliveryFee() {
     final options = availableDeliveryFees;
@@ -104,7 +94,7 @@ class PricingSearchController extends GetxController {
         key: e.medicine.id.toString(),
         name: e.medicine.name,
         quantity: e.quantity,
-        price: e.medicine.price,
+        price: e.price,
       );
     }).toList();
   }
@@ -174,6 +164,14 @@ class PricingSearchController extends GetxController {
   // ───────────── Save Pricing ─────────────
   Future<void> updateOrderStatus({required OrderModel order}) async {
     final updatedOrder = buildUpdatedOrder(order);
+
+    // تحديث سعر كل دواء في قاعدة البيانات المحلية
+    for (final item in selectedMedicines) {
+      await MedicineService().updateMedicinePrice(
+        id: item.medicine.id,
+        price: item.price,
+      );
+    }
 
     await OrderStatusService.updateOrderStatus(
       order: updatedOrder,

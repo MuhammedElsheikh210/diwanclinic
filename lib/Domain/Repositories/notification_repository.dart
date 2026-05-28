@@ -8,6 +8,8 @@ abstract class NotificationRepository {
 
   Future<void> startListening();
 
+  Future<void> stopListening();
+
   Future<void> dispose();
 
   // ============================================================

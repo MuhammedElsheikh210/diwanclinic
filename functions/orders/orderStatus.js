@@ -248,6 +248,26 @@ ${after.created_by === "whatsapp"
 
 : ""}`;
 
+        // Sync session (covers case when staff confirm from dashboard)
+        if (
+          after.created_by === "whatsapp" &&
+          after.patient_phone
+        ) {
+          try {
+            const db = admin.database();
+            const whatsappPhone =
+              after.patient_phone.replace(/^0/, "20");
+            await db
+              .ref("users_sessions/" + whatsappPhone)
+              .update({
+                step: "order_confirmed",
+                updatedAt: Date.now(),
+              });
+          } catch (e) {
+            console.error("❌ SESSION SYNC completed ERROR:", e);
+          }
+        }
+
         break;
 
       // ======================================================
@@ -269,6 +289,27 @@ ${after.created_by === "whatsapp"
 ? `📱 المرة الجاية اطلب من التطبيق واستفيد بحفظ العناوين ومتابعة الطلب بسهولة 👌`
 
 : ""}`;
+
+        // Update session to delivered
+        if (
+          after.created_by === "whatsapp" &&
+          after.patient_phone
+        ) {
+          try {
+            const db = admin.database();
+            const whatsappPhone =
+              after.patient_phone.replace(/^0/, "20");
+            await db
+              .ref("users_sessions/" + whatsappPhone)
+              .update({
+                step: "delivered",
+                updatedAt: Date.now(),
+              });
+            console.log("✅ SESSION updated to delivered");
+          } catch (e) {
+            console.error("❌ SESSION SYNC delivered ERROR:", e);
+          }
+        }
 
         break;
 

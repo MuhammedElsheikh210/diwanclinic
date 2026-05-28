@@ -31,117 +31,73 @@ class ReservationRemoteDataSourceImpl implements ReservationRemoteDataSource {
   Stream<String> get onRemoved => _removedController.stream;
 
   // ============================================================
-  // 🎧 START LISTENING
+  // 🎧 START LISTENING (single date node — no subscription explosion)
   // ============================================================
 
   @override
-  Future<void> startListening({required String doctorKey}) async {
+  Future<void> startListening({
+    required String doctorKey,
+    required String date,
+  }) async {
     await stopListening();
 
-    final path = "doctors/$doctorKey/reservations";
-
+    final path = "doctors/$doctorKey/reservations/$date";
     AppLogger.info("RESERVATION_RT", "🎧 Start listening → $path");
 
     _rootRef = _database.ref(path);
 
-    // ============================================================
-    // 📅 DATE NODES
-    // ============================================================
+    void onError(Object error, StackTrace stack) {
+      AppLogger.error("RESERVATION_RT", "Listener error on $path", error, stack);
+    }
 
-    final dateSub = _rootRef!.onChildAdded.listen((dateEvent) {
-      final dateKey = dateEvent.snapshot.key;
-
-      AppLogger.debug("RESERVATION_RT", "📅 Date node added → $dateKey");
-
-      if (dateKey == null) {
-        AppLogger.warning("RESERVATION_RT", "Date key null");
-
-        return;
-      }
-
-      final dateRef = _rootRef!.child(dateKey);
-
-      _listenInsideDate(dateRef);
-    });
-
-    _subscriptions.add(dateSub);
-
-    AppLogger.success("RESERVATION_RT", "Realtime initialized ✅");
-  }
-
-  // ============================================================
-  // 🎧 LISTEN INSIDE DATE
-  // ============================================================
-
-  void _listenInsideDate(DatabaseReference dateRef) {
-    AppLogger.info("RESERVATION_RT", "👂 Listening inside → ${dateRef.path}");
-
-    // ============================================================
     // ➕ ADDED
-    // ============================================================
-
-    final addedSub = dateRef.onChildAdded.listen((event) {
-      final key = event.snapshot.key;
-
-      AppLogger.debug("RESERVATION_RT", "➕ Reservation Added → $key");
-
-      if (key == null) {
-        return;
-      }
-
-      final model = _parseReservation(event.snapshot);
-
-      if (model != null) {
-        AppLogger.success(
-          "RESERVATION_RT",
-          "Reservation parsed → ${model.patientName}",
-        );
-
-        if (!_addedController.isClosed) {
-          _addedController.add(model);
+    final addedSub = _rootRef!.onChildAdded.listen(
+      (event) {
+        final key = event.snapshot.key;
+        AppLogger.debug("RESERVATION_RT", "➕ Reservation Added → $key");
+        if (key == null) return;
+        final model = _parseReservation(event.snapshot);
+        if (model != null) {
+          AppLogger.success("RESERVATION_RT", "Reservation parsed → ${model.patientName}");
+          if (!_addedController.isClosed) _addedController.add(model);
+        } else {
+          AppLogger.warning("RESERVATION_RT", "Failed to parse reservation → $key");
         }
-      } else {
-        AppLogger.warning("RESERVATION_RT", "Failed to parse reservation");
-      }
-    });
+      },
+      onError: onError,
+      cancelOnError: false,
+    );
 
-    // ============================================================
-    // 🔄 UPDATED
-    // ============================================================
-
-    final changedSub = dateRef.onChildChanged.listen((event) {
-      final key = event.snapshot.key;
-
-      AppLogger.debug("RESERVATION_RT", "🔄 Reservation Changed → $key");
-
-      if (key == null) {
-        return;
-      }
-
-      final model = _parseReservation(event.snapshot);
-
-      if (model != null) {
-        if (!_changedController.isClosed) {
+    // 🔄 CHANGED
+    final changedSub = _rootRef!.onChildChanged.listen(
+      (event) {
+        final key = event.snapshot.key;
+        AppLogger.debug("RESERVATION_RT", "🔄 Reservation Changed → $key");
+        if (key == null) return;
+        final model = _parseReservation(event.snapshot);
+        if (model != null && !_changedController.isClosed) {
           _changedController.add(model);
         }
-      }
-    });
+      },
+      onError: onError,
+      cancelOnError: false,
+    );
 
-    // ============================================================
     // ❌ REMOVED
-    // ============================================================
-
-    final removedSub = dateRef.onChildRemoved.listen((event) {
-      final key = event.snapshot.key;
-
-      AppLogger.warning("RESERVATION_RT", "❌ Reservation Removed → $key");
-
-      if (key != null && !_removedController.isClosed) {
-        _removedController.add(key);
-      }
-    });
+    final removedSub = _rootRef!.onChildRemoved.listen(
+      (event) {
+        final key = event.snapshot.key;
+        AppLogger.warning("RESERVATION_RT", "❌ Reservation Removed → $key");
+        if (key != null && !_removedController.isClosed) {
+          _removedController.add(key);
+        }
+      },
+      onError: onError,
+      cancelOnError: false,
+    );
 
     _subscriptions.addAll([addedSub, changedSub, removedSub]);
+    AppLogger.success("RESERVATION_RT", "Realtime initialized ✅ → $path");
   }
 
   // ============================================================

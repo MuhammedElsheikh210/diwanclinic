@@ -11,4 +11,8 @@ class MedicineUseCases {
       ) {
     return _repository.searchMedicinesDomain(keyword);
   }
+
+  Future<Either<AppError, void>> updateMedicinePrice(int id, double price) {
+    return _repository.updateMedicinePriceDomain(id, price);
+  }
 }

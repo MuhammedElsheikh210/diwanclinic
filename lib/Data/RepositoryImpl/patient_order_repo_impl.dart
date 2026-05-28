@@ -39,19 +39,34 @@ class PatientOrderRepositoryImpl implements PatientOrderRepository {
     await _changedSub?.cancel();
     await _removedSub?.cancel();
 
-    _addedSub = _remote.onAdded.listen((model) {
-      if (model.key == null) return;
-      _addedController.add(model);
-    });
+    void onError(Object error, StackTrace stack) {
+      AppLogger.error("ORDER_REPO", "Stream error - resetting", error, stack);
+      _isListening = false;
+    }
 
-    _changedSub = _remote.onChanged.listen((model) {
-      if (model.key == null) return;
-      _changedController.add(model);
-    });
+    _addedSub = _remote.onAdded.listen(
+      (model) {
+        if (model.key == null) return;
+        _addedController.add(model);
+      },
+      onError: onError,
+      cancelOnError: false,
+    );
 
-    _removedSub = _remote.onRemoved.listen((key) {
-      _removedController.add(key);
-    });
+    _changedSub = _remote.onChanged.listen(
+      (model) {
+        if (model.key == null) return;
+        _changedController.add(model);
+      },
+      onError: onError,
+      cancelOnError: false,
+    );
+
+    _removedSub = _remote.onRemoved.listen(
+      (key) => _removedController.add(key),
+      onError: onError,
+      cancelOnError: false,
+    );
 
     _isListening = true;
   }
@@ -67,6 +82,10 @@ class PatientOrderRepositoryImpl implements PatientOrderRepository {
     await _addedSub?.cancel();
     await _changedSub?.cancel();
     await _removedSub?.cancel();
+
+    _addedSub = null;
+    _changedSub = null;
+    _removedSub = null;
 
     await _remote.stopListening();
   }

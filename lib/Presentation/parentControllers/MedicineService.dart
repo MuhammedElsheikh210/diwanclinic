@@ -18,4 +18,11 @@ class MedicineService {
       (r) => voidCallBack(r),
     );
   }
+
+  Future<void> updateMedicinePrice({
+    required int id,
+    required double price,
+  }) async {
+    await useCase.updateMedicinePrice(id, price);
+  }
 }

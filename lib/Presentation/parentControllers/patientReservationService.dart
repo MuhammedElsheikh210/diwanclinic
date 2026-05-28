@@ -43,14 +43,12 @@ class PatientReservationService {
       return;
     }
 
-    if (_isListening) {
-      await useCase.stopListening();
-    }
-
+    // Same patient already listening - nothing to do
     if (_currentPatientUid == patientUid && _isListening) {
       return;
     }
 
+    // Different patient or first call - clean up previous first
     if (_isListening) {
       await stopListening();
     }
@@ -61,37 +59,29 @@ class PatientReservationService {
     // 🎧 ADDED
     // ============================================================
 
-    _addedSub = useCase.onAdded.listen((reservation) {
+    void onStreamError(Object error, StackTrace stack) {
+      AppLogger.error("PATIENT_RES_SERVICE", "Stream error - resetting", error, stack);
+      _isListening = false;
+      _currentPatientUid = null;
+    }
 
-      if (onReservationAdded == null) {
-      } else {
-        onReservationAdded!.call(reservation);
-      }
-    });
+    _addedSub = useCase.onAdded.listen(
+      (reservation) => onReservationAdded?.call(reservation),
+      onError: onStreamError,
+      cancelOnError: false,
+    );
 
-    // ============================================================
-    // 🎧 CHANGED
-    // ============================================================
+    _changedSub = useCase.onChanged.listen(
+      (reservation) => onReservationUpdated?.call(reservation),
+      onError: onStreamError,
+      cancelOnError: false,
+    );
 
-    _changedSub = useCase.onChanged.listen((reservation) {
-
-      if (onReservationUpdated == null) {
-      } else {
-        onReservationUpdated!.call(reservation);
-      }
-    });
-
-    // ============================================================
-    // 🎧 REMOVED
-    // ============================================================
-
-    _removedSub = useCase.onRemoved.listen((key) {
-
-      if (onReservationRemoved == null) {
-      } else {
-        onReservationRemoved!.call(key);
-      }
-    });
+    _removedSub = useCase.onRemoved.listen(
+      (key) => onReservationRemoved?.call(key),
+      onError: onStreamError,
+      cancelOnError: false,
+    );
 
     _currentPatientUid = patientUid;
     _isListening = true;

@@ -174,8 +174,8 @@ class _MainPageState extends State<MainPage> {
         return [
           _item(IconsConstants.home, "الرئيسية"),
           _item(IconsConstants.new_reservae, "الحجوزات"),
-          // const BottomNavigationBarItem(icon: SizedBox(), label: ""),
           _item(IconsConstants.orders, "الطلبات"),
+          _item(IconsConstants.doc, "سجلي الطبي"),
           _item(IconsConstants.chat, "المحادثة"),
         ];
 
@@ -279,8 +279,8 @@ class _MainPageState extends State<MainPage> {
         return [
           const PatientHomeView(),
           const ReservationPatientView(),
-          // const UploadPrescriptionScreen(),
           const OrdersListScreen(),
+          const MedicalRecordView(),
           const ChatListView(),
         ][index];
 

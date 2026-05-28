@@ -6,17 +6,25 @@ import 'order_medicine_view_model.dart';
 class OrderMedicineScreen extends StatelessWidget {
   final ReservationModel reservation;
   final Function(ReservationModel) onConfirmed;
+  final List<String> preloadedImageUrls;
+  final List<MedicineItemModel> preloadedMedicines;
 
   const OrderMedicineScreen({
     super.key,
     required this.reservation,
     required this.onConfirmed,
+    this.preloadedImageUrls = const [],
+    this.preloadedMedicines = const [],
   });
 
   @override
   Widget build(BuildContext context) {
     return GetBuilder<OrderMedicineViewModel>(
-      init: OrderMedicineViewModel(reservation),
+      init: OrderMedicineViewModel(
+        reservation,
+        preloadedUrls: preloadedImageUrls,
+        preloadedMedicines: preloadedMedicines,
+      ),
       builder: (vm) {
         return Scaffold(
           backgroundColor: AppColors.white,
@@ -247,6 +255,22 @@ class OrderMedicineScreen extends StatelessWidget {
           SizedBox(height: 20.h),
 
           // --------------------------------------------------
+          // REORDER — Prescription preview
+          // --------------------------------------------------
+          if (vm.isReorder) ...[
+            _prescriptionPreviewCard(context, vm.preloadedUrls),
+            SizedBox(height: 16.h),
+          ],
+
+          // --------------------------------------------------
+          // REORDER — Medicine selection
+          // --------------------------------------------------
+          if (vm.isReorder && vm.preloadedMedicines.isNotEmpty) ...[
+            _medicineSelectionCard(context, vm),
+            SizedBox(height: 16.h),
+          ],
+
+          // --------------------------------------------------
           // CARD 1 — CONTACT INFO
           // --------------------------------------------------
           _card(
@@ -346,6 +370,159 @@ class OrderMedicineScreen extends StatelessWidget {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // 🖼️ REORDER — PRESCRIPTION PREVIEW
+  // ===========================================================================
+  Widget _prescriptionPreviewCard(BuildContext context, List<String> urls) {
+    return _card(
+      context,
+      title: "صور الروشتة",
+      child: SizedBox(
+        height: 130.h,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: urls.asMap().entries.map((e) {
+              return Padding(
+                padding: EdgeInsets.only(left: e.key > 0 ? 10.w : 0),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10.r),
+                  child: CachedNetworkImage(
+                    imageUrl: e.value,
+                    width: 100.w,
+                    height: 130.h,
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) => Container(
+                      width: 100.w,
+                      height: 130.h,
+                      color: AppColors.background,
+                    ),
+                    errorWidget: (_, __, ___) => Container(
+                      width: 100.w,
+                      height: 130.h,
+                      color: AppColors.background,
+                      child: Icon(
+                        Icons.broken_image_outlined,
+                        color: AppColors.textSecondaryParagraph,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // 💊 REORDER — MEDICINE SELECTION
+  // ===========================================================================
+  Widget _medicineSelectionCard(
+      BuildContext context, OrderMedicineViewModel vm) {
+    final t = context.typography;
+
+    return _card(
+      context,
+      title: "الأدوية المطلوبة",
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppText(
+            text: "اختر الأدوية اللي محتاجها من الروشتة",
+            textStyle: t.xsRegular.copyWith(
+              color: AppColors.textSecondaryParagraph,
+            ),
+          ),
+          SizedBox(height: 12.h),
+          ...vm.preloadedMedicines.asMap().entries.map((entry) {
+            final i = entry.key;
+            final med = entry.value;
+            final isSelected = vm.selectedMedicineIndices.contains(i);
+
+            return GestureDetector(
+              onTap: () => vm.toggleMedicine(i),
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8.h),
+                child: Row(
+                  children: [
+                    // Checkbox
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      width: 22.w,
+                      height: 22.w,
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.primary
+                            : Colors.transparent,
+                        border: Border.all(
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.borderNeutralPrimary,
+                          width: 2,
+                        ),
+                        borderRadius: BorderRadius.circular(6.r),
+                      ),
+                      child: isSelected
+                          ? Icon(Icons.check,
+                              size: 14.sp, color: Colors.white)
+                          : null,
+                    ),
+
+                    SizedBox(width: 12.w),
+
+                    // Name + type
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AppText(
+                            text: med.name ?? "دواء",
+                            textStyle: t.smMedium.copyWith(
+                              color: isSelected
+                                  ? AppColors.textDisplay
+                                  : AppColors.textSecondaryParagraph,
+                            ),
+                          ),
+                          if (med.type != null && med.type!.isNotEmpty)
+                            AppText(
+                              text: med.type!,
+                              textStyle: t.xsRegular.copyWith(
+                                color: AppColors.textSecondaryParagraph,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+
+                    // Quantity badge
+                    if (med.quantity != null)
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 8.w, vertical: 3.h),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: AppText(
+                          text: "× ${med.quantity}",
+                          textStyle: t.xsMedium.copyWith(
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            );
+          }),
         ],
       ),
     );

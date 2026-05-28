@@ -437,6 +437,8 @@ export 'package:diwanclinic/Presentation/screens/orders/list/order_view_model.da
 export 'package:diwanclinic/Data/Models/bulk_model.dart';
 export 'package:diwanclinic/Presentation/screens/patient_orders/details/order_details_view.dart';
 export 'package:diwanclinic/Presentation/screens/patient_orders/list/controller.dart';
+export 'package:diwanclinic/Presentation/screens/medical_record/medical_record_view.dart';
+export 'package:diwanclinic/Presentation/screens/medical_record/medical_record_details_view.dart';
 export 'package:diwanclinic/Presentation/screens/patient_orders/list/widget/action_dialog_helper.dart';
 export 'package:diwanclinic/Presentation/screens/patient_orders/list/widget/order_card.dart';
 export 'package:diwanclinic/Presentation/screens/patient_orders/price_details_view/view.dart';

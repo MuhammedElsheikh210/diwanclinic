@@ -34,86 +34,68 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
 
   @override
   Future<void> startListening() async {
-    /// ✅ منع التكرار
-    if (_rootRef != null) {
-      AppLogger.warning("NOTIFICATION", "Already listening → skip");
-      return;
-    }
+    // Always stop first to ensure clean state before re-subscribing
+    await stopListening();
 
     final sessionUser = Get.find<UserSession>().user?.user;
     final uid = sessionUser?.uid;
-    
 
     if (uid == null || uid.isEmpty) {
       AppLogger.warning("NOTIFICATION", "UID is null → skip listening");
       return;
     }
 
-    
-
     _rootRef = _database.ref("notifications/$uid");
-
     AppLogger.info("NOTIFICATION", "Start listening → notifications/$uid");
 
-    // ============================================================
+    void onError(Object error, StackTrace stack) {
+      AppLogger.error("NOTIFICATION", "Listener error on notifications/$uid", error, stack);
+    }
+
     // 🟢 ADDED
-    // ============================================================
-
-    final addedSub = _rootRef!.onChildAdded.listen((event) {
-      AppLogger.debug(
-        "NOTIFICATION",
-        "🔥 onChildAdded → ${event.snapshot.key}",
-      );
-
-      final model = _parseNotification(event.snapshot);
-
-      if (model != null) {
-        if (!_addedController.isClosed) {
-          _addedController.add(model);
+    final addedSub = _rootRef!.onChildAdded.listen(
+      (event) {
+        AppLogger.debug("NOTIFICATION", "🔥 onChildAdded → ${event.snapshot.key}");
+        final model = _parseNotification(event.snapshot);
+        if (model != null) {
+          if (!_addedController.isClosed) _addedController.add(model);
+          AppLogger.success("NOTIFICATION", "Notification added → ${model.title}");
+        } else {
+          AppLogger.warning("NOTIFICATION", "Failed to parse notification");
         }
-        AppLogger.success(
-          "NOTIFICATION",
-          "Notification added → ${model.title}",
-        );
-      } else {
-        AppLogger.warning("NOTIFICATION", "Failed to parse notification");
-      }
-    });
+      },
+      onError: onError,
+      cancelOnError: false,
+    );
 
-    // ============================================================
     // 🔄 UPDATED
-    // ============================================================
-
-    final changedSub = _rootRef!.onChildChanged.listen((event) {
-      AppLogger.debug(
-        "NOTIFICATION",
-        "🔄 onChildChanged → ${event.snapshot.key}",
-      );
-
-      final model = _parseNotification(event.snapshot);
-
-      if (model != null) {
-        if (!_changedController.isClosed) {
+    final changedSub = _rootRef!.onChildChanged.listen(
+      (event) {
+        AppLogger.debug("NOTIFICATION", "🔄 onChildChanged → ${event.snapshot.key}");
+        final model = _parseNotification(event.snapshot);
+        if (model != null && !_changedController.isClosed) {
           _changedController.add(model);
         }
-      }
-    });
+      },
+      onError: onError,
+      cancelOnError: false,
+    );
 
-    // ============================================================
     // ❌ REMOVED
-    // ============================================================
-
-    final removedSub = _rootRef!.onChildRemoved.listen((event) {
-      final key = event.snapshot.key;
-
-      AppLogger.warning("NOTIFICATION", "❌ Removed → $key");
-
-      if (key != null && !_removedController.isClosed) {
-        _removedController.add(key);
-      }
-    });
+    final removedSub = _rootRef!.onChildRemoved.listen(
+      (event) {
+        final key = event.snapshot.key;
+        AppLogger.warning("NOTIFICATION", "❌ Removed → $key");
+        if (key != null && !_removedController.isClosed) {
+          _removedController.add(key);
+        }
+      },
+      onError: onError,
+      cancelOnError: false,
+    );
 
     _subscriptions.addAll([addedSub, changedSub, removedSub]);
+    AppLogger.success("NOTIFICATION", "Realtime initialized ✅ → notifications/$uid");
   }
 
   // ============================================================

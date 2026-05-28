@@ -7,7 +7,7 @@ abstract class ReservationRepository {
   // 🔥 REALTIME CONTROL (Firebase → SQLite Sync Only)
   // ============================================================
 
-  Future<void> startListening({required String doctorKey});
+  Future<void> startListening({required String doctorKey, required String date});
 
   Future<void> stopListening();
 

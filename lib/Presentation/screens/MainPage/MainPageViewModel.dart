@@ -202,7 +202,11 @@ class MainPageViewModel extends GetxController {
       return;
     }
 
-    await _reservationService.startListening(doctorKey: resolvedDoctorKey);
+    final today = AppDateFormatter.toDash(null); // today in dd-MM-yyyy
+    await _reservationService.startListening(
+      doctorKey: resolvedDoctorKey,
+      date: today,
+    );
   } // ============================================================
   // 🔔 NOTIFICATIONS REALTIME
   // ============================================================
@@ -217,12 +221,9 @@ class MainPageViewModel extends GetxController {
 
   @override
   void onClose() {
-  //  _reservationService.dispose();
-   // _patientReservationService.dispose();
-
-    // 🔥 مهم جدًا
-   // _patientOrderService.dispose();
-
+    _reservationService.dispose();
+    _patientReservationService.dispose();
+    _patientOrderService.dispose();
     _authService.dispose();
 
     super.onClose();

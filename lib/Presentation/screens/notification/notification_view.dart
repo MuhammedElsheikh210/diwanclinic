@@ -11,17 +11,6 @@ class NotificationsView extends StatefulWidget {
 
 class _NotificationsViewState extends State<NotificationsView> {
   @override
-  void initState() {
-    super.initState();
-
-    // بعد ما الصفحة تترسم
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final controller = Get.find<NotificationController>();
-      controller.markAllAsRead();
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.white,

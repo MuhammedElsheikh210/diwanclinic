@@ -11,8 +11,8 @@ abstract class ReservationRemoteDataSource {
   // 🎧 REALTIME CONTROL
   // ============================================================
 
-  /// Start realtime listening to doctor's reservations
-  Future<void> startListening({required String doctorKey});
+  /// Start realtime listening to doctor's reservations for a specific date
+  Future<void> startListening({required String doctorKey, required String date});
 
   /// Stop all active listeners
   Future<void> stopListening();

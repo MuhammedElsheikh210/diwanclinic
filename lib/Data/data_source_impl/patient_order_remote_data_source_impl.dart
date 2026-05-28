@@ -36,12 +36,19 @@ class PatientOrderRemoteDataSourceImpl implements PatientOrderRemoteDataSource {
 
     _currentPatientUid = patientUid;
 
-    const path = "orders/";
-    _ref = _database.ref(path);
+    _ref = _database.ref("orders");
 
-    final addedSub = _ref!.onChildAdded.listen(_onAdded);
-    final changedSub = _ref!.onChildChanged.listen(_onChanged);
-    final removedSub = _ref!.onChildRemoved.listen(_onRemoved);
+    // Query by patientuid at the database level - no full collection scan
+    // Requires index: orders/.indexOn: ["patientuid"] in Firebase rules
+    final query = _ref!.orderByChild("patientuid").equalTo(patientUid);
+
+    void onError(Object error, StackTrace stack) {
+      AppLogger.error("ORDER_DS", "Stream error", error, stack);
+    }
+
+    final addedSub = query.onChildAdded.listen(_onAdded, onError: onError, cancelOnError: false);
+    final changedSub = query.onChildChanged.listen(_onChanged, onError: onError, cancelOnError: false);
+    final removedSub = query.onChildRemoved.listen(_onRemoved, onError: onError, cancelOnError: false);
 
     _subscriptions.addAll([addedSub, changedSub, removedSub]);
   }

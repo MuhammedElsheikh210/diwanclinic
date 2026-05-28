@@ -445,19 +445,19 @@ class MedicineItem extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 6.h),
-                  // AppText(
-                  //   text: "سعر الوحدة: $unit ج.م",
-                  //   textStyle: context.typography.smRegular.copyWith(
-                  //     color: AppColors.textSecondaryParagraph,
-                  //   ),
-                  // ),
-                  // SizedBox(height: 8.h),
-                  // AppText(
-                  //   text: "السعر الكلي: $total ج.م",
-                  //   textStyle: context.typography.mdBold.copyWith(
-                  //     color: AppColors.primary,
-                  //   ),
-                  // ),
+                  AppText(
+                    text: "سعر الوحدة: $unit ج.م",
+                    textStyle: context.typography.smRegular.copyWith(
+                      color: AppColors.textSecondaryParagraph,
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  AppText(
+                    text: "الإجمالي: $total ج.م",
+                    textStyle: context.typography.mdBold.copyWith(
+                      color: AppColors.primary,
+                    ),
+                  ),
                 ],
               ),
             ),

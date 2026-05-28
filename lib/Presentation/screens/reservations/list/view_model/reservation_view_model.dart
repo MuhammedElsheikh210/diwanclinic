@@ -618,12 +618,6 @@ extension ReservationData on ReservationViewModel {
   }
 
   void _updateListInMemory(ReservationModel model) {
-    /// 🔥 لو القائمة فاضية → اعمل reload
-    if (completeDayReservations.isEmpty) {
-      getReservations();
-      return;
-    }
-
     final index = completeDayReservations.indexWhere(
       (e) => e?.key == model.key,
     );
@@ -633,8 +627,6 @@ extension ReservationData on ReservationViewModel {
     } else {
       completeDayReservations.add(model);
     }
-
-    //listReservations = List.from(completeDayReservations);
 
     listReservations = queueManager.buildFinalList(
       completeDayReservations.whereType<ReservationModel>().toList(),
@@ -668,6 +660,12 @@ extension ReservationData on ReservationViewModel {
     final normalizedDate = AppDateFormatter.toDash(appointmentDate);
 
     AppLogger.info("data in res", doctorKey + normalizedDate);
+
+    // Restart Firebase listener for the current date (no-op if already on same date)
+    unawaited(ReservationService().startListening(
+      doctorKey: doctorKey,
+      date: normalizedDate,
+    ));
 
     try {
       /// 🔥 الترتيب مهم جدًا

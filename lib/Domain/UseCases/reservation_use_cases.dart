@@ -12,8 +12,9 @@ class ReservationUseCases {
 
   Future<void> startListening({
     required String doctorKey,
+    required String date,
   }) {
-    return _repository.startListening(doctorKey: doctorKey);
+    return _repository.startListening(doctorKey: doctorKey, date: date);
   }
 
   Future<void> stopListening() {

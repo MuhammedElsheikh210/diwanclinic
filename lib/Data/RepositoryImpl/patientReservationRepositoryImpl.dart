@@ -51,30 +51,34 @@ class PatientReservationRepositoryImpl implements PatientReservationRepository {
     await _changedSub?.cancel();
     await _removedSub?.cancel();
 
-    _addedSub = _remote.onAdded.listen((model) {
+    void onError(Object error, StackTrace stack) {
+      log("❌ PatientReservationRepo stream error: $error");
+      _isListening = false;
+    }
 
-      final key = model.key;
-      if (key == null) {
-        return;
-      }
+    _addedSub = _remote.onAdded.listen(
+      (model) {
+        if (model.key == null) return;
+        _addedController.add(model);
+      },
+      onError: onError,
+      cancelOnError: false,
+    );
 
-      _addedController.add(model);
-    });
+    _changedSub = _remote.onChanged.listen(
+      (model) {
+        if (model.key == null) return;
+        _changedController.add(model);
+      },
+      onError: onError,
+      cancelOnError: false,
+    );
 
-    _changedSub = _remote.onChanged.listen((model) {
-
-      final key = model.key;
-      if (key == null) {
-        return;
-      }
-
-      _changedController.add(model);
-    });
-
-    _removedSub = _remote.onRemoved.listen((key) {
-
-      _removedController.add(key);
-    });
+    _removedSub = _remote.onRemoved.listen(
+      (key) => _removedController.add(key),
+      onError: onError,
+      cancelOnError: false,
+    );
 
     _isListening = true;
 
@@ -86,15 +90,17 @@ class PatientReservationRepositoryImpl implements PatientReservationRepository {
 
   @override
   Future<void> stopListening() async {
-
     _isListening = false;
 
     await _addedSub?.cancel();
     await _changedSub?.cancel();
     await _removedSub?.cancel();
 
-    await _remote.stopListening();
+    _addedSub = null;
+    _changedSub = null;
+    _removedSub = null;
 
+    await _remote.stopListening();
   }
 
   @override

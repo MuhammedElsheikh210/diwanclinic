@@ -59,7 +59,14 @@
       "Bash(cd /Users/apple/diwanclinic && flutter analyze lib/Presentation/screens/reservations/list/view/reservation_view.dart lib/Data/Models/reservation_model.dart lib/Global/Enums/queue_change_reason.dart 2>&1 | tail -20)",
       "Bash(find /Users/apple/diwanclinic -name \"*.dart\" | xargs grep -l \"queue_position\\\\|queuePosition\\\\|NotificationService\\\\|sendPushNotif\\\\|fcm_notification\" 2>/dev/null | head -15)",
       "Bash(find /Users/apple/diwanclinic -type f -name \"*.dart\" | grep -i \"patient\" | head -30)",
-      "Bash(ls /Users/apple/diwanclinic)"
+      "Bash(ls /Users/apple/diwanclinic)",
+      "Bash(find /Users/apple/diwanclinic -type f -name \"*.dart\" | grep -E \"\\(reservation|patient\\)\" | sort)",
+      "Bash(node -e \"require\\('/Users/apple/diwanclinic/functions/orders/whatsappWebhook.js'\\); console.log\\('✅ syntax OK'\\)\")",
+      "Bash(node -e \"require\\('/Users/apple/diwanclinic/functions/orders/orderStatus.js'\\); console.log\\('✅ syntax OK'\\)\")",
+      "Bash(cd /Users/apple/diwanclinic && dart analyze lib/Presentation/screens/medical_record/ 2>&1 | head -40)",
+      "Bash(find /Users/apple/diwanclinic -type f \\\\\\( -name \"*reservation*\" -o -name \"*order*\" -o -name \"*حجز*\" -o -name \"*اوردر*\" \\\\\\) -iname \"*.dart\" 2>/dev/null | head -30)",
+      "Bash(cd /Users/apple/diwanclinic && dart analyze lib/Data/data_source_impl/reservation_data_source_remote.dart lib/Data/RepositoryImpl/reservation_repository_impl.dart lib/Presentation/parentControllers/reservation_service.dart lib/Domain/Repositories/reservation_repository.dart lib/Domain/UseCases/reservation_use_cases.dart lib/Presentation/screens/MainPage/MainPageViewModel.dart lib/Presentation/screens/reservations/list/view_model/reservation_view_model.dart 2>&1 | grep -v \"^Analyzing\\\\|^No issues\")",
+      "Bash(find /Users/apple/diwanclinic -type f -name \"*.dart\" | xargs grep -l \"orderItem\\\\|OrderItem\\\\|order_item\" 2>/dev/null | head -20)"
     ]
   }
 }
