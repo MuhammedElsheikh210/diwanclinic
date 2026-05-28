@@ -5,21 +5,24 @@ import '../../index/index_main.dart';
 enum ReservationStatus {
   pending,
   approved,
+  checkedIn,
   cancelledByUser,
   cancelledByAssistant,
   cancelledByDoctor,
   inProgress,
   completed,
+  missed,
 }
 
 extension ReservationStatusExt on ReservationStatus {
-  /// ✅ English database value
   String get value {
     switch (this) {
       case ReservationStatus.pending:
         return "pending";
       case ReservationStatus.approved:
         return "approved";
+      case ReservationStatus.checkedIn:
+        return "checked_in";
       case ReservationStatus.cancelledByUser:
         return "cancelled_by_user";
       case ReservationStatus.cancelledByAssistant:
@@ -30,16 +33,19 @@ extension ReservationStatusExt on ReservationStatus {
         return "in_progress";
       case ReservationStatus.completed:
         return "completed";
+      case ReservationStatus.missed:
+        return "missed";
     }
   }
 
-  /// ✅ Arabic label for UI
   String get label {
     switch (this) {
       case ReservationStatus.pending:
         return "قيد الانتظار";
       case ReservationStatus.approved:
         return "في إنتظار الكشف";
+      case ReservationStatus.checkedIn:
+        return "حضر العيادة";
       case ReservationStatus.cancelledByUser:
         return "أُلغي بواسطة المريض";
       case ReservationStatus.cancelledByAssistant:
@@ -50,16 +56,19 @@ extension ReservationStatusExt on ReservationStatus {
         return "في الكشف";
       case ReservationStatus.completed:
         return "تم الكشف";
+      case ReservationStatus.missed:
+        return "تغيّب";
     }
   }
 
-  /// ✅ Color mapping for each status
   Color get color {
     switch (this) {
       case ReservationStatus.pending:
-        return Colors.orange; // waiting
+        return Colors.orange;
       case ReservationStatus.approved:
-        return AppColors.primary; // approved
+        return AppColors.primary;
+      case ReservationStatus.checkedIn:
+        return Colors.teal;
       case ReservationStatus.cancelledByUser:
         return Colors.red.shade400;
       case ReservationStatus.cancelledByAssistant:
@@ -67,19 +76,31 @@ extension ReservationStatusExt on ReservationStatus {
       case ReservationStatus.cancelledByDoctor:
         return Colors.red.shade800;
       case ReservationStatus.inProgress:
-        return Colors.blue; // working
+        return Colors.blue;
       case ReservationStatus.completed:
-        return AppColors.tag_icon_warning; // done
+        return AppColors.tag_icon_warning;
+      case ReservationStatus.missed:
+        return Colors.grey;
     }
   }
 
-  /// ✅ Convert from stored DB/API string → enum
+  bool get isActiveInQueue =>
+      this == ReservationStatus.approved ||
+      this == ReservationStatus.checkedIn;
+
+  bool get isCancelled =>
+      this == ReservationStatus.cancelledByUser ||
+      this == ReservationStatus.cancelledByAssistant ||
+      this == ReservationStatus.cancelledByDoctor;
+
   static ReservationStatus fromValue(String value) {
-    switch (value) {
+    switch (value.trim().toLowerCase()) {
       case "pending":
         return ReservationStatus.pending;
       case "approved":
         return ReservationStatus.approved;
+      case "checked_in":
+        return ReservationStatus.checkedIn;
       case "cancelled_by_user":
         return ReservationStatus.cancelledByUser;
       case "cancelled_by_assistant":
@@ -87,11 +108,15 @@ extension ReservationStatusExt on ReservationStatus {
       case "cancelled_by_doctor":
         return ReservationStatus.cancelledByDoctor;
       case "in_progress":
+      case "inprogress":
         return ReservationStatus.inProgress;
       case "completed":
+      case "done":
         return ReservationStatus.completed;
+      case "missed":
+        return ReservationStatus.missed;
       default:
-        throw ArgumentError("Unknown ReservationStatus: $value");
+        return ReservationStatus.pending;
     }
   }
 }

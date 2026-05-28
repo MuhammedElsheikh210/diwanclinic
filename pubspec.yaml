@@ -52,7 +52,7 @@ dependencies:
   firebase_core_platform_interface:
   connectivity_plus: ^6.0.3
   crypto: ^3.0.2
-  carousel_slider: ^4.2.1
+  carousel_slider: ^5.1.2
   uuid:
   google_fonts: ^6.2.1
   cached_network_image: ^3.3.1

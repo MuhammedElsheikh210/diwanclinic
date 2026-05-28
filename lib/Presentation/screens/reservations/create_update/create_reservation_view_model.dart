@@ -66,7 +66,53 @@ class CreateReservationViewModel extends GetxController {
   int _autoRevisitCount = 0;
   String _autoParentKey = "";
 
-  final List<String> typeOptions = ["كشف جديد", "كشف مستعجل", "إعادة"];
+  final List<String> typeOptions = [
+    "كشف جديد",
+    "كشف مستعجل",
+    "إعادة",
+    "متابعة عمليات",
+    "أشعة وتحاليل",
+  ];
+
+  // 🧠 Smart Queue — priority level for this reservation
+  int priorityLevel = 0; // 0=normal 1=vip 2=elderly 3=newborn 4=urgent
+  bool isPediatricDoctor = false;
+
+  void setPriorityLevel(int level) {
+    priorityLevel = level;
+    update();
+  }
+
+  Future<void> initDoctorSpecialization() async {
+    final sessionUser = Get.find<UserSession>().user;
+
+    if (sessionUser?.isDoctor == true) {
+      isPediatricDoctor = sessionUser?.specializeKey == "pediatrics";
+      update();
+      return;
+    }
+
+    final key = doctor_key;
+    if (key == null || key.isEmpty) return;
+
+    AuthenticationService().getClientsData(
+      query: SQLiteQueryParams(
+        where: "key = ?",
+        whereArgs: [key],
+        limit: 1,
+      ),
+      voidCallBack: (users) {
+        if (users.isNotEmpty) {
+          isPediatricDoctor = users.first.specializeKey == "pediatrics";
+          update();
+        }
+      },
+    );
+  }
+
+  /// Types that go directly to the doctor with no queue number
+  bool get isDirectType =>
+      selectedType == "متابعة عمليات" || selectedType == "أشعة وتحاليل";
 
   // 🔹 Prices from Clinic
   String? consultationPrice;
@@ -97,12 +143,25 @@ class CreateReservationViewModel extends GetxController {
   }
 
   bool validateStep2() {
-    return patientNameController.text.isNotEmpty &&
-        patientPhoneController.text.isNotEmpty;
+    if (patientNameController.text.isEmpty) return false;
+    final phone = patientPhoneController.text.trim();
+    return phone.length == 11 && phone.startsWith('01');
+  }
+
+  /// Returns a specific error message if phone is invalid, null if valid
+  String? get phoneValidationError {
+    final phone = patientPhoneController.text.trim();
+    if (phone.isEmpty) return null;
+    if (!phone.startsWith('01') || phone.length != 11) {
+      return "رقم الهاتف يجب أن يبدأ بـ 01 ويتكون من 11 رقم";
+    }
+    return null;
   }
 
   bool validateStep3() {
-    return selectedType != null && paidAmountController.text.isNotEmpty;
+    if (selectedType == null) return false;
+    if (isDirectType) return true; // no payment required for direct types
+    return paidAmountController.text.isNotEmpty;
   }
 
   bool validateCurrentStep() {
@@ -144,7 +203,7 @@ class CreateReservationViewModel extends GetxController {
   //         lastReservation = null; // 🔥 مهم جدًا
   //       }
   //
-  //       
+  //
   //
   //       Future.microtask(() => applyAutoTypeLogic());
   //     },
@@ -185,7 +244,6 @@ class CreateReservationViewModel extends GetxController {
   }
 
   void resetPatientSelection() {
-
     clientUser = null;
     lastReservation = null;
     lastReservationHumanText = null;
@@ -200,6 +258,7 @@ class CreateReservationViewModel extends GetxController {
     _autoParentKey = "";
 
     isAutoApplied = false; // 🔥🔥🔥 أهم سطر
+    priorityLevel = 0;
 
     update();
   }
@@ -232,8 +291,8 @@ class CreateReservationViewModel extends GetxController {
     update();
   }
 
-
   Future<void> calculateOrderNumber() async {
+    if (isDirectType) return; // direct types have no queue number
     if (clinic_key == null || shift_key == null) return;
 
     final currentUser = Get.find<UserSession>().user;
@@ -292,7 +351,7 @@ class CreateReservationViewModel extends GetxController {
       /// 3️⃣ calculate
       if (!isFromLegacyQueue) {
         final base =
-        totalCount > legacyQueueCount ? totalCount : legacyQueueCount;
+            totalCount > legacyQueueCount ? totalCount : legacyQueueCount;
 
         resOrderController.text = (base + 1).toString();
       } else {
@@ -493,7 +552,6 @@ class CreateReservationViewModel extends GetxController {
     final currentUser = Get.find<UserSession>().user;
 
     if (currentUser == null) {
-      
       return;
     }
 
@@ -660,7 +718,6 @@ class CreateReservationViewModel extends GetxController {
     final currentUser = Get.find<UserSession>().user;
 
     if (currentUser == null) {
-      
       return;
     }
 
@@ -792,6 +849,7 @@ class CreateReservationViewModel extends GetxController {
     restAmountController.text = reservation.restAmount ?? "";
     // Type
     selectedType = reservation.reservationType;
+    priorityLevel = reservation.priorityLevel ?? 0;
     // Date → parse either dd/MM/yyyy or yyyy-MM-dd
     if (reservation.appointmentDateTime != null) {
       try {
@@ -821,6 +879,10 @@ class CreateReservationViewModel extends GetxController {
         break;
       case "كشف مستعجل":
         totalAmount = int.tryParse(urgentConsultationPrice ?? "0");
+        break;
+      case "متابعة عمليات":
+      case "أشعة وتحاليل":
+        totalAmount = 0;
         break;
       default:
         totalAmount = 0;
@@ -856,6 +918,13 @@ class CreateReservationViewModel extends GetxController {
         break;
       case "كشف مستعجل":
         totalAmount = int.tryParse(urgentConsultationPrice ?? "0");
+        priorityLevel = 0; // مستعجل هو أولوية بحد ذاته
+        break;
+      case "متابعة عمليات":
+      case "أشعة وتحاليل":
+        totalAmount = 0;
+        priorityLevel = 0;
+        resOrderController.clear(); // no queue number for direct types
         break;
       default:
         totalAmount = 0;
@@ -865,7 +934,6 @@ class CreateReservationViewModel extends GetxController {
     _updateRestAmount();
     update();
   }
-
 
   void saveReservation(
     List<ReservationModel?> activeList,
@@ -895,14 +963,12 @@ class CreateReservationViewModel extends GetxController {
     final currentUser = Get.find<UserSession>().user;
 
     if (currentUser == null || !currentUser.isAssistant) {
-      
       return;
     }
 
     final assistant = currentUser.asAssistant;
 
     if (assistant == null) {
-      
       return;
     }
 
@@ -921,6 +987,7 @@ class CreateReservationViewModel extends GetxController {
         revisitCount: _autoRevisitCount,
         parentKey: _autoParentKey,
         isAutoType: manualRevisitCount == null,
+        priorityLevel: priorityLevel,
         patientPhone: patientPhoneController.text,
         reservationType: selectedType,
 
@@ -957,6 +1024,7 @@ class CreateReservationViewModel extends GetxController {
       parentKey: _autoParentKey,
       isAutoType: manualRevisitCount == null,
       orderNum: parsedOrderNum,
+      priorityLevel: priorityLevel,
       status: ReservationStatus.approved.value,
 
       reservationType: selectedType,
@@ -1097,8 +1165,8 @@ class CreateReservationViewModel extends GetxController {
       return;
     }
 
-    if (!RegExp(r'^[0-9]{6,15}$').hasMatch(phone)) {
-      Loader.showError("يرجى إدخال رقم هاتف صالح (أرقام فقط)");
+    if (phone.length != 11 || !phone.startsWith('01')) {
+      Loader.showError("رقم الهاتف يجب أن يبدأ بـ 01 ويتكون من 11 رقم");
       return;
     }
 
@@ -1175,7 +1243,8 @@ class CreateReservationViewModel extends GetxController {
           companyNameController.text.trim().isNotEmpty;
     }
 
-    final bool phoneValid = patientPhoneController.text.trim().isNotEmpty;
+    final phone = patientPhoneController.text.trim();
+    final bool phoneValid = phone.length == 11 && phone.startsWith('01');
     final bool hasPatientName = patientNameController.text.trim().isNotEmpty;
     final bool hasType = selectedType != null;
 
@@ -1188,6 +1257,10 @@ class CreateReservationViewModel extends GetxController {
     }
 
     // 🟩 حجز عادي (سيستم)
+    if (isDirectType) {
+      return hasPatientName && hasType && phoneValid;
+    }
+
     return hasPatientName &&
         hasType &&
         phoneValid &&

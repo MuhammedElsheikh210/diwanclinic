@@ -12,7 +12,6 @@ class _PatientHomeViewState extends State<PatientHomeView> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    
   }
 
   @override
@@ -47,8 +46,12 @@ class _PatientHomeViewState extends State<PatientHomeView> {
                         : Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            const MarketingBannerWidget(),
+                            SizedBox(height: 10.h),
+
                             Padding(
                               padding: EdgeInsets.only(
+                                top: 15.h,
                                 left: 16.w,
                                 right: 16.w,
                                 bottom: 12.h,
@@ -107,7 +110,8 @@ class _PatientHomeViewState extends State<PatientHomeView> {
                                 ],
                               ),
                             ),
-                            SizedBox(height: 10.h),
+
+                            SizedBox(height: 16.h),
 
                             ReservationSectionView(controller: controller),
                             SizedBox(height: 24.h),
@@ -162,8 +166,8 @@ class _HomeFeatureTileState extends State<HomeFeatureTile> {
         duration: const Duration(milliseconds: 120),
         scale: isPressed ? 0.97 : 1,
         child: Container(
-          padding: EdgeInsets.symmetric(vertical: 22.h, horizontal: 16.w),
-          margin: const EdgeInsets.symmetric(horizontal: 8),
+          padding: EdgeInsets.symmetric(vertical: 15.h, horizontal: 15.w),
+          margin: EdgeInsets.symmetric(horizontal: 15.w),
           decoration: BoxDecoration(
             color: AppColors.white,
             borderRadius: BorderRadius.circular(24.r),
@@ -182,42 +186,46 @@ class _HomeFeatureTileState extends State<HomeFeatureTile> {
               ),
             ],
           ),
-          child: Stack(
-            alignment: Alignment.center,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               /// Arrow in corner
-              Positioned(
-                left: 0,
-                child: Icon(
-                  Icons.arrow_forward_ios,
-                  size: 14.sp,
-                  color: Colors.grey.shade400,
-                ),
-              ),
 
               /// Main Content
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 60.w,
-                    height: 60.w,
-                    decoration: BoxDecoration(
-                      color: widget.color.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(18.r),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 50.w,
+                      height: 50.w,
+                      decoration: BoxDecoration(
+                        color: widget.color.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(18.r),
+                      ),
+                      child: Icon(
+                        widget.icon,
+                        color: widget.color,
+                        size: 28.sp,
+                      ),
                     ),
-                    child: Icon(widget.icon, color: widget.color, size: 28.sp),
-                  ),
-                  SizedBox(height: 16.h),
-                  Text(
-                    widget.title,
-                    textAlign: TextAlign.center,
-                    style: context.typography.mdMedium.copyWith(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16.sp,
+                    SizedBox(height: 5.h),
+                    Text(
+                      widget.title,
+                      textAlign: TextAlign.center,
+                      style: context.typography.mdMedium.copyWith(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16.sp,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 14.sp,
+                color: Colors.grey.shade400,
               ),
             ],
           ),

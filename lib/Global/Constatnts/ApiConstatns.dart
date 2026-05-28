@@ -121,4 +121,13 @@ class ApiConstatns {
   static String get doctorSuggestions => "doctorSuggestions";
 
   static String get doctorList => "doctorList";
+
+  static String doctorAnnouncementsByDate({
+    required String doctorKey,
+    required String date,
+  }) {
+    return "doctors/$doctorKey/doctor_announcements/$date";
+  }
+
+  static const String marketingBanners = "marketing_banners";
 }

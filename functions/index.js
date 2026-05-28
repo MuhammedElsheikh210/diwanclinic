@@ -3,6 +3,21 @@ const admin = require("firebase-admin");
 admin.initializeApp();
 
 // ============================================================
+// 📣 DOCTOR ANNOUNCEMENTS
+// ============================================================
+
+const {
+
+  onDoctorAnnouncementCreate,
+
+} = require(
+  "./announcements/announcementTriggers"
+);
+
+exports.onDoctorAnnouncementCreate =
+  onDoctorAnnouncementCreate;
+
+// ============================================================
 // 🩺 RESERVATIONS
 // ============================================================
 

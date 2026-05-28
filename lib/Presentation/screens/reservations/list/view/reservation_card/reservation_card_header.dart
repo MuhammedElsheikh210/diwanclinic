@@ -21,6 +21,8 @@ class ReservationCardHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Queue section handles its own visibility internally.
+    // We only suppress it for completed / cancelled or urgent-type reservations.
     final bool showQueueSection =
         !isCompletedOrCancelled && reservation.reservationType != "كشف مستعجل";
 

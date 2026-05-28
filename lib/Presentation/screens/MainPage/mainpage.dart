@@ -288,8 +288,8 @@ class _MainPageState extends State<MainPage> {
         return [
           const ReservationView(),
 
-          const VisitGenericView(title: "Generic",),
-          //  const NotificationsView(),
+          //   const VisitGenericView(title: "Generic",),
+          const NotificationsView(),
           const OrdersView(),
           const AccountView(),
         ][index];

@@ -8,6 +8,10 @@ class ReservationViewModel extends GetxController {
   late final ReservationFilterManager filterManager;
   late final ReservationActionManager actionManager;
   late final ReservationQueryManager queryManager;
+  late final ReservationCheckInManager checkInManager;
+  late final ReservationServingManager servingManager;
+  late final ReservationQueueReasonManager queueReasonManager;
+  late final ReservationSnapshotManager snapshotManager;
   bool hideShiftSelector = false;
   bool _isProcessingStatus = false;
   List<ReservationModel> _cachedReservations = [];
@@ -22,6 +26,7 @@ class ReservationViewModel extends GetxController {
 
   int selectedTab = 0;
   int completedReservation = 0;
+  String searchQuery = "";
 
   // Date + Patient
   String? appointmentDate;
@@ -37,6 +42,34 @@ class ReservationViewModel extends GetxController {
   bool isLoadingDoctors = false;
 
   bool get isCenterMode => false;
+
+  List<ReservationModel?> get filteredReservations {
+    final list = listReservations ?? [];
+    final q = searchQuery.trim();
+    if (q.isEmpty) return list;
+    return list.where((r) {
+      if (r == null) return false;
+      final orderMatch = r.orderNum?.toString() == q;
+      final phoneMatch = (r.patientPhone ?? "").contains(q);
+      return orderMatch || phoneMatch;
+    }).toList();
+  }
+
+  bool get hasActiveUrgentReservation {
+    const doneStatuses = {
+      "completed",
+      "cancelled_by_user",
+      "cancelled_by_assistant",
+      "cancelled_by_doctor",
+      "missed",
+    };
+    return completeDayReservations.any(
+      (r) =>
+          r != null &&
+          r.reservationType == "كشف مستعجل" &&
+          !doneStatuses.contains(r.status),
+    );
+  }
 
   int totalCount = 0;
   int completedCount = 0;
@@ -67,6 +100,15 @@ class ReservationViewModel extends GetxController {
     }
     _initManagers();
     _listenToGlobalReservationEvents();
+    _initAnnouncementService();
+  }
+
+  void _initAnnouncementService() {
+    final doctorKey = ApiConstatns.uid;
+    if (doctorKey == null || doctorKey.isEmpty) return;
+
+    final announcementController = Get.find<DoctorAnnouncementController>();
+    announcementController.initForDoctor(doctorKey);
   }
 
   void calculateStats() {
@@ -84,6 +126,7 @@ class ReservationViewModel extends GetxController {
             .where(
               (r) =>
                   r?.status == ReservationStatus.approved.value ||
+                  r?.status == ReservationStatus.checkedIn.value ||
                   r?.status == ReservationStatus.inProgress.value,
             )
             .length;
@@ -132,6 +175,114 @@ class ReservationViewModel extends GetxController {
     filterManager = ReservationFilterManager();
     actionManager = ReservationActionManager();
     queryManager = ReservationQueryManager();
+    checkInManager = ReservationCheckInManager();
+    servingManager = ReservationServingManager();
+    queueReasonManager = ReservationQueueReasonManager();
+    snapshotManager = ReservationSnapshotManager();
+  }
+
+  /// Check patient in at the clinic.
+  Future<void> checkInPatient(ReservationModel reservation) async {
+    if (_isProcessingStatus) return;
+    _isProcessingStatus = true;
+    Loader.show();
+    try {
+      await checkInManager.checkIn(
+        reservation: reservation,
+        onSuccess: (updated) {
+          _updateListInMemory(updated);
+          unawaited(_handleQueueUpdate(snapshotReason: QueueChangeReason.checkedIn));
+          unawaited(queueReasonManager.writeReason(
+            reservation: updated,
+            reason: QueueChangeReason.checkedIn,
+          ));
+          Loader.showSuccess("تم تسجيل حضور المريض");
+        },
+      );
+    } catch (e) {
+      Loader.showError("حدث خطأ أثناء تسجيل الحضور");
+    } finally {
+      _isProcessingStatus = false;
+      update();
+    }
+  }
+
+  /// Mark patient as missed (no-show).
+  Future<void> markPatientMissed(ReservationModel reservation) async {
+    if (_isProcessingStatus) return;
+    _isProcessingStatus = true;
+    Loader.show();
+    try {
+      await checkInManager.markMissed(
+        reservation: reservation,
+        onSuccess: () {
+          reservation.status = ReservationStatus.missed.value;
+          _updateListInMemory(reservation);
+          unawaited(_handleQueueUpdate(snapshotReason: QueueChangeReason.windowShift));
+          Loader.showSuccess("تم تسجيل الغياب");
+        },
+      );
+    } catch (e) {
+      Loader.showError("حدث خطأ");
+    } finally {
+      _isProcessingStatus = false;
+      update();
+    }
+  }
+
+  /// Return a missed patient to the active queue.
+  /// They re-enter within the same window but with lower priority.
+  Future<void> returnMissedPatient(ReservationModel reservation) async {
+    if (_isProcessingStatus) return;
+    _isProcessingStatus = true;
+    Loader.show();
+    try {
+      await checkInManager.returnFromMissed(
+        reservation: reservation,
+        onSuccess: (updated) {
+          _updateListInMemory(updated);
+          unawaited(_handleQueueUpdate(snapshotReason: QueueChangeReason.missedReturned));
+          unawaited(queueReasonManager.writeReason(
+            reservation: updated,
+            reason: QueueChangeReason.missedReturned,
+          ));
+          Loader.showSuccess("تم إعادة المريض إلى الطابور");
+        },
+      );
+    } catch (e) {
+      Loader.showError("حدث خطأ أثناء إعادة المريض");
+    } finally {
+      _isProcessingStatus = false;
+      update();
+    }
+  }
+
+  /// Manually promote a patient who has been waiting too long.
+  Future<void> promotePatient(
+    ReservationModel reservation, {
+    int minWaitMinutes = 60,
+  }) async {
+    if (_isProcessingStatus) return;
+    _isProcessingStatus = true;
+    try {
+      await checkInManager.manualPromote(
+        reservation: reservation,
+        minWaitMinutes: minWaitMinutes,
+        onSuccess: (updated) {
+          _updateListInMemory(updated);
+          unawaited(_handleQueueUpdate(snapshotReason: QueueChangeReason.manualPromote));
+          unawaited(queueReasonManager.writeReason(
+            reservation: updated,
+            reason: QueueChangeReason.manualPromote,
+          ));
+          Loader.showSuccess("تم تقديم المريض في الطابور");
+        },
+        onDenied: (reason) => Loader.showError(reason),
+      );
+    } finally {
+      _isProcessingStatus = false;
+      update();
+    }
   }
 
   // Fetch clinics
@@ -345,13 +496,23 @@ class ReservationViewModel extends GetxController {
     String? cancelReason,
   ) async {
     try {
+      /// ✅ Serving pointer — single source of truth
+      if (newStatus == ReservationStatus.inProgress) {
+        // مريض جديد بدأ الكشف → اكتب الـ key
+        unawaited(servingManager.setCurrentServing(reservation));
+      } else if (newStatus == ReservationStatus.completed ||
+          newStatus == ReservationStatus.missed ||
+          newStatus.isCancelled) {
+        // الكشف انتهى أو ألغي → امسح الـ pointer
+        unawaited(servingManager.clearCurrentServing(reservation));
+      }
+
       /// ✅ WhatsApp
       await WhatsAppStatusMessageService.sendStatusWhatsAppMessage(
         reservation: reservation,
         clinic: selectedClinic,
         newStatus: newStatus,
       );
-
 
       /// ✅ Queue
       if (newStatus == ReservationStatus.completed) {
@@ -360,19 +521,38 @@ class ReservationViewModel extends GetxController {
           reservationId: reservation.key ?? "",
         );
 
-        await _handleQueueUpdate();
+        await _handleQueueUpdate(snapshotReason: QueueChangeReason.windowShift);
+      } else if (newStatus.isCancelled) {
+        // Cancellation frees a slot — notify remaining patients their position changed.
+        await _handleQueueUpdate(snapshotReason: QueueChangeReason.windowShift);
       }
     } catch (e, stack) {
       debugPrintStack(stackTrace: stack);
     }
   }
 
-  Future<void> _handleQueueUpdate() async {
-    final snapshot = List<ReservationModel>.from(
+  Future<void> _handleQueueUpdate({
+    QueueChangeReason? snapshotReason,
+  }) async {
+    final all = List<ReservationModel>.from(
       listReservations?.whereType<ReservationModel>().toList() ?? [],
     );
 
-    await queueManager.notifyApprovedQueueUpdate(allReservations: snapshot);
+    await queueManager.notifyApprovedQueueUpdate(allReservations: all);
+
+    // حفظ snapshot تلقائي عند كل تحديث كبير
+    if (snapshotReason != null && all.isNotEmpty) {
+      final doctorUid = all.first.doctorUid;
+      final date = all.first.appointmentDateTime;
+      if (doctorUid != null && date != null) {
+        unawaited(snapshotManager.saveSnapshot(
+          doctorUid: doctorUid,
+          appointmentDate: date,
+          allReservations: all,
+          triggeredBy: snapshotReason,
+        ));
+      }
+    }
   }
 
   Future<void> handleMakeOrder(ReservationModel reservation) async {

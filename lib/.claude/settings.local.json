@@ -46,7 +46,20 @@
       "Bash(sed -n '240,260p' /Users/apple/resturants/lib/presentation/screens/static_pages/widgets/static_page_bottom_sheet.dart)",
       "Bash(sed -n '190,205p' /Users/apple/resturants/lib/presentation/screens/theme_settings/widgets/color_picker_sheet.dart)",
       "Bash(sed -n '375,390p' /Users/apple/resturants/lib/presentation/screens/payment_methods/widgets/payment_method_bottom_sheet.dart)",
-      "Bash(python3)"
+      "Bash(python3)",
+      "Bash(cd /Users/apple/diwanclinic && dart analyze lib/Presentation/screens/reservations/list/view_model/reservation_view_model.dart lib/Presentation/parentControllers/reservation_service.dart lib/Data/Models/reservation_model.dart lib/Data/data_source_impl/reservation_data_source_remote.dart lib/Presentation/screens/reservations/list/view_model/managers/reservation_query_manager_read.dart 2>&1 | head -60)",
+      "Bash(git -C /Users/apple/diwanclinic status)",
+      "Bash(cd /Users/apple/diwanclinic && flutter analyze lib/Presentation/screens/reservations/create_update/ 2>&1 | tail -30)",
+      "Bash(cd /Users/apple/diwanclinic && dart analyze lib/Global/Enums/status_enum.dart lib/Global/Enums/priority_level_enum.dart lib/Data/Models/reservation_model.dart lib/Presentation/screens/reservations/list/view_model/managers/reservation_queue_manager.dart lib/Presentation/screens/reservations/list/view_model/managers/reservation_checkin_manager.dart lib/Presentation/screens/reservations/create_update/create_reservation_view_model.dart lib/Presentation/screens/reservations/list/view_model/reservation_view_model.dart 2>&1 | head -60)",
+      "Bash(cd /Users/apple/diwanclinic && dart analyze lib/Data/Models/reservation_model.dart lib/Presentation/screens/reservations/list/view_model/managers/reservation_queue_manager.dart lib/Presentation/screens/reservations/list/view_model/managers/reservation_checkin_manager.dart 2>&1)",
+      "Bash(cd /Users/apple/diwanclinic && flutter analyze lib/Global/Enums/doctor_announcement_type.dart lib/Data/Models/doctor_announcement_model.dart lib/Data/data_source/doctor_announcement_data_source.dart lib/Data/data_source_impl/doctor_announcement_data_source_impl.dart lib/Domain/Repositories/doctor_announcement_repository.dart lib/Data/RepositoryImpl/doctor_announcement_repository_impl.dart lib/Domain/UseCases/doctor_announcement_use_cases.dart 2>&1 | head -60)",
+      "Bash(mkdir -p /Users/apple/diwanclinic/functions/announcements)",
+      "Bash(node -e ' *)",
+      "Bash(firebase deploy *)",
+      "Bash(cd /Users/apple/diwanclinic && flutter analyze lib/Presentation/screens/reservations/list/view/reservation_view.dart lib/Data/Models/reservation_model.dart lib/Global/Enums/queue_change_reason.dart 2>&1 | tail -20)",
+      "Bash(find /Users/apple/diwanclinic -name \"*.dart\" | xargs grep -l \"queue_position\\\\|queuePosition\\\\|NotificationService\\\\|sendPushNotif\\\\|fcm_notification\" 2>/dev/null | head -15)",
+      "Bash(find /Users/apple/diwanclinic -type f -name \"*.dart\" | grep -i \"patient\" | head -30)",
+      "Bash(ls /Users/apple/diwanclinic)"
     ]
   }
 }

@@ -43,7 +43,13 @@ class ReservationModel {
 
   /// 🔢 order
   int? orderNum;
-   int? orderReserved;
+  int? orderReserved;
+
+  /// 🧠 Smart Queue Fields
+  int? priorityLevel;      // 0=normal 1=vip 2=elderly 3=newborn 4=urgent
+  int? checkedInAt;        // timestamp when patient first checked in at clinic
+  int? missedReturnedAt;   // timestamp when patient returned after being missed
+  String? queueReason;     // last reason queue position changed (QueueChangeReason.systemLabel)
 
   /// 🧾 medical
   final String? allergies;
@@ -103,6 +109,10 @@ class ReservationModel {
 
     this.orderNum,
     this.orderReserved,
+    this.priorityLevel,
+    this.checkedInAt,
+    this.missedReturnedAt,
+    this.queueReason,
 
     this.allergies,
     this.diagnosis,
@@ -122,6 +132,16 @@ class ReservationModel {
     this.hasFeedback = false,
     this.isDeleted = false,
   });
+
+  bool get isCheckedIn         => checkedInAt != null;
+  bool get isHardPriority      => (priorityLevel ?? 0) >= 3;
+  bool get hasSoftPriority     => (priorityLevel ?? 0) >= 1;
+  bool get isReturnedFromMissed => missedReturnedAt != null;
+
+  /// وقت الوصول الفعلي:
+  /// لو المريض رجع بعد missed → missedReturnedAt
+  /// غير ذلك → checkedInAt
+  int? get effectiveArrivalTime => missedReturnedAt ?? checkedInAt;
 
   // Helper
   static int? _toInt(dynamic value) {
@@ -186,6 +206,10 @@ class ReservationModel {
     /// 🔢 order
     put('order_num', orderNum);
     put('order_reserved', orderReserved);
+    put('priority_level', priorityLevel);
+    put('checked_in_at', checkedInAt);
+    put('missed_returned_at', missedReturnedAt);
+    put('queue_reason', queueReason);
 
     /// 🧾 medical
     put('allergies', allergies);
@@ -224,6 +248,7 @@ class ReservationModel {
     int? toInt(dynamic v) {
       if (v == null) return null;
       if (v is int) return v;
+      if (v is double) return v.toInt(); // Firebase stores ints as doubles
       return int.tryParse(v.toString());
     }
 
@@ -278,6 +303,10 @@ class ReservationModel {
       /// 🔢 order
       orderNum: toInt(json['order_num']),
       orderReserved: toInt(json['order_reserved']),
+      priorityLevel: toInt(json['priority_level']),
+      checkedInAt: toInt(json['checked_in_at']),
+      missedReturnedAt: toInt(json['missed_returned_at']),
+      queueReason: json['queue_reason'],
 
       /// 🧾 medical
       allergies: json['allergies'],
@@ -349,6 +378,10 @@ class ReservationModel {
     /// 🔢 order
     int? orderNum,
     int? orderReserved,
+    int? priorityLevel,
+    int? checkedInAt,
+    int? missedReturnedAt,
+    String? queueReason,
 
     /// 📎 attachments
     String? transferImage,
@@ -409,6 +442,10 @@ class ReservationModel {
       /// 🔢 order
       orderNum: orderNum ?? this.orderNum,
       orderReserved: orderReserved ?? this.orderReserved,
+      priorityLevel: priorityLevel ?? this.priorityLevel,
+      checkedInAt: checkedInAt ?? this.checkedInAt,
+      missedReturnedAt: missedReturnedAt ?? this.missedReturnedAt,
+      queueReason: queueReason ?? this.queueReason,
 
       /// 📎 attachments
       transferImage: transferImage ?? this.transferImage,

@@ -22,7 +22,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 71, // ⬅️ bumped
+      version: 74, // ⬅️ bumped: added queue_reason
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onConfigure: (db) async {
@@ -228,7 +228,13 @@ is_auto_type INTEGER DEFAULT 0,
 
   -- ⚙️ flags
   is_ordered INTEGER DEFAULT 0,
-  has_feedback INTEGER DEFAULT 0
+  has_feedback INTEGER DEFAULT 0,
+
+  -- 🧠 Smart Queue
+  priority_level INTEGER DEFAULT 0,
+  checked_in_at INTEGER,
+  missed_returned_at INTEGER,
+  queue_reason TEXT
 );
 ''');
   }

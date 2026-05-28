@@ -169,6 +169,14 @@ class Binding implements Bindings {
       fenix: true,
     );
 
+    Get.lazyPut<DoctorAnnouncementDataSource>(
+      () => DoctorAnnouncementDataSourceImpl(
+        FirebaseDatabase.instance,
+        Get.find<ClientSourceRepo>(),
+      ),
+      fenix: true,
+    );
+
     Get.lazyPut<VisitDataSourceRepo>(
       () => VisitDataSourceRepoImpl(Get.find()),
       fenix: true,
@@ -333,6 +341,13 @@ class Binding implements Bindings {
       fenix: true,
     );
 
+    Get.lazyPut<DoctorAnnouncementRepository>(
+      () => DoctorAnnouncementRepositoryImpl(
+        Get.find<DoctorAnnouncementDataSource>(),
+      ),
+      fenix: true,
+    );
+
     Get.lazyPut<VisitRepository>(
       () => VisitRepositoryImpl(Get.find()),
       fenix: true,
@@ -345,6 +360,9 @@ class Binding implements Bindings {
     // ───────────── Use Cases ─────────────
     Get.lazyPut<ClinicUseCases>(() => ClinicUseCases(Get.find()));
     Get.lazyPut<NotificationUseCases>(() => NotificationUseCases(Get.find()));
+    Get.lazyPut<DoctorAnnouncementUseCases>(
+      () => DoctorAnnouncementUseCases(Get.find()),
+    );
     Get.lazyPut<VisitUseCases>(() => VisitUseCases(Get.find()));
     Get.lazyPut<ArchivePatientUseCases>(
       () => ArchivePatientUseCases(Get.find()),
@@ -355,6 +373,10 @@ class Binding implements Bindings {
     Get.lazyPut<LoginViewModel>(() => LoginViewModel());
     Get.lazyPut(() => MainPageViewModel());
     Get.lazyPut<NotificationController>(() => NotificationController());
+    Get.lazyPut<DoctorAnnouncementController>(
+      () => DoctorAnnouncementController(),
+      fenix: true,
+    );
 
     Get.lazyPut<ReservationViewModel>(() => ReservationViewModel());
     Get.lazyPut<ReservationPatientViewModel>(

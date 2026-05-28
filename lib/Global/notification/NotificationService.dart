@@ -194,6 +194,9 @@ class NotificationService {
       case "offers":
         Get.toNamed('/offers');
         break;
+      case "doctor_announcement":
+        Get.toNamed('/reservationView');
+        break;
     }
   }
 }

@@ -31,12 +31,9 @@ class ReservationFilterManager {
       whereArgs.add(appointmentDate);
     }
 
-    // ✅ Tab filter
+    // ✅ Tab filter — tab 1 shows urgent only, tab 0 shows all types
     if (selectedTab == 1) {
       conditions.add("reservation_type = ?");
-      whereArgs.add("كشف مستعجل");
-    } else if (selectedTab == 0) {
-      conditions.add("reservation_type != ?");
       whereArgs.add("كشف مستعجل");
     }
 

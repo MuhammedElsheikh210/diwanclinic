@@ -117,6 +117,7 @@ class _CreateReservationViewState extends State<CreateReservationView> {
 
     vm.calculateOrderNumber();
     vm.isLoadingReservations = false;
+    unawaited(vm.initDoctorSpecialization());
     vm.update();
   }
 
@@ -199,7 +200,16 @@ class _CreateReservationViewState extends State<CreateReservationView> {
 
                       // ❌ Validation فشل
                       if (!controller.validateCurrentStep()) {
-                        Loader.showError("⚠️ اكمل بيانات الخطوة الحالية");
+                        if (controller.currentStep == 2) {
+                          final phone = controller.patientPhoneController.text.trim();
+                          if (phone.isNotEmpty && (phone.length != 11 || !phone.startsWith('01'))) {
+                            Loader.showError("⚠️ رقم الهاتف يجب أن يبدأ بـ 01 ويتكون من 11 رقم");
+                          } else {
+                            Loader.showError("⚠️ اكمل بيانات الخطوة الحالية");
+                          }
+                        } else {
+                          Loader.showError("⚠️ اكمل بيانات الخطوة الحالية");
+                        }
                         return;
                       }
 
@@ -294,10 +304,24 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                       onSelect: (client) {
                                         _fillPatientData(controller, client);
                                         setState(() {
-                                          showPhoneList =
-                                              false; // ✅ Hide results when a patient is selected
+                                          showPhoneList = false;
                                         });
                                       },
+                                    ),
+                                  ),
+
+                                if (controller.phoneValidationError != null)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 15.0,
+                                      vertical: 4,
+                                    ),
+                                    child: Text(
+                                      controller.phoneValidationError!,
+                                      style: context.typography.smRegular
+                                          .copyWith(
+                                            color: AppColors.errorForeground,
+                                          ),
                                     ),
                                   ),
 
@@ -501,27 +525,135 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                             }).toList(),
                                       ),
 
-                                      if (controller.lastReservation == null &&
-                                          controller.selectedType == "إعادة")
+                                    ],
+                                  ),
+                                ),
+
+                                // ─── Priority Selector ───────────────────
+                                if (!controller.isDirectType &&
+                                    controller.selectedType != "كشف مستعجل")
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 10,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "الأولوية",
+                                        style: context.typography.mdMedium,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children: [
+                                          ReservationPriority.normal,
+                                          if (controller.isPediatricDoctor)
+                                            ReservationPriority.newborn,
+                                          ReservationPriority.urgent,
+                                        ].map((p) {
+                                          final isSelected =
+                                              controller.priorityLevel ==
+                                              p.level;
+                                          return GestureDetector(
+                                            onTap: () =>
+                                                controller.setPriorityLevel(
+                                                  p.level,
+                                                ),
+                                            child: AnimatedContainer(
+                                              duration: const Duration(
+                                                milliseconds: 180,
+                                              ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 14,
+                                                    vertical: 10,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    isSelected
+                                                        ? p.color.withValues(
+                                                            alpha: 0.15,
+                                                          )
+                                                        : Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                border: Border.all(
+                                                  color:
+                                                      isSelected
+                                                          ? p.color
+                                                          : Colors.grey.shade300,
+                                                  width: 1.5,
+                                                ),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  if (p.emoji.isNotEmpty)
+                                                    Text(
+                                                      p.emoji,
+                                                      style: const TextStyle(
+                                                        fontSize: 14,
+                                                      ),
+                                                    ),
+                                                  if (p.emoji.isNotEmpty)
+                                                    const SizedBox(width: 4),
+                                                  Text(
+                                                    p.label,
+                                                    style: context
+                                                        .typography
+                                                        .smRegular
+                                                        .copyWith(
+                                                          color:
+                                                              isSelected
+                                                                  ? p.color
+                                                                  : Colors.grey
+                                                                      .shade700,
+                                                          fontWeight:
+                                                              isSelected
+                                                                  ? FontWeight
+                                                                      .w600
+                                                                  : FontWeight
+                                                                      .normal,
+                                                        ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        }).toList(),
+                                      ),
+                                      if (controller.priorityLevel >= 3)
                                         Padding(
                                           padding: const EdgeInsets.only(
-                                            top: 20.0,
+                                            top: 8,
                                           ),
-                                          child: AppTextField(
-                                            hintText: "رقم الإعادة",
-                                            keyboardType: TextInputType.number,
-                                            onChanged: (val) {
-                                              controller.manualRevisitCount =
-                                                  int.tryParse(val);
-
-                                              // 🔥 لازم تعيد الحساب
-                                              controller.applyAutoTypeLogic();
-                                            },
+                                          child: Row(
+                                            children: [
+                                              const Icon(
+                                                Icons.priority_high,
+                                                size: 16,
+                                                color: Colors.red,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                "حالة طارئة — سيُقدَّم فوراً على الطابور",
+                                                style: context.typography.smRegular
+                                                    .copyWith(
+                                                      color: Colors.red,
+                                                    ),
+                                              ),
+                                            ],
                                           ),
                                         ),
                                     ],
                                   ),
                                 ),
+
+                                if (!controller.isDirectType)
                                 Padding(
                                   padding: const EdgeInsets.only(
                                     left: 15,
@@ -535,7 +667,7 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                 ),
 
                                 /// 🔹 المبالغ
-                                controller.selectedType == "متابعة"
+                                controller.isDirectType
                                     ? const SizedBox()
                                     : Padding(
                                       padding: const EdgeInsets.only(
@@ -735,41 +867,80 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                   ),
                                 const SizedBox(height: 15),
                                 // title رقم الدور
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                    left: 15.0,
-                                    right: 15,
-                                    bottom: 7,
-                                  ),
-                                  child: Text(
-                                    "رقم الدور ",
-                                    style: context.typography.lgBold.copyWith(
-                                      color: AppColors.background_black,
+                                if (!controller.isDirectType)
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 15.0,
+                                      right: 15,
+                                      bottom: 7,
+                                    ),
+                                    child: Text(
+                                      "رقم الدور ",
+                                      style: context.typography.lgBold.copyWith(
+                                        color: AppColors.background_black,
+                                      ),
                                     ),
                                   ),
-                                ),
 
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 15.0,
-                                  ),
-                                  child: AppTextField(
-                                    hintText: "رقم الكشف",
-                                    enabled: controller.isFromLegacyQueue,
-                                    controller:
-                                        controller.is_update
-                                            ? TextEditingController(
-                                              text:
-                                                  widget.reservation?.orderNum
-                                                      .toString(),
-                                            )
-                                            : controller.resOrderController,
-                                    keyboardType: TextInputType.number,
-                                    focusNode: keyboardService.getFocusNode(
-                                      keys[6],
+                                if (controller.isDirectType)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 15.0,
+                                      vertical: 8,
+                                    ),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 10,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary.withOpacity(0.08),
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: AppColors.primary.withOpacity(0.4),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.flash_on,
+                                            color: AppColors.primary,
+                                            size: 18,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            "يدخل عند الدكتور مباشرة — بدون دور",
+                                            style: context.typography.smRegular
+                                                .copyWith(
+                                                  color: AppColors.primary,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 15.0,
+                                    ),
+                                    child: AppTextField(
+                                      hintText: "رقم الكشف",
+                                      enabled: controller.isFromLegacyQueue,
+                                      controller:
+                                          controller.is_update
+                                              ? TextEditingController(
+                                                text:
+                                                    widget.reservation?.orderNum
+                                                        .toString(),
+                                              )
+                                              : controller.resOrderController,
+                                      keyboardType: TextInputType.number,
+                                      focusNode: keyboardService.getFocusNode(
+                                        keys[6],
+                                      ),
                                     ),
                                   ),
-                                ),
                                 if ((currentUser?.user.userType ==
                                         UserType.assistant) &&
                                     controller.legacyQueueCount > 0)

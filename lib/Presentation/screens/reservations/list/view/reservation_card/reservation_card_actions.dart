@@ -157,6 +157,17 @@ class ReservationCardActions extends StatelessWidget {
           ),
         ];
 
+      case ReservationNewStatus.missed:
+        return [
+          _space,
+          _actionButton(
+            context,
+            "رجع",
+            Colors.teal,
+            () => controller.returnMissedPatient(reservation),
+          ),
+        ];
+
       default:
         return [];
     }

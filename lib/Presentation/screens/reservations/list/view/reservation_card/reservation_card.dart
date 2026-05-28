@@ -606,18 +606,25 @@ class ReservationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final status =
-    ReservationStatusNewExt.fromValue(reservation.status ?? "");
+    final status = ReservationStatusNewExt.fromValue(reservation.status ?? "");
 
-    final ahead = controller.queueManager.aheadInQueue(
-      reservations: controller.listReservations,
-      target: reservation,
-    );
+    // ── Stable queue position ────────────────────────────────────────────
+    // Use orderReserved (set by buildFinalList) instead of re-sorting
+    // on every render.  This prevents the number from jumping the moment
+    // the patient is marked as checkedIn (sort-boost happens on next
+    // buildFinalList rebuild, not mid-render).
+    //
+    // orderReserved is 1-indexed → ahead = orderReserved - 1
+    // If orderReserved is null (pending / missed / cancelled), ahead = -1 → chip hidden.
+    final int ahead = (reservation.orderReserved != null)
+        ? (reservation.orderReserved! - 1).clamp(0, 9999)
+        : -1;
 
     final bool isCompletedOrCancelled =
-        reservation.status == ReservationNewStatus.completed.value ||
-            reservation.status ==
-                ReservationNewStatus.cancelledByAssistant.value;
+        reservation.status == ReservationStatus.completed.value ||
+        reservation.status == ReservationStatus.cancelledByAssistant.value ||
+        reservation.status == ReservationStatus.cancelledByUser.value ||
+        reservation.status == ReservationStatus.cancelledByDoctor.value;
 
     return Container(
       decoration: BoxDecoration(

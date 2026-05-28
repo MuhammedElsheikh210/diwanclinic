@@ -44,12 +44,17 @@ async function handleQueueUpdate({
 
     const ahead = after.queue_position;
 
+    // فقط لما يكون الدور قريب (0 أو 1 أو 2 قبلك)
+    if (ahead > 2) return;
+
     const title = "تحديث الدور";
 
     const body =
       ahead === 0
         ? "دورك الآن ✨"
-        : `قبلك ${ahead} حالات`;
+        : ahead === 1
+        ? "قبلك من 1 إلى 2 حالات 🔔"
+        : "قبلك من 2 إلى 3 حالات 🔔";
 
     // ========================================================
     // 🛑 PREVENT DUPLICATES
