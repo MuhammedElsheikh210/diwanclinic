@@ -24,6 +24,9 @@ class BaseUser {
   final String? phone;
   final String? name;
   final String? address;
+  final String? code;
+  final double? latitude;
+  final double? longitude;
 
   // 🚨 TEMP ONLY
   final String? password;
@@ -40,6 +43,9 @@ class BaseUser {
     this.phone,
     this.name,
     this.address,
+    this.code,
+    this.latitude,
+    this.longitude,
     this.password,
   });
 
@@ -81,6 +87,9 @@ class BaseUser {
       phone: json['phone']?.toString(),
       name: json['name'] ?? json['client_name'],
       address: json['address'],
+      code: json['code'],
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
       password: json['password'],
     );
   }
@@ -116,6 +125,9 @@ class BaseUser {
     put('phone', phone);
     put('name', name);
     put('address', address);
+    put('code', code);
+    put('latitude', latitude);
+    put('longitude', longitude);
     put('password', password);
 
     return data;
@@ -137,6 +149,9 @@ class BaseUser {
     String? phone,
     String? name,
     String? address,
+    String? code,
+    double? latitude,
+    double? longitude,
     String? password,
   }) {
     return BaseUser(
@@ -151,6 +166,9 @@ class BaseUser {
       phone: phone ?? this.phone,
       name: name ?? this.name,
       address: address ?? this.address,
+      code: code ?? this.code,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
       password: password ?? this.password,
     );
   }

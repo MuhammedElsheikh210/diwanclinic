@@ -100,6 +100,7 @@ class PricingSearchController extends GetxController {
   }
 
   OrderModel buildUpdatedOrder(OrderModel order) {
+    final pharmacy = Get.find<UserSession>().user?.asPharmacy;
     return order.copyWith(
       medicines: buildMedicineItems(),
       totalOrder: subtotalInt,
@@ -107,6 +108,9 @@ class PricingSearchController extends GetxController {
       deliveryFees: deliveryFee,
       finalAmount: totalInt,
       updatedAt: DateTime.now().millisecondsSinceEpoch,
+      pharmacyWalletNumber: pharmacy?.walletNumber,
+      pharmacyInstapayNumber: pharmacy?.instapayNumber,
+      pharmacyInstapayLink: pharmacy?.instapayLink,
     );
   }
 

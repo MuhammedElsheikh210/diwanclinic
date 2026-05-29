@@ -150,6 +150,13 @@ class PatientResultList extends StatelessWidget {
                         color: AppColors.background_black,
                       ),
                     ),
+                    if (client.code != null && client.code!.isNotEmpty)
+                      AppText(
+                        text: "كود: ${client.code}",
+                        textStyle: context.typography.smRegular.copyWith(
+                          color: AppColors.grayMedium,
+                        ),
+                      ),
                   ],
                 ),
               ),

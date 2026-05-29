@@ -14,8 +14,14 @@ class DoctorUser extends BaseUser {
   final double? totalRate;
   final int? numberOfRates;
 
-  // ✅ NEW
   final int remoteReservationAbility;
+
+  // 💳 Online Payment
+  final bool supportsOnlinePay;
+  final bool requiresDeposit;
+  final String? walletNumber;
+  final String? instapayNumber;
+  final String? instapayLink;
 
   const DoctorUser({
     super.uid,
@@ -26,10 +32,13 @@ class DoctorUser extends BaseUser {
     super.appVersion,
     super.identifier,
     super.profileImage,
+    super.code,
     super.phone,
     super.name,
     super.address,
     super.password,
+    super.latitude,
+    super.longitude,
     this.specializationName,
     this.specializeKey,
     this.doctorQualifications,
@@ -39,6 +48,11 @@ class DoctorUser extends BaseUser {
     this.totalRate,
     this.numberOfRates,
     this.remoteReservationAbility = 1,
+    this.supportsOnlinePay = false,
+    this.requiresDeposit = false,
+    this.walletNumber,
+    this.instapayNumber,
+    this.instapayLink,
   });
 
   // ============================================================
@@ -83,7 +97,9 @@ class DoctorUser extends BaseUser {
       name: base.name,
       address: base.address,
       password: base.password,
-
+      code: base.code,
+      latitude: base.latitude,
+      longitude: base.longitude,
       specializationName: json['specialization_name'],
       specializeKey: json['specialize_key'],
       doctorQualifications: json['doctorQualifications'],
@@ -98,6 +114,11 @@ class DoctorUser extends BaseUser {
       remoteReservationAbility: parseBoolToInt(
         json['remote_reservation_ability'],
       ),
+      supportsOnlinePay: parseBoolToInt(json['supports_online_pay']) == 1,
+      requiresDeposit: parseBoolToInt(json['requires_deposit']) == 1,
+      walletNumber: json['wallet_number'],
+      instapayNumber: json['instapay_number'],
+      instapayLink: json['instapay_link'],
     );
   }
 
@@ -126,13 +147,19 @@ class DoctorUser extends BaseUser {
 
     data["remote_reservation_ability"] = remoteReservationAbility;
 
+    data["supports_online_pay"] = supportsOnlinePay ? 1 : 0;
+    data["requires_deposit"] = requiresDeposit ? 1 : 0;
+    put("wallet_number", walletNumber);
+    put("instapay_number", instapayNumber);
+    put("instapay_link", instapayLink);
+
     return data;
   }
 
   // ============================================================
   // COPY WITH
   // ============================================================
-
+  @override
   DoctorUser copyWith({
     String? uid,
     int? createdAt,
@@ -142,10 +169,13 @@ class DoctorUser extends BaseUser {
     String? appVersion,
     String? identifier,
     String? profileImage,
+    String? code,
     String? phone,
     String? name,
     String? address,
     String? password,
+    double? latitude,
+    double? longitude,
     String? specializationName,
     String? specializeKey,
     String? doctorQualifications,
@@ -155,6 +185,11 @@ class DoctorUser extends BaseUser {
     double? totalRate,
     int? numberOfRates,
     int? remoteReservationAbility,
+    bool? supportsOnlinePay,
+    bool? requiresDeposit,
+    String? walletNumber,
+    String? instapayNumber,
+    String? instapayLink,
   }) {
     return DoctorUser(
       uid: uid ?? this.uid,
@@ -166,9 +201,12 @@ class DoctorUser extends BaseUser {
       identifier: identifier ?? this.identifier,
       profileImage: profileImage ?? this.profileImage,
       phone: phone ?? this.phone,
+      code: code ?? this.code,
       name: name ?? this.name,
       address: address ?? this.address,
       password: password ?? this.password,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
       specializationName: specializationName ?? this.specializationName,
       specializeKey: specializeKey ?? this.specializeKey,
       doctorQualifications: doctorQualifications ?? this.doctorQualifications,
@@ -179,6 +217,11 @@ class DoctorUser extends BaseUser {
       numberOfRates: numberOfRates ?? this.numberOfRates,
       remoteReservationAbility:
           remoteReservationAbility ?? this.remoteReservationAbility,
+      supportsOnlinePay: supportsOnlinePay ?? this.supportsOnlinePay,
+      requiresDeposit: requiresDeposit ?? this.requiresDeposit,
+      walletNumber: walletNumber ?? this.walletNumber,
+      instapayNumber: instapayNumber ?? this.instapayNumber,
+      instapayLink: instapayLink ?? this.instapayLink,
     );
   }
 }

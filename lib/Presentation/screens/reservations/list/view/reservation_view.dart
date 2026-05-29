@@ -73,33 +73,53 @@ class _ReservationViewState extends State<ReservationView> {
 
                   // ── Search bar ───────────────────────────────
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 8.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 4.w,
+                      vertical: 8.h,
+                    ),
                     child: TextField(
                       controller: _searchController,
                       keyboardType: TextInputType.phone,
                       textDirection: TextDirection.ltr,
+                      inputFormatters: [ArabicToEnglishDigitsFormatter()],
                       decoration: InputDecoration(
                         hintText: "بحث برقم الحجز أو رقم التلفون",
                         hintStyle: context.typography.smRegular.copyWith(
                           color: AppColors.textSecondaryParagraph,
                         ),
-                        prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary),
-                        suffixIcon: _searchController.text.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear_rounded, size: 18),
-                                onPressed: () {
-                                  _searchController.clear();
-                                },
-                              )
-                            : null,
+                        prefixIcon: const Icon(
+                          Icons.search_rounded,
+                          color: AppColors.primary,
+                        ),
+                        suffixIcon:
+                            _searchController.text.isNotEmpty
+                                ? IconButton(
+                                  icon: const Icon(
+                                    Icons.clear_rounded,
+                                    size: 18,
+                                  ),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    controller.searchQuery = "";
+                                    controller.update();
+                                  },
+                                )
+                                : null,
                         filled: true,
                         fillColor: AppColors.background_neutral_100,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
                         ),
                       ),
+                      onChanged: (value) {
+                        controller.searchQuery = value;
+                        controller.update();
+                      },
                     ),
                   ),
 
@@ -129,8 +149,7 @@ class _ReservationViewState extends State<ReservationView> {
                 onPressed: () async {
                   final trueTotal =
                       await controller.getTotalTodayReservations();
-                  final userType =
-                      Get.find<UserSession>().user?.user.userType;
+                  final userType = Get.find<UserSession>().user?.user.userType;
 
                   if (userType == UserType.patient) {
                     Get.delete<CreateReservationFromPatientViewModel>();
@@ -140,6 +159,7 @@ class _ReservationViewState extends State<ReservationView> {
                         shift_key: controller.selectedShift?.key,
                         total_reservations: trueTotal,
                         selectedClinic: controller.selectedClinic,
+                        selectedDoctor: controller.selectedDoctor,
                       ),
                     );
                   } else {
@@ -292,9 +312,9 @@ class _ReservationViewState extends State<ReservationView> {
       if (isCancelled || isMissed) return const Color(0xFFEF4444);
       if (isCompleted) return const Color(0xFF10B981);
       if (isInProgress) return const Color(0xFF3B82F6);
-      if (isCheckedIn) return const Color(0xFF0D9488);
+      if (isCheckedIn) return AppColors.primary;
       if (hasHardPriority) return const Color(0xFFEF4444);
-      if (ahead <= 0) return const Color(0xFF10B981);
+      if (ahead <= 0) return AppColors.primary;
       return AppColors.primary;
     }
 
@@ -334,9 +354,9 @@ class _ReservationViewState extends State<ReservationView> {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: accentColor.withValues(
-              alpha: dimmed ? 0.12 : (hasHardPriority ? 0.55 : 0.22),
+              alpha: dimmed ? 0.20 : (hasHardPriority ? 0.75 : 0.45),
             ),
-            width: hasHardPriority ? 2.0 : 1.2,
+            width: hasHardPriority ? 2.5 : 1.8,
           ),
           boxShadow:
               dimmed
@@ -352,9 +372,9 @@ class _ReservationViewState extends State<ReservationView> {
                   ]
                   : [
                     BoxShadow(
-                      color: accentColor.withValues(alpha: 0.07),
-                      blurRadius: 18,
-                      offset: const Offset(0, 6),
+                      color: accentColor.withValues(alpha: 0.18),
+                      blurRadius: 14,
+                      offset: const Offset(0, 4),
                     ),
                   ],
         ),
@@ -395,22 +415,21 @@ class _ReservationViewState extends State<ReservationView> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: context.typography.lgBold.copyWith(
-                                    fontWeight: FontWeight.w700,
+                                    fontWeight: FontWeight.w800,
                                     color: AppColors.background_black,
-                                    fontSize: 16,
+                                    fontSize: 22,
                                   ),
                                 ),
                                 if ((reservation.patientPhone ?? "").isNotEmpty)
                                   Padding(
-                                    padding: const EdgeInsets.only(top: 3),
+                                    padding: const EdgeInsets.only(top: 4),
                                     child: Text(
                                       reservation.patientPhone!,
                                       style: context.typography.smRegular
                                           .copyWith(
-                                            color:
-                                                AppColors
-                                                    .textSecondaryParagraph,
-                                            fontSize: 12,
+                                            color: const Color(0xFF374151),
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
                                           ),
                                     ),
                                   ),
@@ -446,7 +465,7 @@ class _ReservationViewState extends State<ReservationView> {
                           _chip(
                             context,
                             label: reservation.reservationType ?? "",
-                            bg: AppColors.primary.withValues(alpha: 0.08),
+                            bg: AppColors.primary.withValues(alpha: 0.15),
                             fg: AppColors.primary,
                           ),
                           if ((reservation.paidAmount ?? "0") != "0" &&
@@ -456,8 +475,8 @@ class _ReservationViewState extends State<ReservationView> {
                               label: "${reservation.paidAmount} ج.م",
                               bg: const Color(
                                 0xFF10B981,
-                              ).withValues(alpha: 0.08),
-                              fg: const Color(0xFF10B981),
+                              ).withValues(alpha: 0.18),
+                              fg: const Color(0xFF059669),
                               icon: Icons.payments_outlined,
                             ),
                           if (hasHardPriority)
@@ -466,8 +485,8 @@ class _ReservationViewState extends State<ReservationView> {
                               label: "${priority.emoji} ${priority.label}",
                               bg: const Color(
                                 0xFFEF4444,
-                              ).withValues(alpha: 0.14),
-                              fg: const Color(0xFFEF4444),
+                              ).withValues(alpha: 0.18),
+                              fg: const Color(0xFFDC2626),
                               icon: Icons.local_hospital_rounded,
                             ),
                           if (isCheckedIn)
@@ -476,7 +495,7 @@ class _ReservationViewState extends State<ReservationView> {
                               label: "حضر",
                               bg: const Color(
                                 0xFF0D9488,
-                              ).withValues(alpha: 0.08),
+                              ).withValues(alpha: 0.18),
                               fg: const Color(0xFF0D9488),
                               icon: Icons.how_to_reg_outlined,
                             ),
@@ -485,12 +504,58 @@ class _ReservationViewState extends State<ReservationView> {
                               !isCancelled)
                             _chip(
                               context,
-                              label: QueueChangeReasonExt.fromLabel(
-                                reservation.queueReason,
-                              ).assistantBadge,
-                              bg: Colors.grey.withValues(alpha: 0.08),
-                              fg: Colors.grey.shade600,
+                              label:
+                                  QueueChangeReasonExt.fromLabel(
+                                    reservation.queueReason,
+                                  ).assistantBadge,
+                              bg: Colors.grey.withValues(alpha: 0.15),
+                              fg: Colors.grey.shade800,
                               icon: Icons.swap_vert_rounded,
+                            ),
+                          if (reservation.paymentMethod != null &&
+                              reservation.paymentMethod!.isNotEmpty)
+                            _chip(
+                              context,
+                              label: () {
+                                switch (reservation.paymentMethod) {
+                                  case 'instapay':
+                                    return 'طريقة الدفع: InstaPay';
+                                  case 'wallet':
+                                    return 'طريقة الدفع: محفظة';
+                                  default:
+                                    return 'طريقة الدفع: كاش';
+                                }
+                              }(),
+                              bg: () {
+                                switch (reservation.paymentMethod) {
+                                  case 'instapay':
+                                    return Colors.green.withValues(alpha: 0.12);
+                                  case 'wallet':
+                                    return Colors.blue.withValues(alpha: 0.12);
+                                  default:
+                                    return Colors.orange.withValues(alpha: 0.12);
+                                }
+                              }(),
+                              fg: () {
+                                switch (reservation.paymentMethod) {
+                                  case 'instapay':
+                                    return Colors.green.shade700;
+                                  case 'wallet':
+                                    return Colors.blue.shade700;
+                                  default:
+                                    return Colors.orange.shade700;
+                                }
+                              }(),
+                              icon: () {
+                                switch (reservation.paymentMethod) {
+                                  case 'instapay':
+                                    return Icons.payment;
+                                  case 'wallet':
+                                    return Icons.account_balance_wallet_outlined;
+                                  default:
+                                    return Icons.payments_outlined;
+                                }
+                              }(),
                             ),
                         ],
                       ),
@@ -500,7 +565,8 @@ class _ReservationViewState extends State<ReservationView> {
                       // ── DIVIDER ──────────────────────────────
                       Divider(
                         height: 1,
-                        color: Colors.grey.withValues(alpha: 0.10),
+                        thickness: 1.2,
+                        color: Colors.grey.withValues(alpha: 0.28),
                       ),
 
                       const SizedBox(height: 12),
@@ -517,24 +583,29 @@ class _ReservationViewState extends State<ReservationView> {
                                   vertical: 7,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: accentColor.withValues(alpha: 0.09),
+                                  color: accentColor.withValues(alpha: 0.18),
                                   borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: accentColor.withValues(alpha: 0.40),
+                                    width: 1.2,
+                                  ),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(
                                       statusIcon(),
-                                      size: 14,
+                                      size: 17,
                                       color: accentColor,
                                     ),
-                                    const SizedBox(width: 5),
+                                    const SizedBox(width: 6),
                                     Text(
                                       statusLabel(),
                                       style: context.typography.smMedium
                                           .copyWith(
                                             color: accentColor,
-                                            fontWeight: FontWeight.w600,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 14,
                                           ),
                                     ),
                                   ],
@@ -573,23 +644,25 @@ class _ReservationViewState extends State<ReservationView> {
     IconData? icon,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(9),
+        border: Border.all(color: fg.withValues(alpha: 0.35), width: 1.2),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 12, color: fg),
-            const SizedBox(width: 4),
+            Icon(icon, size: 15, color: fg),
+            const SizedBox(width: 5),
           ],
           Text(
             label,
             style: context.typography.xsMedium.copyWith(
               color: fg,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
+              fontSize: 14,
             ),
           ),
         ],
@@ -620,7 +693,7 @@ class _ReservationViewState extends State<ReservationView> {
       case ReservationNewStatus.pending:
         return _mainBtn(
           text: "تأكيد",
-          color: const Color(0xFF10B981),
+          color: AppColors.background_black,
           icon: Icons.check_rounded,
           onTap: () => _handleAction(newStatus: ReservationStatus.approved),
         );
@@ -716,7 +789,7 @@ class _ReservationViewState extends State<ReservationView> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: accentColor.withValues(alpha: 0.10),
+        color: accentColor.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -727,7 +800,8 @@ class _ReservationViewState extends State<ReservationView> {
             orderText,
             style: context.typography.mdBold.copyWith(
               color: accentColor,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w900,
+              fontSize: 20,
             ),
           ),
 
@@ -735,15 +809,16 @@ class _ReservationViewState extends State<ReservationView> {
           if (hasQueue) ...[
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 8),
-              width: 1,
-              height: 14,
-              color: accentColor.withValues(alpha: 0.35),
+              width: 1.5,
+              height: 18,
+              color: accentColor.withValues(alpha: 0.60),
             ),
             Text(
               ahead == 0 ? "دورك" : "قبله $ahead",
               style: context.typography.smMedium.copyWith(
                 color: accentColor,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
               ),
             ),
           ],
@@ -759,24 +834,20 @@ class _ReservationViewState extends State<ReservationView> {
     IconData? icon,
   }) {
     return SizedBox(
-      height: 38,
+      height: 50.h,
       child: ElevatedButton.icon(
         icon:
             icon != null
-                ? Icon(icon, size: 16, color: Colors.white)
+                ? Icon(icon, size: 18, color: Colors.white)
                 : const SizedBox.shrink(),
         label: Text(
           text,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-          ),
+          style: context.typography.mdBold.copyWith(color: AppColors.white),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
+          elevation: 1,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),

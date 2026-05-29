@@ -12,6 +12,9 @@ class UserMapper {
       case UserType.assistant:
         return AssistantUser.fromJson(json);
 
+      case UserType.pharmacy:
+        return PharmacyUser.fromJson(json);
+
       default:
         return BaseUser.fromJson(json);
     }

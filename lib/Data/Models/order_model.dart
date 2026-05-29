@@ -49,6 +49,15 @@ class OrderModel {
   final String? pharmacyFcmToken; // NEW
   final String? pharmacyPhone; // NEW
 
+  // 💳 Payment — pharmacy info (stored at pricing time)
+  String? pharmacyWalletNumber;
+  String? pharmacyInstapayNumber;
+  String? pharmacyInstapayLink;
+
+  // 💳 Payment — patient choice
+  String? paymentMethod;         // 'cash' | 'wallet' | 'instapay'
+  String? paymentScreenshotUrl;  // رابط سكرين شوت الدفع
+
   // 🗒️ Misc
   final String? notes;
 
@@ -92,6 +101,11 @@ class OrderModel {
     this.deliveryStatus,
     this.pharmacyFcmToken, // NEW
     this.pharmacyPhone, // NEW
+    this.pharmacyWalletNumber,
+    this.pharmacyInstapayNumber,
+    this.pharmacyInstapayLink,
+    this.paymentMethod,
+    this.paymentScreenshotUrl,
     this.notes,
     this.status,
     this.createdAt,
@@ -147,6 +161,11 @@ class OrderModel {
     if (pharmacyFcmToken != null) data['pharmacy_fcm_token'] = pharmacyFcmToken;
     if (pharmacyPhone != null) data['pharmacy_phone'] = pharmacyPhone;
 
+    if (pharmacyWalletNumber != null) data['pharmacy_wallet_number'] = pharmacyWalletNumber;
+    if (pharmacyInstapayNumber != null) data['pharmacy_instapay_number'] = pharmacyInstapayNumber;
+    if (pharmacyInstapayLink != null) data['pharmacy_instapay_link'] = pharmacyInstapayLink;
+    if (paymentMethod != null) data['payment_method'] = paymentMethod;
+    if (paymentScreenshotUrl != null) data['payment_screenshot_url'] = paymentScreenshotUrl;
     if (notes != null) data['notes'] = notes;
     if (status != null) data['status'] = status;
 
@@ -212,6 +231,11 @@ class OrderModel {
       pharmacyPhone: json['pharmacy_phone'],
 
       // NEW
+      pharmacyWalletNumber: json['pharmacy_wallet_number'],
+      pharmacyInstapayNumber: json['pharmacy_instapay_number'],
+      pharmacyInstapayLink: json['pharmacy_instapay_link'],
+      paymentMethod: json['payment_method'],
+      paymentScreenshotUrl: json['payment_screenshot_url'],
       notes: json['notes'],
       status: json['status'],
       createdAt: json['created_at'],
@@ -258,6 +282,11 @@ class OrderModel {
     String? pharmacyFcmToken,
     String? pharmacyPhone,
 
+    String? pharmacyWalletNumber,
+    String? pharmacyInstapayNumber,
+    String? pharmacyInstapayLink,
+    String? paymentMethod,
+    String? paymentScreenshotUrl,
     String? notes,
     String? status,
     int? createdAt,
@@ -300,6 +329,11 @@ class OrderModel {
       pharmacyFcmToken: pharmacyFcmToken ?? this.pharmacyFcmToken,
       pharmacyPhone: pharmacyPhone ?? this.pharmacyPhone,
 
+      pharmacyWalletNumber: pharmacyWalletNumber ?? this.pharmacyWalletNumber,
+      pharmacyInstapayNumber: pharmacyInstapayNumber ?? this.pharmacyInstapayNumber,
+      pharmacyInstapayLink: pharmacyInstapayLink ?? this.pharmacyInstapayLink,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
+      paymentScreenshotUrl: paymentScreenshotUrl ?? this.paymentScreenshotUrl,
       notes: notes ?? this.notes,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,

@@ -231,24 +231,8 @@ class _PatientSection extends StatelessWidget {
 
               SizedBox(height: 10.h),
 
-              // Container(
-              //   padding: EdgeInsets.symmetric(
-              //     horizontal: 10.w,
-              //     vertical: 6.h,
-              //   ),
-              //
-              //   decoration: BoxDecoration(
-              //     color: AppColors.background_neutral_100,
-              //     borderRadius: BorderRadius.circular(100.r),
-              //   ),
-              //
-              //   child: Text(
-              //     reservation.reservationType ?? "",
-              //     style: context.typography.smMedium.copyWith(
-              //       color: AppColors.textDisplay,
-              //     ),
-              //   ),
-              // ),
+              if (reservation.paymentMethod != null)
+                _PaymentMethodBadge(method: reservation.paymentMethod!),
             ],
           ),
         ),
@@ -373,6 +357,7 @@ class _ReservationInfoSection extends StatelessWidget {
             icon: Icons.calendar_month_rounded,
           ),
         ),
+
       ],
     );
   }
@@ -560,6 +545,43 @@ class _ActionsSection extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+class _PaymentMethodBadge extends StatelessWidget {
+  final String method;
+
+  const _PaymentMethodBadge({required this.method});
+
+  @override
+  Widget build(BuildContext context) {
+    final (icon, label, color) = switch (method) {
+      'instapay' => (Icons.payment, 'InstaPay', Colors.green.shade700),
+      'wallet'   => (Icons.account_balance_wallet_outlined, 'محفظة إلكترونية', Colors.blue.shade700),
+      _          => (Icons.payments_outlined, 'كاش', Colors.orange.shade700),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Color.fromRGBO(color.red, color.green, color.blue, 0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Color.fromRGBO(color.red, color.green, color.blue, 0.3),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text(
+            "طريقة الدفع: $label",
+            style: context.typography.xsMedium.copyWith(color: color),
+          ),
+        ],
+      ),
     );
   }
 }

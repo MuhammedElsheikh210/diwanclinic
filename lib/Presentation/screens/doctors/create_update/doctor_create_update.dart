@@ -52,8 +52,14 @@ class _CreateDoctorViewState extends State<CreateDoctorView> {
       vm.instagramController.text = d.instagramLink ?? "";
       vm.tiktokController.text = d.tiktokLink ?? "";
 
-      // ✅ NEW
       vm.remoteReservationAbility = d.remoteReservationAbility;
+      vm.supportsOnlinePay = d.supportsOnlinePay;
+      vm.requiresDeposit = d.requiresDeposit;
+      vm.walletNumberController.text = d.walletNumber ?? "";
+      vm.instapayNumberController.text = d.instapayNumber ?? "";
+      vm.instapayLinkController.text = d.instapayLink ?? "";
+      vm.selectedLatitude = d.latitude;
+      vm.selectedLongitude = d.longitude;
 
       vm.isUpdate = true;
       vm.existingDoctor = doctor;
@@ -207,6 +213,83 @@ class _CreateDoctorViewState extends State<CreateDoctorView> {
                   ),
                   SizedBox(height: 20.h),
 
+                  /// 💳 Online Payment Section
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "يدعم الدفع الإلكتروني",
+                          style: context.typography.mdMedium,
+                        ),
+                        Switch(
+                          value: controller.supportsOnlinePay,
+                          onChanged: controller.setSupportsOnlinePay,
+                          activeColor: AppColors.primary,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: 10.h),
+
+
+
+                  if (controller.supportsOnlinePay) ...[
+                    SizedBox(height: 10.h),
+                    CustomInputField(
+                      label: "رقم المحفظة",
+                      controller: controller.walletNumberController,
+                      hintText: "رقم محفظة فودافون كاش / اتصالات",
+                      focusNode: FocusNode(),
+                      keyboardType: TextInputType.phone,
+                      validator: InputValidators.combine([]),
+                    ),
+                    SizedBox(height: 10.h),
+                    CustomInputField(
+                      label: "رقم InstaPay",
+                      controller: controller.instapayNumberController,
+                      hintText: "رقم حساب InstaPay",
+                      focusNode: FocusNode(),
+                      keyboardType: TextInputType.phone,
+                      validator: InputValidators.combine([]),
+                    ),
+                    SizedBox(height: 10.h),
+                    CustomInputField(
+                      label: "رابط InstaPay",
+                      controller: controller.instapayLinkController,
+                      hintText: "رابط الدفع عبر InstaPay",
+                      focusNode: FocusNode(),
+                      keyboardType: TextInputType.url,
+                      validator: InputValidators.combine([]),
+                    ),
+                    SizedBox(height: 10.h),
+                  ],
+
+                  /// 💰 Requires Deposit Section
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "يتطلب عربون عند الحجز",
+                          style: context.typography.mdMedium,
+                        ),
+                        Switch(
+                          value: controller.requiresDeposit,
+                          onChanged: controller.setRequiresDeposit,
+                          activeColor: AppColors.primary,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  /// 📍 Location
+                  _DoctorLocationPickerWidget(controller: controller),
+                  SizedBox(height: 16.h),
+
                   /// ✅ Save Button
                   SafeArea(
                     child: BottomNavigationActions(
@@ -225,6 +308,63 @@ class _CreateDoctorViewState extends State<CreateDoctorView> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _DoctorLocationPickerWidget extends StatelessWidget {
+  final CreateDoctorViewModel controller;
+  const _DoctorLocationPickerWidget({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasLocation =
+        controller.selectedLatitude != null && controller.selectedLongitude != null;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.borderNeutralPrimary),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            hasLocation ? Icons.location_on : Icons.location_off,
+            color: hasLocation ? AppColors.primary : AppColors.textSecondaryParagraph,
+            size: 22,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              hasLocation
+                  ? "الموقع: ${controller.selectedLatitude!.toStringAsFixed(5)}, ${controller.selectedLongitude!.toStringAsFixed(5)}"
+                  : "لم يتم تحديد الموقع بعد",
+              style: context.typography.smRegular.copyWith(
+                color: hasLocation
+                    ? AppColors.textDefault
+                    : AppColors.textSecondaryParagraph,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          controller.isLoadingLocation
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : TextButton.icon(
+                  onPressed: controller.fetchCurrentLocation,
+                  icon: const Icon(Icons.my_location, size: 18),
+                  label: Text(hasLocation ? "تحديث" : "تحديد موقعي"),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  ),
+                ),
+        ],
       ),
     );
   }

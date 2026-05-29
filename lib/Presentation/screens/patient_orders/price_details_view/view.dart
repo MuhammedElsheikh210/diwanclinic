@@ -1,4 +1,5 @@
 import '../../../../index/index_main.dart';
+import 'payment_selection_sheet.dart';
 
 class PriceDetailsScreen extends StatefulWidget {
   final OrderModel order;
@@ -171,7 +172,7 @@ class _PriceDetailsScreenState extends State<PriceDetailsScreen> {
             if (isPending && !isPharmacy)
               PrimaryTextButton(
                 appButtonSize: AppButtonSize.xxLarge,
-                onTap: () => _showConfirmPricingDialog(context),
+                onTap: () => _showPaymentSheet(context),
                 label: AppText(
                   text: "تأكيد الطلب",
                   textStyle: context.typography.mdBold.copyWith(
@@ -280,93 +281,61 @@ class _PriceDetailsScreenState extends State<PriceDetailsScreen> {
   }
 
   // ---------------------------------------------------------
-  // CONFIRM PRICING DIALOG
+  // PAYMENT SHEET → then confirm
   // ---------------------------------------------------------
-  void _showConfirmPricingDialog(BuildContext context) {
-    showDialog(
+  Future<void> _showPaymentSheet(BuildContext context) async {
+    final result = await showModalBottomSheet<({String method, String? screenshotUrl})>(
       context: context,
-      builder:
-          (_) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            title: AppText(
-              text: "تأكيد سعر الطلب",
-              textStyle: context.typography.lgBold.copyWith(
-                color: AppColors.textDisplay,
-              ),
-            ),
-            content: AppText(
-              text:
-                  "هل تريد تأكيد التسعير النهائي لهذا الطلب؟\nبعد التأكيد سيتم إرسال السعر للمريض.",
-              textStyle: context.typography.mdMedium.copyWith(
-                color: AppColors.textSecondaryParagraph,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Get.back(),
-                child: AppText(
-                  text: "إلغاء",
-                  textStyle: context.typography.mdMedium.copyWith(
-                    color: AppColors.textSecondaryParagraph,
-                  ),
-                ),
-              ),
-              TextButton(
-                onPressed: () async {
-                  Loader.show();
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => PaymentSelectionSheet(
+        finalAmount: widget.order.finalAmount ?? 0,
+        walletNumber: widget.order.pharmacyWalletNumber,
+        instapayNumber: widget.order.pharmacyInstapayNumber,
+        instapayLink: widget.order.pharmacyInstapayLink,
+      ),
+    );
 
-                  // 🔥 تحديث الطلب من مكان واحد فقط
-                  await OrderStatusService.updateOrderStatus(
-                    order: widget.order.copyWith(
-                      medicines: medicines,
-                      totalOrder: subtotal,
-                      deliveryFees: delivery,
-                      discount: discount,
-                      finalAmount: finalTotal,
-                      updatedAt: DateTime.now().millisecondsSinceEpoch,
-                    ),
-                    newStatus: "completed",
-                    onSave: (updatedOrder) async {
-                      await OrderService().updateOrderData(
-                        order: updatedOrder,
-                        sideEffects: const OrderSideEffects(
-                          sendWhatsApp: true,
-                          sendNotification: true,
-                        ),
-                        voidCallBack: (_) async {
-                          if (widget.fromHome == true) {
-                            Get.offAll(
-                              () => const MainPage(initialIndex: 0),
-                              binding: Binding(),
-                            );
-                          } else {
-                            OrdersListViewModel controller = initController(
-                              () => OrdersListViewModel(),
-                            );
-                            //  controller.fetchOrders();
-                            controller.update();
-                            Get.back();
-                            Get.back();
-                          }
+    if (result == null) return;
 
-                          Loader.dismiss();
-                          // إغلاق شاشة التفاصيل
-                        },
-                      );
-                    },
-                  );
-                },
-                child: AppText(
-                  text: "تأكيد",
-                  textStyle: context.typography.mdBold.copyWith(
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ],
+    Loader.show();
+
+    await OrderStatusService.updateOrderStatus(
+      order: widget.order.copyWith(
+        medicines: medicines,
+        totalOrder: subtotal,
+        deliveryFees: delivery,
+        discount: discount,
+        finalAmount: finalTotal,
+        paymentMethod: result.method,
+        paymentScreenshotUrl: result.screenshotUrl,
+        updatedAt: DateTime.now().millisecondsSinceEpoch,
+      ),
+      newStatus: "completed",
+      onSave: (updatedOrder) async {
+        await OrderService().updateOrderData(
+          order: updatedOrder,
+          sideEffects: const OrderSideEffects(
+            sendWhatsApp: true,
+            sendNotification: true,
           ),
+          voidCallBack: (_) async {
+            Loader.dismiss();
+            if (widget.fromHome == true) {
+              Get.offAll(
+                () => const MainPage(initialIndex: 0),
+                binding: Binding(),
+              );
+            } else {
+              OrdersListViewModel controller =
+                  initController(() => OrdersListViewModel());
+              controller.update();
+              Get.back();
+              Get.back();
+            }
+          },
+        );
+      },
     );
   }
 

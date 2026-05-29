@@ -6,6 +6,8 @@ class ClinicModel {
   final String? phone2;
   final String? emergencyCall;
   final String? location;
+  final double? latitude;
+  final double? longitude;
   final String? whatsappNum;
   final String? appointments;
   final String? doctorKey;
@@ -44,6 +46,8 @@ class ClinicModel {
     this.phone2,
     this.emergencyCall,
     this.location,
+    this.latitude,
+    this.longitude,
     this.whatsappNum,
     this.appointments,
     this.doctorKey,
@@ -72,6 +76,8 @@ class ClinicModel {
     if (emergencyCall?.isNotEmpty == true)
       data['emergency_call'] = emergencyCall;
     if (location?.isNotEmpty == true) data['location'] = location;
+    if (latitude != null) data['latitude'] = latitude;
+    if (longitude != null) data['longitude'] = longitude;
     if (whatsappNum?.isNotEmpty == true) data['whatsapp_num'] = whatsappNum;
     if (appointments?.isNotEmpty == true) data['appointments'] = appointments;
     if (doctorKey?.isNotEmpty == true) data['doctor_key'] = doctorKey;
@@ -117,6 +123,8 @@ class ClinicModel {
       phone2: json['phone2'],
       emergencyCall: json['emergency_call'],
       location: json['location'],
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
       whatsappNum: json['whatsapp_num'],
       appointments: json['appointments'],
       doctorKey: json['doctor_key'],
@@ -156,6 +164,8 @@ class ClinicModel {
     String? phone2,
     String? emergencyCall,
     String? location,
+    double? latitude,
+    double? longitude,
     String? whatsappNum,
     String? appointments,
     String? doctorKey,
@@ -179,6 +189,8 @@ class ClinicModel {
       phone2: phone2 ?? this.phone2,
       emergencyCall: emergencyCall ?? this.emergencyCall,
       location: location ?? this.location,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
       whatsappNum: whatsappNum ?? this.whatsappNum,
       appointments: appointments ?? this.appointments,
       doctorKey: doctorKey ?? this.doctorKey,

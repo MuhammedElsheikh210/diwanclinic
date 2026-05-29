@@ -462,6 +462,18 @@ class DoctorDetailsViewModel extends GetxController {
                 : "0",
 
         status: ReservationStatus.pending.value,
+
+        // 🗺️ clinic location (denormalized for patient card map)
+        clinicAddress: selectedClinic?.address,
+        clinicLatitude: selectedClinic?.latitude,
+        clinicLongitude: selectedClinic?.longitude,
+
+        // 💳 payment method
+        paymentMethod: transfer_url_image != null
+            ? (doctor.asDoctor?.instapayNumber?.isNotEmpty == true ? 'instapay' : 'wallet')
+            : 'cash',
+
+        paymentStatus: transfer_url_image != null ? 'pending_payment' : null,
       );
       // 🔹 Step 6: Save reservation in Firebase & local DB
       await ReservationService().addReservationData(

@@ -35,6 +35,9 @@ class LocalUser {
   AssistantUser? get asAssistant =>
       user is AssistantUser ? user as AssistantUser : null;
 
+  PharmacyUser? get asPharmacy =>
+      user is PharmacyUser ? user as PharmacyUser : null;
+
   // ============================================================
   // COMMON FIELDS (FIX ✅)
   // ============================================================
@@ -50,6 +53,12 @@ class LocalUser {
   String? get email => user.identifier;
 
   String? get address => user.address;
+
+  String? get code => user.code;
+
+  double? get latitude => user.latitude;
+
+  double? get longitude => user.longitude;
 
   String? get profileImage => user.profileImage;
 

@@ -26,6 +26,7 @@ class ReservationModel {
   final String? patientName;
   final String? patientPhone;
   final String? patientFcm;
+  final String? patientCode;
 
   final int? revisitCount;
   final String? parentKey;
@@ -67,6 +68,16 @@ class ReservationModel {
   String? prescriptionUrl4;
   String? prescriptionUrl5;
 
+  /// 💳 online payment
+  String? paymentScreenshotUrl;
+  String? paymentMethod;   // 'wallet' | 'instapay' | 'cash'
+  String? paymentStatus;   // 'pending_payment' | 'payment_approved' | 'payment_rejected'
+
+  /// 🗺️ clinic location (denormalized at create time)
+  String? clinicAddress;
+  double? clinicLatitude;
+  double? clinicLongitude;
+
   /// ⚙️ flags
   bool isOrdered;
   bool hasFeedback;
@@ -98,6 +109,7 @@ class ReservationModel {
     this.patientName,
     this.patientPhone,
     this.patientFcm,
+    this.patientCode,
 
     this.appointmentDateTime,
     this.status,
@@ -127,6 +139,14 @@ class ReservationModel {
     this.prescriptionUrl3,
     this.prescriptionUrl4,
     this.prescriptionUrl5,
+
+    this.paymentScreenshotUrl,
+    this.paymentMethod,
+    this.paymentStatus,
+
+    this.clinicAddress,
+    this.clinicLatitude,
+    this.clinicLongitude,
 
     this.isOrdered = false,
     this.hasFeedback = false,
@@ -192,6 +212,7 @@ class ReservationModel {
     put('patient_name', patientName);
     put('patient_phone', patientPhone);
     put('patient_fcm', patientFcm);
+    put('patient_code', patientCode);
 
     /// 📅 reservation
     put('appointment_date_time', appointmentDateTime);
@@ -226,6 +247,16 @@ class ReservationModel {
     put('prescription_url_3', prescriptionUrl3);
     put('prescription_url_4', prescriptionUrl4);
     put('prescription_url_5', prescriptionUrl5);
+
+    /// 💳 online payment
+    put('payment_screenshot_url', paymentScreenshotUrl);
+    put('payment_method', paymentMethod);
+    put('payment_status', paymentStatus);
+
+    /// 🗺️ clinic location
+    put('clinic_address', clinicAddress);
+    put('clinic_latitude', clinicLatitude);
+    put('clinic_longitude', clinicLongitude);
 
     /// ⚙️ flags
     data['is_ordered'] = isOrdered ? 1 : 0;
@@ -289,6 +320,7 @@ class ReservationModel {
       patientName: json['patient_name'],
       patientPhone: json['patient_phone'],
       patientFcm: json['patient_fcm'],
+      patientCode: json['patient_code'],
 
       /// 📅 reservation
       appointmentDateTime: json['appointment_date_time'],
@@ -323,6 +355,16 @@ class ReservationModel {
       prescriptionUrl3: json['prescription_url_3'],
       prescriptionUrl4: json['prescription_url_4'],
       prescriptionUrl5: json['prescription_url_5'],
+
+      /// 💳 online payment
+      paymentScreenshotUrl: json['payment_screenshot_url'],
+      paymentMethod: json['payment_method'],
+      paymentStatus: json['payment_status'],
+
+      /// 🗺️ clinic location
+      clinicAddress: json['clinic_address'],
+      clinicLatitude: (json['clinic_latitude'] as num?)?.toDouble(),
+      clinicLongitude: (json['clinic_longitude'] as num?)?.toDouble(),
 
       /// ⚙️ flags
       isOrdered: toBool(json['is_ordered']),
@@ -364,6 +406,7 @@ class ReservationModel {
     String? patientName,
     String? patientPhone,
     String? patientFcm,
+    String? patientCode,
 
     /// 📅 reservation
     String? appointmentDateTime,
@@ -391,6 +434,16 @@ class ReservationModel {
     String? prescriptionUrl3,
     String? prescriptionUrl4,
     String? prescriptionUrl5,
+
+    /// 💳 online payment
+    String? paymentScreenshotUrl,
+    String? paymentMethod,
+    String? paymentStatus,
+
+    /// 🗺️ clinic location
+    String? clinicAddress,
+    double? clinicLatitude,
+    double? clinicLongitude,
 
     /// ⚙️ flags
     bool? isOrdered,
@@ -428,6 +481,7 @@ class ReservationModel {
       patientName: patientName ?? this.patientName,
       patientPhone: patientPhone ?? this.patientPhone,
       patientFcm: patientFcm ?? this.patientFcm,
+      patientCode: patientCode ?? this.patientCode,
 
       /// 📅 reservation
       appointmentDateTime: appointmentDateTime ?? this.appointmentDateTime,
@@ -455,6 +509,16 @@ class ReservationModel {
       prescriptionUrl3: prescriptionUrl3 ?? this.prescriptionUrl3,
       prescriptionUrl4: prescriptionUrl4 ?? this.prescriptionUrl4,
       prescriptionUrl5: prescriptionUrl5 ?? this.prescriptionUrl5,
+
+      /// 💳 online payment
+      paymentScreenshotUrl: paymentScreenshotUrl ?? this.paymentScreenshotUrl,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
+
+      /// 🗺️ clinic location
+      clinicAddress: clinicAddress ?? this.clinicAddress,
+      clinicLatitude: clinicLatitude ?? this.clinicLatitude,
+      clinicLongitude: clinicLongitude ?? this.clinicLongitude,
 
       /// ⚙️ flags
       isOrdered: isOrdered ?? this.isOrdered,

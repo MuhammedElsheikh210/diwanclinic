@@ -476,6 +476,37 @@ class ReservationPatientViewModel extends GetxController {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // 💳 Re-upload payment screenshot (after rejection)
+  // ---------------------------------------------------------------------------
+
+  final _picker = ImagePicker();
+
+  Future<void> reuploadPaymentScreenshot(ReservationModel reservation) async {
+    final picked = await _picker.pickImage(source: ImageSource.gallery);
+    if (picked == null) return;
+
+    Loader.show();
+
+    try {
+      final fileName = "${DateTime.now().millisecondsSinceEpoch}.jpg";
+      final ref = FirebaseStorage.instance.ref().child(
+        "payment_screenshots/$fileName",
+      );
+      await ref.putFile(File(picked.path));
+      final url = await ref.getDownloadURL();
+
+      reservation.paymentScreenshotUrl = url;
+      reservation.paymentStatus = 'pending_payment';
+
+      await updateReservation(reservation);
+      Loader.showSuccess("تم إعادة رفع الصورة بنجاح، بانتظار المراجعة");
+    } catch (e) {
+      Loader.dismiss();
+      Loader.showError("فشل رفع الصورة، يرجى المحاولة مرة أخرى");
+    }
+  }
+
   /// Delete reservation
   void deleteReservation(ReservationModel reservation) {
     ReservationService().deleteReservationData(

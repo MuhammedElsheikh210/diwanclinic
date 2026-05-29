@@ -1,3 +1,4 @@
+import 'package:diwanclinic/Global/managers/location_manager.dart';
 import '../../../../../index/index_main.dart';
 
 class CreateAssistantViewModel extends GetxController {
@@ -6,6 +7,10 @@ class CreateAssistantViewModel extends GetxController {
 
   List<ClinicModel?>? listClinics;
   ClinicModel? selectedClinic;
+
+  double? selectedLatitude;
+  double? selectedLongitude;
+  bool isLoadingLocation = false;
 
   bool isUpdate = false;
   LocalUser? existingAssistant;
@@ -30,6 +35,22 @@ class CreateAssistantViewModel extends GetxController {
 
     nameController.addListener(update);
     phoneController.addListener(update);
+  }
+
+  // ============================================================
+  // 📍 LOCATION
+  // ============================================================
+
+  Future<void> fetchCurrentLocation() async {
+    isLoadingLocation = true;
+    update();
+    final latLng = await LocationManager().getLatLng();
+    if (latLng != null) {
+      selectedLatitude = latLng['lat'];
+      selectedLongitude = latLng['lng'];
+    }
+    isLoadingLocation = false;
+    update();
   }
 
   // ============================================================
@@ -74,6 +95,8 @@ class CreateAssistantViewModel extends GetxController {
       phone: phoneController.text,
       address: base.address,
       profileImage: base.profileImage,
+      latitude: selectedLatitude,
+      longitude: selectedLongitude,
 
       clinicKey: selectedClinic?.key,
       doctorKey: base.doctorKey,
@@ -124,6 +147,8 @@ class CreateAssistantViewModel extends GetxController {
         password: password,
         userType: UserType.assistant,
         isProfileCompleted: true,
+        latitude: selectedLatitude,
+        longitude: selectedLongitude,
         clinicKey: selectedClinic?.key,
         doctorKey: doctor_uid,
         transferNumber: transferNumber,

@@ -19,6 +19,37 @@ class ButtonsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final payStatus = reservation.paymentStatus;
+
+    // 💳 Payment status banner + re-upload (shown above buttons)
+    if (payStatus != null && payStatus != 'payment_approved') {
+      return Column(
+        children: [
+        //  _buildPaymentBanner(context, payStatus),
+        //  const SizedBox(height: 8),
+        //   if (payStatus == 'payment_rejected')
+        //     Padding(
+        //       padding: const EdgeInsets.symmetric(horizontal: 15),
+        //       child: SizedBox(
+        //         width: double.infinity,
+        //         child: PrimaryTextButton(
+        //           onTap: () => controller.reuploadPaymentScreenshot(reservation),
+        //           appButtonSize: AppButtonSize.large,
+        //           customBackgroundColor: Colors.orange.shade50,
+        //           customBorder: BorderSide(color: Colors.orange.shade400),
+        //           label: AppText(
+        //             text: "إعادة رفع إثبات الدفع",
+        //             textStyle: context.typography.mdMedium.copyWith(
+        //               color: Colors.orange.shade800,
+        //             ),
+        //           ),
+        //         ),
+        //       ),
+        //     ),
+        ],
+      );
+    }
+
     List<Widget> buttons = [];
 
     if (show_details == true) {
@@ -186,6 +217,45 @@ class ButtonsSection extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 💳 Payment banner
+  // ---------------------------------------------------------------------------
+  Widget _buildPaymentBanner(BuildContext context, String payStatus) {
+    final isPending = payStatus == 'pending_payment';
+    final bgColor = isPending ? Colors.orange.shade50 : AppColors.errorForeground.withOpacity(0.08);
+    final iconColor = isPending ? Colors.orange.shade700 : AppColors.errorForeground;
+    final icon = isPending ? Icons.hourglass_empty_rounded : Icons.cancel_outlined;
+    final text = isPending
+        ? 'بانتظار مراجعة إثبات الدفع من المساعدة'
+        : 'تم رفض إثبات الدفع — يرجى إعادة الرفع';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 15),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isPending ? Colors.orange.shade200 : AppColors.errorForeground.withOpacity(0.3),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: iconColor),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                text,
+                style: context.typography.smMedium.copyWith(color: iconColor, height: 1.4),
+              ),
+            ),
+          ],
         ),
       ),
     );

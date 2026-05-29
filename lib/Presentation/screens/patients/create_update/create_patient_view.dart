@@ -29,7 +29,7 @@ class _CreatePatientViewState extends State<CreatePatientView> {
 
   @override
   Widget build(BuildContext context) {
-    final keys = keyboardService.generateKeys('CreatePatientView', 5);
+    final keys = keyboardService.generateKeys('CreatePatientView', 6);
 
     return GetBuilder<CreatePatientViewModel>(
       init: CreatePatientViewModel(),
@@ -109,6 +109,16 @@ class _CreatePatientViewState extends State<CreatePatientView> {
                           validator: InputValidators.combine([
                             notEmptyValidator,
                           ]),
+                        ),
+                        SizedBox(height: 10.h),
+
+                        CustomInputField(
+                          label: "كود الحالة",
+                          controller: controller.codeController,
+                          hintText: "كود المريض في ملف الدكتور (اختياري)",
+                          focusNode: keyboardService.getFocusNode(keys[4]),
+                          keyboardType: TextInputType.text,
+                          validator: InputValidators.combine([]),
                         ),
                         SizedBox(height: 10.h),
 

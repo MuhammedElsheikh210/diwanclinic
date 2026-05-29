@@ -6,11 +6,15 @@ class SelectReservationDateBottomSheet extends StatefulWidget {
   final DoctorDetailsViewModel controller;
   final String transfer_phone;
   final int wallet_type;
+  final String? instapayNumber;
+  final String? instapayLink;
 
   const SelectReservationDateBottomSheet({
     required this.controller,
     required this.transfer_phone,
     required this.wallet_type,
+    this.instapayNumber,
+    this.instapayLink,
     super.key,
   });
 
@@ -402,12 +406,75 @@ class _SelectReservationDateBottomSheetState
                           ),
                         ),
                         SizedBox(height: 4.h),
-                        Text(
-                          "${widget.transfer_phone}   ${widget.wallet_type == 0 ? "محفظة إلكترونية" : "إنستا باي"}",
-                          style: typography.mdBold.copyWith(
-                            color: AppColors.textDisplay,
+
+                        // 🔹 Wallet number
+                        if (widget.transfer_phone.isNotEmpty)
+                          SelectableText(
+                            "${widget.transfer_phone}   ${widget.wallet_type == 0 ? "محفظة إلكترونية" : "إنستا باي"}",
+                            style: typography.mdBold.copyWith(
+                              color: AppColors.textDisplay,
+                            ),
                           ),
-                        ),
+
+                        // 🔹 InstaPay number
+                        if (widget.instapayNumber != null &&
+                            widget.instapayNumber!.isNotEmpty) ...[
+                          SizedBox(height: 6.h),
+                          SelectableText(
+                            "رقم InstaPay: ${widget.instapayNumber!}",
+                            style: typography.mdBold.copyWith(
+                              color: AppColors.textDisplay,
+                            ),
+                          ),
+                        ],
+
+                        // 🔹 InstaPay link (tappable)
+                        if (widget.instapayLink != null &&
+                            widget.instapayLink!.isNotEmpty) ...[
+                          SizedBox(height: 8.h),
+                          GestureDetector(
+                            onTap: () async {
+                              final uri = Uri.tryParse(widget.instapayLink!);
+                              if (uri != null && await canLaunchUrl(uri)) {
+                                await launchUrl(
+                                  uri,
+                                  mode: LaunchMode.externalApplication,
+                                );
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 7,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.green.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: Colors.green.shade300,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.open_in_new,
+                                    size: 16,
+                                    color: Colors.green.shade700,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    "افتح تطبيق InstaPay",
+                                    style: typography.smMedium.copyWith(
+                                      color: Colors.green.shade700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+
                         SizedBox(height: 10.h),
                         Text(
                           "ثم أرسل صورة التحويل لتأكيد الحجز.",

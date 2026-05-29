@@ -120,6 +120,10 @@ class _CreateClinicViewState extends State<CreateClinicView> {
                   ),
                   SizedBox(height: 12.h),
 
+                  /// 🔹 Location
+                  _LocationPickerWidget(controller: controller),
+                  SizedBox(height: 12.h),
+
                   /// 🔹 Prices
                   CustomInputField(
                     label: "سعر الكشف",
@@ -222,6 +226,63 @@ class _CreateClinicViewState extends State<CreateClinicView> {
           ),
         );
       },
+    );
+  }
+}
+
+class _LocationPickerWidget extends StatelessWidget {
+  final CreateClinicViewModel controller;
+  const _LocationPickerWidget({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasLocation =
+        controller.selectedLatitude != null && controller.selectedLongitude != null;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.borderNeutralPrimary),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            hasLocation ? Icons.location_on : Icons.location_off,
+            color: hasLocation ? AppColors.primary : AppColors.textSecondaryParagraph,
+            size: 22,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              hasLocation
+                  ? "الموقع: ${controller.selectedLatitude!.toStringAsFixed(5)}, ${controller.selectedLongitude!.toStringAsFixed(5)}"
+                  : "لم يتم تحديد الموقع بعد",
+              style: context.typography.smRegular.copyWith(
+                color: hasLocation
+                    ? AppColors.textDefault
+                    : AppColors.textSecondaryParagraph,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          controller.isLoadingLocation
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : TextButton.icon(
+                  onPressed: controller.fetchCurrentLocation,
+                  icon: const Icon(Icons.my_location, size: 18),
+                  label: Text(hasLocation ? "تحديث" : "تحديد موقعي"),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  ),
+                ),
+        ],
+      ),
     );
   }
 }

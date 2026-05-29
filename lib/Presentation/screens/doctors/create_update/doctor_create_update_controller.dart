@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:diwanclinic/Global/managers/location_manager.dart';
 import '../../../../../index/index_main.dart';
 
 class CreateDoctorViewModel extends GetxController {
@@ -16,11 +17,21 @@ class CreateDoctorViewModel extends GetxController {
       TextEditingController();
   final TextEditingController qualificationsController =
       TextEditingController();
+  final TextEditingController walletNumberController = TextEditingController();
+  final TextEditingController instapayNumberController =
+      TextEditingController();
+  final TextEditingController instapayLinkController = TextEditingController();
 
   File? profileImageFile;
   File? coverImageFile;
 
   int remoteReservationAbility = 1;
+  bool supportsOnlinePay = false;
+  bool requiresDeposit = false;
+
+  double? selectedLatitude;
+  double? selectedLongitude;
+  bool isLoadingLocation = false;
 
   bool isUpdate = false;
   LocalUser? existingDoctor;
@@ -57,8 +68,13 @@ class CreateDoctorViewModel extends GetxController {
     }
 
     if (existingDoctor != null && existingDoctor!.isDoctor) {
-      remoteReservationAbility =
-          existingDoctor!.asDoctor?.remoteReservationAbility ?? 0;
+      final d = existingDoctor!.asDoctor;
+      remoteReservationAbility = d?.remoteReservationAbility ?? 0;
+      supportsOnlinePay = d?.supportsOnlinePay ?? false;
+      requiresDeposit = d?.requiresDeposit ?? false;
+      walletNumberController.text = d?.walletNumber ?? "";
+      instapayNumberController.text = d?.instapayNumber ?? "";
+      instapayLinkController.text = d?.instapayLink ?? "";
     }
   }
 
@@ -113,10 +129,34 @@ class CreateDoctorViewModel extends GetxController {
     }
   }
 
+  // ================== LOCATION ==================
+
+  Future<void> fetchCurrentLocation() async {
+    isLoadingLocation = true;
+    update();
+    final latLng = await LocationManager().getLatLng();
+    if (latLng != null) {
+      selectedLatitude = latLng['lat'];
+      selectedLongitude = latLng['lng'];
+    }
+    isLoadingLocation = false;
+    update();
+  }
+
   // ================== SETTINGS ==================
 
   void setRemoteReservationAbility(bool value) {
     remoteReservationAbility = value ? 1 : 0;
+    update();
+  }
+
+  void setSupportsOnlinePay(bool value) {
+    supportsOnlinePay = value;
+    update();
+  }
+
+  void setRequiresDeposit(bool value) {
+    requiresDeposit = value;
     update();
   }
 
@@ -169,6 +209,8 @@ class CreateDoctorViewModel extends GetxController {
       phone: phoneController.text,
       profileImage: profileUrl ?? base.profileImage,
       address: base.address,
+      latitude: selectedLatitude,
+      longitude: selectedLongitude,
 
       doctorQualifications: qualificationsController.text,
       specializationName: selectedSpecialization?.name,
@@ -180,6 +222,18 @@ class CreateDoctorViewModel extends GetxController {
 
       totalRate: base.totalRate,
       numberOfRates: base.numberOfRates,
+
+      supportsOnlinePay: supportsOnlinePay,
+      requiresDeposit: requiresDeposit,
+      walletNumber: walletNumberController.text.trim().isEmpty
+          ? null
+          : walletNumberController.text.trim(),
+      instapayNumber: instapayNumberController.text.trim().isEmpty
+          ? null
+          : instapayNumberController.text.trim(),
+      instapayLink: instapayLinkController.text.trim().isEmpty
+          ? null
+          : instapayLinkController.text.trim(),
     );
 
     final updatedDoctor = LocalUser(updatedDoctorUser);
@@ -210,6 +264,8 @@ class CreateDoctorViewModel extends GetxController {
       identifier: email,
       password: password,
       userType: UserType.doctor,
+      latitude: selectedLatitude,
+      longitude: selectedLongitude,
 
       doctorQualifications: qualificationsController.text,
       specializationName: selectedSpecialization?.name,
@@ -237,6 +293,8 @@ class CreateDoctorViewModel extends GetxController {
         identifier: email,
         password: password,
         userType: UserType.doctor,
+        latitude: selectedLatitude,
+        longitude: selectedLongitude,
 
         doctorQualifications: qualificationsController.text,
         specializationName: selectedSpecialization?.name,
@@ -247,6 +305,18 @@ class CreateDoctorViewModel extends GetxController {
         tiktokLink: tiktokController.text,
 
         profileImage: profileUrl,
+
+        supportsOnlinePay: supportsOnlinePay,
+        requiresDeposit: requiresDeposit,
+        walletNumber: walletNumberController.text.trim().isEmpty
+            ? null
+            : walletNumberController.text.trim(),
+        instapayNumber: instapayNumberController.text.trim().isEmpty
+            ? null
+            : instapayNumberController.text.trim(),
+        instapayLink: instapayLinkController.text.trim().isEmpty
+            ? null
+            : instapayLinkController.text.trim(),
       );
 
       final doctor = LocalUser(doctorUser);
@@ -294,6 +364,9 @@ class CreateDoctorViewModel extends GetxController {
     instagramController.dispose();
     tiktokController.dispose();
     specializationNameController.dispose();
+    walletNumberController.dispose();
+    instapayNumberController.dispose();
+    instapayLinkController.dispose();
     super.dispose();
   }
 }

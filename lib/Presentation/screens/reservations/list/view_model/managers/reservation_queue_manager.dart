@@ -66,6 +66,25 @@ class ReservationQueueManager {
         .where((r) => r.status == ReservationStatus.pending.value)
         .toList();
 
+    // Payment-blocked: approved status but waiting for payment review
+    final awaitingPayment = all
+        .where(
+          (r) =>
+              (r.status == ReservationStatus.approved.value ||
+                  r.status == ReservationStatus.checkedIn.value) &&
+              r.paymentStatus == 'pending_payment',
+        )
+        .toList();
+
+    final paymentRejected = all
+        .where(
+          (r) =>
+              (r.status == ReservationStatus.approved.value ||
+                  r.status == ReservationStatus.checkedIn.value) &&
+              r.paymentStatus == 'payment_rejected',
+        )
+        .toList();
+
     final completed = all
         .where((r) => r.status == ReservationStatus.completed.value)
         .toList();
@@ -87,6 +106,8 @@ class ReservationQueueManager {
       ...inProgress,
       ...sortedActive,
       ...pending,
+      ...awaitingPayment,   // ⏳ waiting for assistant to review screenshot
+      ...paymentRejected,   // ❌ rejected — patient must re-upload
       ...completed,
       ...missed,
       ...cancelled,
@@ -136,8 +157,12 @@ class ReservationQueueManager {
         .whereType<ReservationModel>()
         .where(
           (r) =>
-              r.status == ReservationStatus.approved.value ||
-              r.status == ReservationStatus.checkedIn.value,
+              (r.status == ReservationStatus.approved.value ||
+                  r.status == ReservationStatus.checkedIn.value) &&
+              // Only enter queue when payment is either not required (null)
+              // or has been explicitly approved.
+              (r.paymentStatus == null ||
+                  r.paymentStatus == 'payment_approved'),
         )
         .toList();
   }

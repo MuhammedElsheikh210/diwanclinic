@@ -1,4 +1,5 @@
 // ignore_for_file: avoid_renaming_method_parameters
+import 'package:diwanclinic/Global/managers/location_manager.dart';
 import '../../../../../index/index_main.dart';
 
 class CreateClinicViewModel extends GetxController {
@@ -29,6 +30,10 @@ class CreateClinicViewModel extends GetxController {
   // 🔹 daily works
   final TextEditingController dailyWorksController = TextEditingController();
 
+  double? selectedLatitude;
+  double? selectedLongitude;
+  bool isLoadingLocation = false;
+
   bool is_update = false;
   int reserveWithDeposit = 0;
 
@@ -44,6 +49,8 @@ class CreateClinicViewModel extends GetxController {
     phone2Controller.text = clinic.phone2 ?? "";
     emergencyController.text = clinic.emergencyCall ?? "";
     locationController.text = clinic.location ?? "";
+    selectedLatitude = clinic.latitude;
+    selectedLongitude = clinic.longitude;
     whatsappController.text = clinic.whatsappNum ?? "";
     appointmentsController.text = clinic.appointments ?? "";
     urgentPolicyController.text = (clinic.urgentPolicy ?? 0).toString();
@@ -65,6 +72,21 @@ class CreateClinicViewModel extends GetxController {
   }
 
   // ============================================================
+  // 🔹 Location
+  // ============================================================
+  Future<void> fetchCurrentLocation() async {
+    isLoadingLocation = true;
+    update();
+    final latLng = await LocationManager().getLatLng();
+    if (latLng != null) {
+      selectedLatitude = latLng['lat'];
+      selectedLongitude = latLng['lng'];
+    }
+    isLoadingLocation = false;
+    update();
+  }
+
+  // ============================================================
   // 🔹 Save
   // ============================================================
   void saveClinic() {
@@ -76,6 +98,8 @@ class CreateClinicViewModel extends GetxController {
           phone2: phone2Controller.text,
           emergencyCall: emergencyController.text,
           location: locationController.text,
+          latitude: selectedLatitude,
+          longitude: selectedLongitude,
           whatsappNum: whatsappController.text,
           urgentPolicy: int.tryParse(urgentPolicyController.text),
           appointments: appointmentsController.text,
@@ -106,6 +130,8 @@ class CreateClinicViewModel extends GetxController {
               phone2: phone2Controller.text,
               emergencyCall: emergencyController.text,
               location: locationController.text,
+              latitude: selectedLatitude,
+              longitude: selectedLongitude,
               whatsappNum: whatsappController.text,
               appointments: appointmentsController.text,
               urgentPolicy: int.tryParse(urgentPolicyController.text),

@@ -527,6 +527,11 @@ class ReservationAssistantDetailsView extends StatelessWidget {
               ],
             ),
 
+            /// 💳 Payment Screenshot Section
+            if (reservation.paymentScreenshotUrl != null &&
+                reservation.paymentScreenshotUrl!.isNotEmpty)
+              _buildPaymentSection(context),
+
             /// 🔹 Action Buttons (Dynamic by Status)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
@@ -536,6 +541,182 @@ class ReservationAssistantDetailsView extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildPaymentSection(BuildContext context) {
+    final screenshotUrl = reservation.paymentScreenshotUrl!;
+    final method = reservation.paymentMethod;
+    final payStatus = reservation.paymentStatus;
+    final isPending = payStatus == 'pending_payment';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.background_neutral_100,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isPending
+                ? Colors.orange.shade300
+                : payStatus == 'payment_approved'
+                    ? AppColors.successBackground
+                    : AppColors.errorForeground.withOpacity(0.4),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.payment_outlined,
+                  color: AppColors.primary,
+                  size: 18,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  "إثبات الدفع الإلكتروني",
+                  style: context.typography.mdBold.copyWith(
+                    color: AppColors.primary,
+                  ),
+                ),
+                const Spacer(),
+                if (method != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      method == 'instapay' ? 'InstaPay' : 'محفظة',
+                      style: context.typography.smRegular.copyWith(
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+
+            const SizedBox(height: 10),
+
+            // Payment status badge
+            if (payStatus != null)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: isPending
+                      ? Colors.orange.shade50
+                      : payStatus == 'payment_approved'
+                          ? AppColors.successBackground
+                          : AppColors.errorForeground.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  isPending
+                      ? 'في انتظار التأكيد'
+                      : payStatus == 'payment_approved'
+                          ? 'تم قبول الدفع'
+                          : 'تم رفض الدفع',
+                  style: context.typography.smMedium.copyWith(
+                    color: isPending
+                        ? Colors.orange.shade700
+                        : payStatus == 'payment_approved'
+                            ? AppColors.successForeground
+                            : AppColors.errorForeground,
+                  ),
+                ),
+              ),
+
+            const SizedBox(height: 10),
+
+            // Screenshot thumbnail
+            GestureDetector(
+              onTap: () {
+                Get.to(
+                  () => FullScreenImageView(imageUrl: screenshotUrl),
+                  transition: Transition.fadeIn,
+                  duration: const Duration(milliseconds: 250),
+                );
+              },
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: CachedNetworkImage(
+                  imageUrl: screenshotUrl,
+                  fit: BoxFit.cover,
+                  height: 160.h,
+                  width: double.infinity,
+                  placeholder: (_, __) => Container(
+                    height: 160.h,
+                    color: AppColors.background_neutral_100,
+                    child: const Center(child: CircularProgressIndicator()),
+                  ),
+                  errorWidget: (_, __, ___) => Container(
+                    height: 160.h,
+                    color: AppColors.background_neutral_100,
+                    child: const Icon(Icons.broken_image, color: Colors.grey),
+                  ),
+                ),
+              ),
+            ),
+
+            // Accept / Reject buttons (only when pending)
+            if (isPending) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: PrimaryTextButton(
+                      onTap: () => _updatePaymentStatus('payment_approved'),
+                      appButtonSize: AppButtonSize.large,
+                      customBackgroundColor: AppColors.successBackground,
+                      label: AppText(
+                        text: "قبول الدفع",
+                        textStyle: context.typography.mdMedium.copyWith(
+                          color: AppColors.successForeground,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: PrimaryTextButton(
+                      onTap: () => _updatePaymentStatus('payment_rejected'),
+                      appButtonSize: AppButtonSize.large,
+                      customBackgroundColor:
+                          AppColors.errorForeground.withOpacity(0.1),
+                      label: AppText(
+                        text: "رفض الدفع",
+                        textStyle: context.typography.mdMedium.copyWith(
+                          color: AppColors.errorForeground,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _updatePaymentStatus(String newPaymentStatus) async {
+    Loader.show();
+    reservation.paymentStatus = newPaymentStatus;
+    await controller.actionManager.updateReservation(reservation);
+    Loader.dismiss();
+    final label =
+        newPaymentStatus == 'payment_approved' ? 'قبول الدفع' : 'رفض الدفع';
+    Loader.showSuccess("تم $label بنجاح");
   }
 
   /// 🟢 Build buttons depending on status

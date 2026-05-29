@@ -141,6 +141,7 @@ class _CreateReservationViewState extends State<CreateReservationView> {
 
     controller.patientNameController.text = client.name ?? "";
     controller.patientPhoneController.text = client.phone ?? "";
+    controller.patientCodeController.text = client.code ?? "";
 
     // 🔥 أهم سطر في الفيتشر كلها
     await controller.loadReservationsForPatient();
@@ -148,6 +149,7 @@ class _CreateReservationViewState extends State<CreateReservationView> {
     setState(() {
       showNameList = false;
       showPhoneList = false;
+      showCodeList = false;
     });
 
     FocusScope.of(context).unfocus();
@@ -366,6 +368,47 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                                       onSelect: (client) {
                                         _fillPatientData(controller, client);
                                         setState(() => showNameList = false);
+                                      },
+                                    ),
+                                  ),
+
+                                SizedBox(height: 20.h),
+
+                                /// 🔹 البحث بكود الحالة
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 15.0,
+                                  ),
+                                  child: PatientSearchBar(
+                                    tag: "search_code",
+                                    hint: "كود الحالة (اختياري)",
+                                    focusNode: codeFocus,
+                                    textEditingController:
+                                        controller.patientCodeController,
+                                    searchResult: (patientModel, text) {
+                                      setState(() {
+                                        showCodeList = text.isNotEmpty &&
+                                            !showPhoneList &&
+                                            !showNameList;
+                                        if (text.isEmpty) showCodeList = false;
+                                      });
+                                    },
+                                    onCloseList: () {
+                                      setState(() => showCodeList = false);
+                                    },
+                                  ),
+                                ),
+
+                                if (showCodeList)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 15.0,
+                                    ),
+                                    child: PatientResultList(
+                                      tag: "search_code",
+                                      onSelect: (client) {
+                                        _fillPatientData(controller, client);
+                                        setState(() => showCodeList = false);
                                       },
                                     ),
                                   ),

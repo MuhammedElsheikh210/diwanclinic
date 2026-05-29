@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:intl/intl.dart';
 import '../../../../index/index_main.dart';
 
@@ -46,6 +47,14 @@ class CreateReservationFromPatientViewModel extends GetxController {
 
   int? totalAmount;
 
+  // 💳 Online Payment
+  LocalUser? selectedDoctor;
+  String? selectedPaymentMethod; // 'wallet' | 'instapay'
+  File? paymentScreenshotFile;
+  bool isUploadingScreenshot = false;
+
+  final _picker = ImagePicker();
+
   @override
   void onInit() {
     super.onInit();
@@ -72,6 +81,7 @@ class CreateReservationFromPatientViewModel extends GetxController {
     String? shiftKey,
     int? totalReservations,
     ClinicModel? selectedClinic,
+    LocalUser? doctor,
   }) {
     clinic_key = clinicKey;
     shift_key = shiftKey;
@@ -79,6 +89,7 @@ class CreateReservationFromPatientViewModel extends GetxController {
     consultationPrice = selectedClinic?.consultationPrice ?? "";
     urgentConsultationPrice = selectedClinic?.urgentConsultationPrice ?? "";
     followUpPrice = selectedClinic?.followUpPrice ?? "";
+    selectedDoctor = doctor;
 
     if (reservation != null) {
       existingReservation = reservation;
@@ -143,10 +154,68 @@ class CreateReservationFromPatientViewModel extends GetxController {
     update();
   }
 
+  bool get doctorSupportsOnlinePay =>
+      selectedDoctor?.asDoctor?.supportsOnlinePay ?? false;
+
+  void selectPaymentMethod(String method) {
+    selectedPaymentMethod = method;
+    update();
+  }
+
+  Future<void> pickPaymentScreenshot() async {
+    final picked = await _picker.pickImage(source: ImageSource.gallery);
+    if (picked != null) {
+      paymentScreenshotFile = File(picked.path);
+      update();
+    }
+  }
+
+  Future<String?> _uploadPaymentScreenshot() async {
+    if (paymentScreenshotFile == null) return null;
+    try {
+      final fileName = "${DateTime.now().millisecondsSinceEpoch}.jpg";
+      final ref = FirebaseStorage.instance.ref().child(
+        "payment_screenshots/$fileName",
+      );
+      await ref.putFile(paymentScreenshotFile!);
+      return await ref.getDownloadURL();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<void> _deleteUploadedScreenshot(String url) async {
+    try {
+      await FirebaseStorage.instance.refFromURL(url).delete();
+    } catch (_) {}
+  }
+
   void saveReservation() async {
     if (!validateStep()) {
-      Loader.showError("Please fill all required fields");
+      Loader.showError("يرجى إدخال جميع البيانات المطلوبة");
       return;
+    }
+
+    if (doctorSupportsOnlinePay && selectedPaymentMethod == null) {
+      Loader.showError("يرجى اختيار طريقة الدفع");
+      return;
+    }
+
+    if (doctorSupportsOnlinePay && paymentScreenshotFile == null) {
+      Loader.showError("يرجى رفع صورة إثبات الدفع");
+      return;
+    }
+
+    Loader.show();
+
+    String? screenshotUrl;
+    if (paymentScreenshotFile != null) {
+      screenshotUrl = await _uploadPaymentScreenshot();
+      if (screenshotUrl == null) {
+        Loader.dismiss();
+        Loader.showError("فشل رفع صورة الدفع، يرجى المحاولة مرة أخرى");
+        return;
+      }
     }
 
     String? formattedDate;
@@ -159,14 +228,14 @@ class CreateReservationFromPatientViewModel extends GetxController {
     clientUser ??= Get.find<UserSession>().user;
 
 
+    final patientName = selectedType == "زيارة مندوب"
+        ? delegateNameController.text
+        : patient_name;
+
     final reservation =
         existingReservation?.copyWith(
           key: existingReservation?.key,
-       //   doctorKey: LocalUser().getUserData().doctorKey,
-        //  patientKey: clientUser?.key,
-          patientName: selectedType == "زيارة مندوب"
-              ? delegateNameController.text
-              : patient_name,
+          patientName: patientName,
           reservationType: selectedType,
           appointmentDateTime: formattedDate,
           createdAt: DateTime.now().millisecondsSinceEpoch,
@@ -176,15 +245,15 @@ class CreateReservationFromPatientViewModel extends GetxController {
           shiftKey: shift_key,
           orderNum: total_reservations + 1,
           status: ReservationStatus.approved.value,
+          paymentScreenshotUrl: screenshotUrl,
+          paymentMethod: selectedPaymentMethod,
+          paymentStatus: screenshotUrl != null ? 'pending_payment' : null,
         ) ??
         ReservationModel(
           key: const Uuid().v4(),
-        //  doctorKey: LocalUser().getUserData().doctorKey,
           patientUid: clientUser?.uid,
           createdAt: DateTime.now().millisecondsSinceEpoch,
-          patientName: selectedType == "زيارة مندوب"
-              ? delegateNameController.text
-              : patient_name,
+          patientName: patientName,
           reservationType: selectedType,
           appointmentDateTime: formattedDate,
           clinicKey: clinic_key,
@@ -193,9 +262,14 @@ class CreateReservationFromPatientViewModel extends GetxController {
           restAmount: restAmountController.text,
           orderNum: total_reservations + 1,
           status: ReservationStatus.approved.value,
+          paymentScreenshotUrl: screenshotUrl,
+          paymentMethod: selectedPaymentMethod,
+          paymentStatus: screenshotUrl != null ? 'pending_payment' : null,
         );
 
-    is_update ? updateReservation(reservation) : createReservation(reservation);
+    is_update
+        ? await updateReservation(reservation)
+        : await createReservation(reservation);
   }
 
   bool validateStep() {
@@ -208,24 +282,51 @@ class CreateReservationFromPatientViewModel extends GetxController {
         paidAmountController.text.isNotEmpty;
   }
 
-  void createReservation(ReservationModel reservation) {
-    ReservationService().addReservationData(
+  Future<void> createReservation(ReservationModel reservation) async {
+    final uploadedUrl = reservation.paymentScreenshotUrl;
+    bool saved = false;
+
+    await ReservationService().addReservationData(
       reservation: reservation,
-      voidCallBack: (_) {
-        refreshListView();
-        Loader.showSuccess("تم إضافة الحجز بنجاح");
+      voidCallBack: (status) {
+        if (status == ResponseStatus.success) saved = true;
       },
     );
+
+    if (!saved) {
+      // Rollback: delete orphaned screenshot from Storage
+      if (uploadedUrl != null && uploadedUrl.isNotEmpty) {
+        await _deleteUploadedScreenshot(uploadedUrl);
+      }
+      Loader.dismiss();
+      Loader.showError("فشل حفظ الحجز، يرجى المحاولة مرة أخرى");
+      return;
+    }
+
+    Loader.dismiss();
+    refreshListView();
+    Loader.showSuccess("تم إضافة الحجز بنجاح");
   }
 
-  void updateReservation(ReservationModel reservation) {
-    ReservationService().updateReservationData(
+  Future<void> updateReservation(ReservationModel reservation) async {
+    bool saved = false;
+
+    await ReservationService().updateReservationData(
       reservation: reservation,
-      voidCallBack: (_) {
-        refreshListView();
-        Loader.showSuccess("تم تحديث الحجز بنجاح");
+      voidCallBack: (status) {
+        if (status == ResponseStatus.success) saved = true;
       },
     );
+
+    if (!saved) {
+      Loader.dismiss();
+      Loader.showError("فشل تحديث الحجز، يرجى المحاولة مرة أخرى");
+      return;
+    }
+
+    Loader.dismiss();
+    refreshListView();
+    Loader.showSuccess("تم تحديث الحجز بنجاح");
   }
 
   void refreshListView() {

@@ -840,8 +840,8 @@ class CreateReservationViewModel extends GetxController {
     existingReservation = reservation;
     // Patient data
     patientNameController.text = reservation.patientName ?? "";
-    patientNameController.text = reservation.patientName ?? "";
     patientPhoneController.text = reservation.patientPhone ?? "";
+    patientCodeController.text = reservation.patientCode ?? "";
     resOrderController.text = reservation.orderNum?.toString() ?? "";
 
     // Payment
@@ -984,6 +984,9 @@ class CreateReservationViewModel extends GetxController {
             selectedType == "زيارة مندوب"
                 ? delegateNameController.text
                 : patientNameController.text,
+        patientCode: patientCodeController.text.trim().isEmpty
+            ? null
+            : patientCodeController.text.trim(),
         revisitCount: _autoRevisitCount,
         parentKey: _autoParentKey,
         isAutoType: manualRevisitCount == null,
@@ -1046,6 +1049,9 @@ class CreateReservationViewModel extends GetxController {
               ? delegateNameController.text
               : patientNameController.text,
       patientPhone: patientPhoneController.text,
+      patientCode: patientCodeController.text.trim().isEmpty
+          ? null
+          : patientCodeController.text.trim(),
 
       assistantUid: assistant.uid,
       assistantName: assistant.name,

@@ -586,6 +586,7 @@ export 'package:diwanclinic/Global/Utils/helpers.dart';
 export 'package:diwanclinic/Data/Models/User_local/base_user.dart';
 export 'package:diwanclinic/Data/Models/User_local/assistant_user.dart';
 export 'package:diwanclinic/Data/Models/User_local/doctor_user.dart';
+export 'package:diwanclinic/Data/Models/User_local/pharmacy_user.dart';
 export 'package:diwanclinic/Data/Models/User_local/user_mapper.dart';
 export 'package:diwanclinic/Data/Models/User_local/local_user_db/local_user_datasource.dart';
 export 'package:diwanclinic/Data/Models/User_local/local_user_db/local_user_repository.dart';

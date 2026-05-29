@@ -53,9 +53,10 @@ class DoctorDetailsView extends StatelessWidget {
                       context: context,
                       child: SelectReservationDateBottomSheet(
                         controller: controller,
-                        transfer_phone: d?.phone ?? "", // ✅ FIX
-                        wallet_type:
-                        0, // ✅ لو عندك InstaPay ضيفه في DoctorUser
+                        transfer_phone: d?.walletNumber ?? d?.phone ?? "",
+                        wallet_type: d?.instapayNumber?.isNotEmpty == true ? 1 : 0,
+                        instapayNumber: d?.instapayNumber,
+                        instapayLink: d?.instapayLink,
                       ),
                     );
                   },

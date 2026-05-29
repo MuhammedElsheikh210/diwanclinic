@@ -66,7 +66,21 @@
       "Bash(cd /Users/apple/diwanclinic && dart analyze lib/Presentation/screens/medical_record/ 2>&1 | head -40)",
       "Bash(find /Users/apple/diwanclinic -type f \\\\\\( -name \"*reservation*\" -o -name \"*order*\" -o -name \"*حجز*\" -o -name \"*اوردر*\" \\\\\\) -iname \"*.dart\" 2>/dev/null | head -30)",
       "Bash(cd /Users/apple/diwanclinic && dart analyze lib/Data/data_source_impl/reservation_data_source_remote.dart lib/Data/RepositoryImpl/reservation_repository_impl.dart lib/Presentation/parentControllers/reservation_service.dart lib/Domain/Repositories/reservation_repository.dart lib/Domain/UseCases/reservation_use_cases.dart lib/Presentation/screens/MainPage/MainPageViewModel.dart lib/Presentation/screens/reservations/list/view_model/reservation_view_model.dart 2>&1 | grep -v \"^Analyzing\\\\|^No issues\")",
-      "Bash(find /Users/apple/diwanclinic -type f -name \"*.dart\" | xargs grep -l \"orderItem\\\\|OrderItem\\\\|order_item\" 2>/dev/null | head -20)"
+      "Bash(find /Users/apple/diwanclinic -type f -name \"*.dart\" | xargs grep -l \"orderItem\\\\|OrderItem\\\\|order_item\" 2>/dev/null | head -20)",
+      "Bash(cat -n /Users/apple/diwanclinic/functions/orders/whatsappWebhook.js | head -100)",
+      "Bash(cd /Users/apple/diwanclinic && flutter analyze lib/Data/Models/User_local/base_user.dart lib/Data/Models/reservation_model.dart lib/Presentation/screens/reservations/create_update/create_reservation_view_model.dart lib/Presentation/screens/reservations/create_update/create_reservation_view.dart lib/Presentation/parentControllers/whatsapp/reservation_whatsapp_status_message_service.dart 2>&1 | tail -20)",
+      "Bash(grep -i \".dart$\")",
+      "Bash(grep -i \"\\\\.dart$\")",
+      "Read(//Users/apple/diwanclinic/**)",
+      "Bash(xargs ls)",
+      "Bash(git -C /Users/apple/diwanclinic log --oneline -5 -- lib/Presentation/screens/reservations/create_update/create_reservation_view.dart)",
+      "Bash(git -C /Users/apple/diwanclinic diff HEAD~1 -- lib/Presentation/screens/reservations/create_update/create_reservation_view.dart)",
+      "Bash(git -C /Users/apple/diwanclinic show HEAD~1:lib/Presentation/screens/reservations/create_update/create_reservation_view.dart)",
+      "Bash(git -C /Users/apple/diwanclinic show HEAD~1:lib/Presentation/screens/reservations/create_update/create_reservation_view.dart > /tmp/old_create_reservation_view.dart; echo \"done\")",
+      "Bash(git -C /Users/apple/diwanclinic diff HEAD~1 -- lib/Presentation/screens/reservations/create_update/create_reservation_view_model.dart)",
+      "Bash(git -C /Users/apple/diwanclinic show HEAD~1:lib/Presentation/screens/reservations/create_update/create_reservation_view_model.dart)",
+      "Bash(git -C /Users/apple/diwanclinic show HEAD:lib/Presentation/screens/reservations/create_update/create_reservation_view_model.dart)",
+      "Bash(git -C /Users/apple/diwanclinic log --oneline -10 -- lib/Presentation/screens/reservations/create_update/create_reservation_view_model.dart)"
     ]
   }
 }

@@ -22,7 +22,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 74, // ⬅️ bumped: added queue_reason
+      version: 78, // ⬅️ bumped: clinic location on reservations + payment method
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onConfigure: (db) async {
@@ -99,6 +99,9 @@ class DatabaseService {
     phone TEXT,
     name TEXT,
     address TEXT,
+    code TEXT,
+    latitude REAL,
+    longitude REAL,
     password TEXT,
 
     -- 🔥 AssistantUser
@@ -119,6 +122,10 @@ class DatabaseService {
     total_rate REAL DEFAULT 0.0,
     number_of_rates INTEGER DEFAULT 0,
     remote_reservation_ability INTEGER DEFAULT 0,
+    supports_online_pay INTEGER DEFAULT 0,
+    wallet_number TEXT,
+    instapay_number TEXT,
+    instapay_link TEXT,
 
     -- 🔥 Sync
     serverUpdatedAt INTEGER,
@@ -142,6 +149,8 @@ class DatabaseService {
         phone2 TEXT,
         emergency_call TEXT,
         location TEXT,
+        latitude REAL,
+        longitude REAL,
         whatsapp_num TEXT,
         appointments TEXT,
         doctor_key TEXT,
@@ -195,6 +204,7 @@ is_auto_type INTEGER DEFAULT 0,
   patient_name TEXT,
   patient_phone TEXT,
   patient_fcm TEXT,
+  patient_code TEXT,
 
   -- 📅 reservation
   appointment_date_time TEXT,
@@ -229,6 +239,16 @@ is_auto_type INTEGER DEFAULT 0,
   -- ⚙️ flags
   is_ordered INTEGER DEFAULT 0,
   has_feedback INTEGER DEFAULT 0,
+
+  -- 💳 online payment
+  payment_screenshot_url TEXT,
+  payment_method TEXT,
+  payment_status TEXT,
+
+  -- 🗺️ clinic location
+  clinic_address TEXT,
+  clinic_latitude REAL,
+  clinic_longitude REAL,
 
   -- 🧠 Smart Queue
   priority_level INTEGER DEFAULT 0,

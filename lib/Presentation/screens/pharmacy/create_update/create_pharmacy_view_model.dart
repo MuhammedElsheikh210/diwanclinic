@@ -1,8 +1,16 @@
+import 'package:diwanclinic/Global/managers/location_manager.dart';
 import '../../../../../index/index_main.dart';
 
 class CreatePharmacyViewModel extends GetxController {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
+  final TextEditingController walletController = TextEditingController();
+  final TextEditingController instapayNumberController = TextEditingController();
+  final TextEditingController instapayLinkController = TextEditingController();
+
+  double? selectedLatitude;
+  double? selectedLongitude;
+  bool isLoadingLocation = false;
 
   bool isUpdate = false;
   LocalUser? existingPharmacy;
@@ -12,6 +20,22 @@ class CreatePharmacyViewModel extends GetxController {
     super.onInit();
     nameController.addListener(update);
     phoneController.addListener(update);
+  }
+
+  // ============================================================
+  // 📍 LOCATION
+  // ============================================================
+
+  Future<void> fetchCurrentLocation() async {
+    isLoadingLocation = true;
+    update();
+    final latLng = await LocationManager().getLatLng();
+    if (latLng != null) {
+      selectedLatitude = latLng['lat'];
+      selectedLongitude = latLng['lng'];
+    }
+    isLoadingLocation = false;
+    update();
   }
 
   // ============================================================
@@ -38,18 +62,35 @@ class CreatePharmacyViewModel extends GetxController {
   void _updatePharmacy(LocalUser pharmacy) {
     Loader.show();
 
-    final base = pharmacy.user;
+    final existing = pharmacy.asPharmacy;
 
-    final updatedBaseUser = base.copyWith(
-      name: nameController.text,
-      phone: phoneController.text,
-      password: phoneController.text,
+    final updated = PharmacyUser(
+      uid: existing?.uid ?? pharmacy.user.uid,
+      createdAt: existing?.createdAt ?? pharmacy.user.createdAt,
+      userType: UserType.pharmacy,
+      isProfileCompleted: true,
+      fcmToken: existing?.fcmToken ?? pharmacy.user.fcmToken,
+      appVersion: existing?.appVersion ?? pharmacy.user.appVersion,
+      identifier: existing?.identifier ?? pharmacy.user.identifier,
+      code: existing?.code ?? pharmacy.user.code,
+      name: nameController.text.trim(),
+      phone: phoneController.text.trim(),
+      password: phoneController.text.trim(),
+      latitude: selectedLatitude,
+      longitude: selectedLongitude,
+      walletNumber: walletController.text.trim().isEmpty
+          ? null
+          : walletController.text.trim(),
+      instapayNumber: instapayNumberController.text.trim().isEmpty
+          ? null
+          : instapayNumberController.text.trim(),
+      instapayLink: instapayLinkController.text.trim().isEmpty
+          ? null
+          : instapayLinkController.text.trim(),
     );
 
-    final updatedPharmacy = LocalUser(updatedBaseUser);
-
     AuthenticationService().updateClientsData(
-      userclient: updatedPharmacy,
+      userclient: LocalUser(updated),
       voidCallBack: (_) {
         Loader.dismiss();
         Loader.showSuccess("تم تحديث الصيدلي بنجاح");
@@ -66,30 +107,36 @@ class CreatePharmacyViewModel extends GetxController {
     Loader.show();
 
     final email = "${phoneController.text}@link.com";
-    final password = phoneController.text;
+    final password = phoneController.text.trim();
 
     try {
       final userCred = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+          .createUserWithEmailAndPassword(email: email, password: password);
 
       final uid = userCred.user?.uid ?? "";
 
-      final baseUser = BaseUser(
+      final pharmacyUser = PharmacyUser(
         uid: uid,
-        phone: phoneController.text,
-        name: nameController.text,
+        phone: password,
+        name: nameController.text.trim(),
         identifier: email,
         password: password,
         userType: UserType.pharmacy,
         isProfileCompleted: true,
+        latitude: selectedLatitude,
+        longitude: selectedLongitude,
+        walletNumber: walletController.text.trim().isEmpty
+            ? null
+            : walletController.text.trim(),
+        instapayNumber: instapayNumberController.text.trim().isEmpty
+            ? null
+            : instapayNumberController.text.trim(),
+        instapayLink: instapayLinkController.text.trim().isEmpty
+            ? null
+            : instapayLinkController.text.trim(),
       );
 
-      final userClient = LocalUser(baseUser);
-
-      _savePharmacyToClients(userClient);
+      _savePharmacyToClients(LocalUser(pharmacyUser));
     } on FirebaseAuthException catch (e) {
       Loader.dismiss();
       Loader.showError("فشل إنشاء الحساب: ${e.message}");
@@ -127,8 +174,7 @@ class CreatePharmacyViewModel extends GetxController {
   // ============================================================
 
   bool validateStep() {
-    return nameController.text.isNotEmpty &&
-        phoneController.text.isNotEmpty;
+    return nameController.text.isNotEmpty && phoneController.text.isNotEmpty;
   }
 
   // ============================================================
@@ -139,6 +185,9 @@ class CreatePharmacyViewModel extends GetxController {
   void dispose() {
     nameController.dispose();
     phoneController.dispose();
+    walletController.dispose();
+    instapayNumberController.dispose();
+    instapayLinkController.dispose();
     super.dispose();
   }
 }

@@ -11,10 +11,19 @@ class ReservationActionManager {
   }
 
   Future<void> updateReservation(ReservationModel reservation) async {
+    // Update doctor node
     await ReservationService().updateReservationData(
       reservation: reservation,
       voidCallBack: (_) {},
     );
+
+    // Mirror update to patient node so the patient sees real-time changes
+    if (reservation.patientUid?.isNotEmpty == true) {
+      await PatientReservationService().updateReservationData(
+        reservation: reservation,
+        voidCallBack: (_) {},
+      );
+    }
   }
 
   Future<void> deleteReservation(ReservationModel reservation) async {

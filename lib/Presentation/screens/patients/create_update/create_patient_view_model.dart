@@ -5,6 +5,7 @@ class CreatePatientViewModel extends GetxController {
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
   final TextEditingController birthdayController = TextEditingController();
+  final TextEditingController codeController = TextEditingController();
 
   bool is_update = false;
   PatientModel? existingPatient;
@@ -21,16 +22,20 @@ class CreatePatientViewModel extends GetxController {
     phoneController.text = patient.phone ?? "";
     addressController.text = patient.address ?? "";
     birthdayController.text = patient.birthday ?? "";
+    codeController.text = patient.code ?? "";
     is_update = true;
     update();
   }
 
   void savePatient() {
+    final codeVal = codeController.text.trim();
+
     final patient = existingPatient?.copyWith(
       name: nameController.text,
       phone: phoneController.text,
       address: addressController.text,
       birthday: birthdayController.text,
+      code: codeVal.isEmpty ? null : codeVal,
     ) ??
         PatientModel(
           key: const Uuid().v4(),
@@ -38,6 +43,7 @@ class CreatePatientViewModel extends GetxController {
           phone: phoneController.text,
           address: addressController.text,
           birthday: birthdayController.text,
+          code: codeVal.isEmpty ? null : codeVal,
         );
 
     is_update ? updatePatient(patient) : createPatient(patient);
@@ -80,6 +86,7 @@ class CreatePatientViewModel extends GetxController {
     phoneController.dispose();
     addressController.dispose();
     birthdayController.dispose();
+    codeController.dispose();
     super.dispose();
   }
 }

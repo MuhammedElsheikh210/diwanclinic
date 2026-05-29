@@ -51,28 +51,28 @@ const CASUAL_WORDS = [
 async function sendWhatsApp(to, msg) {
   try {
 
-//    const result = await axios.post(
-//
-//      "https://api.ultramsg.com/instance86174/messages/chat",
-//
-//      new URLSearchParams({
-//        token: "zi9hxnjprdgdayfg",
-//        to:    "+" + to,
-//        body:  msg,
-//      }),
-//
-//      {
-//        headers: {
-//          "Content-Type":
-//            "application/x-www-form-urlencoded",
-//        },
-//      }
-//    );
-//
-//    console.log(
-//      "✅ WhatsApp sent:",
-//      result.data
-//    );
+    const result = await axios.post(
+
+      "https://api.ultramsg.com/instance86174/messages/chat",
+
+      new URLSearchParams({
+        token: "zi9hxnjprdgdayfg",
+        to:    "+" + to,
+        body:  msg,
+      }),
+
+      {
+        headers: {
+          "Content-Type":
+            "application/x-www-form-urlencoded",
+        },
+      }
+    );
+
+    console.log(
+      "✅ WhatsApp sent:",
+      result.data
+    );
 
   } catch (e) {
 
