@@ -103,9 +103,9 @@ class ReservationQueueManager {
         .toList();
 
     return [
+      ...pending,           // 🔔 needs assistant action → always first
       ...inProgress,
       ...sortedActive,
-      ...pending,
       ...awaitingPayment,   // ⏳ waiting for assistant to review screenshot
       ...paymentRejected,   // ❌ rejected — patient must re-upload
       ...completed,

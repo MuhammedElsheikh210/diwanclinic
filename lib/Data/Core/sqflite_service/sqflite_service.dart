@@ -22,7 +22,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 78, // ⬅️ bumped: clinic location on reservations + payment method
+      version: 79, // ⬅️ bumped: pharmacy_id for multi-staff pharmacy support
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onConfigure: (db) async {
@@ -126,6 +126,9 @@ class DatabaseService {
     wallet_number TEXT,
     instapay_number TEXT,
     instapay_link TEXT,
+
+    -- 🔥 PharmacyUser
+    pharmacy_id TEXT,
 
     -- 🔥 Sync
     serverUpdatedAt INTEGER,

@@ -80,7 +80,18 @@
       "Bash(git -C /Users/apple/diwanclinic diff HEAD~1 -- lib/Presentation/screens/reservations/create_update/create_reservation_view_model.dart)",
       "Bash(git -C /Users/apple/diwanclinic show HEAD~1:lib/Presentation/screens/reservations/create_update/create_reservation_view_model.dart)",
       "Bash(git -C /Users/apple/diwanclinic show HEAD:lib/Presentation/screens/reservations/create_update/create_reservation_view_model.dart)",
-      "Bash(git -C /Users/apple/diwanclinic log --oneline -10 -- lib/Presentation/screens/reservations/create_update/create_reservation_view_model.dart)"
+      "Bash(git -C /Users/apple/diwanclinic log --oneline -10 -- lib/Presentation/screens/reservations/create_update/create_reservation_view_model.dart)",
+      "Bash(grep \"\\\\.dart$\")",
+      "Bash(sqlite3 /Users/apple/diwanclinic/assets/medicines.db \"SELECT DISTINCT imported FROM medicines LIMIT 20;\")",
+      "Bash(grep -v \"^/Users/apple/diwanclinic/lib/Presentation/screens$\")",
+      "Bash(xargs -I{} ls {})",
+      "Bash(mkdir -p /Users/apple/diwanclinic/functions/users && ls /Users/apple/diwanclinic/functions/users/)",
+      "Bash(node --eval \"require\\('./functions/users/deleteAuthUser.js'\\)\")",
+      "Bash(node --eval \"require\\('/Users/apple/diwanclinic/functions/index.js'\\)\")",
+      "Bash(grep -v \"^$\")",
+      "Bash(firebase functions:delete deleteAuthUser --region us-central1 --force)",
+      "Bash(flutter clean *)",
+      "Bash(pod install *)"
     ]
   }
 }

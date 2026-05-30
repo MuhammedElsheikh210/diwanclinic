@@ -3,7 +3,14 @@ import '../../../../../index/index_main.dart';
 class CreatePharmacyView extends StatefulWidget {
   final LocalUser? pharmacy; // ✅ Pharmacy user passed if editing
 
-  const CreatePharmacyView({Key? key, this.pharmacy}) : super(key: key);
+  /// When non-null → creating a new STAFF account for this pharmacy
+  final String? parentPharmacyId;
+
+  const CreatePharmacyView({
+    Key? key,
+    this.pharmacy,
+    this.parentPharmacyId,
+  }) : super(key: key);
 
   @override
   State<CreatePharmacyView> createState() => _CreatePharmacyViewState();
@@ -31,6 +38,11 @@ class _CreatePharmacyViewState extends State<CreatePharmacyView> {
       vm.existingPharmacy = widget.pharmacy;
       vm.update();
     }
+
+    if (widget.parentPharmacyId != null) {
+      vm.parentPharmacyId = widget.parentPharmacyId;
+      vm.update();
+    }
   }
 
   @override
@@ -51,8 +63,10 @@ class _CreatePharmacyViewState extends State<CreatePharmacyView> {
                 children: [
                   Text(
                     controller.isUpdate
-                        ? "تحديث الصيدلي"
-                        : "إضافة صيدلي جديد",
+                        ? "تحديث بيانات الصيدلي"
+                        : widget.parentPharmacyId != null
+                            ? "إضافة موظف للصيدلية"
+                            : "إضافة صيدلية جديدة",
                     style: context.typography.mdBold,
                   ),
                   IconButton(
@@ -131,7 +145,9 @@ class _CreatePharmacyViewState extends State<CreatePharmacyView> {
                 child: BottomNavigationActions(
                   rightTitle: controller.isUpdate
                       ? "تحديث الصيدلي"
-                      : "إضافة الصيدلي",
+                      : widget.parentPharmacyId != null
+                          ? "إضافة الموظف"
+                          : "إضافة الصيدلية",
                   rightAction: () {
                     if (globalKeyPharmacy.currentState?.validate() ?? false) {
                       controller.savePharmacy();

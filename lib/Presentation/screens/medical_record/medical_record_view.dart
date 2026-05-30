@@ -483,92 +483,44 @@ class _TinyInfoRow extends StatelessWidget {
 // EMPTY STATES
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _EmptyState extends StatelessWidget {
+class _EmptyState extends StatefulWidget {
   final bool hasOrders;
 
   const _EmptyState({required this.hasOrders});
 
   @override
-  Widget build(BuildContext context) {
-    final t = context.typography;
+  State<_EmptyState> createState() => _EmptyStateState();
+}
 
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 32.w),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 96.w,
-              height: 96.w,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                hasOrders
-                    ? Icons.hourglass_top_rounded
-                    : Icons.medical_information_outlined,
-                size: 44.sp,
-                color: AppColors.primary,
-              ),
-            ),
-            SizedBox(height: 20.h),
-            AppText(
-              text: hasOrders ? 'طلباتك تحت المراجعة' : 'سجلك الطبي فاضل',
-              textStyle: t.lgBold.copyWith(color: AppColors.textDisplay),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 8.h),
-            AppText(
-              text:
-                  hasOrders
-                      ? 'بعد ما الصيدلية توصّلك الدواء،\nالروشتة هتتسجل هنا تلقائياً'
-                      : 'لما تطلب دواء وتوصلك الروشتة\nهتتسجل هنا تلقائياً',
-              textStyle: t.smRegular.copyWith(
-                color: AppColors.textSecondaryParagraph,
-                height: 1.6,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            if (!hasOrders) ...[
-              SizedBox(height: 28.h),
-              GestureDetector(
-                onTap: () {
-                  final user = Get.find<UserSession>().user;
-                  final reservation = ReservationModel(
-                    patientUid: user?.user.uid,
-                    patientFcm: user?.user.fcmToken,
-                    patientPhone: user?.user.phone,
-                    patientName: user?.user.name,
-                  );
-                  Get.to(
-                    () => OrderMedicineScreen(
-                      reservation: reservation,
-                      onConfirmed: (_) => Get.back(),
-                    ),
-                    binding: Binding(),
-                  );
-                },
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 28.w,
-                    vertical: 14.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(14.r),
-                  ),
-                  child: AppText(
-                    text: 'اطلب دواء دلوقتي 💊',
-                    textStyle: t.mdBold.copyWith(color: AppColors.white),
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
+class _EmptyStateState extends State<_EmptyState> {
+  @override
+  Widget build(BuildContext context) {
+    return NoDataAnimated(
+      lottiePath: Animations.empty,
+      title: "ابدأ بناء سجلك الطبي الذكي 🩺",
+      subtitle:
+          "كل روشتة تطلبها من لينك هتتحفظ هنا تلقائياً.\n\n"
+          "هتقدر ترجع لأي دواء أو روشتة في أي وقت، حتى لو الورق ضاع أو نسيت العلاج اللي كنت بتستخدمه.\n\n"
+          "ولو زرت دكتور جديد، هتلاقي تاريخ أدويتك وروشتاتك السابقة كلها في مكان واحد وآمن.",
+      actionText: "اطلب علاجك الآن",
+      onAction: () {
+        final user = Get.find<UserSession>().user;
+        final reservation = ReservationModel(
+          patientUid: user?.user.uid,
+          patientFcm: user?.user.fcmToken,
+          patientPhone: user?.user.phone,
+          patientName: user?.user.name,
+        );
+
+        Get.to(
+          () => OrderMedicineScreen(
+            reservation: reservation,
+            onConfirmed: (_) => Get.back(),
+          ),
+          binding: Binding(),
+        );
+      },
     );
+    ;
   }
 }

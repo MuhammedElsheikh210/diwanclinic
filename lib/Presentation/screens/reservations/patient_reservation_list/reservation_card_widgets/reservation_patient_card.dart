@@ -86,7 +86,6 @@ class ReservationPatientCard extends StatelessWidget {
                     Get.off(() => const OrderSuccessView());
                   },
                 ),
-                binding: Binding(),
               );
             },
           ),

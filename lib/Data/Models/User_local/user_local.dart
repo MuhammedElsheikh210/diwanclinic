@@ -81,4 +81,12 @@ class LocalUser {
   String? get clinicKey => asAssistant?.clinicKey;
 
   String? get doctorKey => asAssistant?.doctorKey;
+
+  // ============================================================
+  // PHARMACY FIELDS
+  // ============================================================
+
+  /// The pharmacy group ID. Same for all staff of one pharmacy.
+  /// For the primary account: pharmacyId == uid.
+  String? get pharmacyId => asPharmacy?.pharmacyId;
 }

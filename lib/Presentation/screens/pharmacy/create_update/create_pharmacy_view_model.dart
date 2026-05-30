@@ -15,6 +15,10 @@ class CreatePharmacyViewModel extends GetxController {
   bool isUpdate = false;
   LocalUser? existingPharmacy;
 
+  /// When non-null this view creates a STAFF account that belongs to this pharmacy.
+  /// The new account will have pharmacyId = parentPharmacyId.
+  String? parentPharmacyId;
+
   @override
   void onInit() {
     super.onInit();
@@ -78,6 +82,8 @@ class CreatePharmacyViewModel extends GetxController {
       password: phoneController.text.trim(),
       latitude: selectedLatitude,
       longitude: selectedLongitude,
+      // Preserve existing pharmacyId — never change it on update
+      pharmacyId: existing?.pharmacyId ?? pharmacy.pharmacyId,
       walletNumber: walletController.text.trim().isEmpty
           ? null
           : walletController.text.trim(),
@@ -115,6 +121,10 @@ class CreatePharmacyViewModel extends GetxController {
 
       final uid = userCred.user?.uid ?? "";
 
+      // Primary account → pharmacyId = uid (self-reference)
+      // Staff account   → pharmacyId = parentPharmacyId
+      final resolvedPharmacyId = parentPharmacyId ?? uid;
+
       final pharmacyUser = PharmacyUser(
         uid: uid,
         phone: password,
@@ -125,6 +135,7 @@ class CreatePharmacyViewModel extends GetxController {
         isProfileCompleted: true,
         latitude: selectedLatitude,
         longitude: selectedLongitude,
+        pharmacyId: resolvedPharmacyId,
         walletNumber: walletController.text.trim().isEmpty
             ? null
             : walletController.text.trim(),

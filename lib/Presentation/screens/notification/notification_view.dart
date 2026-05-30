@@ -11,6 +11,16 @@ class NotificationsView extends StatefulWidget {
 
 class _NotificationsViewState extends State<NotificationsView> {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (Get.isRegistered<NotificationController>()) {
+        Get.find<NotificationController>().markAllAsRead();
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -89,6 +99,10 @@ class _NotificationsViewState extends State<NotificationsView> {
                       title: notif.title ?? "إشعار جديد",
                       description: notif.body,
                       date: formattedDate,
+                      appointmentDate: reservation?.appointmentDateTime,
+                      reservationType: reservation?.reservationType,
+                      orderNum: reservation?.orderNum,
+                      notificationType: notif.notificationType,
                       isPatient: currentUser?.user.userType == UserType.patient,
                       imageUrl: reservation?.transferImage,
                       isUnread: isPending,

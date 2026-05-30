@@ -11,6 +11,16 @@ class NotificationController extends GetxController {
   /// 🔔 unread notifications count
   int get unreadCount => notifications.where((n) => n?.isRead == false).length;
 
+  /// 📋 pending new-reservation notifications (any date, need action)
+  int get pendingReservationCount => notifications
+      .where(
+        (n) =>
+            n?.notificationType == "new_reservation" &&
+            (n?.extraData?["status"] == ReservationStatus.pending.value ||
+                n?.extraData?["status"] == null),
+      )
+      .length;
+
   // ─────────────────────────────────────────────
   // INIT
   // ─────────────────────────────────────────────
@@ -45,7 +55,7 @@ class NotificationController extends GetxController {
     final user = Get.find<UserSession>().user;
     if (user == null) return;
 
-    // 1. Load all existing notifications immediately (one-time fetch)
+    // 1. Load all existing notifications (one-time fetch, sorted newest first)
     await _service.getAllNotificationsOnlineData(
       voidCallBack: (list) {
         notifications = list;
@@ -54,10 +64,7 @@ class NotificationController extends GetxController {
       },
     );
 
-    // 2. Mark all as read right after initial load
-    await markAllAsRead();
-
-    // 3. Start realtime for incoming new notifications
+    // 2. Start realtime for incoming new notifications
     _service.onNotificationAdded = (model) => onRealtimeAdd(model);
     _service.onNotificationUpdated = (model) => onRealtimeUpdate(model);
     _service.onNotificationRemoved = (key) => onRealtimeDelete(key);
@@ -73,16 +80,7 @@ class NotificationController extends GetxController {
     final exists = notifications.any((n) => n?.key == model.key);
     if (exists) return;
 
-    // Auto-mark as read since the screen is open
-    final toAdd = model.isRead == true ? model : model.copyWith(isRead: true);
-    if (model.isRead != true) {
-      unawaited(_service.updateNotificationData(
-        notification: toAdd,
-        voidCallBack: (_) {},
-      ));
-    }
-
-    notifications.insert(0, toAdd);
+    notifications.insert(0, model);
     _sort();
     update();
   }
@@ -233,6 +231,7 @@ extension NotificationFeature on NotificationController {
 
     final updated = reservation.copyWith(
       status: ReservationStatus.approved.value,
+      orderNum: nextOrderNum,
     );
     updated.assistantUid = Get.find<UserSession>().user?.uid;
 

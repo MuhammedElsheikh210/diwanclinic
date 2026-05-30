@@ -40,8 +40,6 @@ class MainPageViewModel extends GetxController {
   final PatientOrderService _patientOrderService = PatientOrderService();
 
   final AuthenticationService _authService = AuthenticationService();
-  final NotificationPatentService _notificationService =
-      NotificationPatentService();
 
   // ============================================================
   // 🚀 INIT
@@ -87,8 +85,6 @@ class MainPageViewModel extends GetxController {
           if (user == null) return;
 
           Get.find<UserSession>().setUser(user);
-
-          await _startNotificationsRealtime();
         },
       );
     } catch (e) {}
@@ -158,10 +154,13 @@ class MainPageViewModel extends GetxController {
       };
 
       _patientOrderService.onOrderUpdated = (order) {
+        debugPrint('[ORDER_SYNC] MainPageVM.onOrderUpdated → key=${order.key} status=${order.status}');
         final home = Get.find<HomePatientController>();
         home.upsertOrder(order);
 
-        if (Get.isRegistered<OrdersListViewModel>()) {
+        final isRegistered = Get.isRegistered<OrdersListViewModel>();
+        debugPrint('[ORDER_SYNC] OrdersListViewModel registered=$isRegistered');
+        if (isRegistered) {
           Get.find<OrdersListViewModel>().upsertOrder(order);
         }
       };
@@ -207,12 +206,6 @@ class MainPageViewModel extends GetxController {
       doctorKey: resolvedDoctorKey,
       date: today,
     );
-  } // ============================================================
-  // 🔔 NOTIFICATIONS REALTIME
-  // ============================================================
-
-  Future<void> _startNotificationsRealtime() async {
-    await _notificationService.startListening();
   }
 
   // ============================================================

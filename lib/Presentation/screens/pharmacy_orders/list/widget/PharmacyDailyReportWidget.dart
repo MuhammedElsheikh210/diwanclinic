@@ -5,11 +5,18 @@ class PharmacyDailyReportWidget extends StatelessWidget {
 
   const PharmacyDailyReportWidget({super.key, required this.controller});
 
-  /// 🔥 نسبة ربح الصيدلية
-  /// أقل من 30 طلب = 10%
-  /// 30 طلب أو أكثر = 15%
-  double _resolvePharmacyProfitPercent(int ordersCount) {
-    return ordersCount < 30 ? 10.0 : 15.0;
+  // المصري:   0-20 → 10%  |  21-50 → 15%  |  50+ → 18%
+  double _localPercent(int count) {
+    if (count <= 20) return 10.0;
+    if (count <= 50) return 15.0;
+    return 18.0;
+  }
+
+  // المستورد: 0-20 → 2%   |  21-50 → 4%   |  50+ → 6%
+  double _importedPercent(int count) {
+    if (count <= 20) return 2.0;
+    if (count <= 50) return 4.0;
+    return 6.0;
   }
 
   @override
@@ -18,9 +25,6 @@ class PharmacyDailyReportWidget extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10.0),
       child: Column(
         children: [
-          // =======================
-          // Header
-          // =======================
           GestureDetector(
             onTap: () {
               controller.showDailyReport = !controller.showDailyReport;
@@ -61,10 +65,6 @@ class PharmacyDailyReportWidget extends StatelessWidget {
               ),
             ),
           ),
-
-          // =======================
-          // Content
-          // =======================
           AnimatedCrossFade(
             firstChild: const SizedBox.shrink(),
             secondChild: _buildReportContent(context),
@@ -78,9 +78,6 @@ class PharmacyDailyReportWidget extends StatelessWidget {
     );
   }
 
-  // --------------------------------------------------
-  // 🧮 الحسابات الصح (محاسبيًا)
-  // --------------------------------------------------
   Widget _buildReportContent(BuildContext context) {
     final today = DateTime.now();
 
@@ -94,40 +91,48 @@ class PharmacyDailyReportWidget extends StatelessWidget {
     }).toList();
 
     final int ordersCount = todayOrders.length;
+    final double localPct = _localPercent(ordersCount);
+    final double importedPct = _importedPercent(ordersCount);
 
-    double subtotalTotal = 0; // إجمالي الأدوية قبل الخصم
-    double discountTotal = 0; // إجمالي الخصومات
-    double deliveryTotal = 0; // إجمالي التوصيل (لا يدخل في الربح)
-    double finalAfterDiscount = 0; // ما دفعه المرضى فعليًا
-    double profitTotal = 0; // ربحك الصافي
-
-    final double profitPercent = _resolvePharmacyProfitPercent(ordersCount);
+    double localSubtotal = 0;
+    double importedSubtotal = 0;
+    double finalAfterDiscount = 0;
 
     for (final o in todayOrders) {
-      final subtotal = (o.totalOrder ?? 0).toDouble();
+      final orderSubtotal = (o.totalOrder ?? 0).toDouble();
       final discount = (o.discount ?? 0).toDouble();
-      final delivery = (o.deliveryFees ?? 0).toDouble();
-      final finalAmount = (o.finalAmount ?? 0).toDouble();
+      final discountRate = orderSubtotal == 0 ? 0.0 : discount / orderSubtotal;
 
-      final discountPercent = subtotal == 0 ? 0 : (discount / subtotal) * 100;
+      double oLocal = 0;
+      double oImported = 0;
 
-      final netProfitPercent = (profitPercent - discountPercent).clamp(
-        0,
-        profitPercent,
-      );
+      if (o.medicines != null && o.medicines!.isNotEmpty) {
+        for (final m in o.medicines!) {
+          final lineTotal = ((m.price ?? 0) * (m.quantity ?? 1)).toDouble();
+          if (m.isImported) {
+            oImported += lineTotal;
+          } else {
+            oLocal += lineTotal;
+          }
+        }
+      } else {
+        oLocal += orderSubtotal;
+      }
 
-      final profit = subtotal * (netProfitPercent / 100);
-
-      subtotalTotal += subtotal;
-      discountTotal += discount;
-      deliveryTotal += delivery;
-      finalAfterDiscount += finalAmount;
-      profitTotal += profit;
+      localSubtotal += oLocal * (1 - discountRate);
+      importedSubtotal += oImported * (1 - discountRate);
+      finalAfterDiscount += (o.finalAmount ?? 0).toDouble();
     }
 
-    final double avgDiscountPercent = subtotalTotal == 0
-        ? 0
-        : (discountTotal / subtotalTotal) * 100;
+    final double localProfit = localSubtotal * (localPct / 100);
+    final double importedProfit = importedSubtotal * (importedPct / 100);
+    final double totalProfit = localProfit + importedProfit;
+
+    final String tierLabel = ordersCount <= 20
+        ? "0–20 طلب"
+        : ordersCount <= 50
+            ? "21–50 طلب"
+            : "50+ طلب";
 
     return Container(
       margin: const EdgeInsets.only(top: 10),
@@ -139,46 +144,49 @@ class PharmacyDailyReportWidget extends StatelessWidget {
       ),
       child: Column(
         children: [
+          // ── عدد الروشتات + الفئة + النسب ──
           _ReportRow(
-            title: "عدد الروشتات",
-            subtitle: "طلبات مكتملة اليوم",
+            title: "الروشتات المكتملة",
+            subtitle: "$tierLabel  •  محلي ${localPct.toStringAsFixed(0)}%  •  مستورد ${importedPct.toStringAsFixed(0)}%",
             valueText: ordersCount.toString(),
             icon: Icons.description_rounded,
           ),
-          _ReportRow(
-            title: "إجمالي سعر الروشتات",
-            subtitle: "100% (بدون توصيل)",
-            valueText: "${subtotalTotal.toStringAsFixed(2)} ج.م",
-            icon: Icons.payments_rounded,
-          ),
-          _ReportRow(
-            title: "قيمة الخصم",
-            subtitle: "خصم المرضى ${avgDiscountPercent.toStringAsFixed(1)}%",
-            valueText: "-${discountTotal.toStringAsFixed(2)} ج.م",
-            icon: Icons.discount_rounded,
-            negative: true,
-          ),
-          _ReportRow(
-            title: "التوصيل",
-            subtitle: "لا يدخل في الربح",
-            valueText: "${deliveryTotal.toStringAsFixed(2)} ج.م",
-            icon: Icons.delivery_dining_rounded,
-          ),
-          const Divider(),
+          const Divider(height: 20),
+
+          // ── إجمالي ما دفعه المرضى ──
           _ReportRow(
             title: "إجمالي ما دفعه المرضى",
             subtitle: "بعد الخصم + التوصيل",
             valueText: "${finalAfterDiscount.toStringAsFixed(2)} ج.م",
             icon: Icons.summarize_rounded,
+          ),
+          const Divider(height: 20),
+
+          // ── ربح المحلي ──
+          _ReportRow(
+            title: "ربح المحلي",
+            subtitle: "${localPct.toStringAsFixed(0)}% × ${localSubtotal.toStringAsFixed(0)} ج.م",
+            valueText: "${localProfit.toStringAsFixed(2)} ج.م",
+            icon: Icons.flag_rounded,
             highlight: true,
           ),
-          const Divider(),
+
+          // ── ربح المستورد ──
+          _ReportRow(
+            title: "ربح المستورد",
+            subtitle: "${importedPct.toStringAsFixed(0)}% × ${importedSubtotal.toStringAsFixed(0)} ج.م",
+            valueText: "${importedProfit.toStringAsFixed(2)} ج.م",
+            icon: Icons.public_rounded,
+            highlight: true,
+          ),
+          const Divider(height: 20),
+
+          // ── الربح الصافي ──
           _ReportRow(
             title: "ربحك الصافي اليوم",
-            subtitle:
-                "${profitPercent.toStringAsFixed(0)}% من (سعر الأدوية بعد الخصم)",
-            valueText: "${profitTotal.toStringAsFixed(2)} ج.م",
-            icon: Icons.trending_up_rounded,
+            subtitle: "محلي + مستورد",
+            valueText: "${totalProfit.toStringAsFixed(2)} ج.م",
+            icon: Icons.account_balance_wallet_rounded,
             highlight: true,
             primary: true,
           ),
@@ -188,9 +196,6 @@ class PharmacyDailyReportWidget extends StatelessWidget {
   }
 }
 
-// --------------------------------------------------
-// 🌟 Row reusable
-// --------------------------------------------------
 class _ReportRow extends StatelessWidget {
   final String title;
   final String valueText;

@@ -37,15 +37,13 @@ class HomePatientController extends GetxController {
   List<ReservationModel?> get activeReservations =>
       reservationVM.otherReservations;
 
+  static const _finishedStatuses = {"delivered", "completed", "cancelled"};
+
   List<OrderModel> get activeOrders =>
-      orders
-          .where((o) => o.status != "delivered" && o.status != "cancelled")
-          .toList();
+      orders.where((o) => !_finishedStatuses.contains(o.status)).toList();
 
   List<OrderModel> get finishedOrders =>
-      orders
-          .where((o) => o.status == "delivered" || o.status == "cancelled")
-          .toList();
+      orders.where((o) => _finishedStatuses.contains(o.status)).toList();
 
   // ============================================================
   // 🚀 INIT
@@ -65,16 +63,16 @@ class HomePatientController extends GetxController {
   // ============================================================
 
   Future<void> refreshAll() async {
-    isLoading = true;
-    update();
-
-    orders.clear();
-    orders.refresh();
-
-    getSpecializationData();
-
-    isLoading = false;
-    update();
+    // isLoading = true;
+    // update();
+    //
+    // orders.clear();
+    // orders.refresh();
+    //
+    // getSpecializationData();
+    //
+    // isLoading = false;
+    // update();
   }
 
   // ============================================================
@@ -94,6 +92,7 @@ class HomePatientController extends GetxController {
 
   void upsertOrder(OrderModel order) {
     final index = orders.indexWhere((o) => o.key == order.key);
+    debugPrint('[ORDER_SYNC] HomeController.upsertOrder → key=${order.key} status=${order.status} index=$index');
 
     if (index == -1) {
       orders.insert(0, order);

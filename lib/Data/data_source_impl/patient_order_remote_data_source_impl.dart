@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/foundation.dart';
 import '../../index/index_main.dart';
 
 class PatientOrderRemoteDataSourceImpl implements PatientOrderRemoteDataSource {
@@ -38,17 +39,17 @@ class PatientOrderRemoteDataSourceImpl implements PatientOrderRemoteDataSource {
 
     _ref = _database.ref("orders");
 
-    // Query by patientuid at the database level - no full collection scan
-    // Requires index: orders/.indexOn: ["patientuid"] in Firebase rules
-    final query = _ref!.orderByChild("patientuid").equalTo(patientUid);
-
+    // بنسمع على كل الـ orders بدون query عشان onChildChanged يشتغل صح
+    // لو استخدمنا orderByChild().equalTo() من غير Firebase index
+    // onChildChanged مش بيشتغل لما حقل تاني غير المفلتر عليه بيتغير (زي status)
+    // الفلترة بتحصل client-side في _onAdded / _onChanged
     void onError(Object error, StackTrace stack) {
       AppLogger.error("ORDER_DS", "Stream error", error, stack);
     }
 
-    final addedSub = query.onChildAdded.listen(_onAdded, onError: onError, cancelOnError: false);
-    final changedSub = query.onChildChanged.listen(_onChanged, onError: onError, cancelOnError: false);
-    final removedSub = query.onChildRemoved.listen(_onRemoved, onError: onError, cancelOnError: false);
+    final addedSub = _ref!.onChildAdded.listen(_onAdded, onError: onError, cancelOnError: false);
+    final changedSub = _ref!.onChildChanged.listen(_onChanged, onError: onError, cancelOnError: false);
+    final removedSub = _ref!.onChildRemoved.listen(_onRemoved, onError: onError, cancelOnError: false);
 
     _subscriptions.addAll([addedSub, changedSub, removedSub]);
   }
@@ -72,14 +73,20 @@ class PatientOrderRemoteDataSourceImpl implements PatientOrderRemoteDataSource {
 
     if (model == null) return;
 
-    // ✅ نفس الفلترة (مهم جدًا)
-    if (model.patientuid != _currentPatientUid) return;
+    debugPrint('[ORDER_SYNC] _onChanged fired → key=${model.key} status=${model.status} patientuid=${model.patientuid} | currentUid=$_currentPatientUid');
 
+    if (model.patientuid != _currentPatientUid) {
+      debugPrint('[ORDER_SYNC] ❌ filtered out (patientuid mismatch)');
+      return;
+    }
+
+    debugPrint('[ORDER_SYNC] ✅ passed filter → pushing to stream');
     _changedController.add(model);
   }
 
   void _onRemoved(DatabaseEvent event) {
     final key = event.snapshot.key;
+    debugPrint('[ORDER_SYNC] _onRemoved fired → key=$key | currentUid=$_currentPatientUid');
 
     if (key != null) {
       _removedController.add(key);

@@ -71,6 +71,9 @@ class _ReservationViewState extends State<ReservationView> {
                       ? const SizedBox()
                       : ReservationReportWidget(controller: controller),
 
+                  // ── Pending reservations banner (assistant only) ──
+                  const _PendingReservationsBanner(),
+
                   // ── Search bar ───────────────────────────────
                   Padding(
                     padding: EdgeInsets.symmetric(
@@ -970,6 +973,85 @@ class _TabItem extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// 🔔 Pending new-reservations banner (visible to assistant only)
+// ─────────────────────────────────────────────────────────────
+class _PendingReservationsBanner extends StatelessWidget {
+  const _PendingReservationsBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final userType = Get.find<UserSession>().user?.user.userType;
+    if (userType != UserType.assistant) return const SizedBox.shrink();
+
+    if (!Get.isRegistered<NotificationController>()) {
+      return const SizedBox.shrink();
+    }
+
+    return GetBuilder<NotificationController>(
+      builder: (notifController) {
+        final count = notifController.pendingReservationCount;
+        if (count == 0) return const SizedBox.shrink();
+
+        return GestureDetector(
+          onTap: () {
+            // Switch to notifications tab (index 1 for assistant)
+            final mainVm = Get.find<MainPageViewModel>();
+            mainVm.changeIndex(1);
+          },
+          child: Container(
+            margin: EdgeInsets.symmetric(vertical: 8.h),
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.35),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      "$count",
+                      style: context.typography.mdBold.copyWith(
+                        color: AppColors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: Text(
+                    count == 1
+                        ? "يوجد حجز جديد بانتظار موافقتك"
+                        : "يوجد $count حجوزات جديدة بانتظار موافقتك",
+                    style: context.typography.smMedium.copyWith(
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: AppColors.primary,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

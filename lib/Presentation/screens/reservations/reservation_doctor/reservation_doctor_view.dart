@@ -1,16 +1,10 @@
-import 'package:diwanclinic/Presentation/screens/reservations/list/widgets/filter_chip_widget.dart';
 import 'package:diwanclinic/Presentation/screens/reservations/reservation_doctor/widgets/ReservationDoctorAppBar.dart';
 import 'package:diwanclinic/Presentation/screens/reservations/reservation_doctor/widgets/reservation_doctor_card.dart';
 import 'package:diwanclinic/index/index_main.dart';
 
-class ReservationDoctorView extends StatefulWidget {
+class ReservationDoctorView extends StatelessWidget {
   const ReservationDoctorView({super.key});
 
-  @override
-  State<ReservationDoctorView> createState() => _ReservationDoctorViewState();
-}
-
-class _ReservationDoctorViewState extends State<ReservationDoctorView> {
   @override
   Widget build(BuildContext context) {
     return GetBuilder<ReservationDoctorViewModel>(
@@ -18,172 +12,126 @@ class _ReservationDoctorViewState extends State<ReservationDoctorView> {
       builder: (controller) {
         return Scaffold(
           backgroundColor: AppColors.white,
-
           appBar: ReservationDoctorAppBar(controller: controller),
-          body: Container(
-            color: AppColors.white,
-            child: ListView(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-              children: [
-                _buildStats(controller, context),
-                SizedBox(height: 15.h),
-
-                //  if (controller.hasActiveFilters)
-                //  _buildActiveFilters(context, controller),
-                _buildReservationList(controller, context),
-              ],
-            ),
-          ),
+          body: controller.listReservations == null
+              ? const _LoadingBody()
+              : _Body(controller: controller),
         );
       },
     );
   }
+}
 
-  // ─────────────────────────────────────────────
-  // 📊 Stats
-  // ─────────────────────────────────────────────
-  Widget _buildStats(
-    ReservationDoctorViewModel controller,
-    BuildContext context,
-  ) {
-    final total = controller.totalCount;
-    final completed = controller.completedCount;
-    final pending = controller.pendingCount;
+// ── Loading state ──────────────────────────────────────────
+class _LoadingBody extends StatelessWidget {
+  const _LoadingBody();
 
+  @override
+  Widget build(BuildContext context) {
+    return const Center(child: CircularProgressIndicator());
+  }
+}
+
+// ── Main body ──────────────────────────────────────────────
+class _Body extends StatelessWidget {
+  final ReservationDoctorViewModel controller;
+
+  const _Body({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    final list = controller.listReservations ?? [];
+
+    return ListView(
+      padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 20.h),
+      children: [
+        _StatsRow(controller: controller),
+        SizedBox(height: 14.h),
+        if (list.isEmpty)
+          const Padding(
+            padding: EdgeInsets.only(top: 80),
+            child: Center(child: NoDataWidget(title: 'لا توجد حجوزات')),
+          )
+        else
+          ...list.map((r) => ReservationDoctorCard(
+                reservation: r!,
+                controller: controller,
+                index: list.indexOf(r),
+              )),
+      ],
+    );
+  }
+}
+
+// ── Stats row — 3 inline pills ─────────────────────────────
+class _StatsRow extends StatelessWidget {
+  final ReservationDoctorViewModel controller;
+
+  const _StatsRow({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
     return Row(
       children: [
-        _statCard(
-          context,
-          "إجمالي",
-          total.toString(),
-          Icons.event_available,
-          AppColors.primary,
+        _StatPill(
+          label: 'الإجمالي',
+          value: controller.totalCount,
+          color: AppColors.primary,
+          bg: AppColors.primary_light,
         ),
-        _statCard(
-          context,
-          "مكتملة",
-          completed.toString(),
-          Icons.check_circle,
-          AppColors.successForeground,
+        SizedBox(width: 8.w),
+        _StatPill(
+          label: 'مكتمل',
+          value: controller.completedCount,
+          color: const Color(0xFF10B981),
+          bg: const Color(0xFFECFDF5),
         ),
-        _statCard(
-          context,
-          "منتظرة",
-          pending.toString(),
-          Icons.access_time,
-          AppColors.tag_icon_warning,
+        SizedBox(width: 8.w),
+        _StatPill(
+          label: 'منتظر',
+          value: controller.pendingCount,
+          color: const Color(0xFFF59E0B),
+          bg: const Color(0xFFFFFBEB),
         ),
       ],
     );
   }
+}
 
-  Widget _buildActiveFilters(
-    BuildContext context,
-    ReservationDoctorViewModel controller,
-  ) {
-    final clinicsCount = controller.list_clinic?.length ?? 0;
+class _StatPill extends StatelessWidget {
+  final String label;
+  final int value;
+  final Color color;
+  final Color bg;
 
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8.h),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children:
-              controller.activeFilters.map((filter) {
-                // 🚫 Hide clinic filter if doctor has only one clinic
-                if (filter["label"].toString().contains("العيادة") &&
-                    clinicsCount <= 1) {
-                  return const SizedBox.shrink();
-                }
+  const _StatPill({
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.bg,
+  });
 
-                return Padding(
-                  padding: EdgeInsets.only(right: 6.w),
-                  child: FilterChipWidget(
-                    label: filter["label"],
-                    onRemove: filter["onRemove"],
-                  ),
-                );
-              }).toList(),
-        ),
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────
-  // 📋 Reservation List
-  // ─────────────────────────────────────────────
-  Widget _buildReservationList(
-    ReservationDoctorViewModel controller,
-    BuildContext context,
-  ) {
-    final list = controller.listReservations ?? [];
-
-    if (list.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.only(top: 100),
-        child: Center(child: NoDataWidget(title: "لا يوجد حجوزات")),
-      );
-    }
-
-    return ListView.separated(
-      physics: const NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      itemCount: list.length,
-      separatorBuilder: (_, __) => SizedBox(height: 10.h),
-      itemBuilder: (context, index) {
-        final reservation = list[index];
-        return Container(
-          padding: EdgeInsets.symmetric(vertical: 6.h),
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: ReservationDoctorCard(
-            reservation: reservation!,
-            controller: controller,
-            index: index,
-          ),
-        );
-      },
-    );
-  }
-
-  // ─────────────────────────────────────────────
-  // 🎨 Stat Card
-  // ─────────────────────────────────────────────
-  Widget _statCard(
-    BuildContext context,
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
+  @override
+  Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.symmetric(vertical: 10.h),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
+          color: bg,
+          borderRadius: BorderRadius.circular(12.r),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Column(
           children: [
-            Icon(icon, color: color, size: 28),
-            const SizedBox(width: 5),
-            Column(
-              children: [
-                Text(
-                  title,
-                  style: context.typography.smRegular.copyWith(
-                    color: AppColors.textSecondaryParagraph,
-                  ),
-                ),
-                Text(
-                  value,
-                  style: context.typography.lgBold.copyWith(color: color),
-                ),
-              ],
+            Text(
+              value.toString(),
+              style: context.typography.lgBold.copyWith(color: color),
+            ),
+            SizedBox(height: 2.h),
+            Text(
+              label,
+              style: context.typography.xsRegular.copyWith(
+                color: AppColors.textSecondaryParagraph,
+              ),
             ),
           ],
         ),

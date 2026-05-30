@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_image_compress/flutter_image_compress.dart';
@@ -6,6 +5,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../../index/index_main.dart';
+import '../../parentControllers/order_Service/pharmacy_notification_helper.dart';
+import '../../parentControllers/order_Service/pharmacy_picker_service.dart';
 
 class OrderMedicineViewModel extends GetxController {
   final ReservationModel reservation;
@@ -23,10 +24,11 @@ class OrderMedicineViewModel extends GetxController {
   // ── medicine selection (reorder only)
   final Set<int> selectedMedicineIndices = {};
 
-  List<MedicineItemModel> get selectedMedicines => selectedMedicineIndices
-      .where((i) => i < preloadedMedicines.length)
-      .map((i) => preloadedMedicines[i])
-      .toList();
+  List<MedicineItemModel> get selectedMedicines =>
+      selectedMedicineIndices
+          .where((i) => i < preloadedMedicines.length)
+          .map((i) => preloadedMedicines[i])
+          .toList();
 
   void toggleMedicine(int index) {
     if (selectedMedicineIndices.contains(index)) {
@@ -299,37 +301,13 @@ class OrderMedicineViewModel extends GetxController {
   // 🔥 TOP-LEVEL / STATIC for compute
 
   // ===========================================================================
-  // 🏥 GET PHARMACY
-  // ===========================================================================
-  Future<LocalUser?> getPharmacyData() async {
-    final completer = Completer<LocalUser?>();
-
-    await AuthenticationService().getClientsData(
-      query: SQLiteQueryParams(
-        where: "userType = ?",
-        whereArgs: ["pharmacy"],
-        limit: 1,
-      ),
-      voidCallBack: (users) {
-        if (users.isNotEmpty && users.first != null) {
-          completer.complete(users.first);
-        } else {
-          completer.complete(null); // ✅ بدل LocalUser()
-        }
-      },
-    );
-
-    return completer.future;
-  }
-
-  // ===========================================================================
   // ✅ CONFIRM ORDER
   // ===========================================================================
   Future<void> confirmOrder(Function(ReservationModel) onConfirmed) async {
     if (!validateForm()) return;
 
     Loader.show();
-    final pharmacy = await getPharmacyData();
+    final pharmacy = await PharmacyPickerService.pick();
 
     final order = OrderModel(
       key: const Uuid().v4(),
@@ -347,9 +325,8 @@ class OrderMedicineViewModel extends GetxController {
       address: addressController.text.trim(),
       doseDays: int.tryParse(doseController.text.trim()),
       notes: notesController.text.trim(),
-      medicines: isReorder && selectedMedicines.isNotEmpty
-          ? selectedMedicines
-          : null,
+      medicines:
+          isReorder && selectedMedicines.isNotEmpty ? selectedMedicines : null,
       createdAt: DateTime.now().millisecondsSinceEpoch,
       status: "approved",
       // 📸 Uploaded images
@@ -376,13 +353,14 @@ class OrderMedicineViewModel extends GetxController {
           body: "📥 تم استلام الروشتة 👌\n\n⏳ جاري التسعير خلال 5 دقائق 💙",
         );
 
-        // await NotificationHandler().sendToClinicAssistants(
-        //   title: "💊 طلب روشتة جديد",
-        //   body: "طلب جديد من ${order.patientName}",
-        //   reservation: reservation,
-        //   assistants: [pharmacy],
-        //   notificationType: "new_pharmacy_order",
-        // );
+        // 🔔 إشعار لكل موظفي الصيدلية
+        final pid = pharmacy?.pharmacyId ?? pharmacy?.uid ?? '';
+        if (pid.isNotEmpty) {
+          await PharmacyNotificationHelper.notifyAllPharmacyStaff(
+            pharmacyId: pid,
+            order: order,
+          );
+        }
 
         Loader.showSuccess("تم إرسال طلب الروشتة بنجاح");
       },

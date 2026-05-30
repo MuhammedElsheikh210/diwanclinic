@@ -1,4 +1,5 @@
 import 'package:diwanclinic/Presentation/screens/generic_visite/read/view.dart';
+import 'package:diwanclinic/Presentation/screens/home_doctor/doctor_home_view.dart';
 
 import '../../../index/index_main.dart';
 import 'package:flutter/cupertino.dart';
@@ -189,14 +190,14 @@ class _MainPageState extends State<MainPage> {
                 "الإشعارات",
                 notifController.unreadCount,
               ),
-          _item(IconsConstants.orders, "الطلبات"),
           _item(IconsConstants.account, "الحساب"),
         ];
 
       case UserType.doctor:
         return [
+          _item(IconsConstants.home, "الرئيسية"),
           _item(IconsConstants.new_reservae, "الحجوزات"),
-          _item(IconsConstants.money, "الإيرادات"),
+          _item(IconsConstants.money, "الدخل"),
           _item(IconsConstants.feedback_icon, "التقييمات"),
           _item(IconsConstants.account, "الحساب"),
         ];
@@ -287,15 +288,13 @@ class _MainPageState extends State<MainPage> {
       case UserType.assistant:
         return [
           const ReservationView(),
-
-          //   const VisitGenericView(title: "Generic",),
           const NotificationsView(),
-          const OrdersView(),
           const AccountView(),
         ][index];
 
       case UserType.doctor:
         return [
+          const DoctorHomeView(),
           const ReservationDoctorView(),
           const IncomeView(),
           const DoctorFeedbackView(),

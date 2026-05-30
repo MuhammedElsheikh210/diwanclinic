@@ -16,13 +16,12 @@ class _OrderSuccessViewState extends State<OrderSuccessView> {
   void initState() {
     super.initState();
 
-    // 🔁 Auto navigate safely (🔥 FIXED)
     _timer = Timer(const Duration(seconds: 6), () {
       if (mounted) {
-        Get.to(
-          () => const MainPage(initialIndex: 2), // 🔥 orders tab
-          binding: Binding(), // 💣 أهم حاجة (تشغل realtime)
-        );
+        Get.until((route) => route.isFirst);
+        if (Get.isRegistered<MainPageViewModel>()) {
+          Get.find<MainPageViewModel>().changeIndex(0);
+        }
       }
     });
   }
@@ -75,7 +74,6 @@ class _OrderSuccessViewState extends State<OrderSuccessView> {
 
                   SizedBox(height: 100.h),
 
-                  /// 🔘 زر عرض الطلبات (🔥 FIXED)
                   SizedBox(
                     width: double.infinity,
                     height: 55.h,
@@ -87,10 +85,11 @@ class _OrderSuccessViewState extends State<OrderSuccessView> {
                         ),
                       ),
                       onTap: () {
-                        Get.to(
-                          () => const MainPage(initialIndex: 2),
-                          binding: Binding(),
-                        );
+                        _timer?.cancel();
+                        Get.until((route) => route.isFirst);
+                        if (Get.isRegistered<MainPageViewModel>()) {
+                          Get.find<MainPageViewModel>().changeIndex(2);
+                        }
                       },
                     ),
                   ),

@@ -60,7 +60,7 @@ class NotificationModel {
       title: json['title'],
       body: json['body'],
       userType: json['user_type'],
-      createAt: json['create_at'],
+      createAt: (json['create_at'] as num?)?.toInt(),
       isRead: json['is_read'] ?? false,
       notificationType: json['notification_type'],
       extraData:

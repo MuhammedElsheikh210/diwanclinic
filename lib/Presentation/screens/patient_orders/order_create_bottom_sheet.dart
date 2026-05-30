@@ -1,4 +1,6 @@
 import 'package:diwanclinic/index/index_main.dart';
+import 'package:diwanclinic/Presentation/parentControllers/order_Service/pharmacy_notification_helper.dart';
+import 'package:diwanclinic/Presentation/parentControllers/order_Service/pharmacy_picker_service.dart';
 
 class OrderConfirmationSheet extends StatefulWidget {
   final ReservationModel reservation;
@@ -214,7 +216,7 @@ class _OrderConfirmationSheetState extends State<OrderConfirmationSheet> {
                   appButtonSize: AppButtonSize.large,
                   onTap: () async {
                     Loader.show();
-                    final pharmacy = await getPharmacyData();
+                    final pharmacy = await PharmacyPickerService.pick();
                     final user = Get.find<UserSession>().user;
 
                     final order = OrderModel(
@@ -252,6 +254,12 @@ class _OrderConfirmationSheetState extends State<OrderConfirmationSheet> {
                           return;
                         }
 
+                        // upsert فوري بدون انتظار Firebase realtime
+                        Get.find<HomePatientController>().upsertOrder(order);
+                        if (Get.isRegistered<OrdersListViewModel>()) {
+                          Get.find<OrdersListViewModel>().upsertOrder(order);
+                        }
+
                         Get.back();
                         widget.reservation.isOrdered = true;
                         widget.onConfirmed(widget.reservation);
@@ -262,14 +270,14 @@ class _OrderConfirmationSheetState extends State<OrderConfirmationSheet> {
                               "📥 تم استلام الروشتة 👌\n\n⏳ جاري التسعير خلال 5 دقائق 💙",
                         );
 
-                        // // 🔔 Notification للصيدلية
-                        // await NotificationHandler().sendToClinicAssistants(
-                        //   title: "💊 طلب روشتة جديد",
-                        //   body: "طلب جديد من ${order.patientName}",
-                        //   reservation: widget.reservation,
-                        //   assistants: [pharmacy],
-                        //   notificationType: "new_pharmacy_order",
-                        // );
+                        // 🔔 إشعار لكل موظفي الصيدلية
+                        final pid = pharmacy?.pharmacyId ?? pharmacy?.uid ?? '';
+                        if (pid.isNotEmpty) {
+                          await PharmacyNotificationHelper.notifyAllPharmacyStaff(
+                            pharmacyId: pid,
+                            order: order,
+                          );
+                        }
 
                         Loader.showSuccess("تم إرسال طلب الروشتة بنجاح");
                       },
@@ -283,28 +291,5 @@ class _OrderConfirmationSheetState extends State<OrderConfirmationSheet> {
         ),
       ),
     );
-  }
-
-  Future<LocalUser?> getPharmacyData() async {
-    final completer = Completer<LocalUser?>();
-
-    await AuthenticationService().getClientsData(
-      query: SQLiteQueryParams(
-        where: "userType = ?",
-        whereArgs: ["pharmacy"],
-        limit: 1,
-      ),
-      voidCallBack: (List<LocalUser?> users) {
-        Loader.dismiss();
-
-        if (users.isNotEmpty && users.first != null) {
-          completer.complete(users.first);
-        } else {
-          completer.complete(null); // ✅ بدل LocalUser()
-        }
-      },
-    );
-
-    return completer.future;
   }
 }

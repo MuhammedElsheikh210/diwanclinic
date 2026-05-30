@@ -13,17 +13,13 @@ class OrdersListViewModel extends GetxController {
   // 📊 FILTERS
   // ============================================================
 
-  List<OrderModel> get activeOrders {
-    return orders
-        .where((o) => o.status != "delivered" && o.status != "cancelled")
-        .toList();
-  }
+  static const _finishedStatuses = {"delivered", "completed", "cancelled"};
 
-  List<OrderModel> get finishedOrders {
-    return orders
-        .where((o) => o.status == "delivered" || o.status == "cancelled")
-        .toList();
-  }
+  List<OrderModel> get activeOrders =>
+      orders.where((o) => !_finishedStatuses.contains(o.status)).toList();
+
+  List<OrderModel> get finishedOrders =>
+      orders.where((o) => _finishedStatuses.contains(o.status)).toList();
 
   // ============================================================
   // 🚀 INIT
@@ -32,6 +28,15 @@ class OrdersListViewModel extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    // sync من HomePatientController اللي بيستلم كل الـ realtime events دايمًا
+    if (Get.isRegistered<HomePatientController>()) {
+      final home = Get.find<HomePatientController>();
+      if (home.orders.isNotEmpty) {
+        orders.value = List.from(home.orders);
+        orders.sort((a, b) => (b.createdAt ?? 0).compareTo(a.createdAt ?? 0));
+        orders.refresh();
+      }
+    }
   }
 
   // ============================================================
@@ -40,6 +45,7 @@ class OrdersListViewModel extends GetxController {
 
   void upsertOrder(OrderModel model) {
     final index = orders.indexWhere((e) => e.key == model.key);
+    debugPrint('[ORDER_SYNC] OrdersListVM.upsertOrder → key=${model.key} status=${model.status} index=$index totalOrders=${orders.length}');
 
     if (index != -1) {
       orders[index] = model;
@@ -49,6 +55,7 @@ class OrdersListViewModel extends GetxController {
 
     orders.sort((a, b) => (b.createdAt ?? 0).compareTo(a.createdAt ?? 0));
     orders.refresh();
+    debugPrint('[ORDER_SYNC] after refresh → activeOrders=${activeOrders.length} finishedOrders=${finishedOrders.length}');
   }
 
   // ============================================================

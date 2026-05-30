@@ -1,3 +1,4 @@
+import 'package:firebase_database/firebase_database.dart';
 import '../../../../index/index_main.dart';
 import 'payment_selection_sheet.dart';
 
@@ -81,6 +82,82 @@ class _PriceDetailsScreenState extends State<PriceDetailsScreen> {
           padding: EdgeInsets.all(16.w),
           children: [
             // --------------------------------------------------
+            // 💳 Section: Payment Info (إن وجد)
+            // --------------------------------------------------
+            if (widget.order.paymentMethod != null &&
+                widget.order.paymentMethod!.isNotEmpty)
+              _section(
+                context: context,
+                title: "طريقة الدفع",
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          widget.order.paymentMethod == 'cash'
+                              ? Icons.money_outlined
+                              : widget.order.paymentMethod == 'instapay'
+                                  ? Icons.bolt_outlined
+                                  : Icons.account_balance_wallet_outlined,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
+                        SizedBox(width: 8.w),
+                        AppText(
+                          text: widget.order.paymentMethod == 'cash'
+                              ? 'كاش'
+                              : widget.order.paymentMethod == 'instapay'
+                                  ? 'InstaPay'
+                                  : 'محفظة إلكترونية',
+                          textStyle: context.typography.mdBold.copyWith(
+                            color: AppColors.textDisplay,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (widget.order.paymentScreenshotUrl != null &&
+                        widget.order.paymentScreenshotUrl!.isNotEmpty) ...[
+                      SizedBox(height: 12.h),
+                      AppText(
+                        text: "إيصال الدفع",
+                        textStyle: context.typography.smSemiBold.copyWith(
+                          color: AppColors.textSecondaryParagraph,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      GestureDetector(
+                        onTap: () => Get.to(
+                          () => _FullScreenImage(
+                            url: widget.order.paymentScreenshotUrl!,
+                          ),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            widget.order.paymentScreenshotUrl!,
+                            height: 180.h,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (_, child, progress) =>
+                                progress == null
+                                    ? child
+                                    : Container(
+                                        height: 180.h,
+                                        color: AppColors.background_neutral_25,
+                                        child: const Center(
+                                          child: CircularProgressIndicator(),
+                                        ),
+                                      ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+
+            // --------------------------------------------------
             // 🟦 Section: Medicines
             // --------------------------------------------------
             _section(
@@ -118,44 +195,13 @@ class _PriceDetailsScreenState extends State<PriceDetailsScreen> {
 
                   SummaryRow(label: "التوصيل ", value: "${delivery} ج.م"),
 
-                  // SummaryRow(
-                  //   label: "الخصم",
-                  //   value:
-                  //       "-$discount ج.م (${discountPercent.toStringAsFixed(0)}%)",
-                  //   valueColor: AppColors.errorForeground,
-                  // ),
-                  //
-                  // SizedBox(height: 6.h),
-                  //
-                  // Container(
-                  //   padding: EdgeInsets.all(12.w),
-                  //   decoration: BoxDecoration(
-                  //     color: AppColors.primary.withValues(alpha: .08),
-                  //     borderRadius: BorderRadius.circular(12),
-                  //   ),
-                  //   child: Row(
-                  //     mainAxisAlignment: MainAxisAlignment.start,
-                  //     crossAxisAlignment: CrossAxisAlignment.start,
-                  //     children: [
-                  //       const Icon(
-                  //         Icons.local_offer_outlined,
-                  //         size: 18,
-                  //         color: AppColors.primary,
-                  //       ),
-                  //       SizedBox(width: 8.w),
-                  //       Expanded(
-                  //         child: AppText(
-                  //           text:
-                  //               "عند طلب العلاج مباشرة بدون حجز كشف تحصل على خصم 10٪ على إجمالي الأدوية.",
-                  //           textStyle: context.typography.xsRegular.copyWith(
-                  //             color: AppColors.primary,
-                  //             height: 1.4,
-                  //           ),
-                  //         ),
-                  //       ),
-                  //     ],
-                  //   ),
-                  // ),
+                  if (discount > 0)
+                    SummaryRow(
+                      label: "الخصم",
+                      value: "-$discount ج.م (${discountPercent.toStringAsFixed(0)}%)",
+                      valueColor: AppColors.errorForeground,
+                    ),
+
                   const Divider(color: AppColors.grayLight),
 
                   SummaryRow(
@@ -300,18 +346,20 @@ class _PriceDetailsScreenState extends State<PriceDetailsScreen> {
 
     Loader.show();
 
+    final updatedOrderForConfirm = widget.order.copyWith(
+      medicines: medicines,
+      totalOrder: subtotal,
+      deliveryFees: delivery,
+      discount: discount,
+      finalAmount: finalTotal,
+      paymentMethod: result.method,
+      paymentScreenshotUrl: result.screenshotUrl,
+      updatedAt: DateTime.now().millisecondsSinceEpoch,
+    );
+
     await OrderStatusService.updateOrderStatus(
-      order: widget.order.copyWith(
-        medicines: medicines,
-        totalOrder: subtotal,
-        deliveryFees: delivery,
-        discount: discount,
-        finalAmount: finalTotal,
-        paymentMethod: result.method,
-        paymentScreenshotUrl: result.screenshotUrl,
-        updatedAt: DateTime.now().millisecondsSinceEpoch,
-      ),
-      newStatus: "completed",
+      order: updatedOrderForConfirm,
+      newStatus: "confirmed",
       onSave: (updatedOrder) async {
         await OrderService().updateOrderData(
           order: updatedOrder,
@@ -320,6 +368,26 @@ class _PriceDetailsScreenState extends State<PriceDetailsScreen> {
             sendNotification: true,
           ),
           voidCallBack: (_) async {
+            // 🔔 in-app notification → كتابة مباشرة على path الصيدلاني
+            final pharmacyUid = updatedOrder.pharmacyKey;
+            if (pharmacyUid != null && pharmacyUid.isNotEmpty) {
+              final notifKey = const Uuid().v4();
+              await FirebaseDatabase.instance
+                  .ref("notifications/$pharmacyUid/$notifKey")
+                  .set({
+                'key': notifKey,
+                'from_key': Get.find<UserSession>().user?.uid,
+                'to_key': pharmacyUid,
+                'title': '✅ تم تأكيد الطلب',
+                'body':
+                    'قام ${updatedOrder.patientName ?? "المريض"} بتأكيد الطلب وجاهز للتجهيز',
+                'notification_type': 'order_confirmed',
+                'create_at': DateTime.now().millisecondsSinceEpoch,
+                'is_read': false,
+                'extra_data': {'order_key': updatedOrder.key},
+              });
+            }
+
             Loader.dismiss();
             if (widget.fromHome == true) {
               Get.offAll(
@@ -452,6 +520,27 @@ class MedicineItem extends StatelessWidget {
           color: AppColors.background_neutral_25,
         ),
         child: Icon(icon, size: 20.w),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------
+// FULL SCREEN IMAGE VIEWER
+// ---------------------------------------------------------
+class _FullScreenImage extends StatelessWidget {
+  final String url;
+  const _FullScreenImage({required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(backgroundColor: Colors.black, elevation: 0),
+      body: Center(
+        child: InteractiveViewer(
+          child: Image.network(url, fit: BoxFit.contain),
+        ),
       ),
     );
   }

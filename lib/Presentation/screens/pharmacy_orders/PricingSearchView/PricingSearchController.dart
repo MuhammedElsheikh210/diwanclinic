@@ -16,7 +16,6 @@ class PricingSearchController extends GetxController {
   List<SelectedMedicine> selectedMedicines = [];
 
   // ───────────── Pricing ─────────────
-  double discountPercent = 0.0;
   double deliveryFee = 5;
 
   // ───────────── Calculations ─────────────
@@ -24,21 +23,11 @@ class PricingSearchController extends GetxController {
   int get subtotalInt =>
       selectedMedicines.fold<int>(0, (s, e) => s + e.total.round());
 
-  int get discountValueInt => (subtotalInt * discountPercent).round();
-
   int get deliveryFeeInt => deliveryFee.round();
-
-  // int get totalInt => subtotalInt - discountValueInt + deliveryFeeInt;
 
   int get totalInt => subtotalInt + deliveryFeeInt;
 
   void initWithOrder(OrderModel order) {
-    if (order.reservationKey != null && order.reservationKey!.isNotEmpty) {
-      discountPercent = 0.05; // 5%
-    } else {
-      discountPercent = 0.10; // 10%
-    }
-
     update();
   }
 
@@ -95,6 +84,7 @@ class PricingSearchController extends GetxController {
         name: e.medicine.name,
         quantity: e.quantity,
         price: e.price,
+        imported: e.medicine.imported,
       );
     }).toList();
   }
@@ -104,10 +94,11 @@ class PricingSearchController extends GetxController {
     return order.copyWith(
       medicines: buildMedicineItems(),
       totalOrder: subtotalInt,
-      discount: discountValueInt,
+      discount: 0,
       deliveryFees: deliveryFee,
       finalAmount: totalInt,
       updatedAt: DateTime.now().millisecondsSinceEpoch,
+      pharmacyKey: pharmacy?.pharmacyId ?? pharmacy?.uid,
       pharmacyWalletNumber: pharmacy?.walletNumber,
       pharmacyInstapayNumber: pharmacy?.instapayNumber,
       pharmacyInstapayLink: pharmacy?.instapayLink,
@@ -206,11 +197,6 @@ class PricingSearchController extends GetxController {
   }
 
   // ───────────── Pricing Controls ─────────────
-  void setDiscount(double value) {
-    discountPercent = value;
-    update();
-  }
-
   void setDelivery(double value) {
     deliveryFee = value;
     update();

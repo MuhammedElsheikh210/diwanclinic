@@ -56,9 +56,8 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
 
       final model = LocalUser.fromMap(json);
 
-
       await _local.upsertFromServer(model);
-      _addedController.add(model);
+      if (!_addedController.isClosed) _addedController.add(model);
     });
 
     _changedSub = _remote.onChanged.listen((json) async {
@@ -67,15 +66,13 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
 
       final model = LocalUser.fromMap(json);
 
-
       await _local.upsertFromServer(model);
-      _changedController.add(model);
+      if (!_changedController.isClosed) _changedController.add(model);
     });
 
     _removedSub = _remote.onRemoved.listen((key) async {
-
       await _local.deleteClient(key);
-      _removedController.add(key);
+      if (!_removedController.isClosed) _removedController.add(key);
     });
   }
 

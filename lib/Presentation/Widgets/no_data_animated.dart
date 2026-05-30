@@ -26,7 +26,7 @@ class NoDataAnimated extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double h = height ?? 220.h;
+    final double h = height ?? 250.h;
 
     return Center(
       child: Padding(
@@ -63,7 +63,7 @@ class NoDataAnimated extends StatelessWidget {
                 Text(
                   subtitle!,
                   textAlign: TextAlign.center,
-                  style: context.typography.smRegular.copyWith(
+                  style: context.typography.mdMedium.copyWith(
                     color: AppColors.textSecondaryParagraph,
                   ),
                 ),

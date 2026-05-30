@@ -6,7 +6,8 @@ class MedicalRecordDetailsView extends StatelessWidget {
   const MedicalRecordDetailsView({super.key, required this.order});
 
   // ── prescription images (non-null, non-empty)
-  List<String> get _images => [
+  List<String> get _images =>
+      [
         order.prescriptionUrl1,
         order.prescriptionUrl2,
         order.prescriptionUrl3,
@@ -96,10 +97,7 @@ class _HeaderBackground extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            AppColors.primary,
-            AppColors.primary.withValues(alpha: 0.7),
-          ],
+          colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.7)],
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
         ),
@@ -138,9 +136,7 @@ class _HeaderBackground extends StatelessWidget {
                       ),
                       AppText(
                         text: _formatDate(order.createdAt),
-                        textStyle: t.lgBold.copyWith(
-                          color: Colors.white,
-                        ),
+                        textStyle: t.lgBold.copyWith(color: Colors.white),
                       ),
                     ],
                   ),
@@ -150,8 +146,7 @@ class _HeaderBackground extends StatelessWidget {
               SizedBox(height: 14.h),
 
               // Doctor name chip
-              if (order.doctorName != null &&
-                  order.doctorName!.isNotEmpty)
+              if (order.doctorName != null && order.doctorName!.isNotEmpty)
                 Container(
                   padding: EdgeInsets.symmetric(
                     horizontal: 12.w,
@@ -172,9 +167,7 @@ class _HeaderBackground extends StatelessWidget {
                       SizedBox(width: 6.w),
                       AppText(
                         text: "د. ${order.doctorName}",
-                        textStyle: t.smMedium.copyWith(
-                          color: Colors.white,
-                        ),
+                        textStyle: t.smMedium.copyWith(color: Colors.white),
                       ),
                     ],
                   ),
@@ -223,108 +216,112 @@ class _PrescriptionSection extends StatelessWidget {
     return _SectionCard(
       icon: Icons.camera_alt_rounded,
       title: "صور الروشتة",
-      child: images.isEmpty
-          ? Container(
-              padding: EdgeInsets.symmetric(
-                  vertical: 20.h, horizontal: 16.w),
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.image_search_rounded,
-                    size: 22.sp,
-                    color: AppColors.textSecondaryParagraph,
-                  ),
-                  SizedBox(width: 10.w),
-                  AppText(
-                    text: "لا توجد صور للروشتة",
-                    textStyle: t.smRegular.copyWith(
+      child:
+          images.isEmpty
+              ? Container(
+                padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 16.w),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.image_search_rounded,
+                      size: 22.sp,
                       color: AppColors.textSecondaryParagraph,
                     ),
-                  ),
-                ],
-              ),
-            )
-          : SizedBox(
-              height: 200.h,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: images.asMap().entries.map((entry) {
-                    final i = entry.key;
-                    final imgWidth =
-                        images.length == 1 ? 300.w : 150.w;
-                    return Padding(
-                      padding:
-                          EdgeInsets.only(left: i > 0 ? 10.w : 0),
-                      child: GestureDetector(
-                        onTap: () => Get.to(
-                          () => _FullScreenImage(
-                            images: images,
-                            initialIndex: i,
-                          ),
-                        ),
-                        child: Stack(
-                          children: [
-                            ClipRRect(
-                              borderRadius:
-                                  BorderRadius.circular(14.r),
-                              child: CachedNetworkImage(
-                                imageUrl: images[i],
-                                width: imgWidth,
-                                height: 200.h,
-                                fit: BoxFit.cover,
-                                placeholder: (_, __) => Container(
-                                  width: imgWidth,
-                                  height: 200.h,
-                                  color: AppColors.background,
-                                  child: const Center(
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2),
-                                  ),
-                                ),
-                                errorWidget: (_, __, ___) =>
-                                    Container(
-                                  width: imgWidth,
-                                  height: 200.h,
-                                  color: AppColors.background,
-                                  child: Icon(
-                                    Icons.broken_image_outlined,
-                                    color: AppColors
-                                        .textSecondaryParagraph,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              bottom: 8.h,
-                              right: 8.w,
-                              child: Container(
-                                padding: EdgeInsets.all(4.w),
-                                decoration: BoxDecoration(
-                                  color: Colors.black
-                                      .withValues(alpha: 0.5),
-                                  borderRadius:
-                                      BorderRadius.circular(6.r),
-                                ),
-                                child: Icon(
-                                  Icons.zoom_in_rounded,
-                                  color: Colors.white,
-                                  size: 14.sp,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                    SizedBox(width: 10.w),
+                    AppText(
+                      text: "لا توجد صور للروشتة",
+                      textStyle: t.smRegular.copyWith(
+                        color: AppColors.textSecondaryParagraph,
                       ),
-                    );
-                  }).toList(),
+                    ),
+                  ],
+                ),
+              )
+              : SizedBox(
+                height: 200.h,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children:
+                        images.asMap().entries.map((entry) {
+                          final i = entry.key;
+                          final imgWidth = images.length == 1 ? 300.w : 150.w;
+                          return Padding(
+                            padding: EdgeInsets.only(left: i > 0 ? 10.w : 0),
+                            child: GestureDetector(
+                              onTap:
+                                  () => Get.to(
+                                    () => _FullScreenImage(
+                                      images: images,
+                                      initialIndex: i,
+                                    ),
+                                  ),
+                              child: Stack(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(14.r),
+                                    child: CachedNetworkImage(
+                                      imageUrl: images[i],
+                                      width: imgWidth,
+                                      height: 200.h,
+                                      fit: BoxFit.cover,
+                                      placeholder:
+                                          (_, __) => Container(
+                                            width: imgWidth,
+                                            height: 200.h,
+                                            color: AppColors.background,
+                                            child: const Center(
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                              ),
+                                            ),
+                                          ),
+                                      errorWidget:
+                                          (_, __, ___) => Container(
+                                            width: imgWidth,
+                                            height: 200.h,
+                                            color: AppColors.background,
+                                            child: Icon(
+                                              Icons.broken_image_outlined,
+                                              color:
+                                                  AppColors
+                                                      .textSecondaryParagraph,
+                                            ),
+                                          ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    bottom: 8.h,
+                                    right: 8.w,
+                                    child: Container(
+                                      padding: EdgeInsets.all(4.w),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.5,
+                                        ),
+                                        borderRadius: BorderRadius.circular(
+                                          6.r,
+                                        ),
+                                      ),
+                                      child: Icon(
+                                        Icons.zoom_in_rounded,
+                                        color: Colors.white,
+                                        size: 14.sp,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                  ),
                 ),
               ),
-            ),
     );
   }
 }
@@ -347,45 +344,44 @@ class _MedicinesSection extends StatelessWidget {
       icon: Icons.medication_rounded,
       title: "الأدوية الموصوفة",
       iconColor: AppColors.successForeground,
-      child: hasMedicines
-          ? Column(
-              children: [
-                ...medicines!.asMap().entries.map(
-                      (entry) => _MedicineRow(
-                        medicine: entry.value,
-                        index: entry.key,
-                        isLast:
-                            entry.key == medicines!.length - 1,
-                      ),
-                    ),
-              ],
-            )
-          : Container(
-              padding: EdgeInsets.all(16.w),
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: Row(
+      child:
+          hasMedicines
+              ? Column(
                 children: [
-                  Icon(
-                    Icons.info_outline_rounded,
-                    size: 18.sp,
-                    color: AppColors.textSecondaryParagraph,
-                  ),
-                  SizedBox(width: 10.w),
-                  Expanded(
-                    child: AppText(
-                      text:
-                          "الصيدلية لم تُدخل تفاصيل الأدوية بعد",
-                      textStyle: t.smRegular.copyWith(
-                        color: AppColors.textSecondaryParagraph,
-                      ),
+                  ...medicines!.asMap().entries.map(
+                    (entry) => _MedicineRow(
+                      medicine: entry.value,
+                      index: entry.key,
+                      isLast: entry.key == medicines!.length - 1,
                     ),
                   ),
                 ],
+              )
+              : Container(
+                padding: EdgeInsets.all(16.w),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      size: 18.sp,
+                      color: AppColors.textSecondaryParagraph,
+                    ),
+                    SizedBox(width: 10.w),
+                    Expanded(
+                      child: AppText(
+                        text: "الصيدلية لم تُدخل تفاصيل الأدوية بعد",
+                        textStyle: t.smRegular.copyWith(
+                          color: AppColors.textSecondaryParagraph,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
     );
   }
 }
@@ -416,9 +412,7 @@ class _MedicineRow extends StatelessWidget {
                 width: 28.w,
                 height: 28.w,
                 decoration: BoxDecoration(
-                  color: AppColors.successForeground.withValues(
-                    alpha: 0.1,
-                  ),
+                  color: AppColors.successForeground.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -443,8 +437,7 @@ class _MedicineRow extends StatelessWidget {
                         color: AppColors.textDisplay,
                       ),
                     ),
-                    if (medicine.type != null &&
-                        medicine.type!.isNotEmpty)
+                    if (medicine.type != null && medicine.type!.isNotEmpty)
                       AppText(
                         text: medicine.type!,
                         textStyle: t.xsRegular.copyWith(
@@ -466,9 +459,7 @@ class _MedicineRow extends StatelessWidget {
                         vertical: 3.h,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(
-                          alpha: 0.08,
-                        ),
+                        color: AppColors.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(8.r),
                       ),
                       child: AppText(
@@ -478,12 +469,10 @@ class _MedicineRow extends StatelessWidget {
                         ),
                       ),
                     ),
-                  if (medicine.price != null &&
-                      medicine.price! > 0) ...[
+                  if (medicine.price != null && medicine.price! > 0) ...[
                     SizedBox(height: 4.h),
                     AppText(
-                      text:
-                          "${medicine.price?.toStringAsFixed(0)} ج.م",
+                      text: "${medicine.price?.toStringAsFixed(0)} ج.م",
                       textStyle: t.xsRegular.copyWith(
                         color: AppColors.textSecondaryParagraph,
                       ),
@@ -494,11 +483,7 @@ class _MedicineRow extends StatelessWidget {
             ],
           ),
         ),
-        if (!isLast)
-          Divider(
-            height: 1,
-            color: AppColors.borderNeutralPrimary,
-          ),
+        if (!isLast) Divider(height: 1, color: AppColors.borderNeutralPrimary),
       ],
     );
   }
@@ -515,8 +500,7 @@ class _FinancialSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasPrice =
-        order.finalAmount != null && order.finalAmount! > 0;
+    final hasPrice = order.finalAmount != null && order.finalAmount! > 0;
 
     if (!hasPrice && order.totalOrder == null) {
       return const SizedBox.shrink();
@@ -541,23 +525,18 @@ class _FinancialSection extends StatelessWidget {
           if (order.deliveryFees != null && order.deliveryFees! > 0)
             _FinancialRow(
               label: "التوصيل",
-              value:
-                  "+ ${order.deliveryFees?.toStringAsFixed(0)} ج.م",
+              value: "+ ${order.deliveryFees?.toStringAsFixed(0)} ج.م",
             ),
           if (hasPrice) ...[
             Padding(
               padding: EdgeInsets.only(top: 8.h),
-              child: Divider(
-                color: AppColors.borderNeutralPrimary,
-                height: 1,
-              ),
+              child: Divider(color: AppColors.borderNeutralPrimary, height: 1),
             ),
             Padding(
               padding: EdgeInsets.only(top: 10.h),
               child: _FinancialRow(
                 label: "الإجمالي النهائي",
-                value:
-                    "${order.finalAmount?.toStringAsFixed(0)} ج.م",
+                value: "${order.finalAmount?.toStringAsFixed(0)} ج.م",
                 isBold: true,
                 valueColor: AppColors.primary,
               ),
@@ -628,15 +607,13 @@ class _MetaSection extends StatelessWidget {
         children: [
           _MetaRow(
             label: "مصدر الطلب",
-            value: order.createdBy == "whatsapp"
-                ? "واتساب"
-                : "التطبيق",
-            icon: order.createdBy == "whatsapp"
-                ? Icons.chat_rounded
-                : Icons.phone_android_rounded,
+            value: order.createdBy == "whatsapp" ? "واتساب" : "التطبيق",
+            icon:
+                order.createdBy == "whatsapp"
+                    ? Icons.chat_rounded
+                    : Icons.phone_android_rounded,
           ),
-          if (order.pharmacyName != null &&
-              order.pharmacyName!.isNotEmpty)
+          if (order.pharmacyName != null && order.pharmacyName!.isNotEmpty)
             _MetaRow(
               label: "الصيدلية",
               value: order.pharmacyName!,
@@ -673,11 +650,7 @@ class _MetaRow extends StatelessWidget {
       padding: EdgeInsets.symmetric(vertical: 8.h),
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 16.sp,
-            color: AppColors.textSecondaryParagraph,
-          ),
+          Icon(icon, size: 16.sp, color: AppColors.textSecondaryParagraph),
           SizedBox(width: 10.w),
           AppText(
             text: label,
@@ -688,9 +661,7 @@ class _MetaRow extends StatelessWidget {
           const Spacer(),
           AppText(
             text: value,
-            textStyle: t.smMedium.copyWith(
-              color: AppColors.textDisplay,
-            ),
+            textStyle: t.smMedium.copyWith(color: AppColors.textDisplay),
           ),
         ],
       ),
@@ -743,9 +714,7 @@ class _SectionCard extends StatelessWidget {
               SizedBox(width: 10.w),
               AppText(
                 text: title,
-                textStyle: t.mdBold.copyWith(
-                  color: AppColors.textDisplay,
-                ),
+                textStyle: t.mdBold.copyWith(color: AppColors.textDisplay),
               ),
             ],
           ),
@@ -772,9 +741,7 @@ class _BottomCTA extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 28.h),
       decoration: BoxDecoration(
         color: AppColors.white,
-        border: Border(
-          top: BorderSide(color: AppColors.borderNeutralPrimary),
-        ),
+        border: Border(top: BorderSide(color: AppColors.borderNeutralPrimary)),
       ),
       child: GestureDetector(
         onTap: _orderAgain,
@@ -787,11 +754,7 @@ class _BottomCTA extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.replay_rounded,
-                color: Colors.white,
-                size: 18,
-              ),
+              const Icon(Icons.replay_rounded, color: Colors.white, size: 18),
               SizedBox(width: 8.w),
               AppText(
                 text: "طلب نفس الروشتة مرة أخرى",
@@ -809,13 +772,14 @@ class _BottomCTA extends StatelessWidget {
   void _orderAgain() {
     final user = Get.find<UserSession>().user;
 
-    final images = [
-      order.prescriptionUrl1,
-      order.prescriptionUrl2,
-      order.prescriptionUrl3,
-      order.prescriptionUrl4,
-      order.prescriptionUrl5,
-    ].where((u) => u != null && u.isNotEmpty).cast<String>().toList();
+    final images =
+        [
+          order.prescriptionUrl1,
+          order.prescriptionUrl2,
+          order.prescriptionUrl3,
+          order.prescriptionUrl4,
+          order.prescriptionUrl5,
+        ].where((u) => u != null && u.isNotEmpty).cast<String>().toList();
 
     final reservation = ReservationModel(
       patientUid: user?.user.uid ?? order.patientuid,
@@ -844,10 +808,7 @@ class _FullScreenImage extends StatefulWidget {
   final List<String> images;
   final int initialIndex;
 
-  const _FullScreenImage({
-    required this.images,
-    required this.initialIndex,
-  });
+  const _FullScreenImage({required this.images, required this.initialIndex});
 
   @override
   State<_FullScreenImage> createState() => _FullScreenImageState();
@@ -861,8 +822,7 @@ class _FullScreenImageState extends State<_FullScreenImage> {
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
-    _pageController =
-        PageController(initialPage: widget.initialIndex);
+    _pageController = PageController(initialPage: widget.initialIndex);
   }
 
   @override
@@ -882,27 +842,24 @@ class _FullScreenImageState extends State<_FullScreenImage> {
           child: const Icon(Icons.close, color: Colors.white),
         ),
         title: AppText(
-          text:
-              "${_currentIndex + 1} / ${widget.images.length}",
-          textStyle: context.typography.mdMedium.copyWith(
-            color: Colors.white,
-          ),
+          text: "${_currentIndex + 1} / ${widget.images.length}",
+          textStyle: context.typography.mdMedium.copyWith(color: Colors.white),
         ),
         centerTitle: true,
       ),
       body: PageView.builder(
         controller: _pageController,
         itemCount: widget.images.length,
-        onPageChanged: (i) =>
-            setState(() => _currentIndex = i),
-        itemBuilder: (_, i) => InteractiveViewer(
-          child: Center(
-            child: CachedNetworkImage(
-              imageUrl: widget.images[i],
-              fit: BoxFit.contain,
+        onPageChanged: (i) => setState(() => _currentIndex = i),
+        itemBuilder:
+            (_, i) => InteractiveViewer(
+              child: Center(
+                child: CachedNetworkImage(
+                  imageUrl: widget.images[i],
+                  fit: BoxFit.contain,
+                ),
+              ),
             ),
-          ),
-        ),
       ),
     );
   }

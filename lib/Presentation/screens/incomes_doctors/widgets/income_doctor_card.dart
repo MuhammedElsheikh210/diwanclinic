@@ -33,7 +33,7 @@ class IncomeDailyReportWidget extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    "تقرير إيرادات اليوم",
+                    "تقرير الدخل اليومي",
                     style: context.typography.lgBold,
                   ),
                 ),

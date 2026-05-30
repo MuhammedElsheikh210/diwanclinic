@@ -5,6 +5,11 @@ class PharmacyUser extends BaseUser {
   final String? instapayNumber;
   final String? instapayLink;
 
+  /// Group identifier — same for all staff of one pharmacy.
+  /// For the primary (owner) account: pharmacyId == uid.
+  /// For staff accounts: pharmacyId == owner.uid.
+  final String? pharmacyId;
+
   const PharmacyUser({
     super.uid,
     super.createdAt,
@@ -24,6 +29,7 @@ class PharmacyUser extends BaseUser {
     this.walletNumber,
     this.instapayNumber,
     this.instapayLink,
+    this.pharmacyId,
   });
 
   factory PharmacyUser.fromJson(Map<String, dynamic> json) {
@@ -47,6 +53,7 @@ class PharmacyUser extends BaseUser {
       walletNumber: json['wallet_number'],
       instapayNumber: json['instapay_number'],
       instapayLink: json['instapay_link'],
+      pharmacyId: json['pharmacy_id'],
     );
   }
 
@@ -60,6 +67,7 @@ class PharmacyUser extends BaseUser {
     put('wallet_number', walletNumber);
     put('instapay_number', instapayNumber);
     put('instapay_link', instapayLink);
+    put('pharmacy_id', pharmacyId);
 
     return data;
   }
@@ -83,6 +91,7 @@ class PharmacyUser extends BaseUser {
     String? walletNumber,
     String? instapayNumber,
     String? instapayLink,
+    String? pharmacyId,
   }) {
     return PharmacyUser(
       uid: uid ?? this.uid,
@@ -103,6 +112,7 @@ class PharmacyUser extends BaseUser {
       walletNumber: walletNumber ?? this.walletNumber,
       instapayNumber: instapayNumber ?? this.instapayNumber,
       instapayLink: instapayLink ?? this.instapayLink,
+      pharmacyId: pharmacyId ?? this.pharmacyId,
     );
   }
 

@@ -168,13 +168,19 @@ class NotificationPatentService {
 
     _isListening = false;
 
-    await _addedSub?.cancel();
-    await _changedSub?.cancel();
-    await _removedSub?.cancel();
+    // Capture before nulling to avoid cancelling newly-created subscriptions
+    // if startListening() races with this call
+    final addedSub = _addedSub;
+    final changedSub = _changedSub;
+    final removedSub = _removedSub;
 
     _addedSub = null;
     _changedSub = null;
     _removedSub = null;
+
+    await addedSub?.cancel();
+    await changedSub?.cancel();
+    await removedSub?.cancel();
 
     await useCase.stopListening();
 

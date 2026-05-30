@@ -46,8 +46,9 @@ class OrderModel {
   final String? deliveryStatus;
 
   /// 🆕 Pharmacy Contact Info
-  final String? pharmacyFcmToken; // NEW
-  final String? pharmacyPhone; // NEW
+  final String? pharmacyKey;      // UID الصيدلاني في Firebase
+  final String? pharmacyFcmToken;
+  final String? pharmacyPhone;
 
   // 💳 Payment — pharmacy info (stored at pricing time)
   String? pharmacyWalletNumber;
@@ -99,8 +100,9 @@ class OrderModel {
     this.pharmacyName,
     this.pharmacyAddress,
     this.deliveryStatus,
-    this.pharmacyFcmToken, // NEW
-    this.pharmacyPhone, // NEW
+    this.pharmacyKey,
+    this.pharmacyFcmToken,
+    this.pharmacyPhone,
     this.pharmacyWalletNumber,
     this.pharmacyInstapayNumber,
     this.pharmacyInstapayLink,
@@ -157,7 +159,7 @@ class OrderModel {
     if (pharmacyAddress != null) data['pharmacy_address'] = pharmacyAddress;
     if (deliveryStatus != null) data['delivery_status'] = deliveryStatus;
 
-    // NEW FIELDS
+    if (pharmacyKey != null) data['pharmacy_key'] = pharmacyKey;
     if (pharmacyFcmToken != null) data['pharmacy_fcm_token'] = pharmacyFcmToken;
     if (pharmacyPhone != null) data['pharmacy_phone'] = pharmacyPhone;
 
@@ -226,8 +228,8 @@ class OrderModel {
       pharmacyAddress: json['pharmacy_address'],
       deliveryStatus: json['delivery_status'],
 
+      pharmacyKey: json['pharmacy_key'],
       pharmacyFcmToken: json['pharmacy_fcm_token'],
-      // NEW
       pharmacyPhone: json['pharmacy_phone'],
 
       // NEW
@@ -278,7 +280,7 @@ class OrderModel {
     String? pharmacyAddress,
     String? deliveryStatus,
 
-    // NEW
+    String? pharmacyKey,
     String? pharmacyFcmToken,
     String? pharmacyPhone,
 
@@ -326,6 +328,7 @@ class OrderModel {
       pharmacyAddress: pharmacyAddress ?? this.pharmacyAddress,
       deliveryStatus: deliveryStatus ?? this.deliveryStatus,
 
+      pharmacyKey: pharmacyKey ?? this.pharmacyKey,
       pharmacyFcmToken: pharmacyFcmToken ?? this.pharmacyFcmToken,
       pharmacyPhone: pharmacyPhone ?? this.pharmacyPhone,
 
@@ -348,7 +351,9 @@ class MedicineItemModel {
   final String? name;
   final int? quantity;
   final num? price;
-  final String? type; // مثل شريط أو كبسول أو علبة
+  final String? type;
+  // "local" | "imported" — set at pricing time from MedicineModel.imported
+  final String? imported;
 
   MedicineItemModel({
     this.key,
@@ -356,7 +361,10 @@ class MedicineItemModel {
     this.quantity,
     this.price,
     this.type,
+    this.imported,
   });
+
+  bool get isImported => imported == "imported";
 
   factory MedicineItemModel.fromJson(Map<String, dynamic> json) {
     return MedicineItemModel(
@@ -365,6 +373,7 @@ class MedicineItemModel {
       quantity: json['quantity'],
       price: json['price'],
       type: json['type'],
+      imported: json['imported'],
     );
   }
 
@@ -375,6 +384,7 @@ class MedicineItemModel {
       'quantity': quantity,
       'price': price,
       'type': type,
+      'imported': imported,
     };
   }
 
@@ -384,6 +394,7 @@ class MedicineItemModel {
     int? quantity,
     num? price,
     String? type,
+    String? imported,
   }) {
     return MedicineItemModel(
       key: key ?? this.key,
@@ -391,6 +402,7 @@ class MedicineItemModel {
       quantity: quantity ?? this.quantity,
       price: price ?? this.price,
       type: type ?? this.type,
+      imported: imported ?? this.imported,
     );
   }
 }

@@ -102,7 +102,6 @@ class _PatientHomeViewState extends State<PatientHomeView> {
                                               );
                                             },
                                           ),
-                                          binding: Binding(),
                                         );
                                       },
                                     ),

@@ -215,6 +215,68 @@ class PharmacyOrderCard extends StatelessWidget {
           PrescriptionShowGallery(images: _prescriptionImages),
 
           SizedBox(height: 14.h),
+
+          //----------------------------------------------------------
+          // 💳 PAYMENT INFO
+          //----------------------------------------------------------
+          if (order.paymentMethod != null &&
+              order.paymentMethod!.isNotEmpty) ...[
+            const Divider(),
+            SizedBox(height: 10.h),
+            Row(
+              children: [
+                Icon(
+                  order.paymentMethod == 'cash'
+                      ? Icons.money_outlined
+                      : order.paymentMethod == 'instapay'
+                          ? Icons.bolt_outlined
+                          : Icons.account_balance_wallet_outlined,
+                  color: AppColors.primary,
+                  size: 18.w,
+                ),
+                SizedBox(width: 8.w),
+                AppText(
+                  text: order.paymentMethod == 'cash'
+                      ? 'كاش'
+                      : order.paymentMethod == 'instapay'
+                          ? 'InstaPay'
+                          : 'محفظة إلكترونية',
+                  textStyle: t.smMedium.copyWith(color: AppColors.textDisplay),
+                ),
+              ],
+            ),
+            if (order.paymentScreenshotUrl != null &&
+                order.paymentScreenshotUrl!.isNotEmpty) ...[
+              SizedBox(height: 8.h),
+              GestureDetector(
+                onTap: () => Get.to(
+                  () => _FullScreenImageView(
+                    url: order.paymentScreenshotUrl!,
+                  ),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12.r),
+                  child: Image.network(
+                    order.paymentScreenshotUrl!,
+                    height: 160.h,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (_, child, progress) => progress == null
+                        ? child
+                        : Container(
+                            height: 160.h,
+                            color: AppColors.background_neutral_25,
+                            child: const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+            ],
+            SizedBox(height: 10.h),
+          ],
+
           const Divider(),
           SizedBox(height: 14.h),
 
@@ -355,5 +417,23 @@ class PharmacyOrderCard extends StatelessWidget {
   String _formatDate(int timestamp) {
     final dt = DateTime.fromMillisecondsSinceEpoch(timestamp);
     return "${dt.year}/${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')}";
+  }
+}
+
+class _FullScreenImageView extends StatelessWidget {
+  final String url;
+  const _FullScreenImageView({required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(backgroundColor: Colors.black, elevation: 0),
+      body: Center(
+        child: InteractiveViewer(
+          child: Image.network(url, fit: BoxFit.contain),
+        ),
+      ),
+    );
   }
 }

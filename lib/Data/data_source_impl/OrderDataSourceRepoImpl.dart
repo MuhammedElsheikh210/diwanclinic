@@ -58,6 +58,11 @@ class OrderDataSourceRepoImpl extends OrderDataSourceRepo {
         return;
       }
 
+      // pharmacyId for filtering — uid == pharmacyId for primary accounts
+      final pharmacyId = sessionUser is PharmacyUser
+          ? (sessionUser.pharmacyId ?? uid)
+          : uid;
+
       _rootRef = _database.ref(ApiConstatns.orders);
       AppLogger.info("ORDER", "Start listening → ${ApiConstatns.orders}");
 
@@ -70,7 +75,7 @@ class OrderDataSourceRepoImpl extends OrderDataSourceRepo {
 
         final model = _parseOrder(event.snapshot);
 
-        if (model != null) {
+        if (model != null && model.pharmacyKey == pharmacyId) {
           if (!_addedController.isClosed) {
             _addedController.add(model);
           }
@@ -88,7 +93,7 @@ class OrderDataSourceRepoImpl extends OrderDataSourceRepo {
 
         final model = _parseOrder(event.snapshot);
 
-        if (model != null) {
+        if (model != null && model.pharmacyKey == pharmacyId) {
           if (!_changedController.isClosed) {
             _changedController.add(model);
           }
@@ -232,6 +237,15 @@ class OrderDataSourceRepoImpl extends OrderDataSourceRepo {
         response,
         (json) => OrderModel.fromJson(json),
       );
+
+      // Filter by pharmacyId so each pharmacy only sees its own orders
+      final sessionUser = Get.find<UserSession>().user?.user;
+      if (sessionUser is PharmacyUser) {
+        final pharmacyId = sessionUser.pharmacyId ?? sessionUser.uid;
+        orderList = orderList
+            .where((o) => o?.pharmacyKey == pharmacyId)
+            .toList();
+      }
 
       return orderList;
     } catch (e) {

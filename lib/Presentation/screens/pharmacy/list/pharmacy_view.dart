@@ -45,26 +45,28 @@ class _PharmacyViewState extends State<PharmacyView> {
                 ? const ShimmerLoader()
                 : controller.listPharmacies!.isEmpty
                 ? const NoDataWidget()
-                : ListView.builder(
-                    padding: EdgeInsets.symmetric(
-                      vertical: 15.h,
-                      horizontal: 5.w,
-                    ),
-                    itemCount: controller.listPharmacies!.length,
-                    itemBuilder: (context, index) {
-                      final pharmacy = controller.listPharmacies![index];
-                      return Padding(
-                        padding: EdgeInsets.symmetric(
-                          vertical: 5.h,
-                          horizontal: 10.w,
-                        ),
-                        child: PharmacyCard(
-                          pharmacy: pharmacy,
+                : Builder(builder: (_) {
+                    final grouped = controller.groupedPharmacies;
+                    final pharmacyIds = grouped.keys.toList();
+                    return ListView.builder(
+                      padding: EdgeInsets.symmetric(
+                        vertical: 15.h,
+                        horizontal: 10.w,
+                      ),
+                      itemCount: pharmacyIds.length,
+                      itemBuilder: (context, index) {
+                        final pid = pharmacyIds[index];
+                        final staffList = grouped[pid]!;
+                        // Primary = first in sorted list (uid == pharmacyId)
+                        final primary = staffList.first;
+                        return PharmacyCard(
+                          pharmacy: primary,
+                          staffList: staffList,
                           controller: controller,
-                        ),
-                      );
-                    },
-                  ),
+                        );
+                      },
+                    );
+                  }),
           );
         },
       ),

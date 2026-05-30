@@ -407,7 +407,6 @@ export 'package:diwanclinic/Presentation/screens/reservations/list/widgets/reser
 export 'package:diwanclinic/Presentation/screens/reservations/list/widgets/shimmer_widget.dart';
 export 'package:diwanclinic/Presentation/screens/reservations/list/widgets/stats_section.dart';
 export 'package:diwanclinic/Presentation/screens/home_patient/view.dart';
-export 'package:diwanclinic/Presentation/screens/orders/list/order_view.dart';
 export 'package:diwanclinic/Presentation/screens/pharmacy/list/pharmacy_view.dart';
 export 'package:diwanclinic/Presentation/screens/reservations/patient_reservation_list/patient_reservation_view.dart';
 export 'package:diwanclinic/Presentation/screens/sales_app/visits/lists/visites_view.dart';
@@ -433,7 +432,6 @@ export 'package:diwanclinic/Presentation/screens/reservations/patient_reservatio
 export 'package:diwanclinic/Presentation/screens/reservations/patient_reservation_list/reservation_card_widgets/sections/payment_info_section.dart';
 export 'package:diwanclinic/Presentation/screens/reservations/patient_reservation_list/reservation_card_widgets/sections/prescription_section.dart';
 export 'package:diwanclinic/Presentation/screens/reservations/patient_reservation_list/reservation_card_widgets/sections/reservation_details_section.dart';
-export 'package:diwanclinic/Presentation/screens/orders/list/order_view_model.dart';
 export 'package:diwanclinic/Data/Models/bulk_model.dart';
 export 'package:diwanclinic/Presentation/screens/patient_orders/details/order_details_view.dart';
 export 'package:diwanclinic/Presentation/screens/patient_orders/list/controller.dart';
@@ -652,3 +650,11 @@ export 'package:diwanclinic/Presentation/parentControllers/doctor_announcement_s
 export 'package:diwanclinic/Presentation/screens/doctor_announcement/doctor_announcement_controller.dart';
 export 'package:diwanclinic/Presentation/screens/doctor_announcement/widgets/doctor_status_banner.dart';
 export 'package:diwanclinic/Presentation/screens/doctor_announcement/widgets/create_announcement_bottom_sheet.dart';
+
+// ─────────── Admin Users Management ───────────
+export 'package:diwanclinic/Presentation/screens/admin_users/admin_users_view.dart';
+export 'package:diwanclinic/Presentation/screens/admin_users/admin_users_view_model.dart';
+
+// ─────────── Doctor Home ───────────
+export 'package:diwanclinic/Presentation/screens/home_doctor/doctor_home_view.dart';
+export 'package:diwanclinic/Presentation/screens/home_doctor/doctor_home_view_model.dart';

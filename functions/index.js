@@ -61,3 +61,18 @@ const {
 
 exports.whatsappWebhook =
   whatsappWebhook;
+
+// ============================================================
+// 👤 USERS
+// ============================================================
+
+const {
+
+  deleteAuthUser,
+
+} = require(
+  "./users/deleteAuthUser"
+);
+
+exports.deleteAuthUser =
+  deleteAuthUser;

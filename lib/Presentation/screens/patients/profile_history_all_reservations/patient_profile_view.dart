@@ -1,10 +1,8 @@
 import 'package:diwanclinic/Presentation/screens/patients/profile_history_all_reservations/medical_record_form/embedded_medical_record_form.dart';
-
 import '../../../../index/index_main.dart';
 
 class PatientAllHistoryView extends StatefulWidget {
   final String patientKey;
-
   const PatientAllHistoryView({super.key, required this.patientKey});
 
   @override
@@ -13,17 +11,12 @@ class PatientAllHistoryView extends StatefulWidget {
 
 class _PatientAllHistoryViewState extends State<PatientAllHistoryView> {
   late final PatientProfileAllHistoryViewModel controller;
-
-  final HandleKeyboardService keyboardService = HandleKeyboardService();
-
   int selectedTab = 0;
 
   @override
   void initState() {
     controller = initController(() => PatientProfileAllHistoryViewModel());
-
     controller.getData(widget.patientKey);
-
     super.initState();
   }
 
@@ -31,136 +24,42 @@ class _PatientAllHistoryViewState extends State<PatientAllHistoryView> {
   Widget build(BuildContext context) {
     return GetBuilder<PatientProfileAllHistoryViewModel>(
       init: controller,
-
       builder: (vm) {
-        final patient = vm.patientModel;
-
         return Scaffold(
           backgroundColor: AppColors.background_neutral_100,
-
-          appBar: PreferredSize(
-            preferredSize: Size.fromHeight(75.h),
-
-            child: AppBar(
-              automaticallyImplyLeading: false,
-
-              elevation: 0,
-
-              backgroundColor: AppColors.white,
-
-              surfaceTintColor: AppColors.white,
-
-              flexibleSpace: SafeArea(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
-                    vertical: 10.h,
+          bottomNavigationBar: vm.canCompleteCurrentReservation
+              ? _CompleteButton(vm: vm)
+              : null,
+          body: vm.reservations.isEmpty
+              ? const _LoadingBody()
+              : KeyboardActions(
+                  config: vm.keyboardService.buildConfig(
+                    context,
+                    vm.keyboardKeys,
                   ),
-
-                  child: Row(
-                    children: [
-                      /// Back Button
-                      InkWell(
-                        borderRadius: BorderRadius.circular(16.r),
-
-                        onTap: () => Get.back(),
-
-                        child: Container(
-                          width: 48.w,
-                          height: 48.h,
-
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16.r),
-
-                            color: AppColors.background_neutral_100,
-                          ),
-
-                          child: Icon(
-                            Icons.arrow_back_ios,
-
-                            size: 18.sp,
-
-                            color: AppColors.background_black,
-                          ),
-                        ),
-                      ),
-
-                      SizedBox(width: 14.w),
-
-                      /// Avatar
-                      Container(
-                        width: 58.w,
-                        height: 58.h,
-
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-
-                          gradient: LinearGradient(
-                            colors: [
-                              AppColors.primary.withValues(alpha: 0.15),
-
-                              AppColors.primary.withValues(alpha: 0.05),
-                            ],
-
-                            begin: Alignment.topLeft,
-
-                            end: Alignment.bottomRight,
-                          ),
-                        ),
-
-                        child: Icon(
-                          Icons.person_rounded,
-
-                          color: AppColors.primary,
-
-                          size: 30.sp,
-                        ),
-                      ),
-
-                      SizedBox(width: 14.w),
-
-                      /// Patient Info
-                      Expanded(
+                  child: CustomScrollView(
+                    slivers: [
+                      _PatientSliverAppBar(patient: vm.patientModel),
+                      SliverToBoxAdapter(
                         child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-
-                          crossAxisAlignment: CrossAxisAlignment.start,
-
                           children: [
-                            Text(
-                              patient?.name ?? "-",
-
-                              maxLines: 1,
-
-                              overflow: TextOverflow.ellipsis,
-
-                              style: context.typography.xlBold.copyWith(
-                                color: AppColors.background_black,
+                            Padding(
+                              padding: EdgeInsets.fromLTRB(
+                                16.w, 16.h, 16.w, 0,
+                              ),
+                              child: _TabSwitcher(
+                                selectedTab: selectedTab,
+                                onTabChange: (i) =>
+                                    setState(() => selectedTab = i),
                               ),
                             ),
-
-                            SizedBox(height: 4.h),
-
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.phone_rounded,
-
-                                  size: 15.sp,
-
-                                  color: AppColors.textSecondaryParagraph,
-                                ),
-
-                                SizedBox(width: 5.w),
-
-                                Text(
-                                  patient?.phone ?? "-",
-
-                                  style: context.typography.smMedium.copyWith(
-                                    color: AppColors.textSecondaryParagraph,
-                                  ),
-                                ),
-                              ],
+                            Padding(
+                              padding: EdgeInsets.fromLTRB(
+                                16.w, 14.h, 16.w, 30.h,
+                              ),
+                              child: selectedTab == 0
+                                  ? EmbeddedMedicalRecordForm(vm: vm)
+                                  : _HistoryList(vm: vm),
                             ),
                           ],
                         ),
@@ -168,174 +67,220 @@ class _PatientAllHistoryViewState extends State<PatientAllHistoryView> {
                     ],
                   ),
                 ),
-              ),
-
-              bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(1),
-
-                child: Container(
-                  height: 1,
-
-                  color: AppColors.borderNeutralPrimary.withValues(alpha: 0.4),
-                ),
-              ),
-            ),
-          ),
-          bottomNavigationBar:
-              vm.canCompleteCurrentReservation
-                  ? Container(
-                    decoration: const BoxDecoration(color: AppColors.primary),
-
-                    child: SafeArea(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 16.w,
-                          vertical: 10.h,
-                        ),
-
-                        child: PrimaryTextButton(
-                          onTap: () async {
-                            final reservation = vm.currentReservation;
-
-                            if (reservation == null) {
-                              return;
-                            }
-
-                            await vm.completeReservation(
-                              reservation: reservation,
-                            );
-                          },
-
-                          appButtonSize: AppButtonSize.xxLarge,
-
-                          customBackgroundColor: AppColors.primary,
-
-                          elevation: 0,
-
-                          label: AppText(
-                            text: "تم الكشف",
-
-                            textStyle: context.typography.lgBold.copyWith(
-                              color: AppColors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  )
-                  : null,
-          body: KeyboardActions(
-            config: vm.keyboardService.buildConfig(context, vm.keyboardKeys),
-            child:
-                vm.reservations.isEmpty
-                    ? const Center(child: CircularProgressIndicator())
-                    : ListView(
-
-                      shrinkWrap: true,
-                      padding: const EdgeInsets.symmetric(horizontal: 15,vertical: 20),
-
-                      children: [
-                        /// Tabs
-                        _buildTabs(),
-                        SizedBox(height: 20.h),
-
-                        /// Current Visit
-                        if (selectedTab == 0) EmbeddedMedicalRecordForm(vm: vm),
-
-                        /// History
-                        if (selectedTab == 1) _buildHistory(vm),
-                      ],
-                    ),
-          ),
         );
       },
     );
   }
+}
 
-  // ------------------------------------------------------------
-  // Tabs
-  // ------------------------------------------------------------
-  Widget _buildTabs() {
-    return Container(
-      height: 58.h,
+// ── Loading ───────────────────────────────────────────────────
+class _LoadingBody extends StatelessWidget {
+  const _LoadingBody();
 
-      padding: EdgeInsets.all(4.r),
+  @override
+  Widget build(BuildContext context) {
+    return const Center(child: CircularProgressIndicator());
+  }
+}
 
-      decoration: BoxDecoration(
-        color: AppColors.background_neutral_100,
+// ── Sliver app bar with patient hero ─────────────────────────
+class _PatientSliverAppBar extends StatelessWidget {
+  final LocalUser? patient;
+  const _PatientSliverAppBar({required this.patient});
 
-        borderRadius: BorderRadius.circular(14.r),
+  String get _initials {
+    final name = (patient?.name ?? '').trim();
+    if (name.isEmpty) return '?';
+    final parts = name.split(RegExp(r'\s+'));
+    if (parts.length == 1) return parts[0][0];
+    return '${parts[0][0]}${parts[1][0]}';
+  }
 
-        border: Border.all(color: AppColors.borderNeutralPrimary),
+  @override
+  Widget build(BuildContext context) {
+    return SliverAppBar(
+      expandedHeight: 170.h,
+      pinned: true,
+      automaticallyImplyLeading: false,
+      backgroundColor: AppColors.primary,
+      surfaceTintColor: Colors.transparent,
+      leading: Padding(
+        padding: EdgeInsets.all(10.r),
+        child: GestureDetector(
+          onTap: () => Get.back(),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(10.r),
+            ),
+            child: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: Colors.white,
+              size: 18.sp,
+            ),
+          ),
+        ),
       ),
+      flexibleSpace: FlexibleSpaceBar(
+        collapseMode: CollapseMode.parallax,
+        titlePadding: EdgeInsets.only(bottom: 14.h),
+        centerTitle: true,
+        title: Text(
+          patient?.name ?? 'المريض',
+          style: TextStyle(
+            fontSize: 15.sp,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        background: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF1B8354), Color(0xFF22A06B)],
+              begin: Alignment.topRight,
+              end: Alignment.bottomLeft,
+            ),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 16.h),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Avatar
+                  Container(
+                    width: 72.w,
+                    height: 72.h,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.2),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.5),
+                        width: 2.5,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        _initials,
+                        style: TextStyle(
+                          fontSize: 26.sp,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 10.h),
+                  // Name
+                  Text(
+                    patient?.name ?? '-',
+                    style: TextStyle(
+                      fontSize: 17.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 5.h),
+                  // Phone
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.phone_rounded,
+                        size: 13.sp,
+                        color: Colors.white.withValues(alpha: 0.8),
+                      ),
+                      SizedBox(width: 4.w),
+                      Text(
+                        patient?.phone ?? '-',
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          color: Colors.white.withValues(alpha: 0.9),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
+// ── Animated tab switcher ─────────────────────────────────────
+class _TabSwitcher extends StatelessWidget {
+  final int selectedTab;
+  final ValueChanged<int> onTabChange;
+
+  const _TabSwitcher({
+    required this.selectedTab,
+    required this.onTabChange,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 52.h,
+      padding: EdgeInsets.all(4.r),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(color: AppColors.dividerAndLines),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: LayoutBuilder(
-        builder: (context, constraints) {
+        builder: (_, constraints) {
           final tabWidth = (constraints.maxWidth - 8.w) / 2;
-
           return Stack(
             children: [
-              /// Animated Background
               AnimatedPositioned(
-                duration: const Duration(milliseconds: 260),
-
+                duration: const Duration(milliseconds: 250),
                 curve: Curves.easeInOutCubic,
-
                 right: selectedTab == 0 ? 0 : tabWidth,
-
                 top: 0,
-
                 child: Container(
                   width: tabWidth,
-
-                  height: 50.h,
-
+                  height: 44.h,
                   decoration: BoxDecoration(
-                    color: AppColors.white,
-
-                    borderRadius: BorderRadius.circular(12.r),
-
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(11.r),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
-
-                        blurRadius: 10,
-
+                        color: AppColors.primary.withValues(alpha: 0.3),
+                        blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
                     ],
                   ),
                 ),
               ),
-
-              /// Tabs
               Row(
                 children: [
                   Expanded(
-                    child: _AnimatedTabItem(
-                      label: "الكشف الحالي",
-
+                    child: _TabBtn(
+                      label: 'الكشف الحالي',
                       isSelected: selectedTab == 0,
-
-                      onTap: () {
-                        setState(() {
-                          selectedTab = 0;
-                        });
-                      },
+                      onTap: () => onTabChange(0),
                     ),
                   ),
-
                   Expanded(
-                    child: _AnimatedTabItem(
-                      label: "سجل الكشوفات",
-
+                    child: _TabBtn(
+                      label: 'سجل الكشوفات',
                       isSelected: selectedTab == 1,
-
-                      onTap: () {
-                        setState(() {
-                          selectedTab = 1;
-                        });
-                      },
+                      onTap: () => onTabChange(1),
                     ),
                   ),
                 ],
@@ -346,39 +291,14 @@ class _PatientAllHistoryViewState extends State<PatientAllHistoryView> {
       ),
     );
   }
-
-  // ------------------------------------------------------------
-  // History
-  // ------------------------------------------------------------
-  Widget _buildHistory(PatientProfileAllHistoryViewModel vm) {
-    return Column(
-      children: [
-        ...vm.reservations.asMap().entries.map((entry) {
-          final index = entry.key;
-
-          final reservation = entry.value;
-
-          return ReservationHistoryCard(
-            reservation: reservation,
-
-            medicalRecord: vm.getMedicalRecordByReservationKey(reservation.key),
-
-            isInitiallyExpanded: index == 0,
-          );
-        }),
-      ],
-    );
-  }
 }
 
-class _AnimatedTabItem extends StatelessWidget {
+class _TabBtn extends StatelessWidget {
   final String label;
-
   final bool isSelected;
-
   final VoidCallback onTap;
 
-  const _AnimatedTabItem({
+  const _TabBtn({
     required this.label,
     required this.isSelected,
     required this.onTap,
@@ -386,30 +306,111 @@ class _AnimatedTabItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(12.r),
-
+    return GestureDetector(
       onTap: onTap,
-
       child: SizedBox(
-        height: 50.h,
-
+        height: 44.h,
         child: Center(
           child: AnimatedDefaultTextStyle(
-            duration: const Duration(milliseconds: 220),
-
-            curve: Curves.easeInOut,
-
-            style: context.typography.mdBold.copyWith(
-              color:
-                  isSelected
-                      ? AppColors.primary
-                      : AppColors.textSecondaryParagraph,
-
-              fontSize: isSelected ? 15.sp : 14.sp,
+            duration: const Duration(milliseconds: 200),
+            style: TextStyle(
+              fontSize: isSelected ? 14.sp : 13.sp,
+              fontWeight: FontWeight.w600,
+              color: isSelected ? Colors.white : AppColors.textSecondaryParagraph,
             ),
-
             child: Text(label),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── History list ──────────────────────────────────────────────
+class _HistoryList extends StatelessWidget {
+  final PatientProfileAllHistoryViewModel vm;
+  const _HistoryList({required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: vm.reservations.asMap().entries.map((entry) {
+        final reservation = entry.value;
+        return ReservationHistoryCard(
+          reservation: reservation,
+          medicalRecord: vm.getMedicalRecordByReservationKey(reservation.key),
+          isInitiallyExpanded: entry.key == 0,
+        );
+      }).toList(),
+    );
+  }
+}
+
+// ── Complete exam button ──────────────────────────────────────
+class _CompleteButton extends StatelessWidget {
+  final PatientProfileAllHistoryViewModel vm;
+  const _CompleteButton({required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+          child: GestureDetector(
+            onTap: () async {
+              final reservation = vm.currentReservation;
+              if (reservation == null) return;
+              await vm.completeReservation(reservation: reservation);
+            },
+            child: Container(
+              width: double.infinity,
+              height: 54.h,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF1B8354), Color(0xFF22A06B)],
+                  begin: Alignment.centerRight,
+                  end: Alignment.centerLeft,
+                ),
+                borderRadius: BorderRadius.circular(14.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.35),
+                    blurRadius: 14,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.check_circle_rounded,
+                    color: Colors.white,
+                    size: 22.sp,
+                  ),
+                  SizedBox(width: 8.w),
+                  Text(
+                    'تم الكشف',
+                    style: TextStyle(
+                      fontSize: 17.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),

@@ -47,7 +47,7 @@ class PatientOrderRepositoryImpl implements PatientOrderRepository {
     _addedSub = _remote.onAdded.listen(
       (model) {
         if (model.key == null) return;
-        _addedController.add(model);
+        if (!_addedController.isClosed) _addedController.add(model);
       },
       onError: onError,
       cancelOnError: false,
@@ -56,14 +56,16 @@ class PatientOrderRepositoryImpl implements PatientOrderRepository {
     _changedSub = _remote.onChanged.listen(
       (model) {
         if (model.key == null) return;
-        _changedController.add(model);
+        if (!_changedController.isClosed) _changedController.add(model);
       },
       onError: onError,
       cancelOnError: false,
     );
 
     _removedSub = _remote.onRemoved.listen(
-      (key) => _removedController.add(key),
+      (key) {
+        if (!_removedController.isClosed) _removedController.add(key);
+      },
       onError: onError,
       cancelOnError: false,
     );
@@ -96,11 +98,10 @@ class PatientOrderRepositoryImpl implements PatientOrderRepository {
 
   @override
   Future<void> dispose() async {
+    // Only cancel subscriptions — do NOT close controllers.
+    // This repository is a GetX singleton and can be restarted via startListening().
+    // Closing the controllers permanently breaks realtime after logout/re-login.
     await stopListening();
-
-    if (!_addedController.isClosed) await _addedController.close();
-    if (!_changedController.isClosed) await _changedController.close();
-    if (!_removedController.isClosed) await _removedController.close();
   }
 
   // ============================================================

@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import '../../index/index_main.dart';
 
 enum ReservationStatus {
@@ -78,7 +76,7 @@ extension ReservationStatusExt on ReservationStatus {
       case ReservationStatus.inProgress:
         return Colors.blue;
       case ReservationStatus.completed:
-        return AppColors.tag_icon_warning;
+        return const Color(0xFF10B981);
       case ReservationStatus.missed:
         return Colors.grey;
     }

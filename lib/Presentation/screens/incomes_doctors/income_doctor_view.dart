@@ -20,7 +20,7 @@ class IncomeView extends StatelessWidget {
 
           body: controller.todayReservations.isEmpty
               ? const NoDataAnimated(
-                  title: "لا توجد إيرادات اليوم",
+                  title: "لا يوجد دخل يومي بعد ..",
                   subtitle: "",
                   lottiePath: Animations.money,
                   height: 200,

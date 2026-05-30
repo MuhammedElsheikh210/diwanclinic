@@ -8,6 +8,7 @@ const String loginView = "/LoginView";
 const String onBoardView = "/OnBoardView";
 
 const String test = "/Test";
+const String adminUsersView = "/AdminUsersView";
 const String expenceCategoryView = "/ExpenceCategoryView";
 const String createExpenseCategoryView = "/CreateExpenseCategoryView";
 const String expenseView = "/ExpenseView";
@@ -28,7 +29,6 @@ const String reservationHistoryView = "/ReservationHistoryView";
 const String accountView = "/AccountView";
 const String helpCenterView = "/HelpCenterView";
 const String privacyPolicyScreen = "/PrivacyPolicyScreen";
-const String ordersView = "/OrdersView";
 const String testSendNotificationView = "/TestSendNotificationView";
 const String whatsAppGroupView = "/WhatsAppGroupView";
 const String notificationsView = "/NotificationsView";
@@ -125,13 +125,6 @@ class Routes {
       GetPage(
         name: patientHomeView,
         page: () => const PatientHomeView(),
-        transitionDuration: const Duration(milliseconds: 500),
-        binding: Binding(),
-        transition: Transition.cupertino,
-      ),
-      GetPage(
-        name: ordersView,
-        page: () => const OrdersView(),
         transitionDuration: const Duration(milliseconds: 500),
         binding: Binding(),
         transition: Transition.cupertino,
@@ -266,6 +259,13 @@ class Routes {
       GetPage(
         name: test,
         page: () => const Test(),
+        binding: Binding(),
+        transition: Transition.cupertino,
+      ),
+      GetPage(
+        name: adminUsersView,
+        page: () => const AdminUsersView(),
+        transitionDuration: const Duration(milliseconds: 500),
         binding: Binding(),
         transition: Transition.cupertino,
       ),
