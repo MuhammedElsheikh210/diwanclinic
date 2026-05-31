@@ -16,6 +16,7 @@ class DoctorHomeViewModel extends GetxController {
   // ─────────────────────────────────────────────
   ReservationModel? currentPatient;
   ReservationModel? nextPatient;
+  List<ReservationModel> approvedList = [];
 
   bool isLoading = true;
 
@@ -93,7 +94,7 @@ class DoctorHomeViewModel extends GetxController {
             .where((r) => r.status == ReservationStatus.completed.value)
             .fold(
               0.0,
-              (acc, r) => acc + (double.tryParse(r.totalFees ?? '0') ?? 0.0),
+              (acc, r) => acc + (double.tryParse(r.paidAmount ?? '0') ?? 0.0),
             );
 
         // Patient in the room right now
@@ -109,6 +110,7 @@ class DoctorHomeViewModel extends GetxController {
             (a, b) => (a.orderNum ?? 9999).compareTo(b.orderNum ?? 9999),
           );
         nextPatient = approved.firstOrNull;
+        approvedList = approved;
 
         isLoading = false;
         update();

@@ -182,7 +182,7 @@ class GridReservationCard extends StatelessWidget {
   // -------------------------
   Color _statusColor(String? status) {
     if (status == ReservationNewStatus.completed.value) {
-      return AppColors.primary;
+      return AppColors.grayMedium;
     }
 
     if (status == ReservationStatus.cancelledByAssistant.value ||

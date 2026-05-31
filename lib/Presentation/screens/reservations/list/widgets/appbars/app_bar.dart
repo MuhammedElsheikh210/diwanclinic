@@ -43,7 +43,7 @@ class ReservationDateAppBar extends StatelessWidget
               const SizedBox(width: 7),
 
               /// ⏰ SHIFT (🔥 New Design)
-              if (hasShift)
+              if (showShift)
                 Align(
                   alignment: Alignment.center,
                   child: _ShiftSection(

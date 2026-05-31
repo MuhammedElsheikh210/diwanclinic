@@ -9,25 +9,37 @@ class DoctorHomeView extends StatelessWidget {
       init: DoctorHomeViewModel(),
       builder: (controller) {
         return Scaffold(
-          backgroundColor: AppColors.white,
+          backgroundColor: const Color(0xFFF5F7FA),
           body: CustomScrollView(
             slivers: [
               _DoctorHeader(controller: controller),
               SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _AnnouncementSection(),
-                      SizedBox(height: 16.h),
-                      _TodayStatsRow(controller: controller),
-                      SizedBox(height: 16.h),
-                      _RevenueCard(controller: controller),
-                      SizedBox(height: 16.h),
-                      _PatientQueueSection(controller: controller),
-                    ],
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _RevenueHeroCard(controller: controller),
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 32.h),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _SectionTitle(title: 'إحصائيات اليوم'),
+                          SizedBox(height: 10.h),
+                          _TodayStatsRow(controller: controller),
+                          SizedBox(height: 22.h),
+                          _SectionTitle(title: 'حالة اليوم'),
+                          SizedBox(height: 10.h),
+                          _AnnouncementSection(),
+                          SizedBox(height: 22.h),
+                          _SectionTitle(title: 'وصول سريع'),
+                          SizedBox(height: 10.h),
+                          _QuickActionsGrid(),
+                          _PatientQueueSection(controller: controller),
+                          _TodayAppointmentsSection(controller: controller),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -39,7 +51,7 @@ class DoctorHomeView extends StatelessWidget {
 }
 
 // ══════════════════════════════════════════════════════
-// 🔵 Header — calm light card
+// Header
 // ══════════════════════════════════════════════════════
 class _DoctorHeader extends StatelessWidget {
   final DoctorHomeViewModel controller;
@@ -56,11 +68,7 @@ class _DoctorHeader extends StatelessWidget {
       elevation: 0,
       backgroundColor: AppColors.primary_light,
       surfaceTintColor: Colors.transparent,
-      // ── Collapsed bar: just the page title ──
-      title: Text(
-        '',
-        style: context.typography.mdBold.copyWith(color: AppColors.primary),
-      ),
+      title: const Text(''),
       flexibleSpace: FlexibleSpaceBar(
         collapseMode: CollapseMode.pin,
         background: Container(
@@ -70,12 +78,8 @@ class _DoctorHeader extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
               child: Row(
                 children: [
-                  // Avatar
                   _Avatar(imageUrl: controller.profileImage),
-
                   SizedBox(width: 14.w),
-
-                  // Name + spec + date
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -142,8 +146,6 @@ class _DoctorHeader extends StatelessWidget {
                       ],
                     ),
                   ),
-
-                  // Date chip
                   Text(
                     controller.todayFormatted,
                     style: context.typography.xsRegular.copyWith(
@@ -198,7 +200,202 @@ class _Avatar extends StatelessWidget {
 }
 
 // ══════════════════════════════════════════════════════
-// 🔵 Announcement Banner
+// Revenue Hero — directly under app bar
+// ══════════════════════════════════════════════════════
+class _RevenueHeroCard extends StatelessWidget {
+  final DoctorHomeViewModel controller;
+
+  const _RevenueHeroCard({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 16.h),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        border: Border(bottom: BorderSide(color: AppColors.dividerAndLines)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'إجمالي الدخل اليوم',
+                  style: context.typography.xsRegular.copyWith(
+                    color: AppColors.textSecondaryParagraph,
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  '${controller.todayRevenue.toStringAsFixed(0)} ج.م',
+                  style: context.typography.xlBold.copyWith(
+                    color: AppColors.primary,
+                    fontSize: 28.sp,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: 1,
+            height: 36.h,
+            color: AppColors.dividerAndLines,
+            margin: EdgeInsets.symmetric(horizontal: 16.w),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '${controller.completedCount}',
+                style: context.typography.lgBold.copyWith(
+                  color: AppColors.textDisplay,
+                ),
+              ),
+              Text(
+                'حجز مكتمل',
+                style: context.typography.xsRegular.copyWith(
+                  color: AppColors.textSecondaryParagraph,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// Section Title
+// ══════════════════════════════════════════════════════
+class _SectionTitle extends StatelessWidget {
+  final String title;
+
+  const _SectionTitle({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      title,
+      style: context.typography.mdBold.copyWith(color: AppColors.textDisplay),
+    );
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// Today Stats — 3 tiles
+// ══════════════════════════════════════════════════════
+class _TodayStatsRow extends StatelessWidget {
+  final DoctorHomeViewModel controller;
+
+  const _TodayStatsRow({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _StatTile(
+            label: 'الإجمالي',
+            value: controller.totalCount.toString(),
+            icon: Icons.event_note_rounded,
+            iconColor: AppColors.primary,
+            bgColor: AppColors.white,
+          ),
+        ),
+        SizedBox(width: 10.w),
+        Expanded(
+          child: _StatTile(
+            label: 'مكتمل',
+            value: controller.completedCount.toString(),
+            icon: Icons.check_circle_rounded,
+            iconColor: const Color(0xFF10B981),
+            bgColor: AppColors.white,
+          ),
+        ),
+        SizedBox(width: 10.w),
+        Expanded(
+          child: _StatTile(
+            label: 'منتظر',
+            value: controller.pendingCount.toString(),
+            icon: Icons.hourglass_top_rounded,
+            iconColor: const Color(0xFFF59E0B),
+            bgColor: AppColors.white,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StatTile extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color iconColor;
+  final Color bgColor;
+
+  const _StatTile({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.iconColor,
+    required this.bgColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 10.w),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(color: AppColors.dividerAndLines),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 36.w,
+            height: 36.w,
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(10.r),
+            ),
+            child: Icon(icon, color: iconColor, size: 18.sp),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            value,
+            style: context.typography.lgBold.copyWith(
+              color: AppColors.textDisplay,
+            ),
+          ),
+          SizedBox(height: 2.h),
+          Text(
+            label,
+            style: context.typography.xsRegular.copyWith(
+              color: AppColors.textSecondaryParagraph,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// Announcement
 // ══════════════════════════════════════════════════════
 class _AnnouncementSection extends StatelessWidget {
   @override
@@ -214,15 +411,16 @@ class _AnnouncementSection extends StatelessWidget {
         final color = hasAnn ? ann.announcementType.color : AppColors.primary;
         final icon =
             hasAnn ? ann.announcementType.icon : Icons.campaign_outlined;
-        final label = hasAnn ? ann.announcementType.arabicLabel : 'حالة اليوم';
+        final label =
+            hasAnn ? ann.announcementType.arabicLabel : 'لا يوجد إعلان نشط';
         final sub = hasAnn ? (ann.reason ?? '') : 'اضغط لإعلان حالتك للمرضى';
 
         return _Card(
           child: Row(
             children: [
               Container(
-                width: 40.w,
-                height: 40.w,
+                width: 42.w,
+                height: 42.w,
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(12.r),
@@ -292,169 +490,124 @@ class _AnnouncementSection extends StatelessWidget {
 }
 
 // ══════════════════════════════════════════════════════
-// 🔵 Today's Stats — 3 small cards
+// Quick Actions — 2×2 grid
 // ══════════════════════════════════════════════════════
-class _TodayStatsRow extends StatelessWidget {
-  final DoctorHomeViewModel controller;
-
-  const _TodayStatsRow({required this.controller});
-
+class _QuickActionsGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _StatTile(
-            label: 'الإجمالي',
-            value: controller.totalCount.toString(),
-            icon: Icons.event_note_rounded,
-            iconColor: AppColors.primary,
-            bgColor: AppColors.primary_light,
-          ),
-        ),
-        SizedBox(width: 10.w),
-        Expanded(
-          child: _StatTile(
-            label: 'مكتمل',
-            value: controller.completedCount.toString(),
-            icon: Icons.check_circle_rounded,
-            iconColor: const Color(0xFF10B981),
-            bgColor: const Color(0xFFECFDF5),
-          ),
-        ),
-        SizedBox(width: 10.w),
-        Expanded(
-          child: _StatTile(
-            label: 'منتظر',
-            value: controller.pendingCount.toString(),
-            icon: Icons.hourglass_top_rounded,
-            iconColor: const Color(0xFFF59E0B),
-            bgColor: const Color(0xFFFFFBEB),
-          ),
-        ),
-      ],
+    final mainCtrl = Get.find<MainPageViewModel>();
+
+    final items = [
+      _Action(
+        label: 'الحجوزات',
+        icon: Icons.calendar_month_rounded,
+        color: AppColors.primary,
+        onTap: () => mainCtrl.changeIndex(1),
+      ),
+      _Action(
+        label: 'الدخل',
+        icon: Icons.payments_rounded,
+        color: AppColors.blueForeground,
+        onTap: () => mainCtrl.changeIndex(2),
+      ),
+      _Action(
+        label: 'التقييمات',
+        icon: Icons.star_rounded,
+        color: const Color(0xFFF59E0B),
+        onTap: () => mainCtrl.changeIndex(3),
+      ),
+      _Action(
+        label: 'الإعلانات',
+        icon: Icons.campaign_rounded,
+        color: const Color(0xFF7C3AED),
+        onTap: () {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (_) => const CreateAnnouncementBottomSheet(),
+          );
+        },
+      ),
+    ];
+
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      padding: EdgeInsets.zero,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 10.h,
+      crossAxisSpacing: 10.w,
+      childAspectRatio: 2.8,
+      children: items.map((item) => _ActionCard(item: item)).toList(),
     );
   }
 }
 
-class _StatTile extends StatelessWidget {
+class _Action {
   final String label;
-  final String value;
   final IconData icon;
-  final Color iconColor;
-  final Color bgColor;
+  final Color color;
+  final VoidCallback onTap;
 
-  const _StatTile({
+  const _Action({
     required this.label,
-    required this.value,
     required this.icon,
-    required this.iconColor,
-    required this.bgColor,
+    required this.color,
+    required this.onTap,
   });
+}
+
+class _ActionCard extends StatelessWidget {
+  final _Action item;
+
+  const _ActionCard({required this.item});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 10.w),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(14.r),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: iconColor, size: 22.sp),
-          SizedBox(height: 6.h),
-          Text(
-            value,
-            style: context.typography.lgBold.copyWith(
-              color: AppColors.textDisplay,
+    return GestureDetector(
+      onTap: item.onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 14.w),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(14.r),
+          border: Border.all(color: AppColors.dividerAndLines),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
             ),
-          ),
-          SizedBox(height: 2.h),
-          Text(
-            label,
-            style: context.typography.xsRegular.copyWith(
-              color: AppColors.textSecondaryParagraph,
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36.w,
+              height: 36.w,
+              decoration: BoxDecoration(
+                color: item.color.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              child: Icon(item.icon, color: item.color, size: 18.sp),
             ),
-          ),
-        ],
+            SizedBox(width: 10.w),
+            Text(
+              item.label,
+              style: context.typography.smMedium.copyWith(
+                color: AppColors.textDisplay,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 // ══════════════════════════════════════════════════════
-// 🔵 Revenue Card — light, not heavy
-// ══════════════════════════════════════════════════════
-class _RevenueCard extends StatelessWidget {
-  final DoctorHomeViewModel controller;
-
-  const _RevenueCard({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    return _Card(
-      child: Row(
-        children: [
-          Container(
-            width: 46.w,
-            height: 46.w,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(14.r),
-            ),
-            child: Icon(
-              Icons.payments_rounded,
-              color: AppColors.primary,
-              size: 22.sp,
-            ),
-          ),
-          SizedBox(width: 14.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'الدخل اليومي',
-                  style: context.typography.xsRegular.copyWith(
-                    color: AppColors.textSecondaryParagraph,
-                  ),
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  '${controller.todayRevenue.toStringAsFixed(0)} ج.م',
-                  style: context.typography.lgBold.copyWith(
-                    color: AppColors.primary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '${controller.completedCount}',
-                style: context.typography.lgBold.copyWith(
-                  color: AppColors.textDisplay,
-                ),
-              ),
-              Text(
-                'حجز مكتمل',
-                style: context.typography.xsRegular.copyWith(
-                  color: AppColors.textSecondaryParagraph,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ══════════════════════════════════════════════════════
-// 🔵 Patient Queue
+// Patient Queue
 // ══════════════════════════════════════════════════════
 class _PatientQueueSection extends StatelessWidget {
   final DoctorHomeViewModel controller;
@@ -471,12 +624,8 @@ class _PatientQueueSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'الطابور الحالي',
-          style: context.typography.smMedium.copyWith(
-            color: AppColors.textDisplay,
-          ),
-        ),
+        SizedBox(height: 22.h),
+        _SectionTitle(title: 'الطابور الحالي'),
         SizedBox(height: 10.h),
         if (hasCurrent)
           _PatientRow(reservation: controller.currentPatient!, isCurrent: true),
@@ -562,104 +711,108 @@ class _PatientRow extends StatelessWidget {
 }
 
 // ══════════════════════════════════════════════════════
-// 🔵 Quick Actions — no section title
+// Today's Appointments list
 // ══════════════════════════════════════════════════════
-class _QuickActionsRow extends StatelessWidget {
+class _TodayAppointmentsSection extends StatelessWidget {
+  final DoctorHomeViewModel controller;
+
+  const _TodayAppointmentsSection({required this.controller});
+
   @override
   Widget build(BuildContext context) {
-    final mainCtrl = Get.find<MainPageViewModel>();
+    final list = controller.approvedList;
+    if (list.isEmpty) return const SizedBox.shrink();
 
-    final items = [
-      _Action(
-        label: 'الحجوزات',
-        icon: Icons.calendar_month_rounded,
-        color: AppColors.primary,
-        onTap: () => mainCtrl.changeIndex(1),
-      ),
-      _Action(
-        label: 'الدخل',
-        icon: Icons.payments_rounded,
-        color: AppColors.blueForeground,
-        onTap: () => mainCtrl.changeIndex(2),
-      ),
-      _Action(
-        label: 'التقييمات',
-        icon: Icons.star_rounded,
-        color: const Color(0xFFF59E0B),
-        onTap: () => mainCtrl.changeIndex(3),
-      ),
-      _Action(
-        label: 'الإعلانات',
-        icon: Icons.campaign_rounded,
-        color: const Color(0xFF7C3AED),
-        onTap: () {
-          showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            backgroundColor: Colors.transparent,
-            builder: (_) => const CreateAnnouncementBottomSheet(),
-          );
-        },
-      ),
-    ];
-
-    return Row(
-      children:
-          items.map((item) {
-            return Expanded(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 4.w),
-                child: _ActionButton(item: item),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(height: 22.h),
+        Row(
+          children: [
+            _SectionTitle(title: 'حجوزات اليوم'),
+            SizedBox(width: 8.w),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(20.r),
               ),
-            );
-          }).toList(),
+              child: Text(
+                '${list.length}',
+                style: context.typography.xsMedium.copyWith(
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 10.h),
+        ...list.map(
+          (r) => Padding(
+            padding: EdgeInsets.only(bottom: 8.h),
+            child: _AppointmentTile(reservation: r),
+          ),
+        ),
+      ],
     );
   }
 }
 
-class _Action {
-  final String label;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
+class _AppointmentTile extends StatelessWidget {
+  final ReservationModel reservation;
 
-  const _Action({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
-}
-
-class _ActionButton extends StatelessWidget {
-  final _Action item;
-
-  const _ActionButton({required this.item});
+  const _AppointmentTile({required this.reservation});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: item.onTap,
-      child: Column(
+    return _Card(
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+      child: Row(
         children: [
           Container(
-            width: 52.w,
-            height: 52.w,
+            width: 36.w,
+            height: 36.w,
             decoration: BoxDecoration(
-              color: item.color.withValues(alpha: 0.09),
-              borderRadius: BorderRadius.circular(15.r),
-              border: Border.all(color: item.color.withValues(alpha: 0.18)),
+              color: AppColors.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10.r),
             ),
-            child: Icon(item.icon, color: item.color, size: 23.sp),
-          ),
-          SizedBox(height: 6.h),
-          Text(
-            item.label,
-            style: context.typography.xsMedium.copyWith(
-              color: AppColors.textSecondaryParagraph,
+            child: Center(
+              child: Text(
+                '#${reservation.orderNum ?? '-'}',
+                style: context.typography.xsMedium.copyWith(
+                  color: AppColors.primary,
+                ),
+              ),
             ),
-            textAlign: TextAlign.center,
           ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  reservation.patientName ?? 'مريض',
+                  style: context.typography.smMedium.copyWith(
+                    color: AppColors.textDisplay,
+                  ),
+                ),
+                if ((reservation.reservationType ?? '').isNotEmpty)
+                  Text(
+                    reservation.reservationType!,
+                    style: context.typography.xsRegular.copyWith(
+                      color: AppColors.textSecondaryParagraph,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          if ((reservation.paidAmount ?? '').isNotEmpty)
+            Text(
+              '${reservation.paidAmount} ج.م',
+              style: context.typography.xsMedium.copyWith(
+                color: AppColors.primary,
+              ),
+            ),
         ],
       ),
     );
@@ -667,7 +820,7 @@ class _ActionButton extends StatelessWidget {
 }
 
 // ══════════════════════════════════════════════════════
-// 🔵 Shared Card
+// Shared Card
 // ══════════════════════════════════════════════════════
 class _Card extends StatelessWidget {
   final Widget child;

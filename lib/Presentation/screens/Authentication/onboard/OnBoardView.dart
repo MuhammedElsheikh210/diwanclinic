@@ -21,7 +21,7 @@ class _OnBoardViewState extends State<OnBoardView> {
     },
     {
       "title": "احجز موعدك في ثواني",
-      "body": "حدد الموعد المناسب لك وتابع دورك لحظة بلحظة بكل سهولة.",
+      "body": "تابع دورك لحظة بلحظة.",
       "image": Images.onboard_2,
     },
     {

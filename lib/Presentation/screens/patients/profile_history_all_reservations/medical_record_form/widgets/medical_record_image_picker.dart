@@ -33,32 +33,28 @@ class MedicalRecordImagePicker extends StatelessWidget {
 
           child: Container(
             width: double.infinity,
-
-            padding: EdgeInsets.symmetric(
-              vertical: 18.h,
-            ),
-
+            padding: EdgeInsets.symmetric(vertical: 14.h),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14.r),
-
+              borderRadius: BorderRadius.circular(12.r),
+              color: AppColors.primary.withValues(alpha: 0.04),
               border: Border.all(
-                color: AppColors.borderNeutralPrimary,
+                color: AppColors.primary.withValues(alpha: 0.25),
               ),
             ),
-
-            child: Column(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
+                Icon(
                   Icons.cloud_upload_outlined,
                   color: AppColors.primary,
-                  size: 30,
+                  size: 22.sp,
                 ),
-
-                SizedBox(height: 10.h),
-
-                AppText(
-                  text: "رفع صور أو ملفات",
-                  textStyle: context.typography.smMedium,
+                SizedBox(width: 8.w),
+                Text(
+                  "رفع صور أو ملفات",
+                  style: context.typography.smMedium.copyWith(
+                    color: AppColors.primary,
+                  ),
                 ),
               ],
             ),

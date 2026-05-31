@@ -99,7 +99,7 @@ class _PatientSliverAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
-      expandedHeight: 170.h,
+      expandedHeight: 160.h,
       pinned: true,
       automaticallyImplyLeading: false,
       backgroundColor: AppColors.primary,
@@ -122,19 +122,7 @@ class _PatientSliverAppBar extends StatelessWidget {
         ),
       ),
       flexibleSpace: FlexibleSpaceBar(
-        collapseMode: CollapseMode.parallax,
-        titlePadding: EdgeInsets.only(bottom: 14.h),
-        centerTitle: true,
-        title: Text(
-          patient?.name ?? 'المريض',
-          style: TextStyle(
-            fontSize: 15.sp,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        collapseMode: CollapseMode.pin,
         background: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -145,65 +133,63 @@ class _PatientSliverAppBar extends StatelessWidget {
           ),
           child: SafeArea(
             child: Padding(
-              padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 16.h),
+              padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 14.h),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Avatar
                   Container(
-                    width: 72.w,
-                    height: 72.h,
+                    width: 60.w,
+                    height: 60.w,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.white.withValues(alpha: 0.2),
                       border: Border.all(
                         color: Colors.white.withValues(alpha: 0.5),
-                        width: 2.5,
+                        width: 2,
                       ),
                     ),
                     child: Center(
                       child: Text(
                         _initials,
                         style: TextStyle(
-                          fontSize: 26.sp,
+                          fontSize: 22.sp,
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
                         ),
                       ),
                     ),
                   ),
-                  SizedBox(height: 10.h),
-                  // Name
+                  SizedBox(height: 8.h),
                   Text(
                     patient?.name ?? '-',
                     style: TextStyle(
-                      fontSize: 17.sp,
+                      fontSize: 15.sp,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  SizedBox(height: 5.h),
-                  // Phone
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.phone_rounded,
-                        size: 13.sp,
-                        color: Colors.white.withValues(alpha: 0.8),
-                      ),
-                      SizedBox(width: 4.w),
-                      Text(
-                        patient?.phone ?? '-',
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          color: Colors.white.withValues(alpha: 0.9),
+                  SizedBox(height: 4.h),
+                  if ((patient?.phone ?? '').isNotEmpty)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.phone_rounded,
+                          size: 12.sp,
+                          color: Colors.white.withValues(alpha: 0.75),
                         ),
-                      ),
-                    ],
-                  ),
+                        SizedBox(width: 4.w),
+                        Text(
+                          patient?.phone ?? '',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: Colors.white.withValues(alpha: 0.85),
+                          ),
+                        ),
+                      ],
+                    ),
                 ],
               ),
             ),

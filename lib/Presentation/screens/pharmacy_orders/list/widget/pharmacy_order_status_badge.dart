@@ -67,7 +67,7 @@ class PharmacyOrderStatusBadge extends StatelessWidget {
       ),
       child: AppText(
         text: label,
-        textStyle: context.typography.xsMedium.copyWith(color: AppColors.white),
+        textStyle: context.typography.smMedium.copyWith(color: AppColors.white),
       ),
     );
   }

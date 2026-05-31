@@ -135,7 +135,7 @@ class _PastReservationsSection extends StatelessWidget {
                     SizedBox(width: 4.w),
                     Text(
                       "حجوزات سابقة",
-                      style: context.typography.smMedium.copyWith(
+                      style: context.typography.mdMedium.copyWith(
                         color: AppColors.primary,
                       ),
                     ),

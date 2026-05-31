@@ -50,20 +50,17 @@ class _PatientHomeViewState extends State<PatientHomeView> {
                             SizedBox(height: 10.h),
 
                             Padding(
-                              padding: EdgeInsets.only(
-                                top: 15.h,
-                                left: 16.w,
-                                right: 16.w,
-                                bottom: 12.h,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 16.w,
+                                vertical: 12.h,
                               ),
                               child: Row(
                                 children: [
                                   Expanded(
                                     child: HomeFeatureTile(
                                       title: "احجز كشف",
-                                      subtitle:
-                                          "تابع دورك لحظة بلحظة واستقبل التحديثات فورًا",
-                                      icon: Icons.calendar_month,
+                                      subtitle: "تابع دورك لحظة بلحظة ",
+                                      icon: Icons.calendar_month_rounded,
                                       color: AppColors.primary,
                                       onTap: () {
                                         Get.to(
@@ -73,15 +70,14 @@ class _PatientHomeViewState extends State<PatientHomeView> {
                                     ),
                                   ),
 
-                                  SizedBox(height: 12.h),
+                                  SizedBox(width: 12.w),
 
                                   Expanded(
                                     child: HomeFeatureTile(
                                       title: "اطلب علاجك",
-                                      subtitle:
-                                          "توصيل العلاج لحد باب البيت مجاني علي حسب قيمة الطلب",
-                                      icon: Icons.medical_services,
-                                      color: AppColors.successForeground,
+                                      subtitle: "توصيل العلاج لحد باب البيت",
+                                      icon: Icons.medical_services_rounded,
+                                      color: const Color(0xFFFF6B35),
                                       onTap: () {
                                         final user =
                                             Get.find<UserSession>().user;
@@ -162,69 +158,62 @@ class _HomeFeatureTileState extends State<HomeFeatureTile> {
       onTapUp: (_) => setState(() => isPressed = false),
       onTapCancel: () => setState(() => isPressed = false),
       child: AnimatedScale(
-        duration: const Duration(milliseconds: 120),
-        scale: isPressed ? 0.97 : 1,
+        duration: const Duration(milliseconds: 130),
+        scale: isPressed ? 0.96 : 1.0,
         child: Container(
-          padding: EdgeInsets.symmetric(vertical: 15.h, horizontal: 15.w),
-          margin: EdgeInsets.symmetric(horizontal: 15.w),
+          padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 14.w),
           decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.circular(24.r),
-
-            // 👇 Border أنعم
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20.r),
             border: Border.all(
-              color: widget.color.withOpacity(0.25),
-              width: 1.1,
+              color: widget.color.withOpacity(0.14),
+              width: 1.2,
             ),
-
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.035),
-                blurRadius: 14,
-                offset: const Offset(0, 8),
+                color: widget.color.withOpacity(0.10),
+                blurRadius: 18,
+                offset: const Offset(0, 6),
+              ),
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
-          child: Row(
+          child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              /// Arrow in corner
-
-              /// Main Content
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 50.w,
-                      height: 50.w,
-                      decoration: BoxDecoration(
-                        color: widget.color.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(18.r),
-                      ),
-                      child: Icon(
-                        widget.icon,
-                        color: widget.color,
-                        size: 28.sp,
-                      ),
-                    ),
-                    SizedBox(height: 5.h),
-                    Text(
-                      widget.title,
-                      textAlign: TextAlign.center,
-                      style: context.typography.mdMedium.copyWith(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16.sp,
-                      ),
-                    ),
-                  ],
+              Container(
+                width: 58.w,
+                height: 58.w,
+                decoration: BoxDecoration(
+                  color: widget.color.withOpacity(0.10),
+                  shape: BoxShape.circle,
                 ),
+                child: Icon(widget.icon, color: widget.color, size: 27.sp),
               ),
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 14.sp,
-                color: Colors.grey.shade400,
+              SizedBox(height: 12.h),
+              Text(
+                widget.title,
+                style: context.typography.mdBold.copyWith(
+                  color: AppColors.textDisplay,
+                  fontSize: 15.sp,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 5.h),
+              Text(
+                widget.subtitle,
+                style: context.typography.smRegular.copyWith(
+                  color: AppColors.textSecondaryParagraph,
+                  height: 1.4,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

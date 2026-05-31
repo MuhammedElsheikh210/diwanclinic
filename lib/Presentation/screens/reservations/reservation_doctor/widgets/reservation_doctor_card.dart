@@ -29,7 +29,7 @@ class ReservationDoctorCard extends StatelessWidget {
 
   Color get _accentColor {
     if (_isInProgress) return const Color(0xFF4F46E5);
-    if (_isCompleted) return const Color(0xFF10B981);
+    if (_isCompleted) return AppColors.grayMedium;
     if (_isCancelled) return const Color(0xFFEF4444);
     return AppColors.primary;
   }

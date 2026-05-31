@@ -13,50 +13,28 @@ class MedicalRecordStaticSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-
-      decoration: BoxDecoration(
-        color: AppColors.background_neutral_100,
-        borderRadius: BorderRadius.circular(16.r),
-      ),
-
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-
-        children: [
-          /// =========================
-          /// REVISIT DATE
-          /// =========================
-          MedicalRecordDateField(
-            hint: "تاريخ الإعادة",
-
-            controller: vm.revisitDateController,
-          ),
-
-          SizedBox(height: 12.h),
-
-          /// =========================
-          /// NOTES
-          /// =========================
-          MedicalRecordInputField(
-            hint: "ملاحظات",
-
-            controller: vm.notesController,
-
-            maxLines: 3,
-
-            focusNode: vm.keyboardService.getFocusNode(vm.keyboardKeys[40]),
-          ),
-
-          SizedBox(height: 16.h),
-
-          /// =========================
-          /// IMAGES
-          /// =========================
-          MedicalRecordImagePicker(vm: vm),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          height: 1,
+          color: AppColors.dividerAndLines,
+          margin: EdgeInsets.only(bottom: 14.h),
+        ),
+        MedicalRecordDateField(
+          hint: "تاريخ الإعادة",
+          controller: vm.revisitDateController,
+        ),
+        SizedBox(height: 10.h),
+        MedicalRecordInputField(
+          hint: "ملاحظات",
+          controller: vm.notesController,
+          maxLines: 3,
+          focusNode: vm.keyboardService.getFocusNode(vm.keyboardKeys[40]),
+        ),
+        SizedBox(height: 12.h),
+        MedicalRecordImagePicker(vm: vm),
+      ],
     );
   }
 }

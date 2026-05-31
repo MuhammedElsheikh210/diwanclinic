@@ -313,9 +313,9 @@ class _ReservationViewState extends State<ReservationView> {
     // ── Status meta ─────────────────────────────────────────
     Color statusColor() {
       if (isCancelled || isMissed) return const Color(0xFFEF4444);
-      if (isCompleted) return const Color(0xFF10B981);
+      if (isCompleted) return const Color(0xFF94A3B8); // slate — neutral "done"
       if (isInProgress) return const Color(0xFF3B82F6);
-      if (isCheckedIn) return AppColors.primary;
+      if (isCheckedIn) return const Color(0xFF0D9488); // teal — present at clinic
       if (hasHardPriority) return const Color(0xFFEF4444);
       if (ahead <= 0) return AppColors.primary;
       return AppColors.primary;

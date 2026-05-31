@@ -14,12 +14,17 @@ class AssistantViewModel extends GetxController {
   // =========================================================
 
   void getData({String? doctor_uid}) {
-    
-    
+    final uid =
+        doctor_uid?.isNotEmpty == true
+            ? doctor_uid
+            : doctorUid?.isNotEmpty == true
+            ? doctorUid
+            : Get.find<UserSession>().user?.uid;
+
     AuthenticationService().getClientsData(
       query: SQLiteQueryParams(
         where: "doctor_key = ? AND userType = ?",
-        whereArgs: [doctor_uid ?? doctorUid, "assistant"],
+        whereArgs: [uid, "assistant"],
       ),
       voidCallBack: (data) {
         listAssistants = data;

@@ -14,13 +14,18 @@ class EmbeddedMedicalRecordForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 15.h),
-
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(16.r),
-
-        border: Border.all(color: AppColors.borderNeutralPrimary),
+        border: Border.all(color: AppColors.dividerAndLines),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
 
       child: Column(
@@ -34,12 +39,10 @@ class EmbeddedMedicalRecordForm extends StatelessWidget {
             SizedBox(height: 20.h),
           ],
 
-          /// ✅ Dynamic Fields
           MedicalRecordDynamicFields(vm: vm),
 
-          SizedBox(height: 24.h),
+          SizedBox(height: 16.h),
 
-          /// ✅ Static Fields
           MedicalRecordStaticSection(vm: vm),
         ],
       ),

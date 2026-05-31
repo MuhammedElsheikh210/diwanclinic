@@ -36,20 +36,17 @@ class ReservationHistoryCard extends StatelessWidget {
     final hasPhotos = medicalRecord?.photos?.isNotEmpty == true;
 
     return Container(
-      margin: EdgeInsets.only(bottom: 16.h),
+      margin: EdgeInsets.only(bottom: 12.h),
 
       decoration: BoxDecoration(
         color: AppColors.white,
-
-        borderRadius: BorderRadius.circular(28.r),
-
-        border: Border.all(color: AppColors.borderNeutralPrimary),
-
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: AppColors.dividerAndLines),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.035),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -60,16 +57,16 @@ class ReservationHistoryCard extends StatelessWidget {
         child: ExpansionTile(
           initiallyExpanded: isInitiallyExpanded,
 
-          tilePadding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 14.h),
+          tilePadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
 
-          childrenPadding: EdgeInsets.fromLTRB(18.w, 0, 18.w, 18.h),
+          childrenPadding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 14.h),
 
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28.r),
+            borderRadius: BorderRadius.circular(16.r),
           ),
 
           collapsedShape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28.r),
+            borderRadius: BorderRadius.circular(16.r),
           ),
 
           iconColor: AppColors.primary,
@@ -83,102 +80,55 @@ class ReservationHistoryCard extends StatelessWidget {
             children: [
               /// ICON
               Container(
-                width: 58.w,
-                height: 58.h,
-
+                width: 42.w,
+                height: 42.w,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18.r),
-
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.primary.withValues(alpha: 0.18),
-
-                      AppColors.primary.withValues(alpha: 0.05),
-                    ],
-                  ),
+                  borderRadius: BorderRadius.circular(12.r),
+                  color: AppColors.primary.withValues(alpha: 0.10),
                 ),
-
                 child: Icon(
                   Icons.monitor_heart_rounded,
                   color: AppColors.primary,
-                  size: 28.sp,
+                  size: 20.sp,
                 ),
               ),
 
-              SizedBox(width: 14.w),
+              SizedBox(width: 12.w),
 
               /// INFO
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-
                   children: [
                     Text(
                       medicalRecord?.categoryName ?? "كشف طبي",
-
                       maxLines: 1,
-
                       overflow: TextOverflow.ellipsis,
-
-                      style: context.typography.lgBold.copyWith(
+                      style: context.typography.smMedium.copyWith(
                         color: AppColors.text_primary_paragraph,
                       ),
                     ),
-
-                    // Row(
-                    //   children: [
-                    //     Icon(
-                    //       Icons.calendar_today_rounded,
-                    //       size: 14.sp,
-                    //       color: AppColors.textSecondaryParagraph,
-                    //     ),
-                    //
-                    //     SizedBox(width: 6.w),
-                    //
-                    //     Expanded(
-                    //       child: Text(
-                    //         reservation.appointmentDateTime ?? "-",
-                    //
-                    //         maxLines: 1,
-                    //
-                    //         overflow: TextOverflow.ellipsis,
-                    //
-                    //         style: context.typography.smMedium.copyWith(
-                    //           color: AppColors.textSecondaryParagraph,
-                    //         ),
-                    //       ),
-                    //     ),
-                    //   ],
-                    // ),
-
-                    /// CREATED AT
-                    if (medicalRecord?.createAt != null) ...[
+                    if (medicalRecord?.createAt != null)
                       Text(
                         DatesUtilis.formatDateTime(medicalRecord?.createAt),
-
-                        style: context.typography.smMedium.copyWith(
+                        style: context.typography.xsRegular.copyWith(
                           color: AppColors.grayMedium,
                         ),
                       ),
-                    ],
                   ],
                 ),
               ),
 
               /// STATUS
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                 decoration: BoxDecoration(
-                  color: AppColors.successForeground.withValues(alpha: 0.12),
-
-                  borderRadius: BorderRadius.circular(30.r),
+                  color: AppColors.successForeground.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(20.r),
                 ),
-
                 child: Text(
                   "مكتمل",
-
-                  style: context.typography.mdBold.copyWith(
+                  style: context.typography.xsMedium.copyWith(
                     color: AppColors.successForeground,
                   ),
                 ),
