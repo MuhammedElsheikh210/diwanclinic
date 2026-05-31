@@ -349,6 +349,8 @@ export 'package:diwanclinic/Presentation/screens/pharmacy/create_update/create_p
 export 'package:diwanclinic/Presentation/screens/pharmacy/create_update/create_pharmacy_view_model.dart';
 export 'package:diwanclinic/Presentation/screens/pharmacy/list/pharmacy_view_model.dart';
 export 'package:diwanclinic/Presentation/screens/pharmacy/list/widget/pharmacy_card.dart';
+export 'package:diwanclinic/Presentation/screens/pharmacy/detail/pharmacy_detail_view.dart';
+export 'package:diwanclinic/Presentation/screens/pharmacy/detail/pharmacy_detail_view_model.dart';
 export 'package:diwanclinic/Global/Enums/status_enum.dart';
 export 'package:diwanclinic/Presentation/screens/reservations/list/widgets/reservation_listtile_widget.dart';
 export 'package:diwanclinic/Presentation/Widgets/full_screen_view.dart';
@@ -654,6 +656,14 @@ export 'package:diwanclinic/Presentation/screens/doctor_announcement/widgets/cre
 // ─────────── Admin Users Management ───────────
 export 'package:diwanclinic/Presentation/screens/admin_users/admin_users_view.dart';
 export 'package:diwanclinic/Presentation/screens/admin_users/admin_users_view_model.dart';
+
+// ─────────── Admin Today Reservations ───────────
+export 'package:diwanclinic/Presentation/screens/admin_today_reservations/admin_today_reservations_view.dart';
+export 'package:diwanclinic/Presentation/screens/admin_today_reservations/admin_today_reservations_view_model.dart';
+
+// ─────────── Admin Today Orders ───────────
+export 'package:diwanclinic/Presentation/screens/admin_today_orders/admin_today_orders_view.dart';
+export 'package:diwanclinic/Presentation/screens/admin_today_orders/admin_today_orders_view_model.dart';
 
 // ─────────── Doctor Home ───────────
 export 'package:diwanclinic/Presentation/screens/home_doctor/doctor_home_view.dart';

@@ -213,16 +213,9 @@ class OrderMedicineScreen extends StatelessWidget {
   // 🔶 STEP 1 – UPLOAD
   // ===========================================================================
   Widget _uploadStep(BuildContext context, OrderMedicineViewModel vm) {
-    return Padding(
+    return SingleChildScrollView(
       padding: EdgeInsets.all(20.w),
-      child: Column(
-        children: [
-          //   _uploadBanner(context),
-          SizedBox(height: 20.h),
-          _uploadArea(context, vm),
-          const Spacer(),
-        ],
-      ),
+      child: _uploadArea(context, vm),
     );
   }
 
@@ -666,31 +659,108 @@ class OrderMedicineScreen extends StatelessWidget {
       );
     }
 
+    final canAddMore = vm.selectedImages.length < OrderMedicineViewModel.maxImages;
+    final totalItems = vm.selectedImages.length + (canAddMore ? 1 : 0);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AppText(
-          text: "الصور المرفوعة (${vm.selectedImages.length}/5)",
-          textStyle: context.typography.smMedium,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            AppText(
+              text: "الصور المرفوعة (${vm.selectedImages.length}/5)",
+              textStyle: context.typography.smMedium,
+            ),
+            if (canAddMore)
+              GestureDetector(
+                onTap: vm.pickImages,
+                child: AppText(
+                  text: "إضافة صورة +",
+                  textStyle: context.typography.smMedium.copyWith(
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+          ],
         ),
         SizedBox(height: 12.h),
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 10.w,
+            mainAxisSpacing: 10.h,
+            childAspectRatio: 3 / 4,
           ),
-          itemCount: vm.selectedImages.length,
-          itemBuilder:
-              (_, i) => ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.file(
-                  File(vm.selectedImages[i].path),
-                  fit: BoxFit.cover,
+          itemCount: totalItems,
+          itemBuilder: (_, i) {
+            if (i == vm.selectedImages.length) {
+              return GestureDetector(
+                onTap: vm.pickImages,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14.r),
+                    border: Border.all(
+                      color: AppColors.borderNeutralPrimary,
+                      style: BorderStyle.solid,
+                    ),
+                    color: AppColors.background_neutral_100,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.add_photo_alternate_outlined,
+                        size: 36,
+                        color: AppColors.primary,
+                      ),
+                      SizedBox(height: 8.h),
+                      AppText(
+                        text: "إضافة صورة",
+                        textStyle: context.typography.smMedium.copyWith(
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+              );
+            }
+
+            return Stack(
+              fit: StackFit.expand,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(14.r),
+                  child: Image.file(
+                    File(vm.selectedImages[i].path),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                Positioned(
+                  top: 6.h,
+                  left: 6.w,
+                  child: GestureDetector(
+                    onTap: () => vm.removeImage(i),
+                    child: Container(
+                      padding: EdgeInsets.all(4.w),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.55),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.close,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ],
     );

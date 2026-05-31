@@ -141,10 +141,14 @@ async function findPharmacy(db) {
     .equalTo("pharmacy")
     .once("value");
 
+  // Primary account = the one where pharmacy_id == uid (the pharmacy entity itself)
+  // Staff accounts have pharmacy_id pointing to the owner — skip them here
   let pharmacy = null;
 
   snap.forEach((child) => {
-    if (!pharmacy) pharmacy = child.val();
+    const val = child.val();
+    const isPrimary = val.pharmacy_id === val.uid || !val.pharmacy_id;
+    if (!pharmacy && isPrimary) pharmacy = val;
   });
 
   return pharmacy;
@@ -255,7 +259,10 @@ async function createOrder(db, {
       reservation?.clinic_key ||
       session.clinicKey       || "",
 
-    // Pharmacy
+    // Pharmacy — pharmacy_key is the group identifier (pharmacyId) used for filtering
+    pharmacy_key:
+      pharmacy.pharmacy_id || pharmacy.uid || "",
+
     pharmacy_uid:
       pharmacy.uid       || "",
 
@@ -809,7 +816,7 @@ const whatsappWebhook = onRequest(
 
 📸 ابعت صورة الروشتة
 وهنوصلك الدواء لحد البيت 🚚
-بنفس سعر الصيدلية + توصيل مجاني`
+بنفس سعر الصيدلية `
       );
 
       return res.send("idle");

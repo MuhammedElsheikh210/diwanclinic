@@ -294,10 +294,11 @@ class _PrescriptionBottomSheetWidgetState
         networkUrl != null && networkUrl.isNotEmpty && networkUrl != "null";
     final hasLocal = localFile != null;
 
+    // Local pick always wins over the saved network URL (user is replacing it)
+    final bool showLocalImage = hasLocal;
     final bool showNetworkImage = hasValidUrl && !hasLocal;
-    final bool showLocalImage = hasLocal && !hasValidUrl;
 
-    final bool hasImage = showNetworkImage || showLocalImage;
+    final bool hasImage = showLocalImage || showNetworkImage;
 
     return Container(
       height: 160.h,

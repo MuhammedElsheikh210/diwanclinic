@@ -85,15 +85,15 @@ class PharmacyOrdersListViewModel extends GetxController {
   // ============================================================
 
   Future<void> refreshAll() async {
-    isRefreshing = true;
-
-    update();
-
-    await fetchOrders();
-
-    isRefreshing = false;
-
-    update();
+    // isRefreshing = true;
+    //
+    // update();
+    //
+    // await fetchOrders();
+    //
+    // isRefreshing = false;
+    //
+    // update();
   }
 
   // ============================================================

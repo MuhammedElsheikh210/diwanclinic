@@ -469,9 +469,12 @@ class DoctorDetailsViewModel extends GetxController {
         clinicLongitude: selectedClinic?.longitude,
 
         // 💳 payment method
-        paymentMethod: transfer_url_image != null
-            ? (doctor.asDoctor?.instapayNumber?.isNotEmpty == true ? 'instapay' : 'wallet')
-            : 'cash',
+        paymentMethod:
+            transfer_url_image != null
+                ? (doctor.asDoctor?.instapayNumber?.isNotEmpty == true
+                    ? 'instapay'
+                    : 'wallet')
+                : 'cash',
 
         paymentStatus: transfer_url_image != null ? 'pending_payment' : null,
       );
@@ -544,11 +547,12 @@ extension LoadApis on DoctorDetailsViewModel {
         equalTo: "${selectedClinic?.key}_${selectedShift?.key}",
       ),
       voidCallBack: (data) {
-        if (data.isNotEmpty) {
-          final item = data.first;
-          if (item?.isClosed == true) {
-            isSelectedDayClosed = true;
-          }
+        final match = data.firstWhere(
+          (item) => item?.date == date && item?.isClosed == true,
+          orElse: () => null,
+        );
+        if (match != null) {
+          isSelectedDayClosed = true;
         }
         update();
       },

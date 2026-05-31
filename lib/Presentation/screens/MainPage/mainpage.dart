@@ -205,9 +205,9 @@ class _MainPageState extends State<MainPage> {
       case UserType.admin:
         return [
           _item(IconsConstants.category, "التخصصات"),
-          _item(IconsConstants.category, "المراكز الطبية"),
-          _item(IconsConstants.sales, "المبيعات"),
-          _item(IconsConstants.money, "الصيدلية"),
+          _item(IconsConstants.account, "المستخدمون"),
+          _item(IconsConstants.new_reservae, "الحجوزات"),
+          _item(IconsConstants.orders, "الطلبات"),
           _item(IconsConstants.account, "الحساب"),
         ];
 
@@ -304,9 +304,9 @@ class _MainPageState extends State<MainPage> {
       case UserType.admin:
         return [
           const SpecializationView(),
-          const MedicalCentersView(),
-          const SalesView(),
-          const PharmacyView(),
+          const AdminUsersView(),
+          const AdminTodayReservationsView(),
+          const AdminTodayOrdersView(),
           const AccountView(),
         ][index];
 

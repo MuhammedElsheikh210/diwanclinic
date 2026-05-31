@@ -18,6 +18,9 @@ class PricingSearchController extends GetxController {
   // ───────────── Pricing ─────────────
   double deliveryFee = 5;
 
+  // Primary pharmacy account — has wallet/instapay even when a staff logs in
+  PharmacyUser? _primaryPharmacy;
+
   // ───────────── Calculations ─────────────
 
   int get subtotalInt =>
@@ -27,7 +30,20 @@ class PricingSearchController extends GetxController {
 
   int get totalInt => subtotalInt + deliveryFeeInt;
 
-  void initWithOrder(OrderModel order) {
+  Future<void> initWithOrder(OrderModel order) async {
+    final sessionPharmacy = Get.find<UserSession>().user?.asPharmacy;
+    final primaryId = sessionPharmacy?.pharmacyId ?? sessionPharmacy?.uid;
+
+    if (primaryId != null && primaryId.isNotEmpty) {
+      final completer = Completer<List<LocalUser?>>();
+      AuthenticationService().getClientsData(
+        query: SQLiteQueryParams(where: "uid = ?", whereArgs: [primaryId]),
+        voidCallBack: (users) => completer.complete(users),
+      );
+      final users = await completer.future;
+      _primaryPharmacy = users.firstOrNull?.asPharmacy;
+    }
+
     update();
   }
 
@@ -90,7 +106,9 @@ class PricingSearchController extends GetxController {
   }
 
   OrderModel buildUpdatedOrder(OrderModel order) {
-    final pharmacy = Get.find<UserSession>().user?.asPharmacy;
+    final sessionPharmacy = Get.find<UserSession>().user?.asPharmacy;
+    // Use primary pharmacy for payment info — staff accounts don't carry wallet/instapay
+    final paymentSource = _primaryPharmacy ?? sessionPharmacy;
     return order.copyWith(
       medicines: buildMedicineItems(),
       totalOrder: subtotalInt,
@@ -98,10 +116,10 @@ class PricingSearchController extends GetxController {
       deliveryFees: deliveryFee,
       finalAmount: totalInt,
       updatedAt: DateTime.now().millisecondsSinceEpoch,
-      pharmacyKey: pharmacy?.pharmacyId ?? pharmacy?.uid,
-      pharmacyWalletNumber: pharmacy?.walletNumber,
-      pharmacyInstapayNumber: pharmacy?.instapayNumber,
-      pharmacyInstapayLink: pharmacy?.instapayLink,
+      pharmacyKey: sessionPharmacy?.pharmacyId ?? sessionPharmacy?.uid,
+      pharmacyWalletNumber: paymentSource?.walletNumber,
+      pharmacyInstapayNumber: paymentSource?.instapayNumber,
+      pharmacyInstapayLink: paymentSource?.instapayLink,
     );
   }
 

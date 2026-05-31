@@ -174,15 +174,17 @@ class OrderDataSourceRepoImpl extends OrderDataSourceRepo {
     try {
       final sessionUser = Get.find<UserSession>().user?.user;
 
-      final uid = sessionUser?.uid;
-
-      if (uid == null || uid.isEmpty) {
+      if (sessionUser?.uid == null) {
         AppLogger.warning("ORDER", "UID null → fetch skip");
-
         return [];
       }
 
-      final snapshot = await _database.ref("${ApiConstatns.orders}/$uid").get();
+      final pharmacyId = sessionUser is PharmacyUser
+          ? (sessionUser.pharmacyId ?? sessionUser.uid)
+          : sessionUser?.uid;
+
+      // Orders are stored flat under /orders/{orderKey}, not nested under uid
+      final snapshot = await _database.ref(ApiConstatns.orders).get();
 
       if (!snapshot.exists || snapshot.value == null) {
         return [];
@@ -197,10 +199,11 @@ class OrderDataSourceRepoImpl extends OrderDataSourceRepo {
           final json = Map<String, dynamic>.from(
             value.map((k, v) => MapEntry(k.toString(), v)),
           );
-
           json['key'] = key;
-
-          list.add(OrderModel.fromJson(json));
+          final model = OrderModel.fromJson(json);
+          if (model.pharmacyKey == pharmacyId) {
+            list.add(model);
+          }
         }
       });
 

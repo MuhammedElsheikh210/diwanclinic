@@ -1,8 +1,6 @@
 // ignore_for_file: non_constant_identifier_names
 
-import 'dart:async';
 import 'package:dartz/dartz.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import '../../../../index/index_main.dart';
@@ -55,9 +53,9 @@ class LoginViewModel extends GetxController {
 
     if (user?.uid == null) return;
 
-    if (user!.user.fcmToken == token) return;
-
-    final updated = user.user.copyWith(fcmToken: token);
+    // Always update fcm_token in clients on every login —
+    // token refresh event is unreliable (may not fire for days).
+    final updated = user!.user.copyWith(fcmToken: token);
 
     await AuthenticationService().updateClientsData(
       userclient: LocalUser(updated),
@@ -65,17 +63,6 @@ class LoginViewModel extends GetxController {
     );
 
     await _session.setUser(LocalUser(updated));
-
-    // Keep pharmacy_staff node up-to-date so notifications reach this device
-    final pharmacy = user.asPharmacy;
-    if (pharmacy != null && user.uid != null) {
-      final pharmacyId = pharmacy.pharmacyId;
-      if (pharmacyId != null) {
-        await FirebaseDatabase.instance
-            .ref("pharmacy_staff/$pharmacyId/${user.uid}")
-            .set({'uid': user.uid, 'fcm_token': token});
-      }
-    }
   }
 
   // ============================================================

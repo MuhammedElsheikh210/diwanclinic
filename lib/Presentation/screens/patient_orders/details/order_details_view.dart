@@ -65,14 +65,33 @@ class OrderDetailsScreen extends StatelessWidget {
             ),
 
             // ===============================
+            // 📝 Notes
+            // ===============================
+            if (order.notes != null && order.notes!.trim().isNotEmpty)
+              _section(
+                context,
+                title: "ملاحظات",
+                children: [
+                  Text(
+                    order.notes!,
+                    style: context.typography.smRegular.copyWith(
+                      color: AppColors.textDisplay,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+
+            // ===============================
             // 💰 Financial Info
             // ===============================
             _section(
               context,
               title: "الدفع والتكلفة",
               children: [
-                _row(context, "قبل الخصم", "${order.totalOrder ?? 0} ج.م"),
-                _row(context, "الخصم", "${order.discount ?? 0} ج.م"),
+                _row(context, "الإجمالي قبل التوصيل", "${order.totalOrder ?? 0} ج.م"),
+                if ((order.discount ?? 0) > 0)
+                  _row(context, "الخصم", "${order.discount} ج.م"),
                 _row(
                   context,
                   "مصاريف التوصيل",

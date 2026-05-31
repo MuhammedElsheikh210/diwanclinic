@@ -290,15 +290,20 @@ class _UploadPrescriptionScreenState extends State<UploadPrescriptionScreen> {
 
               return Stack(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.file(
-                      File(img.path),
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: double.infinity,
+                  // Tap image to replace it
+                  GestureDetector(
+                    onTap: () => _replaceImage(index),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.file(
+                        File(img.path),
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: double.infinity,
+                      ),
                     ),
                   ),
+                  // Remove button
                   Positioned(
                     top: 4,
                     right: 4,
@@ -318,6 +323,19 @@ class _UploadPrescriptionScreenState extends State<UploadPrescriptionScreen> {
                           color: Colors.white,
                         ),
                       ),
+                    ),
+                  ),
+                  // Edit hint
+                  Positioned(
+                    bottom: 4,
+                    left: 4,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(Icons.edit, size: 12, color: Colors.white),
                     ),
                   ),
                 ],
@@ -345,6 +363,17 @@ class _UploadPrescriptionScreenState extends State<UploadPrescriptionScreen> {
       final remain = 5 - selectedImages.length;
       selectedImages.addAll(picked.take(remain));
       setState(() {});
+    }
+  }
+
+  // ===========================================================================
+  // 🔥 Replace a specific image by index
+  // ===========================================================================
+  Future<void> _replaceImage(int index) async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+    if (picked != null) {
+      setState(() => selectedImages[index] = picked);
     }
   }
 

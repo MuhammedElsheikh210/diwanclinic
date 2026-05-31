@@ -32,12 +32,29 @@ class _PharmacyViewState extends State<PharmacyView> {
               backgroundColor: AppColors.white,
             ),
             floatingActionButton: InkWell(
-              onTap: () {
+              onTap: () async {
                 Get.delete<CreatePharmacyViewModel>();
-                showCustomBottomSheet(
+                await showModalBottomSheet<void>(
                   context: context,
-                  child: const CreatePharmacyView(),
+                  isDismissible: true,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => FractionallySizedBox(
+                    heightFactor: 0.85,
+                    child: Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.only(
+                        left: 15.w, right: 15.w, bottom: 30.h, top: 20.h,
+                      ),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                      ),
+                      child: const CreatePharmacyView(),
+                    ),
+                  ),
                 );
+                controller.getData();
               },
               child: const Svgicon(icon: IconsConstants.fab_Button),
             ),

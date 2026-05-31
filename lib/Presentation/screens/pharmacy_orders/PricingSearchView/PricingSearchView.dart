@@ -76,6 +76,56 @@ class _PricingSearchViewState extends State<PricingSearchView> {
                       ),
                     ),
 
+                    // ───────── Patient Notes ─────────
+                    if (widget.orderModel.notes != null &&
+                        widget.orderModel.notes!.trim().isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.07),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: AppColors.primary.withValues(alpha: 0.25),
+                            ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(
+                                Icons.sticky_note_2_outlined,
+                                color: AppColors.primary,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "ملاحظات المريض",
+                                      style: context.typography.mdMedium.copyWith(
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      widget.orderModel.notes!,
+                                      style: context.typography.smRegular.copyWith(
+                                        color: AppColors.textDisplay,
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
                     // ───────── Add Medicine ─────────
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),

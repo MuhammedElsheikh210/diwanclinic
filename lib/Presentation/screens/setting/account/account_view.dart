@@ -113,13 +113,25 @@ class AccountView extends StatelessWidget {
 
                 // 🔹 Admin Section
                 if (userType == "admin") ...[
-                  _sectionTitle(context, "إدارة المستخدمين"),
+                  _sectionTitle(context, "إدارة النظام"),
                   _modernMenuCard(context, [
                     _menuItem(
                       context,
-                      icon: Icons.manage_accounts_outlined,
-                      label: "المستخدمون",
-                      onTap: () => Get.toNamed(adminUsersView),
+                      icon: Icons.local_hospital_outlined,
+                      label: "المراكز الطبية",
+                      onTap: () => Get.to(() => const MedicalCentersView()),
+                    ),
+                    _menuItem(
+                      context,
+                      icon: Icons.trending_up_rounded,
+                      label: "المبيعات",
+                      onTap: () => Get.to(() => const SalesView()),
+                    ),
+                    _menuItem(
+                      context,
+                      icon: Icons.local_pharmacy_outlined,
+                      label: "الصيدلية",
+                      onTap: () => Get.to(() => const PharmacyView()),
                     ),
                   ]),
                   const SizedBox(height: 12),

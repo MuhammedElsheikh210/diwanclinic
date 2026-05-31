@@ -1,7 +1,6 @@
 // ignore_for_file: constant_identifier_names
 
 import 'package:diwanclinic/Data/Models/User_local/save_local_user.dart';
-import 'package:diwanclinic/core/config/app_config.dart';
 import '../../index/index_main.dart';
 
 class ApiConstatns {
@@ -11,7 +10,8 @@ class ApiConstatns {
     "Content-Type": "application/json",
   };
 
-  static String get Base_Url => AppConfig.instance.baseUrl;
+  static const String Base_Url =
+      "https://link-b47c8-default-rtdb.firebaseio.com";
 
   static String? get uid {
     final sessionUser = Get.find<UserSession>().user?.user;

@@ -51,9 +51,6 @@ async function handleNewOrder({
     const token =
       after.patient_fcm_token;
 
-    const pharmacyToken =
-      after.pharmacy_fcm_token;
-
     // ========================================================
     // 🧠 BUILD MESSAGE
     // ========================================================
@@ -121,8 +118,17 @@ ${createdBy}
     // ========================================================
     // 💊 PHARMACY NOTIFICATION
     // ========================================================
+    // Gate on pharmacy_key (always set at order creation) — NOT on
+    // pharmacy_fcm_token, which belongs to one user only.
+    // notifyPharmacyAboutNewOrder queries Firebase by pharmacy_id
+    // and notifies ALL staff members.
 
-    if (pharmacyToken) {
+    const pharmacyKey =
+      after.pharmacy_key ||
+      after.pharmacy_uid ||
+      after.pharmacy_id;
+
+    if (pharmacyKey) {
 
       await notifyPharmacyAboutNewOrder({
 

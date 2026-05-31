@@ -1,5 +1,4 @@
 import 'package:diwanclinic/index/index_main.dart';
-import 'package:diwanclinic/Presentation/parentControllers/order_Service/pharmacy_notification_helper.dart';
 import 'package:diwanclinic/Presentation/parentControllers/order_Service/pharmacy_picker_service.dart';
 
 class OrderConfirmationSheet extends StatefulWidget {
@@ -223,6 +222,7 @@ class _OrderConfirmationSheetState extends State<OrderConfirmationSheet> {
                       key: const Uuid().v4(),
                       reservationKey: widget.reservation.key,
                       patientuid: widget.reservation.patientUid,
+                      pharmacyKey: pharmacy?.pharmacyId ?? pharmacy?.uid,
                       pharmacyPhone: pharmacy?.phone,
                       pharmacyFcmToken: pharmacy?.fcmToken,
                       patientKey: widget.reservation.patientUid,
@@ -269,15 +269,6 @@ class _OrderConfirmationSheetState extends State<OrderConfirmationSheet> {
                           body:
                               "📥 تم استلام الروشتة 👌\n\n⏳ جاري التسعير خلال 5 دقائق 💙",
                         );
-
-                        // 🔔 إشعار لكل موظفي الصيدلية
-                        final pid = pharmacy?.pharmacyId ?? pharmacy?.uid ?? '';
-                        if (pid.isNotEmpty) {
-                          await PharmacyNotificationHelper.notifyAllPharmacyStaff(
-                            pharmacyId: pid,
-                            order: order,
-                          );
-                        }
 
                         Loader.showSuccess("تم إرسال طلب الروشتة بنجاح");
                       },

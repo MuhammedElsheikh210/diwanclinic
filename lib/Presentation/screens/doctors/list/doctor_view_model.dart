@@ -18,7 +18,11 @@ class DoctorViewModel extends GetxController {
     AuthenticationService().getClientsOnlineData(
       firebaseFilter: FirebaseFilter(orderBy: "userType", equalTo: "doctor"),
       voidCallBack: (users) {
-        listDoctors = users;
+        listDoctors =
+            users
+                .where((u) => u.specializeKey == specializeKey)
+                .cast<LocalUser?>()
+                .toList();
         update();
       },
     );

@@ -42,22 +42,8 @@ android {
         main.java.srcDirs += 'src/main/kotlin'
     }
 
-    flavorDimensions "env"
-
-    productFlavors {
-        dev {
-            dimension "env"
-            applicationId "com.elsheikh.linkstage"
-            resValue "string", "app_name", "Link Stage"
-        }
-        prod {
-            dimension "env"
-            applicationId "com.elsheikh.marketingwhats"
-            resValue "string", "app_name", "Link"
-        }
-    }
-
     defaultConfig {
+        applicationId "com.elsheikh.marketingwhats"
         minSdkVersion flutter.minSdkVersion
         targetSdkVersion 35      // ✅ REQUIRED: target latest API
         versionCode flutterVersionCode.toInteger()

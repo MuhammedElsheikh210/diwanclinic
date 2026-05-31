@@ -9,6 +9,8 @@ const String onBoardView = "/OnBoardView";
 
 const String test = "/Test";
 const String adminUsersView = "/AdminUsersView";
+const String adminTodayReservationsView = "/AdminTodayReservationsView";
+const String adminTodayOrdersView = "/AdminTodayOrdersView";
 const String expenceCategoryView = "/ExpenceCategoryView";
 const String createExpenseCategoryView = "/CreateExpenseCategoryView";
 const String expenseView = "/ExpenseView";
@@ -265,6 +267,20 @@ class Routes {
       GetPage(
         name: adminUsersView,
         page: () => const AdminUsersView(),
+        transitionDuration: const Duration(milliseconds: 500),
+        binding: Binding(),
+        transition: Transition.cupertino,
+      ),
+      GetPage(
+        name: adminTodayReservationsView,
+        page: () => const AdminTodayReservationsView(),
+        transitionDuration: const Duration(milliseconds: 500),
+        binding: Binding(),
+        transition: Transition.cupertino,
+      ),
+      GetPage(
+        name: adminTodayOrdersView,
+        page: () => const AdminTodayOrdersView(),
         transitionDuration: const Duration(milliseconds: 500),
         binding: Binding(),
         transition: Transition.cupertino,

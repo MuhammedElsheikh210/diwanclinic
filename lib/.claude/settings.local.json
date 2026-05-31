@@ -91,7 +91,26 @@
       "Bash(grep -v \"^$\")",
       "Bash(firebase functions:delete deleteAuthUser --region us-central1 --force)",
       "Bash(flutter clean *)",
-      "Bash(pod install *)"
+      "Bash(pod install *)",
+      "Bash(cp /Users/apple/diwanclinic/ios/Runner/GoogleService-Info.plist /Users/apple/diwanclinic/ios/Runner/GoogleService-Info-prod.plist && echo \"prod plist copied\")",
+      "Bash(xargs ls -la)",
+      "Bash(find /Users/apple/flutter/packages/flutter_tools/bin -name \"xcode_backend.sh\" | head -3 && grep -n \"FRAMEWORK_SEARCH_PATHS\\\\|Flutter.xcframework\" /Users/apple/flutter/packages/flutter_tools/bin/xcode_backend.sh 2>/dev/null | head -10)",
+      "Bash(find /Users/apple/diwanclinic/ios/Pods -name \"Flutter.xcframework\" -o -name \"Flutter.framework\" 2>/dev/null | head -5 && ls /Users/apple/flutter/bin/cache/artifacts/engine/ios/ 2>/dev/null | head -10)",
+      "Bash(python3 -)",
+      "Bash(flutter build *)",
+      "Bash(ls /Users/apple/flutter/bin/cache/artifacts/engine/ios/ && echo \"---\" && ls /Users/apple/flutter/bin/cache/artifacts/engine/ios-release/ 2>/dev/null | head -5)",
+      "Bash(flutter run *)",
+      "Bash(rm -rf /Users/apple/diwanclinic/ios/Pods /Users/apple/diwanclinic/ios/Podfile.lock && echo \"Pods deleted\")",
+      "Bash(rm /Users/apple/diwanclinic/ios/Flutter/Debug-dev.xcconfig \\\\ *)",
+      "Bash(ls /Users/apple/flutter/bin/cache/artifacts/engine/ios/ 2>/dev/null | head -10 && echo \"---\" && ls /Users/apple/flutter/bin/cache/artifacts/engine/ios-x86_64-sim/ 2>/dev/null | head -5)",
+      "Bash(flutter --version)",
+      "Bash(kill %1)",
+      "Bash(wait)",
+      "Bash(xcrun simctl *)",
+      "Bash(kill %2)",
+      "Bash(ls /Users/apple/Library/Developer/CoreSimulator/Devices/359DB009-63BC-427D-897E-F84A821C7504/data/Containers/Bundle/Application/7EA10AA8-E1AB-4966-90C9-23AF32CDE930/Runner.app/ | grep -i google)",
+      "Bash(xargs -I{} ls \"/Users/apple/Library/Developer/CoreSimulator/Devices/359DB009-63BC-427D-897E-F84A821C7504/data/Containers/Bundle/Application/{}/Runner.app/\")",
+      "Bash(node --check /Users/apple/diwanclinic/functions/orders/orderPharmacy.js)"
     ]
   }
 }

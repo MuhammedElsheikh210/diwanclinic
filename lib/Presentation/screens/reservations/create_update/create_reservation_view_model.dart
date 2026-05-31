@@ -508,12 +508,13 @@ class CreateReservationViewModel extends GetxController {
       ),
 
       voidCallBack: (data) {
-        if (data.isNotEmpty) {
-          final item = data.first;
+        final match = data.firstWhere(
+          (item) => item?.shift_date == shiftDate,
+          orElse: () => null,
+        );
 
-          if (item != null && item.isClosed == true) {
-            isDayClosed = true;
-          }
+        if (match != null && match.isClosed == true) {
+          isDayClosed = true;
         }
 
         update();

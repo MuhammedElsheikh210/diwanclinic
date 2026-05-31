@@ -5,7 +5,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../../index/index_main.dart';
-import '../../parentControllers/order_Service/pharmacy_notification_helper.dart';
 import '../../parentControllers/order_Service/pharmacy_picker_service.dart';
 
 class OrderMedicineViewModel extends GetxController {
@@ -29,6 +28,13 @@ class OrderMedicineViewModel extends GetxController {
           .where((i) => i < preloadedMedicines.length)
           .map((i) => preloadedMedicines[i])
           .toList();
+
+  void removeImage(int index) {
+    if (index >= 0 && index < selectedImages.length) {
+      selectedImages.removeAt(index);
+      update();
+    }
+  }
 
   void toggleMedicine(int index) {
     if (selectedMedicineIndices.contains(index)) {
@@ -313,6 +319,7 @@ class OrderMedicineViewModel extends GetxController {
       key: const Uuid().v4(),
       reservationKey: reservation.key,
       patientuid: reservation.patientUid,
+      pharmacyKey: pharmacy?.pharmacyId ?? pharmacy?.uid,
       pharmacyPhone: pharmacy?.phone,
       pharmacyFcmToken: pharmacy?.fcmToken,
       doctorKey: reservation.doctorUid,
@@ -352,15 +359,6 @@ class OrderMedicineViewModel extends GetxController {
           to: reservation.patientPhone ?? "",
           body: "📥 تم استلام الروشتة 👌\n\n⏳ جاري التسعير خلال 5 دقائق 💙",
         );
-
-        // 🔔 إشعار لكل موظفي الصيدلية
-        final pid = pharmacy?.pharmacyId ?? pharmacy?.uid ?? '';
-        if (pid.isNotEmpty) {
-          await PharmacyNotificationHelper.notifyAllPharmacyStaff(
-            pharmacyId: pid,
-            order: order,
-          );
-        }
 
         Loader.showSuccess("تم إرسال طلب الروشتة بنجاح");
       },
