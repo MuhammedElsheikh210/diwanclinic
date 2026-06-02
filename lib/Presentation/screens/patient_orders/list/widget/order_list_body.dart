@@ -1,3 +1,5 @@
+import 'package:diwanclinic/Presentation/screens/pharmacy_chat/pharmacy_chat_detail_view.dart';
+
 import '../../../../../index/index_main.dart';
 
 enum OrderTabType { active, finished }
@@ -63,6 +65,21 @@ class OrdersListBody extends StatelessWidget {
                 () => Get.to(
                   () => PriceDetailsScreen(order: order, fromHome: false),
                 ),
+            onChat: (order.pharmacyKey != null && order.pharmacyKey!.isNotEmpty)
+                ? () {
+                    final user = Get.find<UserSession>().user;
+                    Get.to(
+                      () => PharmacyChatDetailView(
+                        pharmacyId: order.pharmacyKey!,
+                        pharmacyName: order.pharmacyName ?? "الصيدلية",
+                        patientId: user?.uid ?? order.patientuid ?? "",
+                        patientName: user?.name ?? order.patientName ?? "",
+                        isPharmacySide: false,
+                      ),
+                      binding: Binding(),
+                    );
+                  }
+                : null,
           );
         },
       );

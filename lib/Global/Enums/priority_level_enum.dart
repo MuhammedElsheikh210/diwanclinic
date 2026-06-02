@@ -8,7 +8,7 @@ enum ReservationPriority {
   normal,   // 0 - كشف عادي
   vip,      // 1 - VIP
   elderly,  // 2 - كبار السن
-  newborn,  // 3 - حديث ولادة (hard priority)
+  newborn,  // 3 - حديث ولادة (يدخل بعد حالتين في الطابور)
   urgent,   // 4 - طوارئ / حالة حرجة (hard priority)
 }
 
@@ -73,8 +73,8 @@ extension ReservationPriorityExt on ReservationPriority {
     }
   }
 
-  /// Hard priority bypasses the active window and goes directly to the front.
-  bool get isHard => level >= 3;
+  /// Hard priority (urgent only) bypasses the active window and goes directly to the front.
+  bool get isHard => level >= 4;
 
   static ReservationPriority fromLevel(int? level) {
     switch (level) {

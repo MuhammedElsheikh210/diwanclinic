@@ -18,38 +18,31 @@ class OrderConfirmationSheet extends StatefulWidget {
 }
 
 class _OrderConfirmationSheetState extends State<OrderConfirmationSheet> {
-  late TextEditingController phoneController;
-  late TextEditingController whatsappController;
-  late TextEditingController addressController;
   late TextEditingController doseController;
   late TextEditingController notesController;
 
-  bool isWhatsAppSame = true; // ✅ default true
+  bool _saveForNext = false;
+  static const _kOrderPrefsKey = 'order_prefs_next';
 
   @override
   void initState() {
     super.initState();
-    phoneController = TextEditingController(text: widget.user?.phone ?? "");
-    whatsappController = TextEditingController(text: widget.user?.phone ?? "");
-    addressController = TextEditingController(text: widget.user?.address ?? "");
     doseController = TextEditingController();
     notesController = TextEditingController();
+    _loadSavedPrefs();
+  }
 
-    // If no WhatsApp stored, default to same as phone
-    if (whatsappController.text.isEmpty ||
-        whatsappController.text == phoneController.text) {
-      isWhatsAppSame = true;
-      whatsappController.text = phoneController.text;
-    } else {
-      isWhatsAppSame = false;
+  void _loadSavedPrefs() {
+    final saved = StorageService().getData(_kOrderPrefsKey);
+    if (saved != null) {
+      _saveForNext = true;
+      doseController.text = saved['doseDays'] ?? '';
+      notesController.text = saved['notes'] ?? '';
     }
   }
 
   @override
   void dispose() {
-    phoneController.dispose();
-    whatsappController.dispose();
-    addressController.dispose();
     doseController.dispose();
     notesController.dispose();
     super.dispose();
@@ -67,7 +60,7 @@ class _OrderConfirmationSheetState extends State<OrderConfirmationSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ────── Header ──────
+              // ────── Handle ──────
               Center(
                 child: Container(
                   height: 5,
@@ -81,7 +74,7 @@ class _OrderConfirmationSheetState extends State<OrderConfirmationSheet> {
               ),
               Center(
                 child: AppText(
-                  text: "تأكيد بيانات العميل",
+                  text: "تأكيد الطلب",
                   textStyle: context.typography.lgBold.copyWith(
                     color: ColorMappingImpl().textDisplay,
                     fontWeight: FontWeight.w700,
@@ -90,84 +83,10 @@ class _OrderConfirmationSheetState extends State<OrderConfirmationSheet> {
               ),
               const SizedBox(height: 20),
 
-              // ────── Phone ──────
-              AppText(
-                text: "رقم الهاتف",
-                textStyle: context.typography.mdMedium.copyWith(
-                  color: ColorMappingImpl().textSecondaryParagraph,
-                ),
-              ),
-              const SizedBox(height: 6),
-              AppTextField(
-                controller: phoneController,
-                hintText: "أدخل رقم الهاتف",
-                keyboardType: TextInputType.phone,
-                onChanged: (val) {
-                  if (isWhatsAppSame) {
-                    whatsappController.text = val;
-                  }
-                },
-              ),
-              const SizedBox(height: 12),
-
-              // ────── WhatsApp Same Checkbox ──────
-              Row(
-                children: [
-                  Checkbox(
-                    value: isWhatsAppSame,
-                    activeColor: AppColors.primary,
-                    onChanged: (v) {
-                      setState(() {
-                        isWhatsAppSame = v ?? true;
-                        if (isWhatsAppSame) {
-                          whatsappController.text = phoneController.text;
-                        } else {
-                          whatsappController.clear();
-                        }
-                      });
-                    },
-                  ),
-                  Expanded(
-                    child: AppText(
-                      text: "هذا هو رقم الواتساب",
-                      textStyle: context.typography.smMedium.copyWith(
-                        color: ColorMappingImpl().textSecondaryParagraph,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-
-              // ────── WhatsApp Field (only if unchecked) ──────
-              if (!isWhatsAppSame) ...[
-                AppText(
-                  text: "رقم الواتساب",
-                  textStyle: context.typography.mdMedium.copyWith(
-                    color: ColorMappingImpl().textSecondaryParagraph,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                AppTextField(
-                  controller: whatsappController,
-                  hintText: "أدخل رقم الواتساب",
-                  keyboardType: TextInputType.phone,
-                ),
-                const SizedBox(height: 12),
-              ],
-
-              // ────── Address ──────
-              AppText(
-                text: "العنوان",
-                textStyle: context.typography.mdMedium.copyWith(
-                  color: ColorMappingImpl().textSecondaryParagraph,
-                ),
-              ),
-              const SizedBox(height: 6),
-              AppTextField(
-                controller: addressController,
-                hintText: "أدخل عنوان المريض",
-                maxLines: 2,
+              // ────── Customer info card ──────
+              _CustomerInfoCard(
+                name: widget.reservation.patientName ?? widget.user?.name ?? "العميل",
+                phone: widget.user?.phone ?? widget.reservation.patientPhone ?? "",
               ),
               const Divider(height: 30),
 
@@ -199,7 +118,63 @@ class _OrderConfirmationSheetState extends State<OrderConfirmationSheet> {
                 hintText: "أدخل أي ملاحظات للطبيب أو الصيدلية",
                 maxLines: 3,
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 16),
+
+              // ────── Save for next order ──────
+              GestureDetector(
+                onTap: () => setState(() => _saveForNext = !_saveForNext),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+                  decoration: BoxDecoration(
+                    color: _saveForNext
+                        ? AppColors.primary.withValues(alpha: 0.06)
+                        : Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(
+                      color: _saveForNext
+                          ? AppColors.primary.withValues(alpha: 0.35)
+                          : Colors.grey.shade300,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _saveForNext
+                            ? Icons.bookmark_rounded
+                            : Icons.bookmark_outline_rounded,
+                        color: _saveForNext
+                            ? AppColors.primary
+                            : Colors.grey.shade400,
+                        size: 22,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: AppText(
+                          text: "حفظ بياناتي للطلب القادم",
+                          textStyle: context.typography.smMedium.copyWith(
+                            color: _saveForNext
+                                ? AppColors.primary
+                                : AppColors.textSecondaryParagraph,
+                          ),
+                        ),
+                      ),
+                      Transform.scale(
+                        scale: 0.85,
+                        child: Switch(
+                          value: _saveForNext,
+                          onChanged: (v) => setState(() => _saveForNext = v),
+                          activeColor: AppColors.primary,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
 
               // ────── Confirm Button ──────
               SizedBox(
@@ -214,6 +189,15 @@ class _OrderConfirmationSheetState extends State<OrderConfirmationSheet> {
                   ),
                   appButtonSize: AppButtonSize.large,
                   onTap: () async {
+                    if (_saveForNext) {
+                      await StorageService().setData(_kOrderPrefsKey, {
+                        'doseDays': doseController.text.trim(),
+                        'notes': notesController.text.trim(),
+                      });
+                    } else {
+                      await StorageService().remove(_kOrderPrefsKey);
+                    }
+
                     Loader.show();
                     final pharmacy = await PharmacyPickerService.pick();
                     final user = Get.find<UserSession>().user;
@@ -232,9 +216,9 @@ class _OrderConfirmationSheetState extends State<OrderConfirmationSheet> {
                       patientName: widget.reservation.patientName,
                       clinicKey: widget.reservation.clinicKey,
                       createdBy: user?.uid,
-                      phone: phoneController.text.trim(),
-                      whatsApp: whatsappController.text.trim(),
-                      address: addressController.text.trim(),
+                      phone: widget.user?.phone ?? "",
+                      whatsApp: widget.user?.phone ?? "",
+                      address: widget.user?.address ?? "",
                       doseDays: int.tryParse(doseController.text.trim()),
                       notes: notesController.text.trim(),
                       createdAt: DateTime.now().millisecondsSinceEpoch,
@@ -254,7 +238,6 @@ class _OrderConfirmationSheetState extends State<OrderConfirmationSheet> {
                           return;
                         }
 
-                        // upsert فوري بدون انتظار Firebase realtime
                         Get.find<HomePatientController>().upsertOrder(order);
                         if (Get.isRegistered<OrdersListViewModel>()) {
                           Get.find<OrdersListViewModel>().upsertOrder(order);
@@ -280,6 +263,82 @@ class _OrderConfirmationSheetState extends State<OrderConfirmationSheet> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────
+// Customer info display card (read-only)
+// ──────────────────────────────────────────────────────────────
+
+class _CustomerInfoCard extends StatelessWidget {
+  final String name;
+  final String phone;
+
+  const _CustomerInfoCard({required this.name, required this.phone});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.2),
+          width: 1.5,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 46.w,
+            height: 46.w,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.person_rounded,
+              color: AppColors.primary,
+              size: 24,
+            ),
+          ),
+          SizedBox(width: 14.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppText(
+                  text: name,
+                  textStyle: context.typography.mdBold.copyWith(
+                    color: AppColors.textDisplay,
+                  ),
+                ),
+                if (phone.isNotEmpty) ...[
+                  SizedBox(height: 4.h),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.phone_outlined,
+                        size: 13,
+                        color: AppColors.textSecondaryParagraph,
+                      ),
+                      const SizedBox(width: 5),
+                      AppText(
+                        text: phone,
+                        textStyle: context.typography.smRegular.copyWith(
+                          color: AppColors.textSecondaryParagraph,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

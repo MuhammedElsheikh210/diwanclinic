@@ -152,6 +152,38 @@ class ReservationPatientCard extends StatelessWidget {
                                         ),
                                       ),
                                     ],
+                                    if ((reservation.patientCode ?? '')
+                                        .isNotEmpty) ...[
+                                      const SizedBox(height: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 9, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: statusColor.withValues(
+                                              alpha: 0.10),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          border: Border.all(
+                                            color: statusColor.withValues(
+                                                alpha: 0.25),
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(Icons.tag_rounded,
+                                                size: 12,
+                                                color: statusColor),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              "كود: ${reservation.patientCode}",
+                                              style: context.typography.smMedium
+                                                  .copyWith(color: statusColor),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                   ],
                                 ),
                               ),
@@ -362,6 +394,34 @@ class _HomeCard extends StatelessWidget {
                           reservation.reservationType!,
                           style: context.typography.mdRegular.copyWith(
                             color: AppColors.textSecondaryParagraph,
+                          ),
+                        ),
+                      ],
+
+                      if ((reservation.patientCode ?? '').isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 9, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: statusColor.withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: statusColor.withValues(alpha: 0.25),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.tag_rounded,
+                                  size: 12, color: statusColor),
+                              const SizedBox(width: 4),
+                              Text(
+                                "كود: ${reservation.patientCode}",
+                                style: context.typography.smMedium
+                                    .copyWith(color: statusColor),
+                              ),
+                            ],
                           ),
                         ),
                       ],

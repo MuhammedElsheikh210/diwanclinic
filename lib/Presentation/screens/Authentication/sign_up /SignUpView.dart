@@ -23,7 +23,7 @@ class _SignUpViewState extends State<SignUpView> {
   Widget build(BuildContext context) {
     final typography = context.typography;
     final keyboardService = HandleKeyboardService();
-    final keys = keyboardService.generateKeys("signup", 4);
+    final keys = keyboardService.generateKeys("signup", 3);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -92,35 +92,11 @@ class _SignUpViewState extends State<SignUpView> {
                     focusNode: keyboardService.getFocusNode(keys[2]),
                     hintText: "كلمة المرور",
                     obscureText: true,
-                    textInputAction: TextInputAction.next,
+                    textInputAction: TextInputAction.done,
                     onChanged: controller.validatePassword,
                     validator: (v) => (v == null || v.length < 6)
                         ? "كلمة المرور يجب أن تكون 6 أحرف على الأقل"
                         : null,
-                  ),
-                  SizedBox(height: 20.h),
-
-
-                  // ADDRESS
-                  AppTextField(
-                    controller: controller.addressController,
-                    focusNode: keyboardService.getFocusNode(keys[3]),
-                    hintText: "العنوان",
-                    maxLines: 2,
-                    onChanged: controller.validateAddress,
-                    validator: (v) => (v == null || v.trim().length < 5)
-                        ? "العنوان غير صالح"
-                        : null,
-                  ),
-
-                  SizedBox(height: 8.h),
-
-                  // Address NOTE
-                  AppText(
-                    text: "العنوان ضروري لتوصيل الدواء والحصول على الخصم",
-                    textStyle: typography.smRegular.copyWith(
-                      color: AppColors.textSecondaryParagraph,
-                    ),
                   ),
 
                   SizedBox(height: 36.h),
@@ -130,8 +106,7 @@ class _SignUpViewState extends State<SignUpView> {
                     final ready =
                         controller.isNameValid.value &&
                             controller.isPhoneValid.value &&
-                            controller.isPasswordValid.value &&
-                            controller.isAddressValid.value;
+                            controller.isPasswordValid.value;
 
 
                     return SizedBox(

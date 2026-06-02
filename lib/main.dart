@@ -28,7 +28,7 @@ void main() {
 
       // 🔹 Local DB (خفيف ومهم)
       final dbService = DatabaseService();
-      //  dbService.deleteDatabaseFile();
+      dbService.deleteDatabaseFile();
       await dbService.database;
 
       // 🔹 Storage (خفيف)

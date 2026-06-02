@@ -154,7 +154,7 @@ class ReservationModel {
   });
 
   bool get isCheckedIn         => checkedInAt != null;
-  bool get isHardPriority      => (priorityLevel ?? 0) >= 3;
+  bool get isHardPriority      => (priorityLevel ?? 0) >= 4;
   bool get hasSoftPriority     => (priorityLevel ?? 0) >= 1;
   bool get isReturnedFromMissed => missedReturnedAt != null;
 

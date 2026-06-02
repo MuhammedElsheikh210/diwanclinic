@@ -56,7 +56,9 @@ class _CreateDoctorViewState extends State<CreateDoctorView> {
       vm.supportsOnlinePay = d.supportsOnlinePay;
       vm.requiresDeposit = d.requiresDeposit;
       vm.walletNumberController.text = d.walletNumber ?? "";
+      vm.walletHolderNameController.text = d.walletHolderName ?? "";
       vm.instapayNumberController.text = d.instapayNumber ?? "";
+      vm.instapayHolderNameController.text = d.instapayHolderName ?? "";
       vm.instapayLinkController.text = d.instapayLink ?? "";
       vm.selectedLatitude = d.latitude;
       vm.selectedLongitude = d.longitude;
@@ -248,11 +250,29 @@ class _CreateDoctorViewState extends State<CreateDoctorView> {
                     ),
                     SizedBox(height: 10.h),
                     CustomInputField(
+                      label: "اسم صاحب المحفظة",
+                      controller: controller.walletHolderNameController,
+                      hintText: "مثال: أحمد محمد",
+                      focusNode: FocusNode(),
+                      keyboardType: TextInputType.name,
+                      validator: InputValidators.combine([]),
+                    ),
+                    SizedBox(height: 10.h),
+                    CustomInputField(
                       label: "رقم InstaPay",
                       controller: controller.instapayNumberController,
                       hintText: "رقم حساب InstaPay",
                       focusNode: FocusNode(),
                       keyboardType: TextInputType.phone,
+                      validator: InputValidators.combine([]),
+                    ),
+                    SizedBox(height: 10.h),
+                    CustomInputField(
+                      label: "اسم صاحب حساب InstaPay",
+                      controller: controller.instapayHolderNameController,
+                      hintText: "مثال: أحمد محمد",
+                      focusNode: FocusNode(),
+                      keyboardType: TextInputType.name,
                       validator: InputValidators.combine([]),
                     ),
                     SizedBox(height: 10.h),

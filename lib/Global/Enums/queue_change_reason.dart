@@ -10,8 +10,11 @@ enum QueueChangeReason {
   /// تم تقديم المريض يدويًا بواسطة المساعد
   manualPromote,
 
-  /// تم إدراج حالة طارئة أو وليد
+  /// تم إدراج حالة طارئة
   emergencyInserted,
+
+  /// تم إدراج حالة حديث ولادة
+  newbornInserted,
 
   /// تم إعادة إدراج المريض بعد غياب
   missedReturned,
@@ -32,6 +35,8 @@ extension QueueChangeReasonExt on QueueChangeReason {
         return 'تم تقديمك في الطابور بواسطة المساعد';
       case QueueChangeReason.emergencyInserted:
         return 'تم إدراج حالة طارئة — قد يتأخر دورك قليلًا';
+      case QueueChangeReason.newbornInserted:
+        return 'تم إدراج حالة حديث ولادة — ستتأخر قليلًا';
       case QueueChangeReason.missedReturned:
         return 'تم إعادة ترتيبك بعد الغياب';
       case QueueChangeReason.windowShift:
@@ -50,6 +55,8 @@ extension QueueChangeReasonExt on QueueChangeReason {
         return 'تقديم يدوي';
       case QueueChangeReason.emergencyInserted:
         return 'حالة طارئة';
+      case QueueChangeReason.newbornInserted:
+        return 'حديث ولادة';
       case QueueChangeReason.missedReturned:
         return 'رجع بعد غياب';
       case QueueChangeReason.windowShift:
@@ -68,6 +75,8 @@ extension QueueChangeReasonExt on QueueChangeReason {
         return 'manual_promote';
       case QueueChangeReason.emergencyInserted:
         return 'emergency_inserted';
+      case QueueChangeReason.newbornInserted:
+        return 'newborn_inserted';
       case QueueChangeReason.missedReturned:
         return 'missed_returned';
       case QueueChangeReason.windowShift:
@@ -85,6 +94,8 @@ extension QueueChangeReasonExt on QueueChangeReason {
         return QueueChangeReason.manualPromote;
       case 'emergency_inserted':
         return QueueChangeReason.emergencyInserted;
+      case 'newborn_inserted':
+        return QueueChangeReason.newbornInserted;
       case 'missed_returned':
         return QueueChangeReason.missedReturned;
       case 'window_shift':

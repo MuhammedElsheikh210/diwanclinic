@@ -37,6 +37,10 @@ class ClinicModel {
   // 🔥🔥 NEW (time)
   final int? revisitValidityDays;
 
+  // 🔥 Pediatric settings
+  final int? isPediatric;       // 1 = عيادة أطفال
+  final int? newbornSlotGap;    // حديثي الولادة يدخل بعد كام حالة (default 2)
+
   ClinicModel({
     this.key,
     this.title,
@@ -60,8 +64,16 @@ class ClinicModel {
     this.sendWhatsapp,
     this.file_number,
     this.maxRevisitCount,
-    this.revisitValidityDays, // 🔥 NEW
+    this.revisitValidityDays,
+    this.isPediatric,
+    this.newbornSlotGap,
   });
+
+  /// true إذا كانت عيادة أطفال
+  bool get isPediatricClinic => isPediatric == 1;
+
+  /// عدد الحالات العادية قبل دخول حديث الولادة (الافتراضي 2)
+  int get effectiveNewbornSlotGap => (newbornSlotGap ?? 0) > 0 ? newbornSlotGap! : 2;
 
   /// ✅ TO JSON
   Map<String, dynamic> toJson() {
@@ -105,9 +117,12 @@ class ClinicModel {
 
     if (maxRevisitCount != null) data['max_revisit_count'] = maxRevisitCount;
 
-    // 🔥 NEW
     if (revisitValidityDays != null)
       data['revisit_validity_days'] = revisitValidityDays;
+
+    // 🔥 Pediatric
+    if (isPediatric != null) data['is_pediatric'] = isPediatric;
+    if (newbornSlotGap != null) data['newborn_slot_gap'] = newbornSlotGap;
 
     return data;
   }
@@ -149,8 +164,11 @@ class ClinicModel {
 
       maxRevisitCount: json['max_revisit_count'],
 
-      // 🔥 NEW
       revisitValidityDays: json['revisit_validity_days'],
+
+      // 🔥 Pediatric
+      isPediatric: json['is_pediatric'] is int ? json['is_pediatric'] : null,
+      newbornSlotGap: json['newborn_slot_gap'] is int ? json['newborn_slot_gap'] : null,
     );
   }
 
@@ -178,7 +196,9 @@ class ClinicModel {
     int? sendWhatsapp,
     int? file_number,
     int? maxRevisitCount,
-    int? revisitValidityDays, // 🔥 NEW
+    int? revisitValidityDays,
+    int? isPediatric,
+    int? newbornSlotGap,
   }) {
     return ClinicModel(
       key: key ?? this.key,
@@ -206,8 +226,11 @@ class ClinicModel {
       file_number: file_number ?? this.file_number,
       maxRevisitCount: maxRevisitCount ?? this.maxRevisitCount,
 
-      // 🔥 NEW
       revisitValidityDays: revisitValidityDays ?? this.revisitValidityDays,
+
+      // 🔥 Pediatric
+      isPediatric: isPediatric ?? this.isPediatric,
+      newbornSlotGap: newbornSlotGap ?? this.newbornSlotGap,
     );
   }
 }

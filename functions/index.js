@@ -3,6 +3,21 @@ const admin = require("firebase-admin");
 admin.initializeApp();
 
 // ============================================================
+// 💬 PHARMACY CHAT
+// ============================================================
+
+const {
+
+  onPharmacyChatMessage,
+
+} = require(
+  "./chat/chatTriggers"
+);
+
+exports.onPharmacyChatMessage =
+  onPharmacyChatMessage;
+
+// ============================================================
 // 📣 DOCTOR ANNOUNCEMENTS
 // ============================================================
 

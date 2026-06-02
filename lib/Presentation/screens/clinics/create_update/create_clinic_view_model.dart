@@ -13,9 +13,12 @@ class CreateClinicViewModel extends GetxController {
   final TextEditingController appointmentsController = TextEditingController();
   final TextEditingController urgentPolicyController = TextEditingController();
 
-  // 🔥 NEW
   final TextEditingController maxRevisitController = TextEditingController();
   final TextEditingController revisitValidityController = TextEditingController();
+
+  // 🔥 Pediatric
+  bool isPediatric = false;
+  final TextEditingController newbornSlotGapController = TextEditingController();
 
   String? doctorKey;
 
@@ -65,6 +68,11 @@ class CreateClinicViewModel extends GetxController {
     // 🔥 NEW
     maxRevisitController.text = (clinic.maxRevisitCount ?? 0).toString();
     revisitValidityController.text = (clinic.revisitValidityDays ?? 0).toString();
+
+    // 🔥 Pediatric
+    isPediatric = clinic.isPediatric == 1;
+    newbornSlotGapController.text =
+        (clinic.newbornSlotGap ?? 2).toString();
 
     reserveWithDeposit = clinic.reserveWithDeposit ?? 0;
     is_update = true;
@@ -121,6 +129,13 @@ class CreateClinicViewModel extends GetxController {
           // 🔥 NEW
           maxRevisitCount: int.tryParse(maxRevisitController.text) ?? 0,
           revisitValidityDays: int.tryParse(revisitValidityController.text) ?? 0,
+
+          // 🔥 Pediatric
+          isPediatric: isPediatric ? 1 : 0,
+          newbornSlotGap:
+              isPediatric
+                  ? (int.tryParse(newbornSlotGapController.text) ?? 2)
+                  : null,
         ) ??
             ClinicModel(
               key: const Uuid().v4(),
@@ -153,6 +168,13 @@ class CreateClinicViewModel extends GetxController {
               // 🔥 NEW
               maxRevisitCount: int.tryParse(maxRevisitController.text) ?? 0,
               revisitValidityDays: int.tryParse(revisitValidityController.text) ?? 0,
+
+              // 🔥 Pediatric
+              isPediatric: isPediatric ? 1 : 0,
+              newbornSlotGap:
+                  isPediatric
+                      ? (int.tryParse(newbornSlotGapController.text) ?? 2)
+                      : null,
             );
 
     is_update ? updateClinic(clinic) : createClinic(clinic);
@@ -214,6 +236,7 @@ class CreateClinicViewModel extends GetxController {
   void dispose() {
     maxRevisitController.dispose();
     revisitValidityController.dispose();
+    newbornSlotGapController.dispose();
     super.dispose();
   }
 }

@@ -15,6 +15,7 @@ class ReservationViewModel extends GetxController {
   bool hideShiftSelector = false;
   bool _isProcessingStatus = false;
   List<ReservationModel> _cachedReservations = [];
+  int _activeNewbornCount = 0;
 
   // Services
   final PrescriptionUploadService prescriptionService =
@@ -44,10 +45,10 @@ class ReservationViewModel extends GetxController {
   bool get isCenterMode => false;
 
   List<ReservationModel?> get filteredReservations {
-    final list = listReservations ?? [];
     final q = searchQuery.trim();
-    if (q.isEmpty) return list;
-    return list.where((r) {
+    if (q.isEmpty) return listReservations ?? [];
+    // Search across ALL of today's reservations (all statuses/types, not just the active tab)
+    return completeDayReservations.where((r) {
       if (r == null) return false;
       final orderMatch = r.orderNum?.toString() == q;
       final phoneMatch = (r.patientPhone ?? "").contains(q);
@@ -325,6 +326,10 @@ class ReservationViewModel extends GetxController {
             (clinic) => clinic.key == clinicKey,
             orElse: () => clinics.first,
           );
+
+          // 🔥 Sync newborn slot gap from clinic settings
+          queueManager.newbornSlotGap =
+              selectedClinic?.effectiveNewbornSlotGap ?? 2;
 
           await getShiftList();
         }
@@ -632,7 +637,47 @@ extension ReservationData on ReservationViewModel {
       completeDayReservations.whereType<ReservationModel>().toList(),
     );
 
+    _detectAndNotifyNewbornInsertion();
+
     update();
+  }
+
+  void _detectAndNotifyNewbornInsertion() {
+    const activeStatuses = {
+      'approved',
+      'checked_in',
+    };
+
+    final currentCount = completeDayReservations
+        .whereType<ReservationModel>()
+        .where(
+          (r) =>
+              r.priorityLevel == 3 && activeStatuses.contains(r.status),
+        )
+        .length;
+
+    if (currentCount > _activeNewbornCount) {
+      unawaited(_handleNewbornInsertion());
+    }
+    _activeNewbornCount = currentCount;
+  }
+
+  Future<void> _handleNewbornInsertion() async {
+    await _handleQueueUpdate(snapshotReason: QueueChangeReason.newbornInserted);
+
+    const activeStatuses = {'approved', 'checked_in'};
+    final nonNewbornActive = completeDayReservations
+        .whereType<ReservationModel>()
+        .where(
+          (r) =>
+              r.priorityLevel != 3 && activeStatuses.contains(r.status),
+        )
+        .toList();
+
+    await queueReasonManager.writeBulkReason(
+      reservations: nonNewbornActive,
+      reason: QueueChangeReason.newbornInserted,
+    );
   }
 
   Future<void> getReservations() async {

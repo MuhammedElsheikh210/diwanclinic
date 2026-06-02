@@ -5,18 +5,15 @@ class PharmacyDailyReportWidget extends StatelessWidget {
 
   const PharmacyDailyReportWidget({super.key, required this.controller});
 
-  // المصري:   0-20 → 10%  |  21-50 → 15%  |  50+ → 18%
+  // المحلي: 0-30 → 12%  |  30+ → 15%
   double _localPercent(int count) {
-    if (count <= 20) return 10.0;
-    if (count <= 50) return 15.0;
-    return 18.0;
+    if (count <= 30) return 12.0;
+    return 15.0;
   }
 
-  // المستورد: 0-20 → 2%   |  21-50 → 4%   |  50+ → 6%
+  // المستورد: ثابت 5% دايمًا
   double _importedPercent(int count) {
-    if (count <= 20) return 2.0;
-    if (count <= 50) return 4.0;
-    return 6.0;
+    return 5.0;
   }
 
   @override
@@ -128,11 +125,7 @@ class PharmacyDailyReportWidget extends StatelessWidget {
     final double importedProfit = importedSubtotal * (importedPct / 100);
     final double totalProfit = localProfit + importedProfit;
 
-    final String tierLabel = ordersCount <= 20
-        ? "0–20 طلب"
-        : ordersCount <= 50
-            ? "21–50 طلب"
-            : "50+ طلب";
+    final String tierLabel = ordersCount <= 30 ? "0–30 روشتة" : "30+ روشتة";
 
     return Container(
       margin: const EdgeInsets.only(top: 10),
@@ -147,7 +140,7 @@ class PharmacyDailyReportWidget extends StatelessWidget {
           // ── عدد الروشتات + الفئة + النسب ──
           _ReportRow(
             title: "الروشتات المكتملة",
-            subtitle: "$tierLabel  •  محلي ${localPct.toStringAsFixed(0)}%  •  مستورد ${importedPct.toStringAsFixed(0)}%",
+            subtitle: "$tierLabel  •  محلي ${localPct.toStringAsFixed(0)}%  •  مستوري 5%",
             valueText: ordersCount.toString(),
             icon: Icons.description_rounded,
           ),

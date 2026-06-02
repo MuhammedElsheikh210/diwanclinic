@@ -9,6 +9,7 @@ class PharmacyOrderCard extends StatelessWidget {
   final VoidCallback? onApprovedOrder;
   final VoidCallback? onFollowTreatment;
   final VoidCallback? onOrderDetails;
+  final VoidCallback? onChat;
 
   const PharmacyOrderCard({
     super.key,
@@ -20,6 +21,7 @@ class PharmacyOrderCard extends StatelessWidget {
     this.onApprovedOrder,
     this.onFollowTreatment,
     this.onOrderDetails,
+    this.onChat,
   });
 
   /// ✅ collect prescription images safely
@@ -324,6 +326,40 @@ class PharmacyOrderCard extends StatelessWidget {
           ),
 
           SizedBox(height: 12.h),
+
+          //----------------------------------------------------------
+          // CHAT BUTTON
+          //----------------------------------------------------------
+          if (onChat != null) ...[
+            GestureDetector(
+              onTap: onChat,
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(vertical: 12.h),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.35),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.chat_rounded,
+                        size: 18, color: AppColors.primary),
+                    SizedBox(width: 8.w),
+                    Text(
+                      "تواصل مع المريض",
+                      style: Get.context!.typography.mdBold
+                          .copyWith(color: AppColors.primary),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(height: 12.h),
+          ],
 
           //----------------------------------------------------------
           // ACTION BUTTONS

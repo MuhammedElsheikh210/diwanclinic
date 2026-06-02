@@ -92,22 +92,27 @@ class CreateReservationViewModel extends GetxController {
       return;
     }
 
-    final key = doctor_key;
+    // المساعدة: نجيب بيانات الدكتور من Firebase مباشرة بالـ doctor_key
+    final key = doctor_key ?? sessionUser?.doctorKey;
     if (key == null || key.isEmpty) return;
 
-    AuthenticationService().getClientsData(
-      query: SQLiteQueryParams(
-        where: "key = ?",
-        whereArgs: [key],
-        limit: 1,
-      ),
-      voidCallBack: (users) {
-        if (users.isNotEmpty) {
-          isPediatricDoctor = users.first.specializeKey == "pediatrics";
+    await AuthenticationService().getClientByUidOnline(
+      uid: key,
+      voidCallBack: (doctor) {
+        if (doctor != null) {
+          isPediatricDoctor = _isPediatric(
+            doctor.specializeKey,
+            doctor.specializationName,
+          );
           update();
         }
       },
     );
+  }
+
+  bool _isPediatric(String? key, String? name) {
+    print("is ped is ${key == "pediatrics" || (name?.trim() == "أطفال")}");
+    return key == "pediatrics" || (name?.trim() == "أطفال");
   }
 
   /// Types that go directly to the doctor with no queue number
@@ -985,9 +990,10 @@ class CreateReservationViewModel extends GetxController {
             selectedType == "زيارة مندوب"
                 ? delegateNameController.text
                 : patientNameController.text,
-        patientCode: patientCodeController.text.trim().isEmpty
-            ? null
-            : patientCodeController.text.trim(),
+        patientCode:
+            patientCodeController.text.trim().isEmpty
+                ? null
+                : patientCodeController.text.trim(),
         revisitCount: _autoRevisitCount,
         parentKey: _autoParentKey,
         isAutoType: manualRevisitCount == null,
@@ -1050,9 +1056,10 @@ class CreateReservationViewModel extends GetxController {
               ? delegateNameController.text
               : patientNameController.text,
       patientPhone: patientPhoneController.text,
-      patientCode: patientCodeController.text.trim().isEmpty
-          ? null
-          : patientCodeController.text.trim(),
+      patientCode:
+          patientCodeController.text.trim().isEmpty
+              ? null
+              : patientCodeController.text.trim(),
 
       assistantUid: assistant.uid,
       assistantName: assistant.name,

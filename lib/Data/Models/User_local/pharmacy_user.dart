@@ -2,7 +2,9 @@ import '../../../index/index_main.dart';
 
 class PharmacyUser extends BaseUser {
   final String? walletNumber;
+  final String? walletHolderName;
   final String? instapayNumber;
+  final String? instapayHolderName;
   final String? instapayLink;
 
   /// Group identifier — same for all staff of one pharmacy.
@@ -27,7 +29,9 @@ class PharmacyUser extends BaseUser {
     super.latitude,
     super.longitude,
     this.walletNumber,
+    this.walletHolderName,
     this.instapayNumber,
+    this.instapayHolderName,
     this.instapayLink,
     this.pharmacyId,
   });
@@ -51,7 +55,9 @@ class PharmacyUser extends BaseUser {
       latitude: base.latitude,
       longitude: base.longitude,
       walletNumber: json['wallet_number'],
+      walletHolderName: json['wallet_holder_name'],
       instapayNumber: json['instapay_number'],
+      instapayHolderName: json['instapay_holder_name'],
       instapayLink: json['instapay_link'],
       pharmacyId: json['pharmacy_id'],
     );
@@ -65,7 +71,9 @@ class PharmacyUser extends BaseUser {
     }
 
     put('wallet_number', walletNumber);
+    put('wallet_holder_name', walletHolderName);
     put('instapay_number', instapayNumber);
+    put('instapay_holder_name', instapayHolderName);
     put('instapay_link', instapayLink);
     put('pharmacy_id', pharmacyId);
 
@@ -89,7 +97,9 @@ class PharmacyUser extends BaseUser {
     double? longitude,
     String? password,
     String? walletNumber,
+    String? walletHolderName,
     String? instapayNumber,
+    String? instapayHolderName,
     String? instapayLink,
     String? pharmacyId,
   }) {
@@ -110,7 +120,9 @@ class PharmacyUser extends BaseUser {
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       walletNumber: walletNumber ?? this.walletNumber,
+      walletHolderName: walletHolderName ?? this.walletHolderName,
       instapayNumber: instapayNumber ?? this.instapayNumber,
+      instapayHolderName: instapayHolderName ?? this.instapayHolderName,
       instapayLink: instapayLink ?? this.instapayLink,
       pharmacyId: pharmacyId ?? this.pharmacyId,
     );

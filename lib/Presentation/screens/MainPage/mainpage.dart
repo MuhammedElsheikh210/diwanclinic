@@ -1,5 +1,6 @@
 import 'package:diwanclinic/Presentation/screens/generic_visite/read/view.dart';
 import 'package:diwanclinic/Presentation/screens/home_doctor/doctor_home_view.dart';
+import 'package:diwanclinic/Presentation/screens/pharmacy_chat/pharmacy_chat_list_view.dart';
 
 import '../../../index/index_main.dart';
 import 'package:flutter/cupertino.dart';
@@ -49,12 +50,14 @@ class _MainPageState extends State<MainPage> {
                       ),
 
               // FAB (Patient only)
-              // floatingActionButtonLocation: userType == UserType.patient
-              //     ? FloatingActionButtonLocation.centerDocked
-              //     : null,
-              // floatingActionButton: userType == UserType.patient
-              //     ? _buildFAB()
-              //     : null,
+              floatingActionButtonLocation:
+                  controller.userType == UserType.patient
+                      ? FloatingActionButtonLocation.endFloat
+                      : null,
+              floatingActionButton:
+                  controller.userType == UserType.patient
+                      ? _buildFAB(controller)
+                      : null,
 
               // BOTTOM NAV
               bottomNavigationBar: _buildBottomNavigationBar(controller),
@@ -68,35 +71,29 @@ class _MainPageState extends State<MainPage> {
   // ------------------------------------------------------------------
   // 🔵 FAB
   // ------------------------------------------------------------------
-  // Widget _buildFAB() {
-  //   return GestureDetector(
-  //     onTap: () => setState(() => currentIndex = 2),
-  //     child: Container(
-  //       width: 78.w,
-  //       height: 78.h,
-  //       decoration: BoxDecoration(
-  //         shape: BoxShape.circle,
-  //         color: AppColors.primary,
-  //         border: Border.all(color: AppColors.white, width: 4),
-  //         boxShadow: [
-  //           BoxShadow(
-  //             color: Colors.black.withValues(alpha: 0.15),
-  //             blurRadius: 18,
-  //             offset: const Offset(0, 6),
-  //           ),
-  //         ],
-  //       ),
-  //       child: Center(
-  //         child: Svgicon(
-  //           icon: IconsConstants.upload,
-  //           width: 35.w,
-  //           height: 35.h,
-  //           color: Colors.white,
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
+  Widget _buildFAB(MainPageViewModel controller) {
+    return GestureDetector(
+      onTap: () => controller.changeIndex(4),
+      child: Container(
+        width: 58.w,
+        height: 58.w,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: AppColors.primary,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.18),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: const Center(
+          child: Icon(Icons.chat_rounded, color: Colors.white, size: 28),
+        ),
+      ),
+    );
+  }
 
   // ------------------------------------------------------------------
   // 🔵 BOTTOM NAV (ORIGINAL + ASSISTANT BADGE)
@@ -223,6 +220,7 @@ class _MainPageState extends State<MainPage> {
       case UserType.pharmacy:
         return [
           _item(IconsConstants.money, "الصيدلية"),
+          _item(IconsConstants.chat, "المرضى"),
           _item(IconsConstants.account, "الحساب"),
         ];
 
@@ -320,7 +318,11 @@ class _MainPageState extends State<MainPage> {
         ][index];
 
       case UserType.pharmacy:
-        return [const PharmacyOrdersListScreen(), const AccountView()][index];
+        return [
+          const PharmacyOrdersListScreen(),
+          const PharmacyChatListView(),
+          const AccountView(),
+        ][index];
 
       default:
         return const Center(child: Text("No page"));

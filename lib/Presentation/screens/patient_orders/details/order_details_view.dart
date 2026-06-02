@@ -1,3 +1,4 @@
+import 'package:diwanclinic/Presentation/screens/pharmacy_chat/pharmacy_chat_detail_view.dart';
 import '../../../../index/index_main.dart';
 import 'package:flutter/material.dart';
 
@@ -104,7 +105,48 @@ class OrderDetailsScreen extends StatelessWidget {
                 ),
               ],
             ),
+            // ===============================
+            // 💬 Chat with Pharmacy
+            // ===============================
+            if (order.pharmacyKey != null && order.pharmacyKey!.isNotEmpty)
+              _pharmacyChatButton(context),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _pharmacyChatButton(BuildContext context) {
+    final session = Get.find<UserSession>();
+    return Padding(
+      padding: EdgeInsets.only(bottom: 24.h),
+      child: SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          style: OutlinedButton.styleFrom(
+            padding: EdgeInsets.symmetric(vertical: 14.h),
+            side: const BorderSide(color: Color(0xFFFF6B35), width: 1.5),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14.r)),
+          ),
+          icon: const Icon(Icons.chat_rounded,
+              color: Color(0xFFFF6B35), size: 22),
+          label: Text(
+            "تواصل مع الصيدلية",
+            style: context.typography.mdMedium
+                .copyWith(color: const Color(0xFFFF6B35)),
+          ),
+          onPressed: () => Get.to(
+            () => PharmacyChatDetailView(
+              pharmacyId: order.pharmacyKey!,
+              pharmacyName: order.pharmacyName ?? "الصيدلية",
+              patientId: session.user?.uid ?? "",
+              patientName: session.user?.name ?? "مريض",
+              isPharmacySide: false,
+              receiverFcmToken: order.pharmacyFcmToken,
+            ),
+            binding: Binding(),
+          ),
         ),
       ),
     );

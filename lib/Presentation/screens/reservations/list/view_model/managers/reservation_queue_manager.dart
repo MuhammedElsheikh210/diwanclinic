@@ -2,21 +2,33 @@ import 'package:firebase_database/firebase_database.dart';
 import '../../../../../../index/index_main.dart';
 
 /// Smart Clinic Flow Queue Manager
-/// Sorting order:
-///   1. Hard priority DESC         (level >= 3: newborn, urgent — bypass window)
+///
+/// Newborn rule (level == 3):
+///   Newborns are NOT hard priority. They are inserted at configurable positions
+///   in the sorted queue. The gap is read from [newbornSlotGap] (default 2).
+///   1st newborn → after [gap] regular cases, 2nd → after gap×2+1, …
+///   Formula (0-based index): insertAt = gap + newbornIndex × (gap + 1).
+///   Multiple newborns are ordered among themselves by arrival time.
+///
+/// Sorting order for non-newborn patients:
+///   1. Hard priority DESC         (level >= 4: urgent only — bypass window)
 ///   2. Inside window DESC         (orderNum within current doctor's window)
-///   3. Checked-in (not missed-returned) DESC  (physically present, first time)
+///   3. Checked-in (not missed-returned) DESC
 ///   4. Soft priority DESC         (level 1-2: VIP, elderly)
-///   5. Effective arrival time ASC (missedReturnedAt if returned, else checkedInAt)
-///   6. Reservation order ASC      (original booking number)
+///   5. Reservation order ASC      (original booking number)
+///   6. Effective arrival time ASC
 ///
 /// Missed-Return logic:
 ///   A patient who was marked missed and then returned (missedReturnedAt != null)
 ///   re-enters the active queue within the same window, but WITHOUT the step-3
-///   checked-in boost. They sort after regular checked-in patients but before
-///   anyone outside the window.
+///   checked-in boost.
 class ReservationQueueManager {
   static const int defaultWindowSize = 5;
+
+  /// How many regular cases must come before a newborn.
+  /// Defaults to 2 (positions 3, 6, 9 …).
+  /// Set this from the selected clinic's [ClinicModel.effectiveNewbornSlotGap].
+  int newbornSlotGap = 2;
 
   // ---------------------------------------------------------------------------
   // Public API
@@ -188,10 +200,13 @@ class ReservationQueueManager {
     List<ReservationModel> active,
     int currentOrder,
   ) {
-    final list = List<ReservationModel>.from(active);
+    // Split newborns from everyone else
+    final newborns = active.where((r) => r.priorityLevel == 3).toList();
+    final others = active.where((r) => (r.priorityLevel ?? 0) != 3).toList();
 
-    list.sort((a, b) {
-      // 1. Hard priority (level >= 3) always first
+    // Sort non-newborn patients using the standard rules
+    others.sort((a, b) {
+      // 1. Urgent hard priority (level >= 4) always first
       final aHard = a.isHardPriority ? 1 : 0;
       final bHard = b.isHardPriority ? 1 : 0;
       if (aHard != bHard) return bHard.compareTo(aHard);
@@ -201,8 +216,7 @@ class ReservationQueueManager {
       final bWin = _isInWindow(b.orderNum, currentOrder) ? 1 : 0;
       if (aWin != bWin) return bWin.compareTo(aWin);
 
-      // 3. Checked in at clinic — returned-from-missed do NOT get this boost.
-      //    They re-enter the window but sit below first-time checked-in patients.
+      // 3. Checked in — returned-from-missed do NOT get this boost
       final aCheck = (a.isCheckedIn && !a.isReturnedFromMissed) ? 1 : 0;
       final bCheck = (b.isCheckedIn && !b.isReturnedFromMissed) ? 1 : 0;
       if (aCheck != bCheck) return bCheck.compareTo(aCheck);
@@ -212,21 +226,50 @@ class ReservationQueueManager {
       final bSoft = b.priorityLevel ?? 0;
       if (aSoft != bSoft) return bSoft.compareTo(aSoft);
 
-      // 5. Original reservation order — booking sequence determines turn within
-      //    the same tier. A patient with orderNum=4 should go before orderNum=7
-      //    even if 7 checked in first (scenarios 3, 25).
+      // 5. Booking order
       final aOrder = a.orderNum ?? 9999;
       final bOrder = b.orderNum ?? 9999;
       if (aOrder != bOrder) return aOrder.compareTo(bOrder);
 
-      // 6. Effective arrival time (tiebreaker):
-      //    • Returned-from-missed → missedReturnedAt
-      //    • Normal              → checkedInAt
+      // 6. Effective arrival time
       final aArrival = a.effectiveArrivalTime ?? double.maxFinite.toInt();
       final bArrival = b.effectiveArrivalTime ?? double.maxFinite.toInt();
       return aArrival.compareTo(bArrival);
     });
 
-    return list;
+    // Sort newborns among themselves by arrival (first arrived → earlier slot)
+    newborns.sort((a, b) {
+      final aArr = a.effectiveArrivalTime ?? double.maxFinite.toInt();
+      final bArr = b.effectiveArrivalTime ?? double.maxFinite.toInt();
+      return aArr.compareTo(bArr);
+    });
+
+    // Insert each newborn at configurable positions (0-based):
+    //   gap=2 → positions 2, 5, 8, 11, …  (after 2, 5, 8 regular cases)
+    //   gap=3 → positions 3, 7, 11, 15, … (after 3, 7, 11 regular cases)
+    //   formula: targetIdx = gap + i × (gap + 1)
+    // NEVER past a patient who registered AFTER this newborn.
+    final gap = newbornSlotGap;
+    final result = List<ReservationModel>.from(others);
+    for (int i = 0; i < newborns.length; i++) {
+      final newbornOrderNum = newborns[i].orderNum ?? 9999;
+
+      // First position in current result that belongs to a patient who
+      // registered AFTER this newborn (orderNum > newborn's orderNum).
+      int firstLaterIdx = result.indexWhere(
+        (r) => (r.orderNum ?? 9999) > newbornOrderNum,
+      );
+      if (firstLaterIdx == -1) firstLaterIdx = result.length;
+
+      // Ideal slot based on clinic's configured gap
+      final targetIdx = gap + i * (gap + 1);
+
+      // Never go past a later-registered patient — take the closer bound.
+      final insertAt = targetIdx < firstLaterIdx ? targetIdx : firstLaterIdx;
+
+      result.insert(insertAt, newborns[i]);
+    }
+
+    return result;
   }
 }

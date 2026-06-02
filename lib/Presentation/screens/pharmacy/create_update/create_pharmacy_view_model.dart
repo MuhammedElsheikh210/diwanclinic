@@ -5,7 +5,12 @@ class CreatePharmacyViewModel extends GetxController {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController walletController = TextEditingController();
-  final TextEditingController instapayNumberController = TextEditingController();
+  final TextEditingController walletHolderNameController =
+      TextEditingController();
+  final TextEditingController instapayNumberController =
+      TextEditingController();
+  final TextEditingController instapayHolderNameController =
+      TextEditingController();
   final TextEditingController instapayLinkController = TextEditingController();
 
   double? selectedLatitude;
@@ -87,9 +92,15 @@ class CreatePharmacyViewModel extends GetxController {
       walletNumber: walletController.text.trim().isEmpty
           ? null
           : walletController.text.trim(),
+      walletHolderName: walletHolderNameController.text.trim().isEmpty
+          ? null
+          : walletHolderNameController.text.trim(),
       instapayNumber: instapayNumberController.text.trim().isEmpty
           ? null
           : instapayNumberController.text.trim(),
+      instapayHolderName: instapayHolderNameController.text.trim().isEmpty
+          ? null
+          : instapayHolderNameController.text.trim(),
       instapayLink: instapayLinkController.text.trim().isEmpty
           ? null
           : instapayLinkController.text.trim(),
@@ -139,9 +150,15 @@ class CreatePharmacyViewModel extends GetxController {
         walletNumber: walletController.text.trim().isEmpty
             ? null
             : walletController.text.trim(),
+        walletHolderName: walletHolderNameController.text.trim().isEmpty
+            ? null
+            : walletHolderNameController.text.trim(),
         instapayNumber: instapayNumberController.text.trim().isEmpty
             ? null
             : instapayNumberController.text.trim(),
+        instapayHolderName: instapayHolderNameController.text.trim().isEmpty
+            ? null
+            : instapayHolderNameController.text.trim(),
         instapayLink: instapayLinkController.text.trim().isEmpty
             ? null
             : instapayLinkController.text.trim(),
@@ -197,7 +214,9 @@ class CreatePharmacyViewModel extends GetxController {
     nameController.dispose();
     phoneController.dispose();
     walletController.dispose();
+    walletHolderNameController.dispose();
     instapayNumberController.dispose();
+    instapayHolderNameController.dispose();
     instapayLinkController.dispose();
     super.dispose();
   }

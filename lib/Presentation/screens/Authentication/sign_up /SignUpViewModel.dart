@@ -1,15 +1,12 @@
-import 'package:firebase_database/firebase_database.dart';
 import '../../../../index/index_main.dart';
 
 class SignUpViewModel extends GetxController {
   final nameController = TextEditingController();
   final phoneController = TextEditingController();
-  final addressController = TextEditingController();
   final passwordController = TextEditingController();
 
   final isNameValid = false.obs;
   final isPhoneValid = false.obs;
-  final isAddressValid = false.obs;
   final isPasswordValid = false.obs;
 
   final UserSession _session = Get.find();
@@ -30,10 +27,6 @@ class SignUpViewModel extends GetxController {
     isPhoneValid.value = value.trim().length >= 8;
   }
 
-  void validateAddress(String value) {
-    isAddressValid.value = value.trim().length >= 5;
-  }
-
   // ============================================================
   // SIGN UP
   // ============================================================
@@ -41,10 +34,9 @@ class SignUpViewModel extends GetxController {
   Future<void> signUp() async {
     final name = nameController.text.trim();
     final phone = phoneController.text.trim();
-    final address = addressController.text.trim();
     final password = passwordController.text.trim();
 
-    if (name.isEmpty || phone.isEmpty || address.isEmpty || password.isEmpty) {
+    if (name.isEmpty || phone.isEmpty || password.isEmpty) {
       Loader.showError("يرجى ملء جميع الحقول");
       return;
     }
@@ -75,7 +67,6 @@ class SignUpViewModel extends GetxController {
         uid: uid,
         name: name,
         phone: phone,
-        address: address,
         identifier: email,
         password: password,
         fcmToken: token,

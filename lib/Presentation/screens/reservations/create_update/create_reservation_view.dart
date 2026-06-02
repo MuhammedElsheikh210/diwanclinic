@@ -48,7 +48,7 @@ class _CreateReservationViewState extends State<CreateReservationView> {
   @override
   void initState() {
     super.initState();
-
+    print("doctor_key = ${widget.doctor_key}");
     /// 🔹 basic setup
     vm.clinic_key = widget.clinic_key;
     vm.shift_key = widget.shift_key;
@@ -374,44 +374,25 @@ class _CreateReservationViewState extends State<CreateReservationView> {
 
                                 SizedBox(height: 20.h),
 
-                                /// 🔹 البحث بكود الحالة
+                                /// 🔹 كود الحالة
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 15.0,
                                   ),
-                                  child: PatientSearchBar(
-                                    tag: "search_code",
-                                    hint: "كود الحالة (اختياري)",
-                                    focusNode: codeFocus,
-                                    textEditingController:
+                                  child: AppTextField(
+                                    controller:
                                         controller.patientCodeController,
-                                    searchResult: (patientModel, text) {
-                                      setState(() {
-                                        showCodeList = text.isNotEmpty &&
-                                            !showPhoneList &&
-                                            !showNameList;
-                                        if (text.isEmpty) showCodeList = false;
-                                      });
-                                    },
-                                    onCloseList: () {
-                                      setState(() => showCodeList = false);
-                                    },
+                                    hintText: "كود الحالة (اختياري)",
+                                    labelText: "كود الحالة",
+                                    focusNode: codeFocus,
+                                    keyboardType: TextInputType.text,
+                                    prefixIcon: const Icon(
+                                      Icons.tag_rounded,
+                                      color: AppColors.primary,
+                                      size: 20,
+                                    ),
                                   ),
                                 ),
-
-                                if (showCodeList)
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 15.0,
-                                    ),
-                                    child: PatientResultList(
-                                      tag: "search_code",
-                                      onSelect: (client) {
-                                        _fillPatientData(controller, client);
-                                        setState(() => showCodeList = false);
-                                      },
-                                    ),
-                                  ),
 
                                 if (controller.lastReservationHumanText != null)
                                   Padding(

@@ -158,6 +158,30 @@ class _TopRow extends StatelessWidget {
                   ),
                 ),
               ],
+              if ((reservation.patientCode ?? '').isNotEmpty) ...[
+                SizedBox(height: 4.h),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(6.r),
+                    border: Border.all(
+                        color: accentColor.withValues(alpha: 0.25)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.tag_rounded, size: 11.sp, color: accentColor),
+                      SizedBox(width: 3.w),
+                      Text(
+                        "كود: ${reservation.patientCode}",
+                        style: context.typography.xsMedium
+                            .copyWith(color: accentColor),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
         ),

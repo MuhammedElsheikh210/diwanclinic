@@ -18,7 +18,11 @@ class CreateDoctorViewModel extends GetxController {
   final TextEditingController qualificationsController =
       TextEditingController();
   final TextEditingController walletNumberController = TextEditingController();
+  final TextEditingController walletHolderNameController =
+      TextEditingController();
   final TextEditingController instapayNumberController =
+      TextEditingController();
+  final TextEditingController instapayHolderNameController =
       TextEditingController();
   final TextEditingController instapayLinkController = TextEditingController();
 
@@ -73,7 +77,9 @@ class CreateDoctorViewModel extends GetxController {
       supportsOnlinePay = d?.supportsOnlinePay ?? false;
       requiresDeposit = d?.requiresDeposit ?? false;
       walletNumberController.text = d?.walletNumber ?? "";
+      walletHolderNameController.text = d?.walletHolderName ?? "";
       instapayNumberController.text = d?.instapayNumber ?? "";
+      instapayHolderNameController.text = d?.instapayHolderName ?? "";
       instapayLinkController.text = d?.instapayLink ?? "";
     }
   }
@@ -228,9 +234,15 @@ class CreateDoctorViewModel extends GetxController {
       walletNumber: walletNumberController.text.trim().isEmpty
           ? null
           : walletNumberController.text.trim(),
+      walletHolderName: walletHolderNameController.text.trim().isEmpty
+          ? null
+          : walletHolderNameController.text.trim(),
       instapayNumber: instapayNumberController.text.trim().isEmpty
           ? null
           : instapayNumberController.text.trim(),
+      instapayHolderName: instapayHolderNameController.text.trim().isEmpty
+          ? null
+          : instapayHolderNameController.text.trim(),
       instapayLink: instapayLinkController.text.trim().isEmpty
           ? null
           : instapayLinkController.text.trim(),
@@ -311,9 +323,15 @@ class CreateDoctorViewModel extends GetxController {
         walletNumber: walletNumberController.text.trim().isEmpty
             ? null
             : walletNumberController.text.trim(),
+        walletHolderName: walletHolderNameController.text.trim().isEmpty
+            ? null
+            : walletHolderNameController.text.trim(),
         instapayNumber: instapayNumberController.text.trim().isEmpty
             ? null
             : instapayNumberController.text.trim(),
+        instapayHolderName: instapayHolderNameController.text.trim().isEmpty
+            ? null
+            : instapayHolderNameController.text.trim(),
         instapayLink: instapayLinkController.text.trim().isEmpty
             ? null
             : instapayLinkController.text.trim(),
@@ -365,7 +383,9 @@ class CreateDoctorViewModel extends GetxController {
     tiktokController.dispose();
     specializationNameController.dispose();
     walletNumberController.dispose();
+    walletHolderNameController.dispose();
     instapayNumberController.dispose();
+    instapayHolderNameController.dispose();
     instapayLinkController.dispose();
     super.dispose();
   }

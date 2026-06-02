@@ -113,59 +113,61 @@ class _AdminTodayOrdersViewState extends State<AdminTodayOrdersView>
           SizedBox(height: 8.h),
           controller.isLoadingDoctors
               ? Container(
-                  height: 52.h,
-                  decoration: BoxDecoration(
-                    color: AppColors.background_neutral_100,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Center(
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                )
+                height: 52.h,
+                decoration: BoxDecoration(
+                  color: AppColors.background_neutral_100,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Center(
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              )
               : Container(
-                  padding: EdgeInsets.symmetric(horizontal: 14.w),
-                  decoration: BoxDecoration(
-                    color: AppColors.background_neutral_100,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: controller.selectedDoctor != null
-                          ? AppColors.primary.withValues(alpha: 0.4)
-                          : Colors.transparent,
-                      width: 1.5,
-                    ),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<LocalUser>(
-                      isExpanded: true,
-                      hint: Text(
-                        'اختر دكتور...',
-                        style: context.typography.mdRegular.copyWith(
-                          color: AppColors.field_text_placeholder,
-                        ),
-                      ),
-                      value: controller.selectedDoctor,
-                      icon: const Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        color: AppColors.primary,
-                      ),
-                      style: context.typography.mdMedium.copyWith(
-                        color: AppColors.textDisplay,
-                      ),
-                      items: controller.doctors.map((doctor) {
-                        return DropdownMenuItem<LocalUser>(
-                          value: doctor,
-                          child: Text(
-                            'د. ${doctor.name ?? ""}',
-                            style: context.typography.mdMedium.copyWith(
-                              color: AppColors.textDisplay,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: controller.selectDoctor,
-                    ),
+                padding: EdgeInsets.symmetric(horizontal: 14.w),
+                decoration: BoxDecoration(
+                  color: AppColors.background_neutral_100,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color:
+                        controller.selectedDoctor != null
+                            ? AppColors.primary.withValues(alpha: 0.4)
+                            : Colors.transparent,
+                    width: 1.5,
                   ),
                 ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<LocalUser>(
+                    isExpanded: true,
+                    hint: Text(
+                      'اختر دكتور...',
+                      style: context.typography.mdRegular.copyWith(
+                        color: AppColors.field_text_placeholder,
+                      ),
+                    ),
+                    value: controller.selectedDoctor,
+                    icon: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: AppColors.primary,
+                    ),
+                    style: context.typography.mdMedium.copyWith(
+                      color: AppColors.textDisplay,
+                    ),
+                    items:
+                        controller.doctors.map((doctor) {
+                          return DropdownMenuItem<LocalUser>(
+                            value: doctor,
+                            child: Text(
+                              'د. ${doctor.name ?? ""}',
+                              style: context.typography.mdMedium.copyWith(
+                                color: AppColors.textDisplay,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                    onChanged: controller.selectDoctor,
+                  ),
+                ),
+              ),
         ],
       ),
     );
@@ -282,7 +284,11 @@ class _AdminTodayOrdersViewState extends State<AdminTodayOrdersView>
     );
   }
 
-  Widget _tabItem(BuildContext context, {required String title, required int index}) {
+  Widget _tabItem(
+    BuildContext context, {
+    required String title,
+    required int index,
+  }) {
     final isSelected = _tabController.index == index;
     return Expanded(
       child: GestureDetector(
@@ -330,9 +336,10 @@ class _AdminTodayOrdersViewState extends State<AdminTodayOrdersView>
       return const ShimmerLoader();
     }
 
-    final list = _tabController.index == 0
-        ? controller.activeOrders
-        : controller.finishedOrders;
+    final list =
+        _tabController.index == 0
+            ? controller.activeOrders
+            : controller.finishedOrders;
 
     if (list.isEmpty) {
       return _emptyState(
@@ -349,9 +356,7 @@ class _AdminTodayOrdersViewState extends State<AdminTodayOrdersView>
         final order = list[index];
         return OrderCard(
           order: order,
-          onOrderDetails: () => Get.to(
-            () => OrderDetailsScreen(order: order),
-          ),
+          onOrderDetails: () => Get.to(() => OrderDetailsScreen(order: order)),
         );
       },
     );

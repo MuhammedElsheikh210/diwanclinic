@@ -20,7 +20,9 @@ class DoctorUser extends BaseUser {
   final bool supportsOnlinePay;
   final bool requiresDeposit;
   final String? walletNumber;
+  final String? walletHolderName;
   final String? instapayNumber;
+  final String? instapayHolderName;
   final String? instapayLink;
 
   const DoctorUser({
@@ -51,7 +53,9 @@ class DoctorUser extends BaseUser {
     this.supportsOnlinePay = false,
     this.requiresDeposit = false,
     this.walletNumber,
+    this.walletHolderName,
     this.instapayNumber,
+    this.instapayHolderName,
     this.instapayLink,
   });
 
@@ -117,7 +121,9 @@ class DoctorUser extends BaseUser {
       supportsOnlinePay: parseBoolToInt(json['supports_online_pay']) == 1,
       requiresDeposit: parseBoolToInt(json['requires_deposit']) == 1,
       walletNumber: json['wallet_number'],
+      walletHolderName: json['wallet_holder_name'],
       instapayNumber: json['instapay_number'],
+      instapayHolderName: json['instapay_holder_name'],
       instapayLink: json['instapay_link'],
     );
   }
@@ -150,7 +156,9 @@ class DoctorUser extends BaseUser {
     data["supports_online_pay"] = supportsOnlinePay ? 1 : 0;
     data["requires_deposit"] = requiresDeposit ? 1 : 0;
     put("wallet_number", walletNumber);
+    put("wallet_holder_name", walletHolderName);
     put("instapay_number", instapayNumber);
+    put("instapay_holder_name", instapayHolderName);
     put("instapay_link", instapayLink);
 
     return data;
@@ -188,7 +196,9 @@ class DoctorUser extends BaseUser {
     bool? supportsOnlinePay,
     bool? requiresDeposit,
     String? walletNumber,
+    String? walletHolderName,
     String? instapayNumber,
+    String? instapayHolderName,
     String? instapayLink,
   }) {
     return DoctorUser(
@@ -220,7 +230,9 @@ class DoctorUser extends BaseUser {
       supportsOnlinePay: supportsOnlinePay ?? this.supportsOnlinePay,
       requiresDeposit: requiresDeposit ?? this.requiresDeposit,
       walletNumber: walletNumber ?? this.walletNumber,
+      walletHolderName: walletHolderName ?? this.walletHolderName,
       instapayNumber: instapayNumber ?? this.instapayNumber,
+      instapayHolderName: instapayHolderName ?? this.instapayHolderName,
       instapayLink: instapayLink ?? this.instapayLink,
     );
   }

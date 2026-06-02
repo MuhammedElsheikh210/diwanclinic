@@ -25,6 +25,8 @@ class ReservationCardBody extends StatelessWidget {
               _info(context, "الإسم", reservation.patientName),
               _info(context, "الهاتف", reservation.patientPhone),
               _info(context, "المدفوع", reservation.paidAmount),
+              if (reservation.patientCode?.isNotEmpty == true)
+                _codeChip(context, reservation.patientCode!),
             ],
           ),
         ),
@@ -41,6 +43,32 @@ class ReservationCardBody extends StatelessWidget {
         "$label : ${value ?? ""}",
         style: context.typography.lgBold.copyWith(
           color: AppColors.background_black,
+        ),
+      ),
+    );
+  }
+
+  Widget _codeChip(BuildContext context, String code) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.tag_rounded, size: 13, color: AppColors.primary),
+            const SizedBox(width: 4),
+            Text(
+              "كود: $code",
+              style: context.typography.smMedium
+                  .copyWith(color: AppColors.primary),
+            ),
+          ],
         ),
       ),
     );

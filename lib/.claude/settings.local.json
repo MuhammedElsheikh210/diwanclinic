@@ -110,7 +110,29 @@
       "Bash(kill %2)",
       "Bash(ls /Users/apple/Library/Developer/CoreSimulator/Devices/359DB009-63BC-427D-897E-F84A821C7504/data/Containers/Bundle/Application/7EA10AA8-E1AB-4966-90C9-23AF32CDE930/Runner.app/ | grep -i google)",
       "Bash(xargs -I{} ls \"/Users/apple/Library/Developer/CoreSimulator/Devices/359DB009-63BC-427D-897E-F84A821C7504/data/Containers/Bundle/Application/{}/Runner.app/\")",
-      "Bash(node --check /Users/apple/diwanclinic/functions/orders/orderPharmacy.js)"
+      "Bash(node --check /Users/apple/diwanclinic/functions/orders/orderPharmacy.js)",
+      "Bash(open /Users/apple/Desktop/broklen_mobile_mockup.html)",
+      "Bash(mkdir -p /Users/apple/resturants/lib/presentation/screens/featured/widgets)",
+      "Bash(find /Users/apple -maxdepth 3 -name \"pubspec.yaml\" 2>/dev/null | grep -v diwanclinic | head -10)",
+      "Bash(xargs -I{} sh -c 'echo \"=== {} ===\"; grep \"^name:\" {} 2>/dev/null')",
+      "Bash(find /Users/apple -maxdepth 4 -name \"pubspec.yaml\" 2>/dev/null | grep -v diwanclinic | grep -v \".pub-cache\" | grep -v \"build/\" | head -10)",
+      "Bash(git -C /Users/apple/diwanclinic status --short lib/Data/Models/user_address_model.dart lib/Presentation/parentControllers/user_address_service.dart lib/Presentation/screens/user_addresses/)",
+      "Bash(git -C /Users/apple/diwanclinic status --short)",
+      "Bash(grep -v \"^$\\\\|^Run\\\\|^No issues\\\\|packages\\\\|Run \\\\|Analyzing\")",
+      "Bash(git -C /Users/apple/diwanclinic stash list)",
+      "Bash(git -C /Users/apple/diwanclinic log --oneline -3)",
+      "Bash(git -C /Users/apple/diwanclinic show HEAD --name-only)",
+      "Bash(find /Users/apple -maxdepth 3 -name \"pubspec.yaml\" 2>/dev/null | xargs grep -l \"flutter\" 2>/dev/null | grep -v diwanclinic | head -10)",
+      "Bash(git -C /Users/apple/diwanclinic checkout -- lib/index/index_main.dart lib/Binding/init.dart lib/Presentation/screens/patient_orders/order_create_bottom_sheet.dart lib/Presentation/screens/setting/account/account_view.dart)",
+      "Bash(mkdir -p /Users/apple/resturants/lib/Data/models/delivery_zone /Users/apple/resturants/lib/presentation/screens/delivery_zones/widgets)",
+      "Bash(grep -r \"حفظ بياناتي للطلب القادم\" /Users/apple --include=\"*.dart\" -l 2>/dev/null)",
+      "Bash(grep -v \"^\\\\s*$\")",
+      "Bash(find /Users/apple -name \"*.dart\" -path \"*/resturant*\" -o -name \"*.dart\" -path \"*/restaurant*\" 2>/dev/null | head -20)",
+      "Bash(bash -c \"cd /Users/apple/resturants && flutter analyze --no-pub 2>&1 | tail -30\")",
+      "Bash(mkdir -p /Users/apple/resturants/lib/presentation/screens/order_details)",
+      "Bash(find /Users/apple -name \"*.dart\" -path \"*/resturant*\" 2>/dev/null | head -20)",
+      "Bash(ls /Users/apple/resturants/lib 2>/dev/null || find /Users/apple -maxdepth 3 -name \"pubspec.yaml\" 2>/dev/null | grep -v diwanclinic | head -10)",
+      "Bash(python3 -c ' *)"
     ]
   }
 }

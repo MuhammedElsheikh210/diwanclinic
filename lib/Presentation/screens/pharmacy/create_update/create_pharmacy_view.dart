@@ -6,11 +6,8 @@ class CreatePharmacyView extends StatefulWidget {
   /// When non-null → creating a new STAFF account for this pharmacy
   final String? parentPharmacyId;
 
-  const CreatePharmacyView({
-    Key? key,
-    this.pharmacy,
-    this.parentPharmacyId,
-  }) : super(key: key);
+  const CreatePharmacyView({Key? key, this.pharmacy, this.parentPharmacyId})
+    : super(key: key);
 
   @override
   State<CreatePharmacyView> createState() => _CreatePharmacyViewState();
@@ -32,7 +29,10 @@ class _CreatePharmacyViewState extends State<CreatePharmacyView> {
       vm.selectedLatitude = p.latitude;
       vm.selectedLongitude = p.longitude;
       vm.walletController.text = p.asPharmacy?.walletNumber ?? "";
+      vm.walletHolderNameController.text = p.asPharmacy?.walletHolderName ?? "";
       vm.instapayNumberController.text = p.asPharmacy?.instapayNumber ?? "";
+      vm.instapayHolderNameController.text =
+          p.asPharmacy?.instapayHolderName ?? "";
       vm.instapayLinkController.text = p.asPharmacy?.instapayLink ?? "";
       vm.isUpdate = true;
       vm.existingPharmacy = widget.pharmacy;
@@ -47,118 +47,210 @@ class _CreatePharmacyViewState extends State<CreatePharmacyView> {
 
   @override
   Widget build(BuildContext context) {
-    final keys = keyboardService.generateKeys('CreatePharmacyView', 5);
+    final keys = keyboardService.generateKeys('CreatePharmacyView', 7);
 
     return GetBuilder<CreatePharmacyViewModel>(
       init: CreatePharmacyViewModel(),
       builder: (controller) {
-        return Container(
-          height: 600.h,
-          padding: EdgeInsets.symmetric(horizontal: 15.w),
-          child: Column(
-            children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    controller.isUpdate
-                        ? "تحديث بيانات الصيدلي"
-                        : widget.parentPharmacyId != null
-                            ? "إضافة موظف للصيدلية"
-                            : "إضافة صيدلية جديدة",
-                    style: context.typography.mdBold,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
+        return KeyboardActions(
+          config: keyboardService.buildConfig(context, keys),
 
-              // Form
-              Expanded(
-                child: KeyboardActions(
-                  config: keyboardService.buildConfig(context, keys),
-                  child: Form(
-                    key: globalKeyPharmacy,
-                    child: ListView(
-                      shrinkWrap: true,
-                      children: [
-                        CustomInputField(
-                          label: "اسم الصيدلي",
-                          controller: controller.nameController,
-                          hintText: "ادخل اسم الصيدلي",
-                          validator: InputValidators.combine([notEmptyValidator]),
-                          focusNode: keyboardService.getFocusNode(keys[0]),
-                          keyboardType: TextInputType.name,
-                        ),
-                        CustomInputField(
-                          label: "الهاتف",
-                          controller: controller.phoneController,
-                          hintText: "ادخل الهاتف",
-                          validator: InputValidators.combine([notEmptyValidator]),
-                          focusNode: keyboardService.getFocusNode(keys[1]),
-                          keyboardType: TextInputType.phone,
-                        ),
-                        SizedBox(height: 12.h),
-                        _PharmacyLocationPickerWidget(controller: controller),
-                        SizedBox(height: 16.h),
-
-                        // بيانات الدفع — تظهر للصيدلية الأساسية فقط، لا للموظفين
-                        if (widget.parentPharmacyId == null) ...[
-                          _PaymentSectionHeader(),
-                          SizedBox(height: 10.h),
-                          CustomInputField(
-                            label: "رقم المحفظة (اختياري)",
-                            controller: controller.walletController,
-                            hintText: "مثال: 01012345678",
-                            focusNode: keyboardService.getFocusNode(keys[2]),
-                            keyboardType: TextInputType.phone,
-                            validator: (_) => null,
-                          ),
-                          CustomInputField(
-                            label: "رقم InstaPay (اختياري)",
-                            controller: controller.instapayNumberController,
-                            hintText: "مثال: 01012345678",
-                            focusNode: keyboardService.getFocusNode(keys[3]),
-                            keyboardType: TextInputType.phone,
-                            validator: (_) => null,
-                          ),
-                          CustomInputField(
-                            label: "لينك InstaPay (اختياري)",
-                            controller: controller.instapayLinkController,
-                            hintText: "مثال: https://ipn.eg/...",
-                            focusNode: keyboardService.getFocusNode(keys[4]),
-                            keyboardType: TextInputType.url,
-                            validator: (_) => null,
-                          ),
-                        ],
-                      ],
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 15.w),
+            child: Column(
+              children: [
+                // Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      controller.isUpdate
+                          ? "تحديث بيانات الصيدلي"
+                          : widget.parentPharmacyId != null
+                          ? "إضافة موظف للصيدلية"
+                          : "إضافة صيدلية جديدة",
+                      style: context.typography.mdBold,
                     ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+
+                SizedBox(
+                  height: 500.h,
+                  child: ListView(
+                    children: [
+                      CustomInputField(
+                        label: "اسم الصيدلي",
+                        controller: controller.nameController,
+                        hintText: "ادخل اسم الصيدلي",
+                        validator: InputValidators.combine([notEmptyValidator]),
+                        focusNode: keyboardService.getFocusNode(keys[0]),
+                        keyboardType: TextInputType.name,
+                      ),
+                      CustomInputField(
+                        label: "الهاتف",
+                        controller: controller.phoneController,
+                        hintText: "ادخل الهاتف",
+                        validator: InputValidators.combine([notEmptyValidator]),
+                        focusNode: keyboardService.getFocusNode(keys[1]),
+                        keyboardType: TextInputType.phone,
+                      ),
+                      SizedBox(height: 12.h),
+                      _PharmacyLocationPickerWidget(controller: controller),
+                      SizedBox(height: 16.h),
+
+                      // بيانات الدفع — تظهر للصيدلية الأساسية فقط، لا للموظفين
+                      if (widget.parentPharmacyId == null) ...[
+                        _PaymentSectionHeader(),
+                        SizedBox(height: 10.h),
+                        CustomInputField(
+                          label: "رقم المحفظة (اختياري)",
+                          controller: controller.walletController,
+                          hintText: "مثال: 01012345678",
+                          focusNode: keyboardService.getFocusNode(keys[2]),
+                          keyboardType: TextInputType.phone,
+                          validator: (_) => null,
+                        ),
+                        CustomInputField(
+                          label: "اسم صاحب المحفظة (اختياري)",
+                          controller: controller.walletHolderNameController,
+                          hintText: "مثال: أحمد محمد",
+                          focusNode: keyboardService.getFocusNode(keys[3]),
+                          keyboardType: TextInputType.name,
+                          validator: (_) => null,
+                        ),
+                        CustomInputField(
+                          label: "رقم InstaPay (اختياري)",
+                          controller: controller.instapayNumberController,
+                          hintText: "مثال: 01012345678",
+                          focusNode: keyboardService.getFocusNode(keys[4]),
+                          keyboardType: TextInputType.phone,
+                          validator: (_) => null,
+                        ),
+                        CustomInputField(
+                          label: "اسم صاحب حساب InstaPay (اختياري)",
+                          controller: controller.instapayHolderNameController,
+                          hintText: "مثال: أحمد محمد",
+                          focusNode: keyboardService.getFocusNode(keys[5]),
+                          keyboardType: TextInputType.name,
+                          validator: (_) => null,
+                        ),
+                        CustomInputField(
+                          label: "لينك InstaPay (اختياري)",
+                          controller: controller.instapayLinkController,
+                          hintText: "مثال: https://ipn.eg/...",
+                          focusNode: keyboardService.getFocusNode(keys[6]),
+                          keyboardType: TextInputType.url,
+                          validator: (_) => null,
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-              ),
 
-              Divider(height: 20.h),
+                // // Form
+                // Expanded(
+                //   child: KeyboardActions(
+                //     config: keyboardService.buildConfig(context, keys),
+                //     child: Form(
+                //       key: globalKeyPharmacy,
+                //       child: ListView(
+                //         children: [
+                //           CustomInputField(
+                //             label: "اسم الصيدلي",
+                //             controller: controller.nameController,
+                //             hintText: "ادخل اسم الصيدلي",
+                //             validator: InputValidators.combine([notEmptyValidator]),
+                //             focusNode: keyboardService.getFocusNode(keys[0]),
+                //             keyboardType: TextInputType.name,
+                //           ),
+                //           CustomInputField(
+                //             label: "الهاتف",
+                //             controller: controller.phoneController,
+                //             hintText: "ادخل الهاتف",
+                //             validator: InputValidators.combine([notEmptyValidator]),
+                //             focusNode: keyboardService.getFocusNode(keys[1]),
+                //             keyboardType: TextInputType.phone,
+                //           ),
+                //           SizedBox(height: 12.h),
+                //           _PharmacyLocationPickerWidget(controller: controller),
+                //           SizedBox(height: 16.h),
+                //
+                //           // بيانات الدفع — تظهر للصيدلية الأساسية فقط، لا للموظفين
+                //           if (widget.parentPharmacyId == null) ...[
+                //             _PaymentSectionHeader(),
+                //             SizedBox(height: 10.h),
+                //             CustomInputField(
+                //               label: "رقم المحفظة (اختياري)",
+                //               controller: controller.walletController,
+                //               hintText: "مثال: 01012345678",
+                //               focusNode: keyboardService.getFocusNode(keys[2]),
+                //               keyboardType: TextInputType.phone,
+                //               validator: (_) => null,
+                //             ),
+                //             CustomInputField(
+                //               label: "اسم صاحب المحفظة (اختياري)",
+                //               controller: controller.walletHolderNameController,
+                //               hintText: "مثال: أحمد محمد",
+                //               focusNode: keyboardService.getFocusNode(keys[3]),
+                //               keyboardType: TextInputType.name,
+                //               validator: (_) => null,
+                //             ),
+                //             CustomInputField(
+                //               label: "رقم InstaPay (اختياري)",
+                //               controller: controller.instapayNumberController,
+                //               hintText: "مثال: 01012345678",
+                //               focusNode: keyboardService.getFocusNode(keys[4]),
+                //               keyboardType: TextInputType.phone,
+                //               validator: (_) => null,
+                //             ),
+                //             CustomInputField(
+                //               label: "اسم صاحب حساب InstaPay (اختياري)",
+                //               controller: controller.instapayHolderNameController,
+                //               hintText: "مثال: أحمد محمد",
+                //               focusNode: keyboardService.getFocusNode(keys[5]),
+                //               keyboardType: TextInputType.name,
+                //               validator: (_) => null,
+                //             ),
+                //             CustomInputField(
+                //               label: "لينك InstaPay (اختياري)",
+                //               controller: controller.instapayLinkController,
+                //               hintText: "مثال: https://ipn.eg/...",
+                //               focusNode: keyboardService.getFocusNode(keys[6]),
+                //               keyboardType: TextInputType.url,
+                //               validator: (_) => null,
+                //             ),
+                //           ],
+                //         ],
+                //       ),
+                //     ),
+                //   ),
+                // ),
+                //
+                Divider(height: 20.h),
 
-              // ✅ Bottom Actions
-              SafeArea(
-                child: BottomNavigationActions(
-                  rightTitle: controller.isUpdate
-                      ? "تحديث الصيدلي"
-                      : widget.parentPharmacyId != null
-                          ? "إضافة الموظف"
-                          : "إضافة الصيدلية",
-                  rightAction: () {
-                    if (globalKeyPharmacy.currentState?.validate() ?? false) {
-                      controller.savePharmacy();
-                    }
-                  },
-                  isRightEnabled: controller.validateStep(),
+                // ✅ Bottom Actions
+                SafeArea(
+                  child: BottomNavigationActions(
+                    rightTitle:
+                        controller.isUpdate
+                            ? "تحديث الصيدلي"
+                            : widget.parentPharmacyId != null
+                            ? "إضافة الموظف"
+                            : "إضافة الصيدلية",
+                    rightAction: () {
+                      if (globalKeyPharmacy.currentState?.validate() ?? false) {
+                        controller.savePharmacy();
+                      }
+                    },
+                    isRightEnabled: controller.validateStep(),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -177,11 +269,17 @@ class _PaymentSectionHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.payment_outlined, color: AppColors.primary, size: 18),
+          const Icon(
+            Icons.payment_outlined,
+            color: AppColors.primary,
+            size: 18,
+          ),
           SizedBox(width: 8.w),
           AppText(
             text: "بيانات الدفع الإلكتروني",
-            textStyle: context.typography.smSemiBold.copyWith(color: AppColors.primary),
+            textStyle: context.typography.smSemiBold.copyWith(
+              color: AppColors.primary,
+            ),
           ),
         ],
       ),
@@ -191,12 +289,14 @@ class _PaymentSectionHeader extends StatelessWidget {
 
 class _PharmacyLocationPickerWidget extends StatelessWidget {
   final CreatePharmacyViewModel controller;
+
   const _PharmacyLocationPickerWidget({required this.controller});
 
   @override
   Widget build(BuildContext context) {
     final hasLocation =
-        controller.selectedLatitude != null && controller.selectedLongitude != null;
+        controller.selectedLatitude != null &&
+        controller.selectedLongitude != null;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -208,7 +308,10 @@ class _PharmacyLocationPickerWidget extends StatelessWidget {
         children: [
           Icon(
             hasLocation ? Icons.location_on : Icons.location_off,
-            color: hasLocation ? AppColors.primary : AppColors.textSecondaryParagraph,
+            color:
+                hasLocation
+                    ? AppColors.primary
+                    : AppColors.textSecondaryParagraph,
             size: 22,
           ),
           const SizedBox(width: 8),
@@ -218,28 +321,32 @@ class _PharmacyLocationPickerWidget extends StatelessWidget {
                   ? "الموقع: ${controller.selectedLatitude!.toStringAsFixed(5)}, ${controller.selectedLongitude!.toStringAsFixed(5)}"
                   : "لم يتم تحديد الموقع بعد",
               style: context.typography.smRegular.copyWith(
-                color: hasLocation
-                    ? AppColors.textDefault
-                    : AppColors.textSecondaryParagraph,
+                color:
+                    hasLocation
+                        ? AppColors.textDefault
+                        : AppColors.textSecondaryParagraph,
               ),
             ),
           ),
           const SizedBox(width: 8),
           controller.isLoadingLocation
               ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
               : TextButton.icon(
-                  onPressed: controller.fetchCurrentLocation,
-                  icon: const Icon(Icons.my_location, size: 18),
-                  label: Text(hasLocation ? "تحديث" : "تحديد موقعي"),
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                onPressed: controller.fetchCurrentLocation,
+                icon: const Icon(Icons.my_location, size: 18),
+                label: Text(hasLocation ? "تحديث" : "تحديد موقعي"),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
                   ),
                 ),
+              ),
         ],
       ),
     );

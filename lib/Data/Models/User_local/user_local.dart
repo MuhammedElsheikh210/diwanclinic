@@ -73,6 +73,7 @@ class LocalUser {
   int get numberOfRates => asDoctor?.numberOfRates ?? 0;
 
   String? get specializeKey => asDoctor?.specializeKey;
+  String? get specializationName => asDoctor?.specializationName;
 
   // ============================================================
   // ASSISTANT FIELDS (optional)

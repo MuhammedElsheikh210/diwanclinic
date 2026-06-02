@@ -1,3 +1,4 @@
+import 'package:diwanclinic/Presentation/screens/pharmacy_chat/pharmacy_chat_detail_view.dart';
 import 'package:diwanclinic/Presentation/screens/pharmacy_orders/PricingSearchView/PricingSearchView.dart';
 import 'package:diwanclinic/Presentation/screens/pharmacy_orders/list/bottom_sheets/cancel_with_reason_dialog.dart';
 
@@ -44,6 +45,26 @@ class PharmacyOrdersListBody extends StatelessWidget {
                 () => Get.to(
                   () => PriceDetailsScreen(order: order, fromHome: false),
                 ),
+            onChat: (order.patientuid != null && order.patientuid!.isNotEmpty)
+                ? () {
+                    final session = Get.find<UserSession>();
+                    final pharmacy = session.user?.asPharmacy;
+                    final pharmacyId =
+                        pharmacy?.pharmacyId ?? pharmacy?.uid ?? session.user?.uid ?? "";
+                    final pharmacyName = session.user?.name ?? "الصيدلية";
+                    Get.to(
+                      () => PharmacyChatDetailView(
+                        pharmacyId: pharmacyId,
+                        pharmacyName: pharmacyName,
+                        patientId: order.patientuid!,
+                        patientName: order.patientName ?? "مريض",
+                        isPharmacySide: true,
+                        receiverFcmToken: order.fcmToken,
+                      ),
+                      binding: Binding(),
+                    );
+                  }
+                : null,
           );
         },
       );

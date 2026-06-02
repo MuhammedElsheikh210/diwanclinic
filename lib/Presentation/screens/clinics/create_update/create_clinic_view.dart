@@ -37,7 +37,7 @@ class _CreateClinicViewState extends State<CreateClinicView> {
   Widget build(BuildContext context) {
     final keys = keyboardService.generateKeys(
       'CreateClinicView',
-      10,
+      11,
     ); // 🔥 زودنا واحد
 
     return GetBuilder<CreateClinicViewModel>(
@@ -192,6 +192,42 @@ class _CreateClinicViewState extends State<CreateClinicView> {
                     voidCallbackAction: (_) => controller.update(),
                     keyboardType: TextInputType.number,
                   ),
+
+                  SizedBox(height: 12.h),
+
+                  /// 🔥 Pediatric
+                  SwitchListTile(
+                    title: Text(
+                      "عيادة أطفال؟",
+                      style: context.typography.smMedium,
+                    ),
+                    subtitle: Text(
+                      "يتيح ضبط ترتيب دخول حديثي الولادة",
+                      style: context.typography.xsRegular.copyWith(
+                        color: AppColors.textSecondaryParagraph,
+                      ),
+                    ),
+                    value: controller.isPediatric,
+                    onChanged: (val) {
+                      controller.isPediatric = val;
+                      controller.update();
+                    },
+                    activeColor: AppColors.primary,
+                  ),
+
+                  if (controller.isPediatric) ...[
+                    SizedBox(height: 8.h),
+                    CustomInputField(
+                      label: "حديث الولادة يدخل بعد كام حالة",
+                      controller: controller.newbornSlotGapController,
+                      hintText: "مثال: 2",
+                      validator: InputValidators.combine([notEmptyValidator]),
+                      focusNode: keyboardService.getFocusNode(keys[10]),
+                      voidCallbackAction: (_) => controller.update(),
+                      keyboardType: TextInputType.number,
+                    ),
+                    SizedBox(height: 12.h),
+                  ],
 
                   /// 🔹 Deposit
                   SwitchListTile(

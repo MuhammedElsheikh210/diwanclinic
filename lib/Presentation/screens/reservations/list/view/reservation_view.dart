@@ -11,10 +11,13 @@ class _ReservationViewState extends State<ReservationView> {
   bool isGrid = true;
   late final ReservationViewModel controller;
   final TextEditingController _searchController = TextEditingController();
+  final HandleKeyboardService _keyboardService = HandleKeyboardService();
+  late final List<String> _keyboardKeys;
 
   @override
   void initState() {
     super.initState();
+    _keyboardKeys = _keyboardService.generateKeys('ReservationView', 1);
     controller = initController(() => ReservationViewModel());
     controller.appointmentDate = DatesUtilis.todayAsString();
     _searchController.addListener(() {
@@ -48,14 +51,17 @@ class _ReservationViewState extends State<ReservationView> {
             isGrid: isGrid,
           ),
 
-          body: Container(
-            color: AppColors.white,
-            child: RefreshIndicator(
-              onRefresh: () async {
-                await controller.getReservations();
-                controller.update();
-              },
-              child: ListView(
+          body: KeyboardActions(
+            config: _keyboardService.buildConfig(context, _keyboardKeys),
+            disableScroll: true,
+            child: Container(
+              color: AppColors.white,
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  await controller.getReservations();
+                  controller.update();
+                },
+                child: ListView(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 0.h),
                 children: [
                   // Doctor status announcement banner
@@ -82,7 +88,9 @@ class _ReservationViewState extends State<ReservationView> {
                     ),
                     child: TextField(
                       controller: _searchController,
+                      focusNode: _keyboardService.getFocusNode(_keyboardKeys[0]),
                       keyboardType: TextInputType.phone,
+                      textInputAction: TextInputAction.done,
                       textDirection: TextDirection.ltr,
                       inputFormatters: [ArabicToEnglishDigitsFormatter()],
                       decoration: InputDecoration(
@@ -123,6 +131,7 @@ class _ReservationViewState extends State<ReservationView> {
                         controller.searchQuery = value;
                         controller.update();
                       },
+                      onSubmitted: (_) => FocusScope.of(context).unfocus(),
                     ),
                   ),
 
@@ -137,6 +146,7 @@ class _ReservationViewState extends State<ReservationView> {
                 ],
               ),
             ),
+          ),
           ),
           floatingActionButton: Column(
             mainAxisSize: MainAxisSize.min,
@@ -308,15 +318,17 @@ class _ReservationViewState extends State<ReservationView> {
     final priority = ReservationPriorityExt.fromLevel(
       reservation.priorityLevel,
     );
-    final hasHardPriority = reservation.isHardPriority;
+    final hasHardPriority = reservation.isHardPriority; // urgent only (level >= 4)
+    final isNewborn = (reservation.priorityLevel ?? 0) == 3;
 
     // ── Status meta ─────────────────────────────────────────
     Color statusColor() {
       if (isCancelled || isMissed) return const Color(0xFFEF4444);
-      if (isCompleted) return const Color(0xFF94A3B8); // slate — neutral "done"
+      if (isCompleted) return const Color(0xFF94A3B8);
       if (isInProgress) return const Color(0xFF3B82F6);
-      if (isCheckedIn) return const Color(0xFF0D9488); // teal — present at clinic
+      if (isCheckedIn) return const Color(0xFF0D9488);
       if (hasHardPriority) return const Color(0xFFEF4444);
+      if (isNewborn) return const Color(0xFFEC4899); // pink — حديث ولادة
       if (ahead <= 0) return AppColors.primary;
       return AppColors.primary;
     }
@@ -328,6 +340,7 @@ class _ReservationViewState extends State<ReservationView> {
       if (isInProgress) return Icons.medical_services_outlined;
       if (isCheckedIn) return Icons.how_to_reg_outlined;
       if (hasHardPriority) return Icons.priority_high_rounded;
+      if (isNewborn) return Icons.child_care_rounded;
       if (ahead <= 0) return Icons.notifications_active_outlined;
       return Icons.hourglass_top_rounded;
     }
@@ -341,6 +354,7 @@ class _ReservationViewState extends State<ReservationView> {
       if (isInProgress) return "في الكشف الآن";
       if (isCheckedIn) return "حضر العيادة ✓";
       if (hasHardPriority) return "${priority.emoji} ${priority.label}";
+      if (isNewborn) return "${priority.emoji} ${priority.label}";
       if (ahead <= 0) return "دورك الآن 🎯";
       return "";
     }
@@ -357,9 +371,9 @@ class _ReservationViewState extends State<ReservationView> {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: accentColor.withValues(
-              alpha: dimmed ? 0.20 : (hasHardPriority ? 0.75 : 0.45),
+              alpha: dimmed ? 0.20 : (hasHardPriority || isNewborn ? 0.65 : 0.45),
             ),
-            width: hasHardPriority ? 2.5 : 1.8,
+            width: hasHardPriority ? 2.5 : (isNewborn ? 2.0 : 1.8),
           ),
           boxShadow:
               dimmed
@@ -387,7 +401,7 @@ class _ReservationViewState extends State<ReservationView> {
             children: [
               // ── LEFT ACCENT STRIP ──────────────────────────
               Container(
-                width: hasHardPriority ? 7 : 5,
+                width: hasHardPriority ? 7 : (isNewborn ? 6 : 5),
                 decoration: BoxDecoration(
                   color: accentColor,
                   borderRadius: const BorderRadius.only(
@@ -482,27 +496,36 @@ class _ReservationViewState extends State<ReservationView> {
                               fg: const Color(0xFF059669),
                               icon: Icons.payments_outlined,
                             ),
+                          // ── Priority chips ────────────────────
                           if (hasHardPriority)
                             _chip(
                               context,
                               label: "${priority.emoji} ${priority.label}",
-                              bg: const Color(
-                                0xFFEF4444,
-                              ).withValues(alpha: 0.18),
+                              bg: const Color(0xFFEF4444).withValues(alpha: 0.18),
                               fg: const Color(0xFFDC2626),
                               icon: Icons.local_hospital_rounded,
+                            ),
+                          if (isNewborn)
+                            _chip(
+                              context,
+                              label: "${priority.emoji} ${priority.label}",
+                              bg: const Color(0xFFEC4899).withValues(alpha: 0.18),
+                              fg: const Color(0xFFDB2777),
+                              icon: Icons.child_care_rounded,
                             ),
                           if (isCheckedIn)
                             _chip(
                               context,
                               label: "حضر",
-                              bg: const Color(
-                                0xFF0D9488,
-                              ).withValues(alpha: 0.18),
+                              bg: const Color(0xFF0D9488).withValues(alpha: 0.18),
                               fg: const Color(0xFF0D9488),
                               icon: Icons.how_to_reg_outlined,
                             ),
+                          // Queue change reason — skip newbornInserted
+                          // (it fires on ALL non-newborn patients and is too noisy).
                           if (reservation.queueReason != null &&
+                              reservation.queueReason !=
+                                  QueueChangeReason.newbornInserted.systemLabel &&
                               !isCompleted &&
                               !isCancelled)
                             _chip(
