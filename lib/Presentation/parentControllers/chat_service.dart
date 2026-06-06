@@ -257,6 +257,178 @@ class ChatService {
     // Also update on pharmacy side so pharmacist can see patient read it
     // We don't know pharmacyId here, so we update the patient mirror only
   }
+
+  // ============================================================
+  // 🧑‍⚕️ ASSISTANT CHAT SECTION
+  // ============================================================
+
+  /// Firebase path: assistant_chats/{doctorKey}/chats/{chatId}/messages/
+  DatabaseReference _assistantChatsRef(String doctorKey) =>
+      FirebaseDatabase.instance.ref("assistant_chats/$doctorKey/chats");
+
+  String assistantChatId(String patientUid, String doctorKey) {
+    final sorted = [patientUid, doctorKey]..sort();
+    return "${sorted[0]}_${sorted[1]}";
+  }
+
+  Future<void> sendAssistantMessage({
+    required ChatMessage message,
+    required String doctorKey,
+    required String assistantName,
+    String? senderFcmToken,
+    String? receiverFcmToken,
+  }) async {
+    final isAssistantSender = message.senderId == doctorKey;
+    final patientId = isAssistantSender ? message.receiverId : message.senderId;
+    final patientName = isAssistantSender
+        ? (message.receiverName ?? "مريض")
+        : (message.senderName ?? "مريض");
+
+    final chatId = assistantChatId(patientId, doctorKey);
+    final lastMsg = message.isImage ? "📷 صورة" : message.text;
+
+    final Map<String, dynamic> threadData = {
+      "lastMessage": lastMsg,
+      "lastMessageTime": message.timestamp,
+      "patientId": patientId,
+      "patientName": patientName,
+      "assistantId": doctorKey,
+      "assistantName": assistantName,
+      "isAssistantRead": isAssistantSender,
+      "isPatientRead": !isAssistantSender,
+    };
+
+    if (isAssistantSender) {
+      if (senderFcmToken != null) threadData["assistantFcmToken"] = senderFcmToken;
+      if (receiverFcmToken != null) threadData["patientFcmToken"] = receiverFcmToken;
+    } else {
+      if (senderFcmToken != null) threadData["patientFcmToken"] = senderFcmToken;
+      if (receiverFcmToken != null) threadData["assistantFcmToken"] = receiverFcmToken;
+    }
+
+    await _assistantChatsRef(doctorKey).child(chatId).update(threadData);
+    await _assistantChatsRef(doctorKey)
+        .child(chatId)
+        .child("messages")
+        .push()
+        .set(message.toJson());
+
+    // Mirror for patient list view
+    await FirebaseDatabase.instance
+        .ref("patient_assistant_chats/$patientId/$chatId")
+        .update(Map.from(threadData));
+  }
+
+  Stream<List<ChatMessage>> getAssistantMessages(
+      String patientUid, String doctorKey) {
+    final chatId = assistantChatId(patientUid, doctorKey);
+    return _assistantChatsRef(doctorKey)
+        .child(chatId)
+        .child("messages")
+        .onValue
+        .map((event) {
+      if (event.snapshot.value == null) return [];
+      final data = Map<String, dynamic>.from(event.snapshot.value as Map);
+      return data.entries
+          .map((e) => ChatMessage.fromJson(
+                Map<String, dynamic>.from(e.value),
+                e.key,
+              ))
+          .toList()
+        ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    });
+  }
+
+  Stream<List<AssistantChatThread>> getAssistantChatList(String doctorKey) {
+    return _assistantChatsRef(doctorKey).onValue.map((event) {
+      final data = event.snapshot.value as Map?;
+      if (data == null) return [];
+      return data.values
+          .map((c) => AssistantChatThread.fromMap(
+                Map<String, dynamic>.from(c as Map),
+              ))
+          .toList()
+        ..sort((a, b) =>
+            (b.lastMessageTime ?? 0).compareTo(a.lastMessageTime ?? 0));
+    });
+  }
+
+  Stream<List<AssistantChatThread>> getPatientAssistantChats(
+      String patientUid) {
+    return FirebaseDatabase.instance
+        .ref("patient_assistant_chats/$patientUid")
+        .onValue
+        .map((event) {
+      final data = event.snapshot.value as Map?;
+      if (data == null) return [];
+      return data.values
+          .map((c) => AssistantChatThread.fromMap(
+                Map<String, dynamic>.from(c as Map),
+              ))
+          .toList()
+        ..sort((a, b) =>
+            (b.lastMessageTime ?? 0).compareTo(a.lastMessageTime ?? 0));
+    });
+  }
+
+  Future<void> markAssistantChatRead(
+      String doctorKey, String chatId) async {
+    await _assistantChatsRef(doctorKey)
+        .child(chatId)
+        .update({"isAssistantRead": true});
+  }
+
+  Future<void> markPatientAssistantChatRead(
+      String patientUid, String chatId) async {
+    await FirebaseDatabase.instance
+        .ref("patient_assistant_chats/$patientUid/$chatId")
+        .update({"isPatientRead": true});
+  }
+}
+
+// ============================================================
+// 📦 ASSISTANT CHAT THREAD MODEL
+// ============================================================
+
+class AssistantChatThread {
+  final String? patientId;
+  final String? patientName;
+  final String? assistantId;
+  final String? assistantName;
+  final String? lastMessage;
+  final int? lastMessageTime;
+  final bool? isAssistantRead;
+  final bool? isPatientRead;
+  final String? patientFcmToken;
+  final String? assistantFcmToken;
+
+  const AssistantChatThread({
+    this.patientId,
+    this.patientName,
+    this.assistantId,
+    this.assistantName,
+    this.lastMessage,
+    this.lastMessageTime,
+    this.isAssistantRead,
+    this.isPatientRead,
+    this.patientFcmToken,
+    this.assistantFcmToken,
+  });
+
+  factory AssistantChatThread.fromMap(Map<String, dynamic> map) {
+    return AssistantChatThread(
+      patientId: map["patientId"],
+      patientName: map["patientName"],
+      assistantId: map["assistantId"],
+      assistantName: map["assistantName"],
+      lastMessage: map["lastMessage"],
+      lastMessageTime: map["lastMessageTime"],
+      isAssistantRead: map["isAssistantRead"] ?? true,
+      isPatientRead: map["isPatientRead"] ?? true,
+      patientFcmToken: map["patientFcmToken"],
+      assistantFcmToken: map["assistantFcmToken"],
+    );
+  }
 }
 
 // ============================================================

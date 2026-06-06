@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:intl/intl.dart';
 import '../../../../index/index_main.dart';
 
@@ -105,7 +106,7 @@ class CreateReservationFromPatientViewModel extends GetxController {
   void populateFields(ReservationModel reservation) {
     patientNameController.text = reservation.patientName ?? "";
     patientPhoneController.text = reservation.patientUid ?? "";
-    //  patientCodeController.text = reservation.patientCode ?? "";
+    patientCodeController.text = reservation.patientCode ?? "";
     //  patientAddressController.text = reservation.patientAddress ?? "";
     selectedType = reservation.reservationType;
 
@@ -122,6 +123,7 @@ class CreateReservationFromPatientViewModel extends GetxController {
     patientNameController.text = user?.name ?? "";
     patientPhoneController.text = user?.phone ?? "";
     patientAddressController.text = user?.address ?? "";
+    patientCodeController.text = user?.code ?? "";
     patient_name = user?.name;
   }
 
@@ -190,6 +192,58 @@ class CreateReservationFromPatientViewModel extends GetxController {
     } catch (_) {}
   }
 
+  String? get _effectiveDoctorKey {
+    final user = Get.find<UserSession>().user?.user;
+    if (selectedDoctor?.uid != null) return selectedDoctor!.uid;
+    if (user is AssistantUser) return user.doctorKey;
+    if (user is DoctorUser) return user.uid;
+    return null;
+  }
+
+  /// Returns error message if limit reached, null if OK to proceed.
+  Future<String?> _checkDayLimit(String formattedDate) async {
+    final doctorKey = _effectiveDoctorKey;
+    if (doctorKey == null || doctorKey.isEmpty) return null;
+    if (shift_key == null || shift_key!.isEmpty) return null;
+
+    try {
+      final limitRef = FirebaseDatabase.instance.ref(
+        "doctors/$doctorKey/dayLimits/${formattedDate}_$shift_key",
+      );
+      final limitSnapshot = await limitRef.get();
+      if (!limitSnapshot.exists || limitSnapshot.value == null) return null;
+
+      final limitData = Map<String, dynamic>.from(limitSnapshot.value as Map);
+      final maxCount = (limitData['maxCount'] as num?)?.toInt();
+      if (maxCount == null || maxCount <= 0) return null;
+
+      // Count existing reservations for this date + shift from Firebase
+      final resRef = FirebaseDatabase.instance.ref(
+        "doctors/$doctorKey/reservations/$formattedDate",
+      );
+      final resSnapshot = await resRef.get();
+
+      int count = 0;
+      if (resSnapshot.exists && resSnapshot.value != null) {
+        final resData = Map<dynamic, dynamic>.from(resSnapshot.value as Map);
+        for (final entry in resData.values) {
+          if (entry is Map) {
+            final resShiftKey = entry['shiftKey']?.toString();
+            if (resShiftKey == shift_key) count++;
+          }
+        }
+      }
+
+      if (count >= maxCount) {
+        return "عدد الحجوزات اكتملت لهذا اليوم، الحد الأقصى هو $maxCount حجز";
+      }
+    } catch (e) {
+      AppLogger.error("DayLimit", "Error checking day limit", e);
+      return null;
+    }
+    return null;
+  }
+
   void saveReservation() async {
     if (!validateStep()) {
       Loader.showError("يرجى إدخال جميع البيانات المطلوبة");
@@ -204,6 +258,22 @@ class CreateReservationFromPatientViewModel extends GetxController {
     if (doctorSupportsOnlinePay && paymentScreenshotFile == null) {
       Loader.showError("يرجى رفع صورة إثبات الدفع");
       return;
+    }
+
+    // ── Day limit check (fresh count from Firebase) ──────────────
+    if (!is_update && create_at != null) {
+      final dateStr = DateFormat(
+        "dd-MM-yyyy",
+      ).format(DateTime.fromMillisecondsSinceEpoch(create_at!));
+
+      Loader.show();
+      final limitError = await _checkDayLimit(dateStr);
+      Loader.dismiss();
+
+      if (limitError != null) {
+        Loader.showError(limitError);
+        return;
+      }
     }
 
     Loader.show();
@@ -232,10 +302,15 @@ class CreateReservationFromPatientViewModel extends GetxController {
         ? delegateNameController.text
         : patient_name;
 
+    final patientCode = patientCodeController.text.trim().isEmpty
+        ? null
+        : patientCodeController.text.trim();
+
     final reservation =
         existingReservation?.copyWith(
           key: existingReservation?.key,
           patientName: patientName,
+          patientCode: patientCode,
           reservationType: selectedType,
           appointmentDateTime: formattedDate,
           createdAt: DateTime.now().millisecondsSinceEpoch,
@@ -254,6 +329,7 @@ class CreateReservationFromPatientViewModel extends GetxController {
           patientUid: clientUser?.uid,
           createdAt: DateTime.now().millisecondsSinceEpoch,
           patientName: patientName,
+          patientCode: patientCode,
           reservationType: selectedType,
           appointmentDateTime: formattedDate,
           clinicKey: clinic_key,

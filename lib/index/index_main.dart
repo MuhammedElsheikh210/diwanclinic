@@ -668,3 +668,9 @@ export 'package:diwanclinic/Presentation/screens/admin_today_orders/admin_today_
 // ─────────── Doctor Home ───────────
 export 'package:diwanclinic/Presentation/screens/home_doctor/doctor_home_view.dart';
 export 'package:diwanclinic/Presentation/screens/home_doctor/doctor_home_view_model.dart';
+
+// ─────────── Assistant Chat ───────────
+export 'package:diwanclinic/Presentation/screens/assistant_chat/assistant_chat_list_vm.dart';
+export 'package:diwanclinic/Presentation/screens/assistant_chat/assistant_chat_list_view.dart';
+export 'package:diwanclinic/Presentation/screens/assistant_chat/assistant_chat_detail_vm.dart';
+export 'package:diwanclinic/Presentation/screens/assistant_chat/assistant_chat_detail_view.dart';

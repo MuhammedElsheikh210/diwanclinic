@@ -1,3 +1,5 @@
+import 'package:diwanclinic/Presentation/screens/assistant_chat/assistant_chat_list_view.dart';
+import 'package:diwanclinic/Presentation/screens/assistant_chat/assistant_chat_list_vm.dart';
 import 'package:diwanclinic/Presentation/screens/generic_visite/read/view.dart';
 import 'package:diwanclinic/Presentation/screens/home_doctor/doctor_home_view.dart';
 import 'package:diwanclinic/Presentation/screens/pharmacy_chat/pharmacy_chat_list_view.dart';
@@ -101,17 +103,23 @@ class _MainPageState extends State<MainPage> {
   Widget _buildBottomNavigationBar(MainPageViewModel controller) {
     if (controller.userType == null) return const SizedBox.shrink();
 
-    // assistant only → realtime badge
+    // assistant only → realtime badges (notifications + chat)
     if (controller.userType == UserType.assistant) {
       return GetBuilder<NotificationController>(
         init: NotificationController(),
         builder: (notifController) {
-          return _buildNavContainer(
-            _bottomItems(
-              notifController: notifController,
-              userType: controller.userType ?? UserType.patient,
-            ),
-            controller,
+          return GetBuilder<AssistantChatListVm>(
+            init: AssistantChatListVm(),
+            builder: (chatVm) {
+              return _buildNavContainer(
+                _bottomItems(
+                  notifController: notifController,
+                  assistantChatVm: chatVm,
+                  userType: controller.userType ?? UserType.patient,
+                ),
+                controller,
+              );
+            },
           );
         },
       );
@@ -165,6 +173,7 @@ class _MainPageState extends State<MainPage> {
   // ------------------------------------------------------------------
   List<BottomNavigationBarItem> _bottomItems({
     NotificationController? notifController,
+    AssistantChatListVm? assistantChatVm,
     UserType? userType,
   }) {
     switch (userType) {
@@ -178,6 +187,7 @@ class _MainPageState extends State<MainPage> {
         ];
 
       case UserType.assistant:
+        final chatUnread = assistantChatVm?.unreadCount ?? 0;
         return [
           _item(IconsConstants.new_reservae, "الحجوزات"),
           notifController == null
@@ -187,6 +197,9 @@ class _MainPageState extends State<MainPage> {
                 "الإشعارات",
                 notifController.unreadCount,
               ),
+          chatUnread > 0
+              ? _itemWithBadge(IconsConstants.chat, "المحادثات", chatUnread)
+              : _item(IconsConstants.chat, "المحادثات"),
           _item(IconsConstants.account, "الحساب"),
         ];
 
@@ -287,6 +300,7 @@ class _MainPageState extends State<MainPage> {
         return [
           const ReservationView(),
           const NotificationsView(),
+          const AssistantChatListView(),
           const AccountView(),
         ][index];
 

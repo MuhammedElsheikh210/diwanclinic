@@ -28,9 +28,7 @@ class DoctorDetailsView extends StatelessWidget {
               centerTitle: true,
               title: Text(
                 doctor.name ?? "",
-                style: typography.lgBold.copyWith(
-                  color: AppColors.textDisplay,
-                ),
+                style: typography.lgBold.copyWith(color: AppColors.textDisplay),
               ),
               iconTheme: const IconThemeData(color: AppColors.textDisplay),
             ),
@@ -54,7 +52,8 @@ class DoctorDetailsView extends StatelessWidget {
                       child: SelectReservationDateBottomSheet(
                         controller: controller,
                         transfer_phone: d?.walletNumber ?? d?.phone ?? "",
-                        wallet_type: d?.instapayNumber?.isNotEmpty == true ? 1 : 0,
+                        wallet_type:
+                            d?.instapayNumber?.isNotEmpty == true ? 1 : 0,
                         instapayNumber: d?.instapayNumber,
                         instapayLink: d?.instapayLink,
                       ),
@@ -66,76 +65,84 @@ class DoctorDetailsView extends StatelessWidget {
 
             // ================= BODY =================
             body: SafeArea(
-              child: controller.isLoadingClinics
-                  ? const ShimmerLoader()
-                  : ListView(
-                children: [
-                  // ================= IMAGE =================
-                  InkWell(
-                    onTap: () => Get.to(
-                          () => FullScreenImageView(
-                        imageUrl: doctor.profileImage ?? "",
-                      ),
-                    ),
-                    child: Container(
-                      width: 150.w,
-                      height: 150.h,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 4),
-                        image: DecorationImage(
-                          image:
-                          (doctor.profileImage != null &&
-                              doctor.profileImage!.isNotEmpty)
-                              ? CachedNetworkImageProvider(doctor.profileImage!)
-                              : const AssetImage(
-                            "assets/images/splash.png",
-                          )
-                          as ImageProvider,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ),
-                  ),
+              child:
+                  controller.isLoadingClinics
+                      ? const ShimmerLoader()
+                      : ListView(
+                        children: [
+                          // ================= IMAGE =================
+                          InkWell(
+                            onTap:
+                                () => Get.to(
+                                  () => FullScreenImageView(
+                                    imageUrl: doctor.profileImage ?? "",
+                                  ),
+                                ),
+                            child: Container(
+                              width: 150.w,
+                              height: 150.h,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 4,
+                                ),
+                                image: DecorationImage(
+                                  image:
+                                      (doctor.profileImage != null &&
+                                              doctor.profileImage!.isNotEmpty)
+                                          ? CachedNetworkImageProvider(
+                                            doctor.profileImage!,
+                                          )
+                                          : const AssetImage(
+                                                "assets/images/splash.png",
+                                              )
+                                              as ImageProvider,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
+                          ),
 
-                  // ================= QUALIFICATIONS =================
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 15.0,
-                      vertical: 10,
-                    ),
-                    child: Text(
-                      d?.doctorQualifications ?? "", // ✅ FIX
-                      style: context.typography.mdMedium.copyWith(
-                        color: AppColors.background_black,
+                          // ================= QUALIFICATIONS =================
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 15.0,
+                              vertical: 10,
+                            ),
+                            child: Text(
+                              d?.doctorQualifications ?? "", // ✅ FIX
+                              style: context.typography.mdMedium.copyWith(
+                                color: AppColors.background_black,
+                              ),
+                            ),
+                          ),
+
+                          // ================= TABS =================
+                          DoctorTabsWidget(controller: controller),
+
+                          // ================= CONTENT =================
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 250),
+                            child:
+                                controller.selectedTabIndex == 0
+                                    ? ClinicAndShiftSection(
+                                      key: const ValueKey(0),
+                                      controller: controller,
+                                      showFromHome: false,
+                                    )
+                                    : controller.selectedTabIndex == 1
+                                    ? DoctorReviewsWidget(
+                                      key: const ValueKey(1),
+                                      controller: controller,
+                                    )
+                                    : DoctorContactWidget(
+                                      key: const ValueKey(2),
+                                      doctor: doctor,
+                                    ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ),
-
-                  // ================= TABS =================
-                  DoctorTabsWidget(controller: controller),
-
-                  // ================= CONTENT =================
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 250),
-                    child: controller.selectedTabIndex == 0
-                        ? ClinicAndShiftSection(
-                      key: const ValueKey(0),
-                      controller: controller,
-                      showFromHome: false,
-                    )
-                        : controller.selectedTabIndex == 1
-                        ? DoctorReviewsWidget(
-                      key: const ValueKey(1),
-                      controller: controller,
-                    )
-                        : DoctorContactWidget(
-                      key: const ValueKey(2),
-                      doctor: doctor,
-                    ),
-                  ),
-                ],
-              ),
             ),
           ),
         );

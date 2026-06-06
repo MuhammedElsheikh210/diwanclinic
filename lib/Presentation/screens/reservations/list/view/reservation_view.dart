@@ -9,6 +9,7 @@ class ReservationView extends StatefulWidget {
 
 class _ReservationViewState extends State<ReservationView> {
   bool isGrid = true;
+  bool _showSearch = false;
   late final ReservationViewModel controller;
   final TextEditingController _searchController = TextEditingController();
   final HandleKeyboardService _keyboardService = HandleKeyboardService();
@@ -80,59 +81,89 @@ class _ReservationViewState extends State<ReservationView> {
                   // ── Pending reservations banner (assistant only) ──
                   const _PendingReservationsBanner(),
 
-                  // ── Search bar ───────────────────────────────
+                  // ── Quick Actions Row ─────────────────────────
                   Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal: 4.w,
                       vertical: 8.h,
                     ),
-                    child: TextField(
-                      controller: _searchController,
-                      focusNode: _keyboardService.getFocusNode(_keyboardKeys[0]),
-                      keyboardType: TextInputType.phone,
-                      textInputAction: TextInputAction.done,
-                      textDirection: TextDirection.ltr,
-                      inputFormatters: [ArabicToEnglishDigitsFormatter()],
-                      decoration: InputDecoration(
-                        hintText: "بحث برقم الحجز أو رقم التلفون",
-                        hintStyle: context.typography.smRegular.copyWith(
-                          color: AppColors.textSecondaryParagraph,
-                        ),
-                        prefixIcon: const Icon(
-                          Icons.search_rounded,
-                          color: AppColors.primary,
-                        ),
-                        suffixIcon:
-                            _searchController.text.isNotEmpty
-                                ? IconButton(
-                                  icon: const Icon(
-                                    Icons.clear_rounded,
-                                    size: 18,
+                    child: _buildQuickActions(controller),
+                  ),
+
+                  // ── Animated Search Field ─────────────────────
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 240),
+                    curve: Curves.easeInOut,
+                    child: _showSearch
+                        ? Padding(
+                            padding: EdgeInsets.only(
+                              left: 4.w,
+                              right: 4.w,
+                              bottom: 8.h,
+                            ),
+                            child: AnimatedOpacity(
+                              duration: const Duration(milliseconds: 180),
+                              opacity: _showSearch ? 1.0 : 0.0,
+                              child: TextField(
+                                controller: _searchController,
+                                focusNode: _keyboardService.getFocusNode(
+                                  _keyboardKeys[0],
+                                ),
+                                keyboardType: TextInputType.phone,
+                                textInputAction: TextInputAction.done,
+                                textDirection: TextDirection.ltr,
+                                autofocus: true,
+                                inputFormatters: [
+                                  ArabicToEnglishDigitsFormatter(),
+                                ],
+                                decoration: InputDecoration(
+                                  hintText: "بحث برقم الحجز أو رقم التلفون",
+                                  hintStyle: context.typography.smRegular
+                                      .copyWith(
+                                        color:
+                                            AppColors.textSecondaryParagraph,
+                                      ),
+                                  prefixIcon: const Icon(
+                                    Icons.search_rounded,
+                                    color: AppColors.primary,
                                   ),
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    controller.searchQuery = "";
-                                    controller.update();
-                                  },
-                                )
-                                : null,
-                        filled: true,
-                        fillColor: AppColors.background_neutral_100,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 12,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                      onChanged: (value) {
-                        controller.searchQuery = value;
-                        controller.update();
-                      },
-                      onSubmitted: (_) => FocusScope.of(context).unfocus(),
-                    ),
+                                  suffixIcon:
+                                      _searchController.text.isNotEmpty
+                                          ? IconButton(
+                                            icon: const Icon(
+                                              Icons.clear_rounded,
+                                              size: 18,
+                                            ),
+                                            onPressed: () {
+                                              _searchController.clear();
+                                              controller.searchQuery = "";
+                                              controller.update();
+                                            },
+                                          )
+                                          : null,
+                                  filled: true,
+                                  fillColor:
+                                      AppColors.background_neutral_100,
+                                  contentPadding:
+                                      const EdgeInsets.symmetric(
+                                        horizontal: 14,
+                                        vertical: 12,
+                                      ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                ),
+                                onChanged: (value) {
+                                  controller.searchQuery = value;
+                                  controller.update();
+                                },
+                                onSubmitted: (_) =>
+                                    FocusScope.of(context).unfocus(),
+                              ),
+                            ),
+                          )
+                        : const SizedBox.shrink(),
                   ),
 
                   // ── Tabs (فقط لو في كشف مستعجل جاري) ─────────
@@ -162,6 +193,16 @@ class _ReservationViewState extends State<ReservationView> {
                 onPressed: () async {
                   final trueTotal =
                       await controller.getTotalTodayReservations();
+
+                  // ── Day limit check ───────────────────────────
+                  if (controller.dayLimit != null &&
+                      trueTotal >= controller.dayLimit!) {
+                    Loader.showError(
+                      "عدد الحجوزات اكتملت لهذا اليوم (${controller.dayLimit})",
+                    );
+                    return;
+                  }
+
                   final userType = Get.find<UserSession>().user?.user.userType;
 
                   if (userType == UserType.patient) {
@@ -195,6 +236,310 @@ class _ReservationViewState extends State<ReservationView> {
           ),
         );
       },
+    );
+  }
+
+  // ---------------------------------------------------------------
+  // ⚡ QUICK ACTIONS ROW
+  // ---------------------------------------------------------------
+  Widget _buildQuickActions(ReservationViewModel controller) {
+    return Row(
+      children: [
+        _actionChip(
+          icon: _showSearch
+              ? Icons.search_off_rounded
+              : Icons.search_rounded,
+          label: "بحث",
+          isActive: _showSearch,
+          onTap: () {
+            setState(() => _showSearch = !_showSearch);
+            if (!_showSearch) {
+              _searchController.clear();
+              controller.searchQuery = "";
+              controller.update();
+              FocusScope.of(context).unfocus();
+            }
+          },
+        ),
+        SizedBox(width: 8.w),
+        _actionChip(
+          icon: Icons.event_busy_outlined,
+          label: "أيام العمل",
+          onTap: () => Get.toNamed(openclosereservationView),
+        ),
+        SizedBox(width: 8.w),
+        _actionChip(
+          icon: Icons.description_outlined,
+          label: "الكشكول",
+          onTap: () => Get.toNamed(legacyQueueView),
+        ),
+        SizedBox(width: 8.w),
+        _actionChip(
+          icon: controller.dayLimit != null
+              ? Icons.lock_rounded
+              : Icons.lock_open_rounded,
+          label: controller.dayLimit != null
+              ? "${controller.dayLimit}"
+              : "قفل",
+          isActive: controller.dayLimit != null,
+          activeColor: const Color(0xFFEF4444),
+          onTap: () => _showSetDayLimitSheet(controller),
+        ),
+      ],
+    );
+  }
+
+  Widget _actionChip({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    bool isActive = false,
+    Color? activeColor,
+  }) {
+    final Color color = isActive
+        ? (activeColor ?? AppColors.primary)
+        : AppColors.textSecondaryParagraph;
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+          decoration: BoxDecoration(
+            color: isActive
+                ? (activeColor ?? AppColors.primary).withValues(alpha: 0.10)
+                : AppColors.background_neutral_100,
+            borderRadius: BorderRadius.circular(12),
+            border: isActive
+                ? Border.all(
+                    color: (activeColor ?? AppColors.primary).withValues(
+                      alpha: 0.40,
+                    ),
+                    width: 1.2,
+                  )
+                : null,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 22, color: color),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showSetDayLimitSheet(ReservationViewModel controller) {
+    final limitController = TextEditingController(
+      text: controller.dayLimit?.toString() ?? "",
+    );
+
+    Get.bottomSheet(
+      isScrollControlled: true,
+      Container(
+        padding: EdgeInsets.fromLTRB(
+          20.w,
+          16.h,
+          20.w,
+          MediaQuery.of(context).viewInsets.bottom + 20.h,
+        ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Handle bar
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            SizedBox(height: 16.h),
+
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEF4444).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.lock_clock_rounded,
+                    color: Color(0xFFEF4444),
+                    size: 22,
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "قفل اليوم بعدد حجوزات",
+                      style: context.typography.lgBold,
+                    ),
+                    Text(
+                      "${controller.appointmentDate ?? '—'}  |  ${controller.selectedShift?.name ?? '—'}",
+                      style: context.typography.smRegular.copyWith(
+                        color: AppColors.textSecondaryParagraph,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            SizedBox(height: 20.h),
+
+            TextField(
+              controller: limitController,
+              keyboardType: TextInputType.number,
+              inputFormatters: [ArabicToEnglishDigitsFormatter()],
+              textDirection: TextDirection.ltr,
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: "الحد الأقصى للحجوزات (مثال: 30)",
+                hintStyle: context.typography.smRegular.copyWith(
+                  color: AppColors.textSecondaryParagraph,
+                ),
+                prefixIcon: const Icon(
+                  Icons.tag_rounded,
+                  color: AppColors.primary,
+                ),
+                filled: true,
+                fillColor: AppColors.background_neutral_100,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 14,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+
+            if (controller.dayLimit != null) ...[
+              SizedBox(height: 10.h),
+              Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 12.w,
+                  vertical: 8.h,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEF4444).withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: const Color(0xFFEF4444).withValues(alpha: 0.30),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.lock_rounded,
+                      size: 16,
+                      color: Color(0xFFEF4444),
+                    ),
+                    SizedBox(width: 8.w),
+                    Text(
+                      "القفل الحالي: ${controller.dayLimit} حجز",
+                      style: context.typography.smMedium.copyWith(
+                        color: const Color(0xFFEF4444),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            SizedBox(height: 16.h),
+
+            Row(
+              children: [
+                if (controller.dayLimit != null) ...[
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      icon: const Icon(
+                        Icons.lock_open_rounded,
+                        size: 18,
+                      ),
+                      label: const Text("إلغاء القفل"),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFFEF4444),
+                        side: const BorderSide(
+                          color: Color(0xFFEF4444),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () async {
+                        Loader.show();
+                        await controller.removeDayLimit();
+                        Loader.dismiss();
+                        Get.back();
+                        Loader.showSuccess("تم إلغاء قفل اليوم");
+                      },
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                ],
+                Expanded(
+                  child: ElevatedButton.icon(
+                    icon: const Icon(
+                      Icons.lock_rounded,
+                      size: 18,
+                      color: Colors.white,
+                    ),
+                    label: const Text("حفظ القفل"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () async {
+                      final val = int.tryParse(limitController.text.trim());
+                      if (val == null || val <= 0) {
+                        Loader.showError("أدخل عدد صحيح أكبر من صفر");
+                        return;
+                      }
+                      Loader.show();
+                      await controller.saveDayLimit(val);
+                      Loader.dismiss();
+                      Get.back();
+                      Loader.showSuccess("تم قفل اليوم بـ $val حجز");
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -495,6 +840,14 @@ class _ReservationViewState extends State<ReservationView> {
                               ).withValues(alpha: 0.18),
                               fg: const Color(0xFF059669),
                               icon: Icons.payments_outlined,
+                            ),
+                          if ((reservation.patientCode ?? "").isNotEmpty)
+                            _chip(
+                              context,
+                              label: "كود: ${reservation.patientCode}",
+                              bg: const Color(0xFF7C3AED).withValues(alpha: 0.12),
+                              fg: const Color(0xFF7C3AED),
+                              icon: Icons.tag_rounded,
                             ),
                           // ── Priority chips ────────────────────
                           if (hasHardPriority)

@@ -18,6 +18,21 @@ exports.onPharmacyChatMessage =
   onPharmacyChatMessage;
 
 // ============================================================
+// 🧑‍⚕️ ASSISTANT CHAT
+// ============================================================
+
+const {
+
+  onAssistantChatMessage,
+
+} = require(
+  "./chat/assistantChatTriggers"
+);
+
+exports.onAssistantChatMessage =
+  onAssistantChatMessage;
+
+// ============================================================
 // 📣 DOCTOR ANNOUNCEMENTS
 // ============================================================
 

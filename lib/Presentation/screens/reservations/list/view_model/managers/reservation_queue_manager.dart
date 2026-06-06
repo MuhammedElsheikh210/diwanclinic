@@ -133,27 +133,38 @@ class ReservationQueueManager {
     final active = _extractActive(allReservations);
     final currentOrder = _currentDoctorOrder(allReservations);
     final sorted = _sortActive(active, currentOrder);
+    final now = DateTime.now().millisecondsSinceEpoch;
 
     for (int i = 0; i < sorted.length; i++) {
       final r = sorted[i];
       final ahead = i;
+      final orderReserved = i + 1;
 
-      r.orderReserved = i + 1;
+      r.orderReserved = orderReserved;
 
       if (r.key == null || r.doctorUid == null || r.appointmentDateTime == null) {
         continue;
       }
 
       try {
-        final path =
+        // Update assistant/doctor path (existing)
+        final doctorPath =
             "doctors/${r.doctorUid}"
             "/reservations/${r.appointmentDateTime}"
             "/${r.key}";
 
-        await FirebaseDatabase.instance.ref(path).update({
+        await FirebaseDatabase.instance.ref(doctorPath).update({
           "queue_position": ahead,
-          "queue_trigger": DateTime.now().millisecondsSinceEpoch,
+          "queue_trigger": now,
         });
+
+        // Update patient path so their app shows correct queue position
+        if (r.patientUid != null) {
+          final patientPath = "patients/${r.patientUid}/reservationsMeta/${r.key}";
+          await FirebaseDatabase.instance.ref(patientPath).update({
+            "order_reserved": orderReserved,
+          });
+        }
       } catch (e, stack) {
         debugPrintStack(stackTrace: stack);
       }

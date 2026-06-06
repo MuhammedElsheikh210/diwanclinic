@@ -116,18 +116,9 @@ class FirebaseRemoteConfigService {
     final userType = user.userType!;
 
     // ---------------------------------------------------------
-    // 🎯 Role-based logic (optional custom rules)
-    // ---------------------------------------------------------
-
-    if (user is DoctorUser) {
-      // لو عايز تعامل خاص بالدكتور
-      // return true; // مثال
-    }
-
-    // ---------------------------------------------------------
     // 🔥 Force update for allowed roles
     // ---------------------------------------------------------
-    return _forceRoles.contains(userType);
+    return _forceRoles.contains(userType.name);
   }
 
   // ─────────────────────────────────────────────

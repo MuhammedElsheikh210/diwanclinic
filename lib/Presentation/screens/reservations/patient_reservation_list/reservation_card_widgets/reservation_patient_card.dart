@@ -1,4 +1,5 @@
 import 'package:diwanclinic/Global/managers/location_manager.dart';
+import 'package:diwanclinic/Presentation/screens/assistant_chat/assistant_chat_detail_view.dart';
 import 'package:diwanclinic/Presentation/screens/reservations/patient_reservation_list/reservation_card_widgets/card_details.dart';
 import '../../../../../../index/index_main.dart';
 
@@ -25,21 +26,13 @@ class ReservationPatientCard extends StatelessWidget {
     final isCompleted = status == ReservationStatus.completed;
     final isHome = from_home == true;
 
-    // Home card — completely different layout
-    if (isHome) {
-      return _HomeCard(
-        reservation: reservation,
-        status: status,
-        statusColor: statusColor,
-        aheadCount: aheadCount,
-      );
-    }
-
     final hasDate = reservation.appointmentDateTime?.isNotEmpty == true;
-    final isInQueue = status == ReservationStatus.approved ||
+    final isInQueue =
+        status == ReservationStatus.approved ||
         status == ReservationStatus.checkedIn ||
         status == ReservationStatus.inProgress;
     final doctorName = reservation.doctorName ?? "غير معروف";
+    final announcement = controller.getAnnouncementFor(reservation.doctorUid);
 
     return Container(
       decoration: BoxDecoration(
@@ -70,15 +63,16 @@ class ReservationPatientCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+                      padding: EdgeInsets.fromLTRB(14, 14, 14, isHome ? 14 : 0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // ── STATUS ROW ────────────────────────
+                          // ── STATUS + RESERVATION NUMBER ROW ──
                           Row(
                             children: [
                               Container(
-                                width: 7, height: 7,
+                                width: 7,
+                                height: 7,
                                 decoration: BoxDecoration(
                                   color: statusColor,
                                   shape: BoxShape.circle,
@@ -87,42 +81,23 @@ class ReservationPatientCard extends StatelessWidget {
                               const SizedBox(width: 6),
                               Text(
                                 status.label,
-                                style: context.typography.mdMedium
-                                    .copyWith(color: statusColor),
+                                style: context.typography.mdMedium.copyWith(
+                                  color: statusColor,
+                                ),
                               ),
                               const Spacer(),
-                              if (isInQueue)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 9, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: statusColor.withValues(alpha: 0.10),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: statusColor.withValues(alpha: 0.25),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    aheadCount > 0
-                                        ? "قدامك $aheadCount"
-                                        : "دورك الآن 🎉",
-                                    style: context.typography.mdRegular
-                                        .copyWith(color: statusColor),
-                                  ),
-                                )
-                              else
-                                Text(
-                                  "#${reservation.orderNum ?? '-'}",
-                                  style: context.typography.mdMedium.copyWith(
-                                    color: AppColors.textSecondaryParagraph,
-                                  ),
+                              Text(
+                                "#${reservation.orderNum ?? '-'}",
+                                style: context.typography.mdMedium.copyWith(
+                                  color: AppColors.textSecondaryParagraph,
                                 ),
+                              ),
                             ],
                           ),
 
                           const SizedBox(height: 6),
 
-                          // ── DOCTOR NAME ───────────────────────
+                          // ── DOCTOR NAME + MAP BUTTON ──────────
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
@@ -138,42 +113,37 @@ class ReservationPatientCard extends StatelessWidget {
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
-                                    if (reservation.reservationType
-                                            ?.isNotEmpty ==
-                                        true) ...[
+                                    if (reservation.reservationType?.isNotEmpty == true) ...[
                                       const SizedBox(height: 3),
                                       Text(
                                         reservation.reservationType!,
-                                        style:
-                                            context.typography.mdRegular
-                                                .copyWith(
-                                          color:
-                                              AppColors.textSecondaryParagraph,
+                                        style: context.typography.mdRegular.copyWith(
+                                          color: AppColors.textSecondaryParagraph,
                                         ),
                                       ),
                                     ],
-                                    if ((reservation.patientCode ?? '')
-                                        .isNotEmpty) ...[
+                                    if ((reservation.patientCode ?? '').isNotEmpty) ...[
                                       const SizedBox(height: 6),
                                       Container(
                                         padding: const EdgeInsets.symmetric(
-                                            horizontal: 9, vertical: 3),
+                                          horizontal: 9,
+                                          vertical: 3,
+                                        ),
                                         decoration: BoxDecoration(
-                                          color: statusColor.withValues(
-                                              alpha: 0.10),
-                                          borderRadius:
-                                              BorderRadius.circular(8),
+                                          color: statusColor.withValues(alpha: 0.10),
+                                          borderRadius: BorderRadius.circular(8),
                                           border: Border.all(
-                                            color: statusColor.withValues(
-                                                alpha: 0.25),
+                                            color: statusColor.withValues(alpha: 0.25),
                                           ),
                                         ),
                                         child: Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            Icon(Icons.tag_rounded,
-                                                size: 12,
-                                                color: statusColor),
+                                            Icon(
+                                              Icons.tag_rounded,
+                                              size: 12,
+                                              color: statusColor,
+                                            ),
                                             const SizedBox(width: 4),
                                             Text(
                                               "كود: ${reservation.patientCode}",
@@ -187,7 +157,6 @@ class ReservationPatientCard extends StatelessWidget {
                                   ],
                                 ),
                               ),
-                              // Map button — small, unobtrusive
                               if (reservation.clinicLatitude != null ||
                                   reservation.clinicAddress?.isNotEmpty == true)
                                 Padding(
@@ -197,19 +166,63 @@ class ReservationPatientCard extends StatelessWidget {
                             ],
                           ),
 
-                          const SizedBox(height: 12),
-
-                          // ── DATE CHIP (full width) ────────────
-                          if (hasDate)
+                          // ── QUEUE CHIP (when in queue) ─────────
+                          if (isInQueue) ...[
+                            const SizedBox(height: 10),
                             Container(
                               width: double.infinity,
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 9),
+                                horizontal: 12,
+                                vertical: 9,
+                              ),
+                              decoration: BoxDecoration(
+                                color: statusColor.withValues(alpha: 0.10),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: statusColor.withValues(alpha: 0.25),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.people_outline_rounded,
+                                    size: 14,
+                                    color: statusColor,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    "الدور",
+                                    style: context.typography.mdRegular.copyWith(
+                                      color: statusColor,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  Text(
+                                    aheadCount > 0
+                                        ? "قدامك $aheadCount"
+                                        : "دورك الآن 🎉",
+                                    style: context.typography.mdBold.copyWith(
+                                      color: statusColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+
+                          // ── DATE CHIP ─────────────────────────
+                          if (hasDate) ...[
+                            const SizedBox(height: 10),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 9,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.grayLight.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                    color: const Color(0xFFE2E8F0)),
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
                               ),
                               child: Row(
                                 children: [
@@ -221,8 +234,7 @@ class ReservationPatientCard extends StatelessWidget {
                                   const SizedBox(width: 6),
                                   Text(
                                     "موعد الكشف",
-                                    style: context.typography.mdRegular
-                                        .copyWith(
+                                    style: context.typography.mdRegular.copyWith(
                                       color: AppColors.textSecondaryParagraph,
                                     ),
                                   ),
@@ -236,32 +248,48 @@ class ReservationPatientCard extends StatelessWidget {
                                 ],
                               ),
                             ),
+                          ],
 
                           // ── PENDING HINT ──────────────────────
-                          if (reservation.status ==
-                              ReservationStatus.pending.value) ...[
+                          if (reservation.status == ReservationStatus.pending.value) ...[
                             const SizedBox(height: 8),
                             _PendingHint(),
+                          ],
+
+                          // ── DOCTOR ANNOUNCEMENT BANNER ────────
+                          if (announcement != null && announcement.isActive == true) ...[
+                            const SizedBox(height: 10),
+                            _AnnouncementBanner(announcement: announcement),
+                          ],
+
+                          // ── CHAT BUTTON (home only) ───────────
+                          if (isHome && reservation.doctorUid != null) ...[
+                            const SizedBox(height: 10),
+                            _ChatBtn(reservation: reservation, fullWidth: true),
                           ],
                         ],
                       ),
                     ),
 
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 15.0),
-                      child: Divider(height: 1, thickness: 1,
-                          color: Color(0xFFEEF2F6)),
-                    ),
-
-                    // ── ACTIONS ───────────────────────────────
-                    _Actions(
-                      reservation: reservation,
-                      controller: controller,
-                      status: status,
-                      index: index,
-                      isCancelled: isCancelled,
-                      isCompleted: isCompleted,
-                    ),
+                    // ── DIVIDER + ACTIONS (list only) ─────────
+                    if (!isHome) ...[
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 15.0),
+                        child: Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: Color(0xFFEEF2F6),
+                        ),
+                      ),
+                      _Actions(
+                        reservation: reservation,
+                        controller: controller,
+                        status: status,
+                        index: index,
+                        isCancelled: isCancelled,
+                        isCompleted: isCompleted,
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -274,200 +302,56 @@ class ReservationPatientCard extends StatelessWidget {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// HOME CARD — clean unified card for the home horizontal scroll
+// DOCTOR ANNOUNCEMENT BANNER
 // ────────────────────────────────────────────────────────────────────────────
-class _HomeCard extends StatelessWidget {
-  final ReservationModel reservation;
-  final ReservationStatus status;
-  final Color statusColor;
-  final int aheadCount;
+class _AnnouncementBanner extends StatelessWidget {
+  final DoctorAnnouncementModel announcement;
 
-  const _HomeCard({
-    required this.reservation,
-    required this.status,
-    required this.statusColor,
-    required this.aheadCount,
-  });
+  const _AnnouncementBanner({required this.announcement});
 
   @override
   Widget build(BuildContext context) {
-    final doctorName = reservation.doctorName ?? "غير معروف";
-    final hasDate = reservation.appointmentDateTime?.isNotEmpty == true;
-    final isInQueue = status == ReservationStatus.approved ||
-        status == ReservationStatus.checkedIn ||
-        status == ReservationStatus.inProgress;
+    final type = announcement.announcementType;
+    final color = type.color;
+    final hasReason = announcement.reason?.isNotEmpty == true;
 
     return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE8ECF0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.30)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 1),
+            child: Icon(type.icon, size: 15, color: color),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  type.arabicLabel,
+                  style: context.typography.mdMedium.copyWith(color: color),
+                ),
+                if (hasReason) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    announcement.reason!,
+                    style: context.typography.smRegular.copyWith(
+                      color: color.withValues(alpha: 0.80),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
         ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Left accent bar
-              Container(width: 4, color: statusColor),
-
-              // Card content
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // ── STATUS + QUEUE ROW ───────────────────
-                      Row(
-                        children: [
-                          // Status dot + label
-                          Container(
-                            width: 7,
-                            height: 7,
-                            decoration: BoxDecoration(
-                              color: statusColor,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            status.label,
-                            style: context.typography.mdMedium.copyWith(
-                              color: statusColor,
-                            ),
-                          ),
-                          const Spacer(),
-                          // Queue or order number
-                          if (isInQueue)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: statusColor.withValues(alpha: 0.10),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: statusColor.withValues(alpha: 0.25),
-                                ),
-                              ),
-                              child: Text(
-                                aheadCount > 0
-                                    ? "قدامك $aheadCount"
-                                    : "دورك الآن 🎉",
-                                style: context.typography.mdMedium
-                                    .copyWith(color: statusColor),
-                              ),
-                            )
-                          else
-                            Text(
-                              "#${reservation.orderNum ?? '-'}",
-                              style: context.typography.mdMedium.copyWith(
-                                color: AppColors.textSecondaryParagraph,
-                              ),
-                            ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // ── DOCTOR NAME ──────────────────────────
-                      Text(
-                        "د. $doctorName",
-                        style: context.typography.mdBold.copyWith(
-                          color: AppColors.textDisplay,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (reservation.reservationType?.isNotEmpty == true) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          reservation.reservationType!,
-                          style: context.typography.mdRegular.copyWith(
-                            color: AppColors.textSecondaryParagraph,
-                          ),
-                        ),
-                      ],
-
-                      if ((reservation.patientCode ?? '').isNotEmpty) ...[
-                        const SizedBox(height: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 9, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: statusColor.withValues(alpha: 0.10),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: statusColor.withValues(alpha: 0.25),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.tag_rounded,
-                                  size: 12, color: statusColor),
-                              const SizedBox(width: 4),
-                              Text(
-                                "كود: ${reservation.patientCode}",
-                                style: context.typography.smMedium
-                                    .copyWith(color: statusColor),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-
-                      // ── DATE ROW ─────────────────────────────
-                      if (hasDate) ...[
-                        const SizedBox(height: 12),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: AppColors.grayLight.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.calendar_today_outlined,
-                                  size: 14,
-                                  color: AppColors.textSecondaryParagraph),
-                              const SizedBox(width: 6),
-                              Text(
-                                "موعد الكشف",
-                                style: context.typography.mdRegular.copyWith(
-                                  color: AppColors.textSecondaryParagraph,
-                                ),
-                              ),
-                              const Spacer(),
-                              Text(
-                                reservation.appointmentDateTime!,
-                                style: context.typography.mdMedium.copyWith(
-                                  color: AppColors.textDisplay,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -481,7 +365,11 @@ class _PendingHint extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(Icons.info_outline_rounded, size: 13, color: Colors.orange.shade700),
+        Icon(
+          Icons.info_outline_rounded,
+          size: 13,
+          color: Colors.orange.shade700,
+        ),
         const SizedBox(width: 5),
         Expanded(
           child: Text(
@@ -522,7 +410,6 @@ class _Actions extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
       child: Row(
         children: [
-          // ── Details button — clearly a button ──────────────
           Expanded(
             child: GestureDetector(
               onTap: () => Get.to(
@@ -542,13 +429,15 @@ class _Actions extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.receipt_long_outlined,
-                        size: 15,
-                        color: AppColors.text_primary_paragraph),
+                    const Icon(
+                      Icons.receipt_long_outlined,
+                      size: 15,
+                      color: AppColors.text_primary_paragraph,
+                    ),
                     const SizedBox(width: 5),
                     Text(
                       "تفاصيل الحجز",
-                      style: context.typography.mdMedium.copyWith(
+                      style: context.typography.smMedium.copyWith(
                         color: AppColors.text_primary_paragraph,
                       ),
                     ),
@@ -560,7 +449,10 @@ class _Actions extends StatelessWidget {
 
           const SizedBox(width: 10),
 
-          // ── Secondary action ───────────────────────────────
+          if (reservation.doctorUid != null) _ChatBtn(reservation: reservation),
+
+          const SizedBox(width: 10),
+
           if (isCompleted && reservation.hasFeedback != true)
             _GhostBtn(
               label: "تقييم الدكتور",
@@ -590,8 +482,11 @@ class _Actions extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.warning_amber_rounded,
-                  size: 48.sp, color: AppColors.errorForeground),
+              Icon(
+                Icons.warning_amber_rounded,
+                size: 48.sp,
+                color: AppColors.errorForeground,
+              ),
               SizedBox(height: 10.h),
               Text("تأكيد الإلغاء", style: context.typography.lgBold),
               SizedBox(height: 8.h),
@@ -612,9 +507,12 @@ class _Actions extends StatelessWidget {
                           borderRadius: BorderRadius.circular(30.r),
                         ),
                       ),
-                      child: Text("رجوع",
-                          style: context.typography.mdMedium
-                              .copyWith(color: AppColors.primary)),
+                      child: Text(
+                        "رجوع",
+                        style: context.typography.mdMedium.copyWith(
+                          color: AppColors.primary,
+                        ),
+                      ),
                     ),
                   ),
                   SizedBox(width: 10.w),
@@ -627,9 +525,12 @@ class _Actions extends StatelessWidget {
                           borderRadius: BorderRadius.circular(30.r),
                         ),
                       ),
-                      child: Text("تأكيد",
-                          style: context.typography.mdMedium
-                              .copyWith(color: Colors.white)),
+                      child: Text(
+                        "تأكيد",
+                        style: context.typography.mdMedium.copyWith(
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -654,8 +555,7 @@ class _Actions extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
       ),
-      builder: (_) =>
-          FeedbackSheet(reservation: reservation, controller: controller),
+      builder: (_) => FeedbackSheet(reservation: reservation, controller: controller),
     );
   }
 }
@@ -663,68 +563,6 @@ class _Actions extends StatelessWidget {
 // ────────────────────────────────────────────────────────────────────────────
 // REUSABLE WIDGETS
 // ────────────────────────────────────────────────────────────────────────────
-
-class _StatusPill extends StatelessWidget {
-  final ReservationStatus status;
-  final Color color;
-
-  const _StatusPill({required this.status, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.30)),
-      ),
-      child: Text(
-        status.label,
-        style: context.typography.mdMedium.copyWith(color: color),
-      ),
-    );
-  }
-}
-
-class _Chip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color bgColor;
-  final Color borderColor;
-  final Color textColor;
-
-  const _Chip({
-    required this.icon,
-    required this.label,
-    required this.bgColor,
-    required this.borderColor,
-    required this.textColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: borderColor),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: textColor),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: context.typography.mdMedium.copyWith(color: textColor),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _GhostBtn extends StatelessWidget {
   final String label;
@@ -758,6 +596,66 @@ class _GhostBtn extends StatelessWidget {
   }
 }
 
+// ────────────────────────────────────────────────────────────────────────────
+// CHAT BUTTON
+// ────────────────────────────────────────────────────────────────────────────
+class _ChatBtn extends StatelessWidget {
+  final ReservationModel reservation;
+  final bool fullWidth;
+
+  const _ChatBtn({required this.reservation, this.fullWidth = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        final session = Get.find<UserSession>();
+        final patientId = session.user?.uid ?? "";
+        final patientName = session.user?.name ?? "مريض";
+        final patientFcmToken = session.user?.fcmToken;
+
+        Get.to(
+          () => AssistantChatDetailView(
+            assistantId: reservation.doctorUid ?? "",
+            assistantName: reservation.assistantName ?? "المساعدة",
+            patientId: patientId,
+            patientName: patientName,
+            isAssistantSide: false,
+            receiverFcmToken: reservation.assistantFcm ?? patientFcmToken,
+          ),
+          binding: Binding(),
+        );
+      },
+      child: Container(
+        width: fullWidth ? double.infinity : null,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.primary.withOpacity(0.25)),
+        ),
+        child: Row(
+          mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
+          mainAxisAlignment: fullWidth ? MainAxisAlignment.center : MainAxisAlignment.start,
+          children: [
+            const Icon(Icons.chat_rounded, size: 15, color: AppColors.primary),
+            const SizedBox(width: 5),
+            Text(
+              "تواصل مع المساعدة",
+              style: context.typography.smMedium.copyWith(
+                color: AppColors.primary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// MAP BUTTON
+// ────────────────────────────────────────────────────────────────────────────
 class _MapButton extends StatelessWidget {
   final ReservationModel reservation;
 
@@ -774,9 +672,9 @@ class _MapButton extends StatelessWidget {
       if (userLatLng != null) {
         uri = Uri.parse(
           "https://www.google.com/maps/dir/?api=1"
-              "&origin=${userLatLng['lat']},${userLatLng['lng']}"
-              "&destination=$lat,$lng"
-              "&travelmode=driving",
+          "&origin=${userLatLng['lat']},${userLatLng['lng']}"
+          "&destination=$lat,$lng"
+          "&travelmode=driving",
         );
       } else {
         uri = Uri.parse(

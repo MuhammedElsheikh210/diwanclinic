@@ -7,6 +7,27 @@ import 'package:intl/intl.dart';
 import '../../../../../index/index_main.dart';
 
 class ReservationPatientViewModel extends GetxController {
+  // 🔹 Doctor Announcements Cache (doctorUid → latest announcement for today)
+  final Map<String, DoctorAnnouncementModel?> _doctorAnnouncements = {};
+
+  DoctorAnnouncementModel? getAnnouncementFor(String? doctorUid) {
+    if (doctorUid == null || doctorUid.isEmpty) return null;
+    return _doctorAnnouncements[doctorUid];
+  }
+
+  Future<void> _fetchAnnouncementForDoctor(String uid) async {
+    if (_doctorAnnouncements.containsKey(uid)) return;
+    _doctorAnnouncements[uid] = null; // mark as fetching
+    final today =
+        "${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().day.toString().padLeft(2, '0')}";
+    final result = await Get.find<DoctorAnnouncementUseCases>()
+        .fetchLatest(doctorKey: uid, date: today);
+    result.fold((_) {}, (announcement) {
+      _doctorAnnouncements[uid] = announcement;
+      update();
+    });
+  }
+
   // 🔹 Realtime Sync
   bool showDailyReport = false;
   bool? fromUpdate;
@@ -137,16 +158,16 @@ class ReservationPatientViewModel extends GetxController {
       listReservations!.insert(0, model);
     }
 
-    // قبل الترتيب
-    for (var e in listReservations!) {}
-
     // 🔥 sort
     listReservations!.sort(
       (a, b) => (b?.createdAt ?? 0).compareTo(a?.createdAt ?? 0),
     );
 
-    // بعد الترتيب
-    for (var e in listReservations!) {}
+    // Fetch doctor announcement once per unique doctor
+    final uid = model.doctorUid;
+    if (uid != null && uid.isNotEmpty) {
+      _fetchAnnouncementForDoctor(uid);
+    }
 
     update();
   }
@@ -255,31 +276,16 @@ class ReservationPatientViewModel extends GetxController {
   }
 
   int calculateAheadCount(ReservationModel current) {
-    if (listReservations == null || listReservations!.isEmpty) {
-      return 0;
+    // orderReserved is written by the assistant's notifyApprovedQueueUpdate
+    // directly to this patient's Firebase path. It's 1-based position in queue,
+    // so ahead = orderReserved - 1.
+    final orderReserved = current.orderReserved;
+    if (orderReserved != null && orderReserved > 0) {
+      return legacyQueueCount + (orderReserved - 1);
     }
 
-    final myOrder = current.orderNum ?? 0;
-    if (myOrder == 0) return 0;
-
-    final activeOnlineAhead =
-        listReservations!.whereType<ReservationModel>().where((r) {
-          final sameDay = r.appointmentDateTime == current.appointmentDateTime;
-
-          final rOrder = r.orderNum ?? 0;
-          if (rOrder == 0) return false;
-
-          final isBeforeMe = rOrder < myOrder;
-
-          final isActive =
-              r.status == ReservationStatus.pending.value ||
-              r.status == ReservationStatus.approved.value ||
-              r.status == ReservationStatus.inProgress.value;
-
-          return sameDay && isBeforeMe && isActive;
-        }).length;
-
-    return legacyQueueCount + activeOnlineAhead;
+    // Fallback for reservations not yet processed by the assistant queue system
+    return 0;
   }
 
   Future<void> openOrderConfirmationSheet({

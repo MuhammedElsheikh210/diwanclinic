@@ -55,10 +55,13 @@ void main() {
       // 🔹 باقي الـ dependencies
       Binding().dependencies();
 
+      // 🔥 Remote Config — قبل runApp عشان الـ middleware يقرأ القيمة الصح
+      await FirebaseRemoteConfigService().checkForceUpdate();
+
       // 🎨 ThemeScope (مهم)
       final app = await ThemeScopeWidget.initialize(const MyApp());
 
-      // 🚀 run app بسرعة
+      // 🚀 run app
       runApp(
         ScreenUtilInit(
           designSize: const Size(430, 932),
@@ -69,15 +72,8 @@ void main() {
         ),
       );
 
-      // =========================
-      // 🔥 INIT AFTER RUN APP 🔥
-      // =========================
-
       // 🔔 Notifications (background init)
       NotificationService().initCore();
-
-      // 🔥 Remote Config (background)
-      FirebaseRemoteConfigService().checkForceUpdate();
     },
     (e, s) {
       debugPrintStack(stackTrace: s);

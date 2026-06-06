@@ -1,3 +1,4 @@
+import 'package:firebase_database/firebase_database.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../../../index/index_main.dart';
@@ -75,6 +76,9 @@ class ReservationViewModel extends GetxController {
   int totalCount = 0;
   int completedCount = 0;
   int waitingCount = 0;
+
+  // Day limit
+  int? dayLimit;
 
   // Clinic + Shift
   List<ClinicModel?>? listClinic;
@@ -530,6 +534,9 @@ class ReservationViewModel extends GetxController {
       } else if (newStatus.isCancelled) {
         // Cancellation frees a slot — notify remaining patients their position changed.
         await _handleQueueUpdate(snapshotReason: QueueChangeReason.windowShift);
+      } else if (newStatus == ReservationStatus.approved) {
+        // Pending reservation approved → enters active queue → update all positions.
+        await _handleQueueUpdate(snapshotReason: null);
       }
     } catch (e, stack) {
       debugPrintStack(stackTrace: stack);
@@ -588,6 +595,9 @@ extension ReservationData on ReservationViewModel {
       if (!_belongsToCurrentFilters(reservation)) return;
 
       _updateListInMemory(reservation);
+      // New reservation entered queue → update all positions so patient apps
+      // show the correct ahead-count immediately instead of "دورك الآن".
+      unawaited(_handleQueueUpdate(snapshotReason: null));
     };
 
     service.onReservationUpdated = (reservation) {
@@ -724,6 +734,8 @@ extension ReservationData on ReservationViewModel {
 
       await getTotalTodayReservations();
 
+      await loadDayLimit();
+
       update();
     } catch (e, stack) {
       debugPrintStack(stackTrace: stack);
@@ -777,6 +789,78 @@ extension ReservationData on ReservationViewModel {
     }
 
     return _cachedReservations.length;
+  }
+
+  Future<void> loadDayLimit() async {
+    if (appointmentDate == null) return;
+    final currentUser = Get.find<UserSession>().user;
+    if (currentUser == null) return;
+    final assistant = currentUser.asAssistant;
+    if (assistant == null) return;
+    final doctorKey = assistant.doctorKey ?? "";
+    if (doctorKey.isEmpty) return;
+
+    final normalizedDate = AppDateFormatter.toDash(appointmentDate);
+    final shiftKey = selectedShift?.key ?? "all";
+
+    final ref = FirebaseDatabase.instance.ref(
+      "doctors/$doctorKey/dayLimits/${normalizedDate}_$shiftKey",
+    );
+
+    try {
+      final snapshot = await ref.get();
+      if (snapshot.exists && snapshot.value != null) {
+        final data = Map<String, dynamic>.from(snapshot.value as Map);
+        dayLimit = (data['maxCount'] as num?)?.toInt();
+      } else {
+        dayLimit = null;
+      }
+    } catch (_) {
+      dayLimit = null;
+    }
+    update();
+  }
+
+  Future<void> saveDayLimit(int maxCount) async {
+    if (appointmentDate == null) return;
+    final currentUser = Get.find<UserSession>().user;
+    if (currentUser == null) return;
+    final assistant = currentUser.asAssistant;
+    if (assistant == null) return;
+    final doctorKey = assistant.doctorKey ?? "";
+    if (doctorKey.isEmpty) return;
+
+    final normalizedDate = AppDateFormatter.toDash(appointmentDate);
+    final shiftKey = selectedShift?.key ?? "all";
+
+    final ref = FirebaseDatabase.instance.ref(
+      "doctors/$doctorKey/dayLimits/${normalizedDate}_$shiftKey",
+    );
+
+    await ref.set({'maxCount': maxCount, 'date': normalizedDate, 'shiftKey': shiftKey});
+    dayLimit = maxCount;
+    update();
+  }
+
+  Future<void> removeDayLimit() async {
+    if (appointmentDate == null) return;
+    final currentUser = Get.find<UserSession>().user;
+    if (currentUser == null) return;
+    final assistant = currentUser.asAssistant;
+    if (assistant == null) return;
+    final doctorKey = assistant.doctorKey ?? "";
+    if (doctorKey.isEmpty) return;
+
+    final normalizedDate = AppDateFormatter.toDash(appointmentDate);
+    final shiftKey = selectedShift?.key ?? "all";
+
+    final ref = FirebaseDatabase.instance.ref(
+      "doctors/$doctorKey/dayLimits/${normalizedDate}_$shiftKey",
+    );
+
+    await ref.remove();
+    dayLimit = null;
+    update();
   }
 
   Future<void> getLastReservationDateForPatient(LocalUser client) async {
