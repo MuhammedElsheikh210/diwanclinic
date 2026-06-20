@@ -21,6 +21,10 @@ class IncomeViewModel extends GetxController {
 
   String todayDate = "";
 
+  // 🔹 The date currently shown on screen (dd-MM-yyyy). Used to ignore stale
+  // fetch responses if the user switches dates quickly.
+  String _currentDate = "";
+
   @override
   void onInit() {
     super.onInit();
@@ -53,26 +57,32 @@ class IncomeViewModel extends GetxController {
   // =====================================================
   // 🔥 SINGLE loader (only completed)
   // =====================================================
+  // Reads the day directly from Firebase every time. The local realtime
+  // listener only auto-syncs *today* into SQLite, so reading SQLite for past
+  // days returned empty ("no income"). A one-shot remote fetch always returns
+  // the correct data regardless of which date the SQLite cache holds.
   void _loadByDate(String date) {
+    _currentDate = date;
     final doctorKey = Get.find<UserSession>().user?.uid ?? "";
-    final query = SQLiteQueryParams(
-      is_filtered: true,
-      where: """
-        appointment_date_time = ?
-        AND status = ?
-        AND doctor_uid = ?
-      """,
-      whereArgs: [
-        date,
-        ReservationStatus.completed.value, // ✅ واحد ثابت
-        doctorKey,
-      ],
-    );
 
-    ReservationService().getReservationsData(
-      query: query,
+    if (doctorKey.isEmpty) {
+      todayReservations = [];
+      _calculateTotals();
+      update();
+      return;
+    }
+
+    ReservationService().fetchReservationsOnce(
+      doctorKey: doctorKey,
+      date: AppDateFormatter.toDash(date),
       voidCallBack: (list) {
-        todayReservations = list.whereType<ReservationModel>().toList();
+        // Ignore a late response for a date the user already navigated away from.
+        if (_currentDate != date) return;
+
+        todayReservations =
+            list
+                .where((r) => r.status == ReservationStatus.completed.value)
+                .toList();
         _calculateTotals();
         update();
       },

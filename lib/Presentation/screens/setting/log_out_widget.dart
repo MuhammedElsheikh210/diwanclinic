@@ -74,6 +74,24 @@ class _LogoutDialogState extends State<LogoutDialog> {
                   child: PrimaryTextButton(
                     appButtonSize: AppButtonSize.large,
                     onTap: () async {
+                      // 🛑 Stop patient realtime listeners
+                      await PatientReservationService().stopListening();
+                      await PatientOrderService().stopListening();
+
+                      // 🧹 Clear stale patient state (account-switch leak fix)
+                      if (Get.isRegistered<ReservationPatientViewModel>()) {
+                        final reservationVM =
+                            Get.find<ReservationPatientViewModel>();
+                        reservationVM.listReservations = [];
+                        reservationVM.update();
+                      }
+                      if (Get.isRegistered<HomePatientController>()) {
+                        final home = Get.find<HomePatientController>();
+                        home.orders.clear();
+                        home.orders.refresh();
+                        home.update();
+                      }
+
                       // Logout logic
                       await Get.find<UserSession>().clear();
                       Get.offAllNamed(loginView);

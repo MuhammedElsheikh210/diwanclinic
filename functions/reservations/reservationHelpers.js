@@ -1,4 +1,6 @@
 const admin = require("firebase-admin");
+const axios = require("axios");
+const { sendWhatsApp: _sendWhatsApp } = require("../whatsapp/whatsappSender");
 
 // ============================================================
 // 🔔 SEND PUSH NOTIFICATION
@@ -87,6 +89,33 @@ async function getDoctorAssistants(doctorId) {
   );
 }
 
+// ============================================================
+// 📞 FORMAT PHONE
+// ============================================================
+
+function formatPhone(phone) {
+
+  const p = (phone || "").trim();
+
+  if (p.startsWith("+"))  return p;
+  if (p.startsWith("20")) return "+" + p;
+  if (p.startsWith("0"))  return "+2" + p;
+
+  return "+2" + p;
+}
+
+// ============================================================
+// 📲 SEND WHATSAPP — Meta Cloud API
+// ============================================================
+
+async function sendWhatsApp(to, msg) {
+  try {
+    await _sendWhatsApp(to, msg);
+  } catch (e) {
+    console.error("❌ WhatsApp ERROR:", e.response?.data || e.message);
+  }
+}
+
 module.exports = {
 
   sendPushNotification,
@@ -94,4 +123,8 @@ module.exports = {
   saveNotification,
 
   getDoctorAssistants,
+
+  formatPhone,
+
+  sendWhatsApp,
 };

@@ -63,34 +63,50 @@ exports.onReservationUpdate =
   onReservationUpdate;
 
 // ============================================================
-// 💊 ORDERS
+// 💊 ORDERS — معطّل مؤقتاً
+// ============================================================
+
+// const {
+//   onOrderUpdate,
+// } = require("./orders/orderTriggers");
+// exports.onOrderUpdate = onOrderUpdate;
+
+// ============================================================
+// 📲 WHATSAPP WEBHOOK (orders)
 // ============================================================
 
 const {
-
-  onOrderUpdate,
-
-} = require(
-  "./orders/orderTriggers"
-);
-
-exports.onOrderUpdate =
-  onOrderUpdate;
-
-// ============================================================
-// 📲 WHATSAPP
-// ============================================================
-
-const {
-
   whatsappWebhook,
+} = require("./orders/whatsappWebhook");
 
-} = require(
-  "./orders/whatsappWebhook"
+exports.whatsappWebhook = whatsappWebhook;
+
+// ============================================================
+// 📤 SEND WHATSAPP — Callable from Flutter
+// ============================================================
+
+const { onCall } = require("firebase-functions/v2/https");
+const { sendWhatsApp: _sendWhatsApp } = require("./whatsapp/whatsappSender");
+const {
+  WHATSAPP_ACCESS_TOKEN,
+  WHATSAPP_PHONE_NUMBER_ID,
+} = require("./whatsapp/whatsappConfig");
+
+exports.sendWhatsAppMessage = onCall(
+  {
+    secrets: [WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID],
+  },
+  async (request) => {
+    const { to, body } = request.data;
+
+    if (!to || !body) {
+      throw new Error("Missing required fields: to, body");
+    }
+
+    await _sendWhatsApp(to, body);
+    return { success: true };
+  }
 );
-
-exports.whatsappWebhook =
-  whatsappWebhook;
 
 // ============================================================
 // 👤 USERS

@@ -82,6 +82,7 @@ class ReservationModel {
   bool isOrdered;
   bool hasFeedback;
   bool isDeleted;
+  bool whatsappConfirmationSent;
 
   ReservationModel({
     this.key,
@@ -151,6 +152,7 @@ class ReservationModel {
     this.isOrdered = false,
     this.hasFeedback = false,
     this.isDeleted = false,
+    this.whatsappConfirmationSent = false,
   });
 
   bool get isCheckedIn         => checkedInAt != null;
@@ -261,6 +263,7 @@ class ReservationModel {
     /// ⚙️ flags
     data['is_ordered'] = isOrdered ? 1 : 0;
     data['has_feedback'] = hasFeedback ? 1 : 0;
+    data['whatsapp_confirmation_sent'] = whatsappConfirmationSent ? 1 : 0;
 
     return data;
   }
@@ -369,6 +372,7 @@ class ReservationModel {
       /// ⚙️ flags
       isOrdered: toBool(json['is_ordered']),
       hasFeedback: toBool(json['has_feedback']),
+      whatsappConfirmationSent: toBool(json['whatsapp_confirmation_sent']),
     );
   }
 
@@ -448,6 +452,7 @@ class ReservationModel {
     /// ⚙️ flags
     bool? isOrdered,
     bool? hasFeedback,
+    bool? whatsappConfirmationSent,
   }) {
     return ReservationModel(
       key: key ?? this.key,
@@ -523,6 +528,7 @@ class ReservationModel {
       /// ⚙️ flags
       isOrdered: isOrdered ?? this.isOrdered,
       hasFeedback: hasFeedback ?? this.hasFeedback,
+      whatsappConfirmationSent: whatsappConfirmationSent ?? this.whatsappConfirmationSent,
     );
   }
 }

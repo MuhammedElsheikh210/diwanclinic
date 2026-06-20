@@ -43,6 +43,49 @@ async function handleQueueUpdate({
     // ========================================================
 
     const ahead = after.queue_position;
+    const shiftReason = after.queue_shift_reason;
+    const shiftId = after.queue_shift_id;
+
+    // --------------------------------------------------------
+    // Priority insertion (emergency / operation follow-up)
+    // Notify regardless of position so all patients know why
+    // their queue shifted.
+    // --------------------------------------------------------
+    if (shiftReason && shiftId) {
+
+      const shiftKey = `shift_notified_${shiftId}`;
+
+      if (after[shiftKey]) return;
+
+      const isEmergency = shiftReason === "emergency";
+
+      const title = isEmergency
+        ? "⚠️ تم إضافة حالة طوارئ"
+        : "📋 تم تقديم متابعة عمليات";
+
+      const body = isEmergency
+        ? `تم إضافة حالة طوارئ وتقديمها في الدور\nأنت الآن في المركز رقم ${ahead + 1} 🔔`
+        : `تم تقديم متابعة عمليات في الدور\nأنت الآن في المركز رقم ${ahead + 1} 🔔`;
+
+      await sendPushNotification({ token, title, body });
+
+      await saveNotification({
+        uid: patientUid,
+        title,
+        body,
+        type: "queue_shift",
+        reservation: after,
+      });
+
+      await event.data.after.ref.update({ [shiftKey]: true });
+
+      console.log("✅ Priority shift notification sent:", shiftReason);
+      return;
+    }
+
+    // --------------------------------------------------------
+    // Regular queue update — only notify when close to front
+    // --------------------------------------------------------
 
     // فقط لما يكون الدور قريب (0 أو 1 أو 2 قبلك)
     if (ahead > 2) return;

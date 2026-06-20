@@ -196,11 +196,15 @@ class ReservationViewModel extends GetxController {
         reservation: reservation,
         onSuccess: (updated) {
           _updateListInMemory(updated);
-          unawaited(_handleQueueUpdate(snapshotReason: QueueChangeReason.checkedIn));
-          unawaited(queueReasonManager.writeReason(
-            reservation: updated,
-            reason: QueueChangeReason.checkedIn,
-          ));
+          unawaited(
+            _handleQueueUpdate(snapshotReason: QueueChangeReason.checkedIn),
+          );
+          unawaited(
+            queueReasonManager.writeReason(
+              reservation: updated,
+              reason: QueueChangeReason.checkedIn,
+            ),
+          );
           Loader.showSuccess("تم تسجيل حضور المريض");
         },
       );
@@ -223,7 +227,9 @@ class ReservationViewModel extends GetxController {
         onSuccess: () {
           reservation.status = ReservationStatus.missed.value;
           _updateListInMemory(reservation);
-          unawaited(_handleQueueUpdate(snapshotReason: QueueChangeReason.windowShift));
+          unawaited(
+            _handleQueueUpdate(snapshotReason: QueueChangeReason.windowShift),
+          );
           Loader.showSuccess("تم تسجيل الغياب");
         },
       );
@@ -246,11 +252,17 @@ class ReservationViewModel extends GetxController {
         reservation: reservation,
         onSuccess: (updated) {
           _updateListInMemory(updated);
-          unawaited(_handleQueueUpdate(snapshotReason: QueueChangeReason.missedReturned));
-          unawaited(queueReasonManager.writeReason(
-            reservation: updated,
-            reason: QueueChangeReason.missedReturned,
-          ));
+          unawaited(
+            _handleQueueUpdate(
+              snapshotReason: QueueChangeReason.missedReturned,
+            ),
+          );
+          unawaited(
+            queueReasonManager.writeReason(
+              reservation: updated,
+              reason: QueueChangeReason.missedReturned,
+            ),
+          );
           Loader.showSuccess("تم إعادة المريض إلى الطابور");
         },
       );
@@ -275,11 +287,15 @@ class ReservationViewModel extends GetxController {
         minWaitMinutes: minWaitMinutes,
         onSuccess: (updated) {
           _updateListInMemory(updated);
-          unawaited(_handleQueueUpdate(snapshotReason: QueueChangeReason.manualPromote));
-          unawaited(queueReasonManager.writeReason(
-            reservation: updated,
-            reason: QueueChangeReason.manualPromote,
-          ));
+          unawaited(
+            _handleQueueUpdate(snapshotReason: QueueChangeReason.manualPromote),
+          );
+          unawaited(
+            queueReasonManager.writeReason(
+              reservation: updated,
+              reason: QueueChangeReason.manualPromote,
+            ),
+          );
           Loader.showSuccess("تم تقديم المريض في الطابور");
         },
         onDenied: (reason) => Loader.showError(reason),
@@ -459,8 +475,6 @@ class ReservationViewModel extends GetxController {
       // /// 🔥 UPDATE DOCTOR (trigger function)
       // await ref.update(updateData);
 
-
-
       await ReservationService().updateReservationData(
         reservation: reservation,
         voidCallBack: (_) {
@@ -521,6 +535,7 @@ class ReservationViewModel extends GetxController {
         reservation: reservation,
         clinic: selectedClinic,
         newStatus: newStatus,
+        cancelReason: cancelReason,
       );
 
       /// ✅ Queue
@@ -536,7 +551,10 @@ class ReservationViewModel extends GetxController {
         await _handleQueueUpdate(snapshotReason: QueueChangeReason.windowShift);
       } else if (newStatus == ReservationStatus.approved) {
         // Pending reservation approved → enters active queue → update all positions.
-        await _handleQueueUpdate(snapshotReason: null);
+        await _handleQueueUpdate(
+          snapshotReason: null,
+          triggeringReservation: reservation,
+        );
       }
     } catch (e, stack) {
       debugPrintStack(stackTrace: stack);
@@ -545,24 +563,30 @@ class ReservationViewModel extends GetxController {
 
   Future<void> _handleQueueUpdate({
     QueueChangeReason? snapshotReason,
+    ReservationModel? triggeringReservation,
   }) async {
     final all = List<ReservationModel>.from(
       listReservations?.whereType<ReservationModel>().toList() ?? [],
     );
 
-    await queueManager.notifyApprovedQueueUpdate(allReservations: all);
+    await queueManager.notifyApprovedQueueUpdate(
+      allReservations: all,
+      triggeringReservation: triggeringReservation,
+    );
 
     // حفظ snapshot تلقائي عند كل تحديث كبير
     if (snapshotReason != null && all.isNotEmpty) {
       final doctorUid = all.first.doctorUid;
       final date = all.first.appointmentDateTime;
       if (doctorUid != null && date != null) {
-        unawaited(snapshotManager.saveSnapshot(
-          doctorUid: doctorUid,
-          appointmentDate: date,
-          allReservations: all,
-          triggeredBy: snapshotReason,
-        ));
+        unawaited(
+          snapshotManager.saveSnapshot(
+            doctorUid: doctorUid,
+            appointmentDate: date,
+            allReservations: all,
+            triggeredBy: snapshotReason,
+          ),
+        );
       }
     }
   }
@@ -597,7 +621,12 @@ extension ReservationData on ReservationViewModel {
       _updateListInMemory(reservation);
       // New reservation entered queue → update all positions so patient apps
       // show the correct ahead-count immediately instead of "دورك الآن".
-      unawaited(_handleQueueUpdate(snapshotReason: null));
+      unawaited(
+        _handleQueueUpdate(
+          snapshotReason: null,
+          triggeringReservation: reservation,
+        ),
+      );
     };
 
     service.onReservationUpdated = (reservation) {
@@ -614,6 +643,7 @@ extension ReservationData on ReservationViewModel {
       );
 
       listReservations = rebuilt;
+      calculateStats();
       update();
     };
   }
@@ -647,24 +677,23 @@ extension ReservationData on ReservationViewModel {
       completeDayReservations.whereType<ReservationModel>().toList(),
     );
 
+    calculateStats();
+
     _detectAndNotifyNewbornInsertion();
 
     update();
   }
 
   void _detectAndNotifyNewbornInsertion() {
-    const activeStatuses = {
-      'approved',
-      'checked_in',
-    };
+    const activeStatuses = {'approved', 'checked_in'};
 
-    final currentCount = completeDayReservations
-        .whereType<ReservationModel>()
-        .where(
-          (r) =>
-              r.priorityLevel == 3 && activeStatuses.contains(r.status),
-        )
-        .length;
+    final currentCount =
+        completeDayReservations
+            .whereType<ReservationModel>()
+            .where(
+              (r) => r.priorityLevel == 3 && activeStatuses.contains(r.status),
+            )
+            .length;
 
     if (currentCount > _activeNewbornCount) {
       unawaited(_handleNewbornInsertion());
@@ -676,13 +705,13 @@ extension ReservationData on ReservationViewModel {
     await _handleQueueUpdate(snapshotReason: QueueChangeReason.newbornInserted);
 
     const activeStatuses = {'approved', 'checked_in'};
-    final nonNewbornActive = completeDayReservations
-        .whereType<ReservationModel>()
-        .where(
-          (r) =>
-              r.priorityLevel != 3 && activeStatuses.contains(r.status),
-        )
-        .toList();
+    final nonNewbornActive =
+        completeDayReservations
+            .whereType<ReservationModel>()
+            .where(
+              (r) => r.priorityLevel != 3 && activeStatuses.contains(r.status),
+            )
+            .toList();
 
     await queueReasonManager.writeBulkReason(
       reservations: nonNewbornActive,
@@ -717,10 +746,12 @@ extension ReservationData on ReservationViewModel {
     AppLogger.info("data in res", doctorKey + normalizedDate);
 
     // Restart Firebase listener for the current date (no-op if already on same date)
-    unawaited(ReservationService().startListening(
-      doctorKey: doctorKey,
-      date: normalizedDate,
-    ));
+    unawaited(
+      ReservationService().startListening(
+        doctorKey: doctorKey,
+        date: normalizedDate,
+      ),
+    );
 
     try {
       /// 🔥 الترتيب مهم جدًا
@@ -837,7 +868,11 @@ extension ReservationData on ReservationViewModel {
       "doctors/$doctorKey/dayLimits/${normalizedDate}_$shiftKey",
     );
 
-    await ref.set({'maxCount': maxCount, 'date': normalizedDate, 'shiftKey': shiftKey});
+    await ref.set({
+      'maxCount': maxCount,
+      'date': normalizedDate,
+      'shiftKey': shiftKey,
+    });
     dayLimit = maxCount;
     update();
   }

@@ -357,6 +357,20 @@ class ReservationDoctorViewModel extends GetxController {
       return;
     }
 
+    // 🔥 Pull the selected date's reservations from Firebase into SQLite.
+    // The realtime listener only auto-syncs today, so past/future dates would
+    // otherwise stay empty locally. Restarting it for the chosen date fetches
+    // that day and fires onAdded events that refill the list.
+    final dKey = _doctorKey;
+    if (dKey != null && dKey.isNotEmpty) {
+      unawaited(
+        ReservationService().startListening(
+          doctorKey: dKey,
+          date: AppDateFormatter.toDash(appointment_date_time),
+        ),
+      );
+    }
+
     listReservations = [];
 
     String where = "";

@@ -23,6 +23,35 @@ class ReservationSectionView extends StatelessWidget {
                 Get.find<MainPageViewModel>().changeIndex(1);
               },
             ),
+
+            if (hasActive) ...[
+              SizedBox(height: 8.h),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.notifications_active_rounded,
+                      size: 16.sp,
+                      color: AppColors.primary,
+                    ),
+                    SizedBox(width: 6.w),
+                    Expanded(
+                      child: Text(
+                        "أول ما الدكتور يوصل هنبعتلك إشعار فورًا،\nوكل ما حالة قدامك تخلص هنعرفك عشان تتابع دورك.",
+                        style: context.typography.smRegular.copyWith(
+                          color: AppColors.textSecondaryParagraph,
+                          height: 1.4,
+                          fontSize: 13.sp,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
             SizedBox(height: 14.h),
 
             if (hasActive)

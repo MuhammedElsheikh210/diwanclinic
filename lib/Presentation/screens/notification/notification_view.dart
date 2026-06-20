@@ -38,7 +38,9 @@ class _NotificationsViewState extends State<NotificationsView> {
               //   return const Center(child: CircularProgressIndicator());
               // }
 
-              if (controller.notifications.isEmpty) {
+              final displayNotifs = controller.displayNotifications;
+
+              if (displayNotifs.isEmpty) {
                 return Center(
                   child: Text(
                     "لا توجد إشعارات بعد",
@@ -56,9 +58,9 @@ class _NotificationsViewState extends State<NotificationsView> {
 
               return ListView.builder(
                 physics: const BouncingScrollPhysics(),
-                itemCount: controller.notifications.length,
+                itemCount: displayNotifs.length,
                 itemBuilder: (context, index) {
-                  final notif = controller.notifications[index];
+                  final notif = displayNotifs[index];
                   if (notif == null) return const SizedBox.shrink();
 
                   final formattedDate =

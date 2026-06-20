@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_database/firebase_database.dart' as rtdb;
 import 'package:intl/intl.dart';
 import '../../../../index/index_main.dart';
 
@@ -200,6 +200,53 @@ class CreateReservationFromPatientViewModel extends GetxController {
     return null;
   }
 
+  /// Atomically reserves the next unique order number for a given date + shift.
+  ///
+  /// Uses a Firebase counter at `doctors/{doctorKey}/reservationCounters/{date}_{shiftKey}`
+  /// to guarantee uniqueness even when multiple patients book simultaneously.
+  /// If the counter is behind the real max (e.g. assistant created reservations),
+  /// it fast-forwards the counter before incrementing.
+  Future<int> _reserveNextOrderNum({
+    required String doctorKey,
+    required String date,
+    required String shiftKey,
+  }) async {
+    // Step 1: read real max orderNum from Firebase (handles assistant-created reservations)
+    int currentMax = 0;
+    try {
+      final resRef = rtdb.FirebaseDatabase.instance.ref(
+        "doctors/$doctorKey/reservations/$date",
+      );
+      final resSnapshot = await resRef.get();
+      if (resSnapshot.exists && resSnapshot.value != null) {
+        final resData = Map<dynamic, dynamic>.from(resSnapshot.value as Map);
+        for (final entry in resData.values) {
+          if (entry is Map && entry['shiftKey']?.toString() == shiftKey) {
+            final n = (entry['order_num'] as num?)?.toInt() ?? 0;
+            if (n > currentMax) currentMax = n;
+          }
+        }
+      }
+    } catch (_) {}
+
+    // Step 2: atomically increment the counter, clamping below currentMax
+    final counterRef = rtdb.FirebaseDatabase.instance.ref(
+      "doctors/$doctorKey/reservationCounters/${date}_$shiftKey",
+    );
+
+    int reserved = currentMax + 1;
+    try {
+      final result = await counterRef.runTransaction((Object? current) {
+        final c = current == null ? 0 : (current as num).toInt();
+        final next = (c > currentMax ? c : currentMax) + 1;
+        return rtdb.Transaction.success(next);
+      });
+      reserved = (result.snapshot.value as num?)?.toInt() ?? reserved;
+    } catch (_) {}
+
+    return reserved;
+  }
+
   /// Returns error message if limit reached, null if OK to proceed.
   Future<String?> _checkDayLimit(String formattedDate) async {
     final doctorKey = _effectiveDoctorKey;
@@ -207,7 +254,7 @@ class CreateReservationFromPatientViewModel extends GetxController {
     if (shift_key == null || shift_key!.isEmpty) return null;
 
     try {
-      final limitRef = FirebaseDatabase.instance.ref(
+      final limitRef = rtdb.FirebaseDatabase.instance.ref(
         "doctors/$doctorKey/dayLimits/${formattedDate}_$shift_key",
       );
       final limitSnapshot = await limitRef.get();
@@ -218,7 +265,7 @@ class CreateReservationFromPatientViewModel extends GetxController {
       if (maxCount == null || maxCount <= 0) return null;
 
       // Count existing reservations for this date + shift from Firebase
-      final resRef = FirebaseDatabase.instance.ref(
+      final resRef = rtdb.FirebaseDatabase.instance.ref(
         "doctors/$doctorKey/reservations/$formattedDate",
       );
       final resSnapshot = await resRef.get();
@@ -297,6 +344,15 @@ class CreateReservationFromPatientViewModel extends GetxController {
 
     clientUser ??= Get.find<UserSession>().user;
 
+    // Reserve a unique order number atomically from Firebase
+    final doctorKey = _effectiveDoctorKey;
+    final int nextOrderNum = (doctorKey != null && formattedDate != null && shift_key != null)
+        ? await _reserveNextOrderNum(
+            doctorKey: doctorKey,
+            date: formattedDate,
+            shiftKey: shift_key!,
+          )
+        : (total_reservations + 1);
 
     final patientName = selectedType == "زيارة مندوب"
         ? delegateNameController.text
@@ -309,6 +365,7 @@ class CreateReservationFromPatientViewModel extends GetxController {
     final reservation =
         existingReservation?.copyWith(
           key: existingReservation?.key,
+          doctorUid: doctorKey,
           patientName: patientName,
           patientCode: patientCode,
           reservationType: selectedType,
@@ -318,7 +375,7 @@ class CreateReservationFromPatientViewModel extends GetxController {
           restAmount: restAmountController.text,
           clinicKey: clinic_key,
           shiftKey: shift_key,
-          orderNum: total_reservations + 1,
+          orderNum: nextOrderNum,
           status: ReservationStatus.approved.value,
           paymentScreenshotUrl: screenshotUrl,
           paymentMethod: selectedPaymentMethod,
@@ -326,6 +383,7 @@ class CreateReservationFromPatientViewModel extends GetxController {
         ) ??
         ReservationModel(
           key: const Uuid().v4(),
+          doctorUid: doctorKey,
           patientUid: clientUser?.uid,
           createdAt: DateTime.now().millisecondsSinceEpoch,
           patientName: patientName,
@@ -336,7 +394,7 @@ class CreateReservationFromPatientViewModel extends GetxController {
           shiftKey: shift_key,
           paidAmount: paidAmountController.text,
           restAmount: restAmountController.text,
-          orderNum: total_reservations + 1,
+          orderNum: nextOrderNum,
           status: ReservationStatus.approved.value,
           paymentScreenshotUrl: screenshotUrl,
           paymentMethod: selectedPaymentMethod,

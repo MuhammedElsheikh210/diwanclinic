@@ -184,8 +184,8 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                         vertical: 3,
                       ),
                       child: Text(
-                        "هذا اليوم مُغلق بقرار الإدارة",
-                        style: context.typography.lgBold.copyWith(
+                        "⚠️ اليوم مُغلق من جهة المرضي — يمكنك الإضافة يدوياً",
+                        style: context.typography.mdBold.copyWith(
                           color: AppColors.errorForeground,
                         ),
                       ),
@@ -194,12 +194,6 @@ class _CreateReservationViewState extends State<CreateReservationView> {
                   ReservationBottomNavigation(
                     controller: controller,
                     onSave: () {
-                      // 🚫 اليوم مغلق
-                      if (controller.isDayClosed) {
-                        Loader.showError("🚫 اليوم مغلق للحجوزات");
-                        return;
-                      }
-
                       // ❌ Validation فشل
                       if (!controller.validateCurrentStep()) {
                         if (controller.currentStep == 2) {

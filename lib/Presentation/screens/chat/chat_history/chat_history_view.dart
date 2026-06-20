@@ -1,11 +1,11 @@
 import 'package:diwanclinic/Presentation/parentControllers/chat_service.dart';
 import 'package:diwanclinic/Presentation/screens/chat/chat_details/chat_view.dart';
-import 'package:diwanclinic/Presentation/screens/pharmacy_chat/pharmacy_chat_detail_view.dart';
 import 'package:intl/intl.dart';
 import '../../../../index/index_main.dart';
 
 // ─────────────────────────────────────────────────────────────
-// Patient Chat List — shows pharmacy chat threads (Tab 5)
+// Patient Chat List — shows assistant chats for doctors the
+// patient has reservations with (Tab: المحادثة)
 // ─────────────────────────────────────────────────────────────
 class ChatListView extends StatefulWidget {
   const ChatListView({super.key});
@@ -15,48 +15,70 @@ class ChatListView extends StatefulWidget {
 }
 
 class _ChatListViewState extends State<ChatListView> {
-  late final _vm = Get.put(PatientPharmacyChatListVm());
+  late final _vm = Get.put(PatientAssistantChatListVm());
 
   @override
   void initState() {
     super.initState();
     final uid = Get.find<UserSession>().user?.uid ?? "";
-    if (uid.isNotEmpty) _vm.listenPharmacyChats(uid);
+    if (uid.isNotEmpty) _vm.listen(uid);
+  }
+
+  // Unique doctors (= assistants) derived from patient reservations
+  List<_AssistantContact> _deriveContacts(
+      List<ReservationModel?>? reservations) {
+    final map = <String, _AssistantContact>{};
+    for (final r in reservations ?? []) {
+      final id = r?.doctorUid;
+      if (id == null || id.isEmpty) continue;
+      if (map.containsKey(id)) continue;
+      map[id] = _AssistantContact(
+        doctorUid: id,
+        doctorName: r?.doctorName ?? "العيادة",
+        receiverFcm: r?.assistantFcm ?? r?.doctorFcm,
+      );
+    }
+    return map.values.toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    return GetBuilder<PatientPharmacyChatListVm>(
-      builder: (vm) {
-        return Scaffold(
-          backgroundColor: AppColors.white,
-          appBar: const HomePatientAppBar(),
-          body: vm.threads == null
-              ? const ShimmerLoader()
-              : vm.threads!.isEmpty
+    return GetBuilder<ReservationPatientViewModel>(
+      init: Get.isRegistered<ReservationPatientViewModel>()
+          ? Get.find<ReservationPatientViewModel>()
+          : ReservationPatientViewModel(),
+      builder: (resVm) {
+        final contacts = _deriveContacts(resVm.listReservations);
+        return GetBuilder<PatientAssistantChatListVm>(
+          builder: (vm) {
+            return Scaffold(
+              backgroundColor: AppColors.white,
+              appBar: const HomePatientAppBar(),
+              body: contacts.isEmpty
                   ? NoDataAnimated(
-                      title: "لا توجد محادثات مع صيدليات",
+                      title: "لا توجد محادثات",
                       subtitle:
-                          "عند طلب دواء من صيدلية يمكنك التواصل معها مباشرةً هنا.",
+                          "بعد حجز كشف يمكنك التواصل مع مساعدة العيادة من هنا.",
                       lottiePath: Animations.comming_soon,
                       height: 200.h,
                     )
                   : ListView.separated(
-                      itemCount: vm.threads!.length,
+                      itemCount: contacts.length,
                       separatorBuilder: (_, __) => const Divider(
                         height: 1,
                         color: AppColors.borderNeutralPrimary,
                       ),
                       itemBuilder: (context, i) {
-                        final thread = vm.threads![i];
-                        final isUnread =
-                            thread.isPatientRead == false;
-                        return _PatientThreadTile(
+                        final contact = contacts[i];
+                        final thread = vm.threadFor(contact.doctorUid);
+                        return _AssistantContactTile(
+                          contact: contact,
                           thread: thread,
-                          isUnread: isUnread,
                         );
                       },
                     ),
+            );
+          },
         );
       },
     );
@@ -64,44 +86,77 @@ class _ChatListViewState extends State<ChatListView> {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Patient Pharmacy Chat List ViewModel
+// Patient Assistant Chat List ViewModel
 // ─────────────────────────────────────────────────────────────
-class PatientPharmacyChatListVm extends GetxController {
+class PatientAssistantChatListVm extends GetxController {
   final _chatService = ChatService();
 
-  List<PharmacyChatThread>? threads;
+  List<AssistantChatThread>? threads;
+  StreamSubscription? _sub;
 
-  void listenPharmacyChats(String patientUid) {
-    _chatService.getPatientPharmacyChats(patientUid).listen((data) {
+  void listen(String patientUid) {
+    _sub?.cancel();
+    _sub = _chatService.getPatientAssistantChats(patientUid).listen((data) {
       threads = data;
       update();
     });
   }
+
+  AssistantChatThread? threadFor(String assistantId) {
+    final list = threads;
+    if (list == null) return null;
+    for (final t in list) {
+      if (t.assistantId == assistantId) return t;
+    }
+    return null;
+  }
+
+  @override
+  void onClose() {
+    _sub?.cancel();
+    super.onClose();
+  }
 }
 
 // ─────────────────────────────────────────────────────────────
-// Thread Tile Widget
+// Assistant Contact (one per doctor the patient booked with)
 // ─────────────────────────────────────────────────────────────
-class _PatientThreadTile extends StatelessWidget {
-  final PharmacyChatThread thread;
-  final bool isUnread;
+class _AssistantContact {
+  final String doctorUid;
+  final String doctorName;
+  final String? receiverFcm;
 
-  const _PatientThreadTile(
-      {required this.thread, required this.isUnread});
+  const _AssistantContact({
+    required this.doctorUid,
+    required this.doctorName,
+    this.receiverFcm,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+// Contact Tile Widget
+// ─────────────────────────────────────────────────────────────
+class _AssistantContactTile extends StatelessWidget {
+  final _AssistantContact contact;
+  final AssistantChatThread? thread;
+
+  const _AssistantContactTile({required this.contact, this.thread});
 
   @override
   Widget build(BuildContext context) {
+    final isUnread = thread?.isPatientRead == false;
+    final lastMessage = thread?.lastMessage;
     return InkWell(
       onTap: () {
         final session = Get.find<UserSession>();
         Get.to(
-          () => PharmacyChatDetailView(
-            pharmacyId: thread.pharmacyId ?? "",
-            pharmacyName: thread.pharmacyName ?? "الصيدلية",
+          () => AssistantChatDetailView(
+            assistantId: contact.doctorUid,
+            assistantName: contact.doctorName,
             patientId: session.user?.uid ?? "",
             patientName: session.user?.name ?? "مريض",
-            isPharmacySide: false,
-            receiverFcmToken: thread.pharmacyFcmToken,
+            isAssistantSide: false,
+            receiverFcmToken: contact.receiverFcm,
           ),
           binding: Binding(),
         );
@@ -110,16 +165,15 @@ class _PatientThreadTile extends StatelessWidget {
         color: isUnread
             ? AppColors.primary.withOpacity(0.06)
             : Colors.transparent,
-        padding:
-            EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+        padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
         child: Row(
           children: [
             CircleAvatar(
               radius: 26,
-              backgroundColor: const Color(0xFFFF6B35).withOpacity(0.1),
+              backgroundColor: AppColors.primary.withOpacity(0.1),
               child: const Icon(
-                Icons.local_pharmacy_rounded,
-                color: Color(0xFFFF6B35),
+                Icons.support_agent_rounded,
+                color: AppColors.primary,
                 size: 26,
               ),
             ),
@@ -129,22 +183,26 @@ class _PatientThreadTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        thread.pharmacyName ?? "الصيدلية",
-                        style: isUnread
-                            ? context.typography.mdBold
-                            : context.typography.mdMedium,
-                      ),
-                      Text(
-                        _formatDate(thread.lastMessageTime),
-                        style: context.typography.smRegular.copyWith(
-                          color: AppColors.grayMedium,
-                          fontSize: 11.sp,
+                      Expanded(
+                        child: Text(
+                          contact.doctorName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: isUnread
+                              ? context.typography.mdBold
+                              : context.typography.mdMedium,
                         ),
                       ),
+                      if (thread?.lastMessageTime != null)
+                        Text(
+                          _formatDate(thread!.lastMessageTime),
+                          style: context.typography.smRegular.copyWith(
+                            color: AppColors.grayMedium,
+                            fontSize: 11.sp,
+                          ),
+                        ),
                     ],
                   ),
                   const SizedBox(height: 4),
@@ -152,7 +210,7 @@ class _PatientThreadTile extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          thread.lastMessage ?? "",
+                          lastMessage ?? "اضغط لبدء المحادثة مع المساعدة",
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: context.typography.smRegular.copyWith(

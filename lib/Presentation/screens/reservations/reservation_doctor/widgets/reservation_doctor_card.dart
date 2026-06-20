@@ -382,6 +382,31 @@ class _ActionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
+        // Chat icon — only when patient has the app
+        if (reservation.patientUid?.isNotEmpty == true) ...[
+          _IconBtn(
+            icon: Icons.chat_bubble_outline_rounded,
+            color: AppColors.primary,
+            onTap: () {
+              final session = Get.find<UserSession>();
+              final doctorUid = reservation.doctorUid ?? '';
+              final doctorName = session.user?.name ?? "الدكتور";
+              Get.to(
+                () => AssistantChatDetailView(
+                  assistantId: doctorUid,
+                  assistantName: doctorName,
+                  patientId: reservation.patientUid!,
+                  patientName: reservation.patientName ?? "مريض",
+                  isAssistantSide: true,
+                  isReadOnly: true,
+                ),
+                binding: Binding(),
+              );
+            },
+          ),
+          SizedBox(width: 8.w),
+        ],
+
         // Details button — always shown
         Expanded(
           child: _OutlineBtn(

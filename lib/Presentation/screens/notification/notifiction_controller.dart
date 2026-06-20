@@ -1,4 +1,5 @@
 import '../../../../index/index_main.dart';
+import 'notification_cancel_reason_sheet.dart';
 
 class NotificationController extends GetxController {
   final NotificationPatentService _service = NotificationPatentService();
@@ -8,8 +9,14 @@ class NotificationController extends GetxController {
   final TextEditingController titleController = TextEditingController();
   final TextEditingController bodyController = TextEditingController();
 
-  /// 🔔 unread notifications count
-  int get unreadCount => notifications.where((n) => n?.isRead == false).length;
+  static const _chatTypes = {"pharmacy_chat", "assistant_chat"};
+
+  List<NotificationModel?> get displayNotifications =>
+      notifications.where((n) => !_chatTypes.contains(n?.notificationType)).toList();
+
+  /// 🔔 unread notifications count (chat excluded)
+  int get unreadCount =>
+      displayNotifications.where((n) => n?.isRead == false).length;
 
   /// 📋 pending new-reservation notifications (any date, need action)
   int get pendingReservationCount => notifications
@@ -313,8 +320,9 @@ extension NotificationFeature on NotificationController {
   // ─────────────────────────────────────────────
   Future<void> rejectReservationFromNotification(
     ReservationModel reservation,
-    String notificationKey,
-  ) async {
+    String notificationKey, {
+    String? cancelReason,
+  }) async {
     Loader.show();
 
     final updated = reservation.copyWith(
@@ -326,22 +334,13 @@ extension NotificationFeature on NotificationController {
       voidCallBack: (_) async {
         await _afterReject(updated, notificationKey);
 
-        final notificationController = Get.find<NotificationController>();
-
-        // await notificationController.addNotification(
-        //   title: "تم إلغاء الحجز",
-        //   body: "نعتذر، تم إلغاء الحجز.\nيمكنك الحجز مرة أخرى بسهولة 🙏",
-        //   toKey: updated.patientUid ?? "",
-        //   notificationType: ReservationStatus.cancelledByAssistant.value,
-        //   extraData: updated.toJson(),
-        // );
-
         // 📱 WhatsApp
         await WhatsAppStatusMessageService.sendStatusWhatsAppMessage(
           reservation: updated,
           clinic: null,
           from_assist: true,
           newStatus: ReservationStatus.cancelledByAssistant,
+          cancelReason: cancelReason,
         );
       },
     );
@@ -467,17 +466,22 @@ extension NotificationFeature on NotificationController {
     required ReservationModel reservation,
     required String notificationKey,
   }) async {
-    final confirmed = await _showConfirmDialog(
+    await showModalBottomSheet(
       context: context,
-      title: "تأكيد الرفض",
-      message: "هل أنت متأكد من رفض هذا الحجز؟ لا يمكن التراجع عن هذا الإجراء.",
-      confirmText: "رفض الحجز",
-      confirmColor: AppColors.errorBackground,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => NotificationCancelReasonSheet(
+        onConfirm: (reason) async {
+          await rejectReservationFromNotification(
+            reservation,
+            notificationKey,
+            cancelReason: reason,
+          );
+        },
+      ),
     );
-
-    if (!confirmed) return;
-
-    await rejectReservationFromNotification(reservation, notificationKey);
   }
 
   // ─────────────────────────────────────────────

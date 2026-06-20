@@ -10,7 +10,7 @@ const {
 
 const {
   sendWhatsApp,
-} = require("./whatsappWebhook");
+} = require("../whatsapp/whatsappSender");
 
 // ============================================================
 // 🔄 HANDLE ORDER STATUS CHANGE

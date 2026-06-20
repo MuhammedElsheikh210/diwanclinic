@@ -105,15 +105,6 @@ class ReservationQueueManager {
         .where((r) => r.status == ReservationStatus.missed.value)
         .toList();
 
-    final cancelledValues = {
-      ReservationStatus.cancelledByUser.value,
-      ReservationStatus.cancelledByAssistant.value,
-      ReservationStatus.cancelledByDoctor.value,
-    };
-    final cancelled = all
-        .where((r) => cancelledValues.contains(r.status))
-        .toList();
-
     return [
       ...pending,           // 🔔 needs assistant action → always first
       ...inProgress,
@@ -122,18 +113,38 @@ class ReservationQueueManager {
       ...paymentRejected,   // ❌ rejected — patient must re-upload
       ...completed,
       ...missed,
-      ...cancelled,
     ];
   }
 
   /// Push queue_position updates to Firebase so patient apps receive notifications.
+  ///
+  /// [triggeringReservation]: the reservation that caused the queue to shift.
+  /// When it is an emergency ("كشف مستعجل" / isHardPriority) or operation
+  /// follow-up ("متابعة عمليات"), every OTHER patient's node gets
+  /// `queue_shift_reason` + `queue_shift_id` written so the Cloud Function
+  /// can send a labelled "حالة طوارئ / متابعة عمليات" push instead of the
+  /// generic "قبلك حالات" message.
   Future<void> notifyApprovedQueueUpdate({
     required List<ReservationModel> allReservations,
+    ReservationModel? triggeringReservation,
   }) async {
     final active = _extractActive(allReservations);
     final currentOrder = _currentDoctorOrder(allReservations);
     final sorted = _sortActive(active, currentOrder);
     final now = DateTime.now().millisecondsSinceEpoch;
+
+    // Detect if the triggering reservation is a priority type
+    String? shiftReason;
+    String? shiftId;
+    if (triggeringReservation != null) {
+      if (triggeringReservation.isHardPriority) {
+        shiftReason = "emergency";
+        shiftId = triggeringReservation.key;
+      } else if (triggeringReservation.reservationType == "متابعة عمليات") {
+        shiftReason = "operation_follow_up";
+        shiftId = triggeringReservation.key;
+      }
+    }
 
     for (int i = 0; i < sorted.length; i++) {
       final r = sorted[i];
@@ -147,18 +158,22 @@ class ReservationQueueManager {
       }
 
       try {
-        // Update assistant/doctor path (existing)
         final doctorPath =
             "doctors/${r.doctorUid}"
             "/reservations/${r.appointmentDateTime}"
             "/${r.key}";
 
-        await FirebaseDatabase.instance.ref(doctorPath).update({
+        // Write shift reason for all patients except the priority case itself
+        final isThePriorityCase = r.key == triggeringReservation?.key;
+        final Map<String, dynamic> doctorUpdate = {
           "queue_position": ahead,
           "queue_trigger": now,
-        });
+          "queue_shift_reason": (shiftReason != null && !isThePriorityCase) ? shiftReason : null,
+          "queue_shift_id": (shiftId != null && !isThePriorityCase) ? shiftId : null,
+        };
 
-        // Update patient path so their app shows correct queue position
+        await FirebaseDatabase.instance.ref(doctorPath).update(doctorUpdate);
+
         if (r.patientUid != null) {
           final patientPath = "patients/${r.patientUid}/reservationsMeta/${r.key}";
           await FirebaseDatabase.instance.ref(patientPath).update({

@@ -54,64 +54,16 @@ class _PatientHomeViewState extends State<PatientHomeView> {
                                 horizontal: 16.w,
                                 vertical: 12.h,
                               ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: HomeFeatureTile(
-                                      title: "احجز كشف",
-                                      subtitle: "تابع دورك لحظة بلحظة ",
-                                      icon: Icons.calendar_month_rounded,
-                                      color: AppColors.primary,
-                                      onTap: () {
-                                        Get.to(
-                                          () => const SpecializationView(),
-                                        );
-                                      },
-                                    ),
-                                  ),
-
-                                  SizedBox(width: 12.w),
-
-                                  Expanded(
-                                    child: HomeFeatureTile(
-                                      title: "اطلب علاجك",
-                                      subtitle: "توصيل العلاج لحد باب البيت",
-                                      icon: Icons.medical_services_rounded,
-                                      color: const Color(0xFFFF6B35),
-                                      onTap: () {
-                                        final user =
-                                            Get.find<UserSession>().user;
-
-                                        final reservation = ReservationModel(
-                                          patientUid: user?.uid,
-                                          patientFcm: user?.fcmToken,
-                                          patientPhone: user?.phone,
-                                          patientName: user?.name,
-                                        );
-
-                                        Get.to(
-                                          () => OrderMedicineScreen(
-                                            reservation: reservation,
-                                            onConfirmed: (ReservationModel p1) {
-                                              Get.off(
-                                                () => const OrderSuccessView(),
-                                              );
-                                            },
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ],
+                              child: BookAppointmentCard(
+                                onTap: () {
+                                  Get.to(() => const SpecializationView());
+                                },
                               ),
                             ),
 
                             SizedBox(height: 16.h),
 
                             ReservationSectionView(controller: controller),
-                            SizedBox(height: 24.h),
-
-                            OrdersSectionView(controller: controller),
                             SizedBox(height: 24.h),
 
                             SpecializationSectionView(controller: controller),
@@ -127,27 +79,16 @@ class _PatientHomeViewState extends State<PatientHomeView> {
   }
 }
 
-class HomeFeatureTile extends StatefulWidget {
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final Color color;
+class BookAppointmentCard extends StatefulWidget {
   final VoidCallback onTap;
 
-  const HomeFeatureTile({
-    super.key,
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
+  const BookAppointmentCard({super.key, required this.onTap});
 
   @override
-  State<HomeFeatureTile> createState() => _HomeFeatureTileState();
+  State<BookAppointmentCard> createState() => _BookAppointmentCardState();
 }
 
-class _HomeFeatureTileState extends State<HomeFeatureTile> {
+class _BookAppointmentCardState extends State<BookAppointmentCard> {
   bool isPressed = false;
 
   @override
@@ -159,61 +100,81 @@ class _HomeFeatureTileState extends State<HomeFeatureTile> {
       onTapCancel: () => setState(() => isPressed = false),
       child: AnimatedScale(
         duration: const Duration(milliseconds: 130),
-        scale: isPressed ? 0.96 : 1.0,
+        scale: isPressed ? 0.97 : 1.0,
         child: Container(
-          padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 14.w),
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(vertical: 22.h, horizontal: 18.w),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20.r),
-            border: Border.all(
-              color: widget.color.withOpacity(0.14),
-              width: 1.2,
+            borderRadius: BorderRadius.circular(24.r),
+            gradient: LinearGradient(
+              begin: Alignment.topRight,
+              end: Alignment.bottomLeft,
+              colors: [AppColors.primary, AppColors.primary.withOpacity(0.82)],
             ),
             boxShadow: [
               BoxShadow(
-                color: widget.color.withOpacity(0.10),
-                blurRadius: 18,
-                offset: const Offset(0, 6),
-              ),
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
+                color: AppColors.primary.withOpacity(0.30),
+                blurRadius: 22,
+                offset: const Offset(0, 10),
               ),
             ],
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
+          child: Row(
             children: [
               Container(
-                width: 58.w,
-                height: 58.w,
+                width: 60.w,
+                height: 60.w,
                 decoration: BoxDecoration(
-                  color: widget.color.withOpacity(0.10),
+                  color: Colors.white.withOpacity(0.18),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.25),
+                    width: 1.2,
+                  ),
+                ),
+                child: Icon(
+                  Icons.calendar_month_rounded,
+                  color: Colors.white,
+                  size: 30.sp,
+                ),
+              ),
+              SizedBox(width: 16.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "احجز كشف",
+                      style: context.typography.lgBold.copyWith(
+                        color: Colors.white,
+                        fontSize: 19.sp,
+                      ),
+                    ),
+                    SizedBox(height: 5.h),
+                    Text(
+                      "تابع دورك لحظة بلحظة",
+                      style: context.typography.smRegular.copyWith(
+                        color: Colors.white.withOpacity(0.85),
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Container(
+                width: 38.w,
+                height: 38.w,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(widget.icon, color: widget.color, size: 27.sp),
-              ),
-              SizedBox(height: 12.h),
-              Text(
-                widget.title,
-                style: context.typography.mdBold.copyWith(
-                  color: AppColors.textDisplay,
-                  fontSize: 15.sp,
+                child: Icon(
+                  Icons.arrow_forward_ios_outlined,
+                  color: AppColors.primary,
+                  size: 16.sp,
                 ),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 5.h),
-              Text(
-                widget.subtitle,
-                style: context.typography.smRegular.copyWith(
-                  color: AppColors.textSecondaryParagraph,
-                  height: 1.4,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

@@ -124,6 +124,11 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
+		<key>FirebaseFunctions.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
 		<key>FirebaseInstallations-FirebaseInstallations_Privacy.xcscheme</key>
 		<dict>
 			<key>isShown</key>
@@ -140,6 +145,11 @@
 			<false/>
 		</dict>
 		<key>FirebaseMessaging.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>FirebaseMessagingInterop.xcscheme</key>
 		<dict>
 			<key>isShown</key>
 			<false/>
@@ -270,6 +280,11 @@
 			<false/>
 		</dict>
 		<key>cloud_firestore.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>cloud_functions.xcscheme</key>
 		<dict>
 			<key>isShown</key>
 			<false/>

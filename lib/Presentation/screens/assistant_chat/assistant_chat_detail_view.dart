@@ -8,6 +8,7 @@ import '../../../index/index_main.dart';
 /// Shared chat screen for both patient and assistant.
 /// [isAssistantSide] = true  → current user is the assistant
 /// [isAssistantSide] = false → current user is the patient
+/// [isReadOnly] = true       → doctor view: read-only, no input bar, no notifications
 class AssistantChatDetailView extends StatefulWidget {
   final String assistantId; // = doctorKey
   final String assistantName;
@@ -15,6 +16,7 @@ class AssistantChatDetailView extends StatefulWidget {
   final String patientName;
   final bool isAssistantSide;
   final String? receiverFcmToken;
+  final bool isReadOnly;
 
   const AssistantChatDetailView({
     super.key,
@@ -24,6 +26,7 @@ class AssistantChatDetailView extends StatefulWidget {
     required this.patientName,
     required this.isAssistantSide,
     this.receiverFcmToken,
+    this.isReadOnly = false,
   });
 
   @override
@@ -221,7 +224,11 @@ class _AssistantChatDetailViewState extends State<AssistantChatDetailView> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
-                          widget.isAssistantSide ? "مريض" : "المساعدة",
+                          widget.isReadOnly
+                              ? "عرض فقط"
+                              : widget.isAssistantSide
+                                  ? "مريض"
+                                  : "المساعدة",
                           style: context.typography.smRegular.copyWith(
                             color: Colors.white70,
                             fontSize: 11.sp,
@@ -275,11 +282,12 @@ class _AssistantChatDetailViewState extends State<AssistantChatDetailView> {
                           },
                         ),
                 ),
-                _InputBar(
-                  controller: _msgController,
-                  onSend: _sendText,
-                  onPickImages: _pickImages,
-                ),
+                if (!widget.isReadOnly)
+                  _InputBar(
+                    controller: _msgController,
+                    onSend: _sendText,
+                    onPickImages: _pickImages,
+                  ),
               ],
             ),
           );

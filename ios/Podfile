@@ -1,5 +1,5 @@
 # Define global platform
-platform :ios, '13.0'
+platform :ios, '17.0'
 
 # Disable CocoaPods analytics
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'

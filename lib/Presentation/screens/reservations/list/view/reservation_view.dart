@@ -1,4 +1,5 @@
 import 'package:diwanclinic/index/index_main.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class ReservationView extends StatefulWidget {
   const ReservationView({super.key});
@@ -63,121 +64,126 @@ class _ReservationViewState extends State<ReservationView> {
                   controller.update();
                 },
                 child: ListView(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 0.h),
-                children: [
-                  // Doctor status announcement banner
-                  const DoctorStatusBanner(),
-
-                  isGrid ? const SizedBox() : const SizedBox(height: 10),
-
-                  isGrid
-                      ? const SizedBox()
-                      : StatsSection(controller: controller),
-
-                  isGrid
-                      ? const SizedBox()
-                      : ReservationReportWidget(controller: controller),
-
-                  // ── Pending reservations banner (assistant only) ──
-                  const _PendingReservationsBanner(),
-
-                  // ── Quick Actions Row ─────────────────────────
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 4.w,
-                      vertical: 8.h,
-                    ),
-                    child: _buildQuickActions(controller),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 0.h,
                   ),
+                  children: [
+                    // Doctor status announcement banner
+                    const DoctorStatusBanner(),
 
-                  // ── Animated Search Field ─────────────────────
-                  AnimatedSize(
-                    duration: const Duration(milliseconds: 240),
-                    curve: Curves.easeInOut,
-                    child: _showSearch
-                        ? Padding(
-                            padding: EdgeInsets.only(
-                              left: 4.w,
-                              right: 4.w,
-                              bottom: 8.h,
-                            ),
-                            child: AnimatedOpacity(
-                              duration: const Duration(milliseconds: 180),
-                              opacity: _showSearch ? 1.0 : 0.0,
-                              child: TextField(
-                                controller: _searchController,
-                                focusNode: _keyboardService.getFocusNode(
-                                  _keyboardKeys[0],
-                                ),
-                                keyboardType: TextInputType.phone,
-                                textInputAction: TextInputAction.done,
-                                textDirection: TextDirection.ltr,
-                                autofocus: true,
-                                inputFormatters: [
-                                  ArabicToEnglishDigitsFormatter(),
-                                ],
-                                decoration: InputDecoration(
-                                  hintText: "بحث برقم الحجز أو رقم التلفون",
-                                  hintStyle: context.typography.smRegular
-                                      .copyWith(
-                                        color:
-                                            AppColors.textSecondaryParagraph,
-                                      ),
-                                  prefixIcon: const Icon(
-                                    Icons.search_rounded,
-                                    color: AppColors.primary,
-                                  ),
-                                  suffixIcon:
-                                      _searchController.text.isNotEmpty
-                                          ? IconButton(
-                                            icon: const Icon(
-                                              Icons.clear_rounded,
-                                              size: 18,
-                                            ),
-                                            onPressed: () {
-                                              _searchController.clear();
-                                              controller.searchQuery = "";
-                                              controller.update();
-                                            },
-                                          )
-                                          : null,
-                                  filled: true,
-                                  fillColor:
-                                      AppColors.background_neutral_100,
-                                  contentPadding:
-                                      const EdgeInsets.symmetric(
-                                        horizontal: 14,
-                                        vertical: 12,
-                                      ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                ),
-                                onChanged: (value) {
-                                  controller.searchQuery = value;
-                                  controller.update();
-                                },
-                                onSubmitted: (_) =>
-                                    FocusScope.of(context).unfocus(),
-                              ),
-                            ),
-                          )
-                        : const SizedBox.shrink(),
-                  ),
+                    isGrid ? const SizedBox() : const SizedBox(height: 10),
 
-                  // ── Tabs (فقط لو في كشف مستعجل جاري) ─────────
-                  if (controller.hasActiveUrgentReservation)
+                    isGrid
+                        ? const SizedBox()
+                        : StatsSection(controller: controller),
+
+                    isGrid
+                        ? const SizedBox()
+                        : ReservationReportWidget(controller: controller),
+
+                    // ── Pending reservations banner (assistant only) ──
+                    const _PendingReservationsBanner(),
+
+                    // ── Quick Actions Row ─────────────────────────
                     Padding(
-                      padding: EdgeInsets.symmetric(vertical: 15.0.h),
-                      child: _buildTabs(controller),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 4.w,
+                        vertical: 8.h,
+                      ),
+                      child: _buildQuickActions(controller),
                     ),
 
-                  _buildReservationNotebook(reservations, controller),
-                ],
+                    // ── Animated Search Field ─────────────────────
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 240),
+                      curve: Curves.easeInOut,
+                      child:
+                          _showSearch
+                              ? Padding(
+                                padding: EdgeInsets.only(
+                                  left: 4.w,
+                                  right: 4.w,
+                                  bottom: 8.h,
+                                ),
+                                child: AnimatedOpacity(
+                                  duration: const Duration(milliseconds: 180),
+                                  opacity: _showSearch ? 1.0 : 0.0,
+                                  child: TextField(
+                                    controller: _searchController,
+                                    focusNode: _keyboardService.getFocusNode(
+                                      _keyboardKeys[0],
+                                    ),
+                                    keyboardType: TextInputType.phone,
+                                    textInputAction: TextInputAction.done,
+                                    textDirection: TextDirection.ltr,
+                                    autofocus: true,
+                                    inputFormatters: [
+                                      ArabicToEnglishDigitsFormatter(),
+                                    ],
+                                    decoration: InputDecoration(
+                                      hintText: "بحث برقم الحجز أو رقم التلفون",
+                                      hintStyle: context.typography.smRegular
+                                          .copyWith(
+                                            color:
+                                                AppColors
+                                                    .textSecondaryParagraph,
+                                          ),
+                                      prefixIcon: const Icon(
+                                        Icons.search_rounded,
+                                        color: AppColors.primary,
+                                      ),
+                                      suffixIcon:
+                                          _searchController.text.isNotEmpty
+                                              ? IconButton(
+                                                icon: const Icon(
+                                                  Icons.clear_rounded,
+                                                  size: 18,
+                                                ),
+                                                onPressed: () {
+                                                  _searchController.clear();
+                                                  controller.searchQuery = "";
+                                                  controller.update();
+                                                },
+                                              )
+                                              : null,
+                                      filled: true,
+                                      fillColor:
+                                          AppColors.background_neutral_100,
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 14,
+                                            vertical: 12,
+                                          ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                    ),
+                                    onChanged: (value) {
+                                      controller.searchQuery = value;
+                                      controller.update();
+                                    },
+                                    onSubmitted:
+                                        (_) => FocusScope.of(context).unfocus(),
+                                  ),
+                                ),
+                              )
+                              : const SizedBox.shrink(),
+                    ),
+
+                    // ── Tabs (فقط لو في كشف مستعجل جاري) ─────────
+                    if (controller.hasActiveUrgentReservation)
+                      Padding(
+                        padding: EdgeInsets.symmetric(vertical: 15.0.h),
+                        child: _buildTabs(controller),
+                      ),
+
+                    _buildReservationNotebook(reservations, controller),
+                  ],
+                ),
               ),
             ),
-          ),
           ),
           floatingActionButton: Column(
             mainAxisSize: MainAxisSize.min,
@@ -246,9 +252,7 @@ class _ReservationViewState extends State<ReservationView> {
     return Row(
       children: [
         _actionChip(
-          icon: _showSearch
-              ? Icons.search_off_rounded
-              : Icons.search_rounded,
+          icon: _showSearch ? Icons.search_off_rounded : Icons.search_rounded,
           label: "بحث",
           isActive: _showSearch,
           onTap: () {
@@ -275,12 +279,11 @@ class _ReservationViewState extends State<ReservationView> {
         ),
         SizedBox(width: 8.w),
         _actionChip(
-          icon: controller.dayLimit != null
-              ? Icons.lock_rounded
-              : Icons.lock_open_rounded,
-          label: controller.dayLimit != null
-              ? "${controller.dayLimit}"
-              : "قفل",
+          icon:
+              controller.dayLimit != null
+                  ? Icons.lock_rounded
+                  : Icons.lock_open_rounded,
+          label: controller.dayLimit != null ? "${controller.dayLimit}" : "قفل",
           isActive: controller.dayLimit != null,
           activeColor: const Color(0xFFEF4444),
           onTap: () => _showSetDayLimitSheet(controller),
@@ -296,9 +299,10 @@ class _ReservationViewState extends State<ReservationView> {
     bool isActive = false,
     Color? activeColor,
   }) {
-    final Color color = isActive
-        ? (activeColor ?? AppColors.primary)
-        : AppColors.textSecondaryParagraph;
+    final Color color =
+        isActive
+            ? (activeColor ?? AppColors.primary)
+            : AppColors.textSecondaryParagraph;
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
@@ -306,18 +310,20 @@ class _ReservationViewState extends State<ReservationView> {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
           decoration: BoxDecoration(
-            color: isActive
-                ? (activeColor ?? AppColors.primary).withValues(alpha: 0.10)
-                : AppColors.background_neutral_100,
+            color:
+                isActive
+                    ? (activeColor ?? AppColors.primary).withValues(alpha: 0.10)
+                    : AppColors.background_neutral_100,
             borderRadius: BorderRadius.circular(12),
-            border: isActive
-                ? Border.all(
-                    color: (activeColor ?? AppColors.primary).withValues(
-                      alpha: 0.40,
-                    ),
-                    width: 1.2,
-                  )
-                : null,
+            border:
+                isActive
+                    ? Border.all(
+                      color: (activeColor ?? AppColors.primary).withValues(
+                        alpha: 0.40,
+                      ),
+                      width: 1.2,
+                    )
+                    : null,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -442,10 +448,7 @@ class _ReservationViewState extends State<ReservationView> {
             if (controller.dayLimit != null) ...[
               SizedBox(height: 10.h),
               Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 12.w,
-                  vertical: 8.h,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
                 decoration: BoxDecoration(
                   color: const Color(0xFFEF4444).withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
@@ -479,16 +482,11 @@ class _ReservationViewState extends State<ReservationView> {
                 if (controller.dayLimit != null) ...[
                   Expanded(
                     child: OutlinedButton.icon(
-                      icon: const Icon(
-                        Icons.lock_open_rounded,
-                        size: 18,
-                      ),
+                      icon: const Icon(Icons.lock_open_rounded, size: 18),
                       label: const Text("إلغاء القفل"),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFFEF4444),
-                        side: const BorderSide(
-                          color: Color(0xFFEF4444),
-                        ),
+                        side: const BorderSide(color: Color(0xFFEF4444)),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -663,7 +661,8 @@ class _ReservationViewState extends State<ReservationView> {
     final priority = ReservationPriorityExt.fromLevel(
       reservation.priorityLevel,
     );
-    final hasHardPriority = reservation.isHardPriority; // urgent only (level >= 4)
+    final hasHardPriority =
+        reservation.isHardPriority; // urgent only (level >= 4)
     final isNewborn = (reservation.priorityLevel ?? 0) == 3;
 
     // ── Status meta ─────────────────────────────────────────
@@ -716,7 +715,8 @@ class _ReservationViewState extends State<ReservationView> {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: accentColor.withValues(
-              alpha: dimmed ? 0.20 : (hasHardPriority || isNewborn ? 0.65 : 0.45),
+              alpha:
+                  dimmed ? 0.20 : (hasHardPriority || isNewborn ? 0.65 : 0.45),
             ),
             width: hasHardPriority ? 2.5 : (isNewborn ? 2.0 : 1.8),
           ),
@@ -777,22 +777,90 @@ class _ReservationViewState extends State<ReservationView> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: context.typography.lgBold.copyWith(
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w700,
                                     color: AppColors.background_black,
-                                    fontSize: 22,
+                                    fontSize: 16,
+                                    height: 1.2,
                                   ),
                                 ),
                                 if ((reservation.patientPhone ?? "").isNotEmpty)
                                   Padding(
-                                    padding: const EdgeInsets.only(top: 4),
-                                    child: Text(
-                                      reservation.patientPhone!,
-                                      style: context.typography.smRegular
-                                          .copyWith(
-                                            color: const Color(0xFF374151),
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
+                                    padding: const EdgeInsets.only(top: 6),
+                                    child: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.phone_outlined,
+                                          size: 15,
+                                          color: Color(0xFF6B7280),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Flexible(
+                                          child: Directionality(
+                                            textDirection: TextDirection.ltr,
+                                            child: Text(
+                                              reservation.patientPhone!,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              textAlign: TextAlign.left,
+                                              style: context
+                                                  .typography.smRegular
+                                                  .copyWith(
+                                                    color: const Color(
+                                                      0xFF374151,
+                                                    ),
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w600,
+                                                    letterSpacing: 0.3,
+                                                  ),
+                                            ),
                                           ),
+                                        ),
+                                        if (!reservation
+                                            .whatsappConfirmationSent) ...[
+                                          const SizedBox(width: 8),
+                                          GestureDetector(
+                                            onTap: () =>
+                                                _openWhatsApp(reservation),
+                                            child: Container(
+                                              padding: const EdgeInsets.all(6),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFF25D366)
+                                                    .withValues(alpha: 0.12),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              child: const FaIcon(
+                                                FontAwesomeIcons.whatsapp,
+                                                size: 18,
+                                                color: Color(0xFF25D366),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                        if (reservation
+                                                .patientUid?.isNotEmpty ==
+                                            true) ...[
+                                          const SizedBox(width: 8),
+                                          GestureDetector(
+                                            onTap: () => _openChat(reservation),
+                                            child: Container(
+                                              padding: const EdgeInsets.all(6),
+                                              decoration: BoxDecoration(
+                                                color: AppColors.primary
+                                                    .withValues(alpha: 0.12),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              child: Icon(
+                                                Icons
+                                                    .chat_bubble_outline_rounded,
+                                                size: 18,
+                                                color: AppColors.primary,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
                                     ),
                                   ),
                               ],
@@ -845,7 +913,9 @@ class _ReservationViewState extends State<ReservationView> {
                             _chip(
                               context,
                               label: "كود: ${reservation.patientCode}",
-                              bg: const Color(0xFF7C3AED).withValues(alpha: 0.12),
+                              bg: const Color(
+                                0xFF7C3AED,
+                              ).withValues(alpha: 0.12),
                               fg: const Color(0xFF7C3AED),
                               icon: Icons.tag_rounded,
                             ),
@@ -854,7 +924,9 @@ class _ReservationViewState extends State<ReservationView> {
                             _chip(
                               context,
                               label: "${priority.emoji} ${priority.label}",
-                              bg: const Color(0xFFEF4444).withValues(alpha: 0.18),
+                              bg: const Color(
+                                0xFFEF4444,
+                              ).withValues(alpha: 0.18),
                               fg: const Color(0xFFDC2626),
                               icon: Icons.local_hospital_rounded,
                             ),
@@ -862,7 +934,9 @@ class _ReservationViewState extends State<ReservationView> {
                             _chip(
                               context,
                               label: "${priority.emoji} ${priority.label}",
-                              bg: const Color(0xFFEC4899).withValues(alpha: 0.18),
+                              bg: const Color(
+                                0xFFEC4899,
+                              ).withValues(alpha: 0.18),
                               fg: const Color(0xFFDB2777),
                               icon: Icons.child_care_rounded,
                             ),
@@ -870,7 +944,9 @@ class _ReservationViewState extends State<ReservationView> {
                             _chip(
                               context,
                               label: "حضر",
-                              bg: const Color(0xFF0D9488).withValues(alpha: 0.18),
+                              bg: const Color(
+                                0xFF0D9488,
+                              ).withValues(alpha: 0.18),
                               fg: const Color(0xFF0D9488),
                               icon: Icons.how_to_reg_outlined,
                             ),
@@ -878,7 +954,9 @@ class _ReservationViewState extends State<ReservationView> {
                           // (it fires on ALL non-newborn patients and is too noisy).
                           if (reservation.queueReason != null &&
                               reservation.queueReason !=
-                                  QueueChangeReason.newbornInserted.systemLabel &&
+                                  QueueChangeReason
+                                      .newbornInserted
+                                      .systemLabel &&
                               !isCompleted &&
                               !isCancelled)
                             _chip(
@@ -912,7 +990,9 @@ class _ReservationViewState extends State<ReservationView> {
                                   case 'wallet':
                                     return Colors.blue.withValues(alpha: 0.12);
                                   default:
-                                    return Colors.orange.withValues(alpha: 0.12);
+                                    return Colors.orange.withValues(
+                                      alpha: 0.12,
+                                    );
                                 }
                               }(),
                               fg: () {
@@ -930,7 +1010,8 @@ class _ReservationViewState extends State<ReservationView> {
                                   case 'instapay':
                                     return Icons.payment;
                                   case 'wallet':
-                                    return Icons.account_balance_wallet_outlined;
+                                    return Icons
+                                        .account_balance_wallet_outlined;
                                   default:
                                     return Icons.payments_outlined;
                                 }
@@ -1233,6 +1314,80 @@ class _ReservationViewState extends State<ReservationView> {
         ),
         onPressed: onTap,
       ),
+    );
+  }
+
+  // ---------------------------------------------------------------
+  // 📲 WHATSAPP — open app with pre-filled approved message
+  // ---------------------------------------------------------------
+  Future<void> _openWhatsApp(ReservationModel reservation) async {
+    final rawPhone = reservation.patientPhone ?? '';
+    print('phone patient is ${rawPhone}');
+    if (rawPhone.isEmpty) return;
+
+    final normalized = WhatsAppManager.normalizeEgyptPhone(rawPhone);
+    final message = WhatsAppStatusMessageService.buildManualApprovedMessage(
+      reservation,
+    );
+    final encodedText = Uri.encodeComponent(message);
+    final waMeUri = Uri.parse('https://wa.me/$normalized?text=$encodedText');
+    final waSchemeUri = Uri.parse(
+      'whatsapp://send?phone=$normalized&text=$encodedText',
+    );
+
+    bool launched = false;
+    try {
+      launched = await launchUrl(
+        waMeUri,
+        mode: LaunchMode.externalApplication,
+      );
+    } catch (_) {
+      launched = false;
+    }
+
+    if (!launched) {
+      try {
+        launched = await launchUrl(
+          waSchemeUri,
+          mode: LaunchMode.externalApplication,
+        );
+      } catch (_) {
+        launched = false;
+      }
+    }
+
+    if (!launched) return;
+
+    // Mark as sent — update Firebase + local state
+    final date = AppDateFormatter.toDash(reservation.appointmentDateTime);
+    final path = 'doctors/${reservation.doctorUid}/reservations/$date/${reservation.key}';
+    FirebaseDatabase.instance
+        .ref(path)
+        .update({'whatsapp_confirmation_sent': 1});
+
+    reservation.whatsappConfirmationSent = true;
+    controller.update();
+  }
+
+  // ---------------------------------------------------------------
+  // 💬 CHAT — open assistant chat with patient
+  // ---------------------------------------------------------------
+  void _openChat(ReservationModel reservation) {
+    final session = Get.find<UserSession>();
+    final user = session.user?.user as AssistantUser?;
+    final doctorKey = user?.doctorKey ?? "";
+    final assistantName = session.user?.name ?? "المساعدة";
+
+    Get.to(
+      () => AssistantChatDetailView(
+        assistantId: doctorKey,
+        assistantName: assistantName,
+        patientId: reservation.patientUid!,
+        patientName: reservation.patientName ?? "مريض",
+        isAssistantSide: true,
+        receiverFcmToken: reservation.patientFcm,
+      ),
+      binding: Binding(),
     );
   }
 

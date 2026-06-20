@@ -75,7 +75,7 @@ class HelpCenterView extends GetView<HelpCenterViewModel> {
                   context,
                   title: "تواصل عبر واتساب".tr,
                   subtitle: "دعم فوري عبر الواتساب",
-                  onTap: () => controller.openwhatsapp(),
+                  onTap: () => controller.openWhatsapp(),
                   icon: const Svgicon(
                     icon: IconsConstants.phone,
                     color: AppColors.background_black,

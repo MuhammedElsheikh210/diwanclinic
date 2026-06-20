@@ -12,6 +12,8 @@ class AssistantChatListVm extends GetxController {
     final user = Get.find<UserSession>().user?.user;
     if (user is AssistantUser) {
       _listenChats(user.doctorKey ?? "");
+    } else if (user is DoctorUser) {
+      _listenChats(user.uid ?? "");
     }
   }
 

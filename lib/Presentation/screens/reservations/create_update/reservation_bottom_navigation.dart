@@ -14,9 +14,7 @@ class ReservationBottomNavigation extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isLastStep = controller.currentStep == 3;
 
-    /// 🔥 مهم: ضيف شرط اليوم مغلق
-    final bool isValid =
-        controller.validateCurrentStep() && !controller.isDayClosed;
+    final bool isValid = controller.validateCurrentStep();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -74,13 +72,8 @@ class ReservationBottomNavigation extends StatelessWidget {
                 ),
               ),
 
-              /// 🔥 تغيير النص حسب الحالة
               child: Text(
-                controller.isDayClosed
-                    ? "اليوم مغلق"
-                    : isLastStep
-                    ? "حفظ الحجز"
-                    : "التالي",
+                isLastStep ? "حفظ الحجز" : "التالي",
                 style: context.typography.mdMedium.copyWith(
                   color: Colors.white,
                 ),

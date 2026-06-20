@@ -1,5 +1,6 @@
 import 'package:diwanclinic/Presentation/screens/assistant_chat/assistant_chat_list_view.dart';
 import 'package:diwanclinic/Presentation/screens/assistant_chat/assistant_chat_list_vm.dart';
+import 'package:diwanclinic/Presentation/screens/assistant_chat/doctor_chat_list_view.dart';
 import 'package:diwanclinic/Presentation/screens/generic_visite/read/view.dart';
 import 'package:diwanclinic/Presentation/screens/home_doctor/doctor_home_view.dart';
 import 'package:diwanclinic/Presentation/screens/pharmacy_chat/pharmacy_chat_list_view.dart';
@@ -51,47 +52,10 @@ class _MainPageState extends State<MainPage> {
                         controller.userType ?? UserType.patient,
                       ),
 
-              // FAB (Patient only)
-              floatingActionButtonLocation:
-                  controller.userType == UserType.patient
-                      ? FloatingActionButtonLocation.endFloat
-                      : null,
-              floatingActionButton:
-                  controller.userType == UserType.patient
-                      ? _buildFAB(controller)
-                      : null,
-
               // BOTTOM NAV
               bottomNavigationBar: _buildBottomNavigationBar(controller),
             );
           },
-        ),
-      ),
-    );
-  }
-
-  // ------------------------------------------------------------------
-  // 🔵 FAB
-  // ------------------------------------------------------------------
-  Widget _buildFAB(MainPageViewModel controller) {
-    return GestureDetector(
-      onTap: () => controller.changeIndex(4),
-      child: Container(
-        width: 58.w,
-        height: 58.w,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: AppColors.primary,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.18),
-              blurRadius: 18,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: const Center(
-          child: Icon(Icons.chat_rounded, color: Colors.white, size: 28),
         ),
       ),
     );
@@ -122,6 +86,17 @@ class _MainPageState extends State<MainPage> {
             },
           );
         },
+      );
+    }
+
+    // doctor → wrap with AssistantChatListVm (same data, no badge)
+    if (controller.userType == UserType.doctor) {
+      return GetBuilder<AssistantChatListVm>(
+        init: AssistantChatListVm(),
+        builder: (_) => _buildNavContainer(
+          _bottomItems(userType: controller.userType),
+          controller,
+        ),
       );
     }
 
@@ -181,7 +156,6 @@ class _MainPageState extends State<MainPage> {
         return [
           _item(IconsConstants.home, "الرئيسية"),
           _item(IconsConstants.new_reservae, "الحجوزات"),
-          _item(IconsConstants.orders, "الطلبات"),
           _item(IconsConstants.doc, "سجلي الطبي"),
           _item(IconsConstants.chat, "المحادثة"),
         ];
@@ -207,6 +181,7 @@ class _MainPageState extends State<MainPage> {
         return [
           _item(IconsConstants.home, "الرئيسية"),
           _item(IconsConstants.new_reservae, "الحجوزات"),
+          _item(IconsConstants.chat, "المحادثات"),
           _item(IconsConstants.money, "الدخل"),
           _item(IconsConstants.feedback_icon, "التقييمات"),
           _item(IconsConstants.account, "الحساب"),
@@ -291,7 +266,6 @@ class _MainPageState extends State<MainPage> {
         return [
           const PatientHomeView(),
           const ReservationPatientView(),
-          const OrdersListScreen(),
           const MedicalRecordView(),
           const ChatListView(),
         ][index];
@@ -308,6 +282,7 @@ class _MainPageState extends State<MainPage> {
         return [
           const DoctorHomeView(),
           const ReservationDoctorView(),
+          const AssistantChatsForDoctorView(),
           const IncomeView(),
           const DoctorFeedbackView(),
           const AccountView(),

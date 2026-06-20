@@ -588,7 +588,7 @@ extension LoadApis on DoctorDetailsViewModel {
         for (final item in data) {
           if (item == null) continue;
 
-          if (item.clinic_key == myClinicKey) {
+          if (item.clinic_key == myClinicKey && item.date == date) {
             legacyQueueCount = item.value ?? 0;
             legacyQueueForDay = item;
             break;

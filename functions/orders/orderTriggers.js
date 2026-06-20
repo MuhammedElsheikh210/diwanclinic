@@ -3,6 +3,11 @@ const { onValueWritten } = require(
 );
 
 const {
+  WHATSAPP_ACCESS_TOKEN,
+  WHATSAPP_PHONE_NUMBER_ID,
+} = require("../whatsapp/whatsappConfig");
+
+const {
 
   handleNewOrder,
 
@@ -27,6 +32,8 @@ exports.onOrderUpdate =
 
       instance:
         "link-b47c8-default-rtdb",
+
+      secrets: [WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID],
     },
 
     async (event) => {

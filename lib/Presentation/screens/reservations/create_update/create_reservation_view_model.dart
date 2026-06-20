@@ -23,6 +23,7 @@ class CreateReservationViewModel extends GetxController {
   int maxRevisitePerClinic = 0;
   int maxDateRevisitePerClinic = 0;
   bool isCalculatingOrder = false;
+  bool _isSaving = false;
   List<ReservationModel?> patientReservations = [];
   bool isTimelineExpanded = false;
   bool isAutoApplied = false;
@@ -333,8 +334,8 @@ class CreateReservationViewModel extends GetxController {
 
       if (requestId != _calcRequestId) return;
 
-      /// 🔥 2️⃣ get TOTAL COUNT بدل lastOrder
-      int totalCount = 0;
+      /// 🔥 2️⃣ get MAX order_num excluding cancelled reservations
+      int maxOrderNum = 0;
 
       await ReservationService().getReservationsData(
         query: SQLiteQueryParams(
@@ -343,11 +344,24 @@ class CreateReservationViewModel extends GetxController {
           AND clinic_key = ?
           AND shift_key = ?
           AND doctor_uid = ?
+          AND status NOT IN (?, ?, ?)
         """,
-          whereArgs: [formatted, clinic_key, shift_key, doctorUid],
+          whereArgs: [
+            formatted,
+            clinic_key,
+            shift_key,
+            doctorUid,
+            ReservationStatus.cancelledByUser.value,
+            ReservationStatus.cancelledByAssistant.value,
+            ReservationStatus.cancelledByDoctor.value,
+          ],
+          orderBy: "order_num DESC",
+          limit: 1,
         ),
         voidCallBack: (list) {
-          totalCount = list.length;
+          if (list.isNotEmpty && list.first != null) {
+            maxOrderNum = list.first!.orderNum ?? 0;
+          }
         },
       );
 
@@ -356,7 +370,7 @@ class CreateReservationViewModel extends GetxController {
       /// 3️⃣ calculate
       if (!isFromLegacyQueue) {
         final base =
-            totalCount > legacyQueueCount ? totalCount : legacyQueueCount;
+            maxOrderNum > legacyQueueCount ? maxOrderNum : legacyQueueCount;
 
         resOrderController.text = (base + 1).toString();
       } else {
@@ -945,127 +959,129 @@ class CreateReservationViewModel extends GetxController {
     List<ReservationModel?> activeList,
     ClinicModel? clinicModel,
   ) async {
-    if (isDayClosed) {
-      Loader.showError("🚫 هذا اليوم مغلق ولا يمكن الحجز فيه");
-      return;
-    }
+    if (_isSaving) return;
+    _isSaving = true;
+    update();
 
-    if (!validateStep()) {
-      Loader.showError("⚠️ يرجى ملء جميع الحقول المطلوبة");
-      return;
-    }
-
-    // 🔹 Ensure patient account exists
-    if (clientUser == null) {
-      await _createClientAccount();
-      if (clientUser == null) {
-        Loader.showError("فشل إنشاء حساب المريض");
+    try {
+      if (!validateStep()) {
+        Loader.showError("⚠️ يرجى ملء جميع الحقول المطلوبة");
         return;
       }
-    }
 
-    final now = DateTime.now().millisecondsSinceEpoch;
+      // 🔹 Ensure patient account exists
+      if (clientUser == null) {
+        await _createClientAccount();
+        if (clientUser == null) {
+          Loader.showError("فشل إنشاء حساب المريض");
+          return;
+        }
+      }
 
-    final currentUser = Get.find<UserSession>().user;
+      final now = DateTime.now().millisecondsSinceEpoch;
 
-    if (currentUser == null || !currentUser.isAssistant) {
-      return;
-    }
+      final currentUser = Get.find<UserSession>().user;
 
-    final assistant = currentUser.asAssistant;
+      if (currentUser == null || !currentUser.isAssistant) {
+        return;
+      }
 
-    if (assistant == null) {
-      return;
-    }
+      final assistant = currentUser.asAssistant;
 
-    // ============================================================
-    // 🟦 UPDATE MODE
-    // ============================================================
-    if (is_update && existingReservation != null) {
-      final updatedReservation = existingReservation!.copyWith(
-        patientUid: existingReservation?.patientUid,
-        patientFcm: existingReservation?.patientFcm,
+      if (assistant == null) {
+        return;
+      }
 
-        patientName:
-            selectedType == "زيارة مندوب"
-                ? delegateNameController.text
-                : patientNameController.text,
-        patientCode:
-            patientCodeController.text.trim().isEmpty
-                ? null
-                : patientCodeController.text.trim(),
+      // ============================================================
+      // 🟦 UPDATE MODE
+      // ============================================================
+      if (is_update && existingReservation != null) {
+        final updatedReservation = existingReservation!.copyWith(
+          patientUid: existingReservation?.patientUid,
+          patientFcm: existingReservation?.patientFcm,
+
+          patientName:
+              selectedType == "زيارة مندوب"
+                  ? delegateNameController.text
+                  : patientNameController.text,
+          patientCode:
+              patientCodeController.text.trim().isEmpty
+                  ? null
+                  : patientCodeController.text.trim(),
+          revisitCount: _autoRevisitCount,
+          parentKey: _autoParentKey,
+          isAutoType: manualRevisitCount == null,
+          priorityLevel: priorityLevel,
+          patientPhone: patientPhoneController.text,
+          reservationType: selectedType,
+
+          appointmentDateTime:
+              companyNameController.text.contains('/')
+                  ? normalizeToDashDate(companyNameController.text)
+                  : companyNameController.text,
+
+          paidAmount: paidAmountController.text,
+          restAmount: restAmountController.text,
+          clinicKey: clinic_key,
+          shiftKey: shift_key,
+          doctorUid: assistant.doctorKey,
+
+          updatedAt: now,
+        );
+
+        updateReservation(updatedReservation, activeList, clinicModel);
+        return;
+      }
+
+      final parsedOrderNum = int.tryParse(resOrderController.text) ?? 0;
+
+      final newReservation = ReservationModel(
+        key: const Uuid().v4(),
+        clinicKey: clinic_key,
+        shiftKey: shift_key,
+        createdAt: now,
+        updatedAt: now,
+
         revisitCount: _autoRevisitCount,
         parentKey: _autoParentKey,
         isAutoType: manualRevisitCount == null,
+        orderNum: parsedOrderNum,
         priorityLevel: priorityLevel,
-        patientPhone: patientPhoneController.text,
-        reservationType: selectedType,
+        status: ReservationStatus.approved.value,
 
+        reservationType: selectedType,
         appointmentDateTime:
             companyNameController.text.contains('/')
                 ? normalizeToDashDate(companyNameController.text)
                 : companyNameController.text,
-
         paidAmount: paidAmountController.text,
         restAmount: restAmountController.text,
-        clinicKey: clinic_key,
-        shiftKey: shift_key,
+
         doctorUid: assistant.doctorKey,
+        doctorFcm: assistant.doctorKey,
+        doctorName: assistant.doctorName,
 
-        // 🔥 IMPORTANT
-        updatedAt: now,
+        patientFcm: clientUser?.fcmToken,
+        patientUid: clientUser?.uid,
+        patientName:
+            selectedType == "زيارة مندوب"
+                ? delegateNameController.text
+                : patientNameController.text,
+        patientPhone: patientPhoneController.text,
+        patientCode:
+            patientCodeController.text.trim().isEmpty
+                ? null
+                : patientCodeController.text.trim(),
+
+        assistantUid: assistant.uid,
+        assistantName: assistant.name,
+        assistantFcm: assistant.fcmToken,
       );
-
-      updateReservation(updatedReservation, activeList, clinicModel);
-      return;
+      createReservation(newReservation);
+    } finally {
+      _isSaving = false;
+      update();
     }
-
-    final parsedOrderNum = int.tryParse(resOrderController.text) ?? 0;
-
-    final newReservation = ReservationModel(
-      key: const Uuid().v4(),
-      clinicKey: clinic_key,
-      shiftKey: shift_key,
-      createdAt: now,
-      updatedAt: now,
-
-      /// 🔥 NEW
-      revisitCount: _autoRevisitCount,
-      parentKey: _autoParentKey,
-      isAutoType: manualRevisitCount == null,
-      orderNum: parsedOrderNum,
-      priorityLevel: priorityLevel,
-      status: ReservationStatus.approved.value,
-
-      reservationType: selectedType,
-      appointmentDateTime:
-          companyNameController.text.contains('/')
-              ? normalizeToDashDate(companyNameController.text)
-              : companyNameController.text,
-      paidAmount: paidAmountController.text,
-      restAmount: restAmountController.text,
-
-      doctorUid: assistant.doctorKey,
-      doctorFcm: assistant.doctorKey,
-      doctorName: assistant.doctorName,
-
-      patientFcm: clientUser?.fcmToken,
-      patientUid: clientUser?.uid,
-      patientName:
-          selectedType == "زيارة مندوب"
-              ? delegateNameController.text
-              : patientNameController.text,
-      patientPhone: patientPhoneController.text,
-      patientCode:
-          patientCodeController.text.trim().isEmpty
-              ? null
-              : patientCodeController.text.trim(),
-
-      assistantUid: assistant.uid,
-      assistantName: assistant.name,
-      assistantFcm: assistant.fcmToken,
-    );
-    createReservation(newReservation);
   }
 
   // Future<void> getLastReservationDateHuman(LocalUser client) async {
@@ -1170,7 +1186,8 @@ class CreateReservationViewModel extends GetxController {
     );
   }
 
-  /// ✅ Create new client in "users"
+  /// Create patient account without affecting the assistant's auth session.
+  /// Uses: local check → online check → secondary Firebase app creation.
   Future<void> _createClientAccount() async {
     final phone = patientPhoneController.text.trim();
 
@@ -1186,38 +1203,62 @@ class CreateReservationViewModel extends GetxController {
 
     Loader.show();
 
+    // ✅ Step 1: Check local SQLite first (fastest)
+    await AuthenticationService().getClientsData(
+      query: SQLiteQueryParams(
+        where: "phone = ?",
+        whereArgs: [phone],
+        limit: 1,
+      ),
+      voidCallBack: (users) {
+        if (users.isNotEmpty && users.first != null) {
+          clientUser = users.first;
+          update();
+        }
+      },
+    );
+
+    if (clientUser != null) {
+      Loader.dismiss();
+      return;
+    }
+
+    // ✅ Step 2: Check Firebase online by phone
+    await AuthenticationService().getClientsOnlineData(
+      firebaseFilter: FirebaseFilter(orderBy: "phone", equalTo: phone),
+      voidCallBack: (users) {
+        if (users.isNotEmpty && users.first != null) {
+          clientUser = users.first;
+          update();
+        }
+      },
+    );
+
+    if (clientUser != null) {
+      Loader.dismiss();
+      return;
+    }
+
+    // ✅ Step 3: Truly new patient — use secondary app so assistant stays logged in
     final email = "$phone@link.com";
     final password = phone;
+    FirebaseApp? secondaryApp;
 
     try {
-      final userCred = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(email: email, password: password);
+      secondaryApp = await Firebase.initializeApp(
+        name: 'patient_create_${DateTime.now().millisecondsSinceEpoch}',
+        options: Firebase.app().options,
+      );
+
+      final secondaryAuth = FirebaseAuth.instanceFor(app: secondaryApp);
+      final userCred = await secondaryAuth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
       final uid = userCred.user?.uid ?? "";
+      await secondaryAuth.signOut();
 
-      // ✅ current user من session
-      final currentUser = Get.find<UserSession>().user;
-
-      if (currentUser == null) {
-        Loader.showError("❌ المستخدم غير موجود");
-        Loader.dismiss();
-        return;
-      }
-
-      final baseUser = currentUser.user;
-
-      String? doctorKey;
-
-      // ✅ Doctor
-      if (baseUser is DoctorUser) {
-        doctorKey = baseUser.uid;
-      }
-      // ✅ Assistant
-      else if (baseUser is AssistantUser) {
-        doctorKey = baseUser.doctorKey;
-      }
-
-      // ✅ إنشاء BaseUser (patient)
       final patientBase = BaseUser(
         uid: uid,
         name: patientNameController.text,
@@ -1228,25 +1269,42 @@ class CreateReservationViewModel extends GetxController {
         isProfileCompleted: true,
       );
 
-      // 🔥 لفه بـ LocalUser
       final newClient = LocalUser(patientBase);
 
       await AuthenticationService().addClientsData(
         userclient: newClient,
-        voidCallBack: (_) async {
-          Loader.dismiss();
-
+        voidCallBack: (_) {
           clientUser = newClient;
-
           update();
         },
       );
     } on FirebaseAuthException catch (e) {
-      Loader.dismiss();
-      Loader.showError("فشل إنشاء الحساب: ${e.message}");
+      if (e.code == 'email-already-in-use') {
+        // Patient exists in Auth but wasn't found in DB — search online by identifier
+        await AuthenticationService().getClientsOnlineData(
+          firebaseFilter: FirebaseFilter(
+            orderBy: "identifier",
+            equalTo: email,
+          ),
+          voidCallBack: (users) {
+            if (users.isNotEmpty && users.first != null) {
+              clientUser = users.first;
+              update();
+            }
+          },
+        );
+
+        if (clientUser == null) {
+          Loader.showError("المريض مسجل مسبقًا، يرجى البحث عنه بالهاتف");
+        }
+      } else {
+        Loader.showError("فشل إنشاء الحساب: ${e.message}");
+      }
     } catch (e) {
-      Loader.dismiss();
       Loader.showError("حدث خطأ أثناء إنشاء الحساب");
+    } finally {
+      Loader.dismiss();
+      await secondaryApp?.delete();
     }
   }
 

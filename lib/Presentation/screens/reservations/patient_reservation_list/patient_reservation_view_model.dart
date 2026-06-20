@@ -190,7 +190,7 @@ class ReservationPatientViewModel extends GetxController {
         for (final item in data) {
           if (item == null) continue;
 
-          if (item.clinic_key == clinicKey) {
+          if (item.clinic_key == clinicKey && item.date == date) {
             legacyQueueCount = item.value ?? 0;
             break;
           }

@@ -18,37 +18,22 @@ class HelpCenterViewModel extends GetxController {
   globalData() {
     // getGlobalData(voidCallBack: (model) {
     //   globalModel = model;
-    //   
+    //
     //   update();
     // });
   }
 
-  Future<void> openwhatsapp() async {
-    // var whatsapp = phone;
-    //  var whatsapp = globalModel?.whatsphone ?? "";
-    var whatsapp = "+201551061194";
+  Future<void> openWhatsapp() async {
+    const phone = '201551061194'; // بدون +
 
-    var whatsappURl_android =
-        "whatsapp://send?phone=$whatsapp&text=${"سلام عليكم".tr}";
-    var whatappURL_ios =
-        "https://wa.me/$whatsapp?text=${Uri.parse("سلام عليكم".tr)}";
-    if (Platform.isIOS) {
-      // for iOS phone only
+    final message = Uri.encodeComponent("سلام عليكم".tr);
 
-      if (!await launchUrl(Uri.parse(whatappURL_ios))) {
-        throw 'Could not launch $whatappURL_ios';
-      } else {
-        //     Loader.showError("there is something error in phone number");
-      }
-    } else {
-      // android , web
-      
+    final whatsappUri = Uri.parse('whatsapp://send?phone=$phone&text=$message');
 
-      if (!await launchUrl(Uri.parse(whatsappURl_android))) {
-        throw 'Could not launch $whatsappURl_android';
-      } else {
-        //   Loader.showError("there is something error in phone number");
-      }
+    try {
+      await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      throw 'Could not launch WhatsApp';
     }
   }
 

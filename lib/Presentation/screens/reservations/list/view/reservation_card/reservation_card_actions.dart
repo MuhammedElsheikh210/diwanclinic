@@ -19,6 +19,12 @@ class ReservationCardActions extends StatelessWidget {
 
     final List<Widget> buttons = [];
 
+    // Chat button — only when patient has the app
+    if (reservation.patientUid?.isNotEmpty == true) {
+      buttons.add(_chatButton(context));
+      buttons.add(_space);
+    }
+
     // Always add Details
     buttons.add(_detailsButton(context));
 
@@ -33,6 +39,44 @@ class ReservationCardActions extends StatelessWidget {
     buttons.addAll(_statusButtons(context, status));
 
     return Row(children: buttons);
+  }
+
+  // CHAT BUTTON
+  Widget _chatButton(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: () {
+        final session = Get.find<UserSession>();
+        final user = session.user?.user as AssistantUser?;
+        final doctorKey = user?.doctorKey ?? "";
+        final assistantName = session.user?.name ?? "المساعدة";
+
+        Get.to(
+          () => AssistantChatDetailView(
+            assistantId: doctorKey,
+            assistantName: assistantName,
+            patientId: reservation.patientUid!,
+            patientName: reservation.patientName ?? "مريض",
+            isAssistantSide: true,
+            receiverFcmToken: reservation.patientFcm,
+          ),
+          binding: Binding(),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+        ),
+        child: const Icon(
+          Icons.chat_bubble_outline_rounded,
+          color: AppColors.primary,
+          size: 20,
+        ),
+      ),
+    );
   }
 
   // DETAILS BUTTON

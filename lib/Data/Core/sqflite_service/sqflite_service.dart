@@ -22,7 +22,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 79, // ⬅️ bumped: pharmacy_id for multi-staff pharmacy support
+      version: 80, // ⬅️ bumped: whatsapp_confirmation_sent flag on reservations
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onConfigure: (db) async {
@@ -242,6 +242,7 @@ is_auto_type INTEGER DEFAULT 0,
   -- ⚙️ flags
   is_ordered INTEGER DEFAULT 0,
   has_feedback INTEGER DEFAULT 0,
+  whatsapp_confirmation_sent INTEGER DEFAULT 0,
 
   -- 💳 online payment
   payment_screenshot_url TEXT,
